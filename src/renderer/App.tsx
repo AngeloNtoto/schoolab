@@ -5,9 +5,11 @@ import Dashboard from './components/Dashboard';
 import ClassDetails from './components/ClassDetails';
 import StudentDetails from './components/StudentDetails';
 import Bulletin from './components/Bulletin';
+import StartupLoader from './components/StartupLoader';
 
 export default function App() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
+  const [showLoader, setShowLoader] = useState(true);
 
   useEffect(() => {
     checkSetup();
@@ -25,26 +27,15 @@ export default function App() {
     }
   };
 
-  if (isSetupComplete === null) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center bg-slate-50"
-        style={{
-          backgroundImage: 'url(/assets/loading-bg.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-slate-700 font-medium text-lg">Chargement de EcoleGest...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleLoaderComplete = () => {
+    setShowLoader(false);
+  };
 
   return (
     <HashRouter>
+      {showLoader && isSetupComplete !== null && (
+        <StartupLoader onComplete={handleLoaderComplete} />
+      )}
       <Routes>
         <Route path="/setup" element={<SetupWizard />} />
         <Route path="/dashboard" element={<Dashboard />} />

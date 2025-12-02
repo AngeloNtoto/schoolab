@@ -11,7 +11,7 @@ export const OPTIONS = [
   { label: 'Éducation de Base', value: 'EB', short: 'EB' },
   { label: 'Électronique', value: 'ELECTRONIQUE', short: 'ETRO' },
   { label: 'Électricité', value: 'ELECTRICITE', short: 'ELEC' },
-  { label: 'Scientifique', value: 'SCIENTIFIQUE', short: 'SC' },
+  { label: 'Mécanique', value: 'SCIENTIFIQUE', short: 'SC' },
   { label: 'Commerciale', value: 'COMMERCIALE', short: 'COM' },
   { label: 'Littéraire', value: 'LITTERAIRE', short: 'LIT' },
 ] as const;

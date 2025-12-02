@@ -536,8 +536,13 @@ export default function ClassDetails() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
                           {idx + 1}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 relative group">
                           {student.last_name}
+                          {hoveredStudent === student.id && (
+                            <div className="absolute left-full top-0 ml-2 z-50">
+                              <StudentTooltip student={student} />
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
                           {student.post_name || '-'}
@@ -558,11 +563,7 @@ export default function ClassDetails() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                           {student.birth_date ? new Date(student.birth_date).toLocaleDateString('fr-FR') : '-'}
                         </td>
-                        {hoveredStudent === student.id && (
-                          <td className="absolute">
-                            <StudentTooltip student={student} />
-                          </td>
-                        )}
+
                       </tr>
                     ))}
                   </tbody>
@@ -596,7 +597,6 @@ interface GradeGridProps {
   subjects: Subject[];
   grades: Grade[];
   getGrade: (studentId: number, subjectId: number, period: string) => number | null;
-  calculateSemesterTotal: (studentId: number, subjectId: number, semester: 1 | 2) => number | null;
   calculateSemesterTotal: (studentId: number, subjectId: number, semester: 1 | 2) => number | null;
   onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => void;
   onContextMenu: (e: React.MouseEvent, student: Student) => void;

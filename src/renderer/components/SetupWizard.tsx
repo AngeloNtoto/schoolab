@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LEVELS, OPTIONS, SUBJECT_TEMPLATES } from '../../constants/school';
 import { ChevronRight, School, Calendar, Users, Check, GraduationCap } from 'lucide-react';
+import { getClassDisplayName } from '../lib/classUtils';
 
 export default function SetupWizard() {
   const navigate = useNavigate();
@@ -20,6 +21,23 @@ export default function SetupWizard() {
   // Step 3: Classes
   const [classes, setClasses] = useState<{ level: string; option: string; section: string }[]>([]);
   const [newClass, setNewClass] = useState({ level: '7ème' as string, option: 'EB' as string, section: 'A' });
+
+  // Update option when level changes
+  React.useEffect(() => {
+    if (newClass.level === '7ème' || newClass.level === '8ème') {
+      setNewClass(prev => ({ ...prev, option: 'EB' }));
+      // Force section to A (not allowed to be "Sans section")
+      if (newClass.section === '-') {
+        setNewClass(prev => ({ ...prev, section: 'A' }));
+      }
+    } else {
+      // For 1-4ème, default to first non-EB option
+      const firstNonEB = OPTIONS.find(o => o.value !== 'EB');
+      if (firstNonEB && newClass.option === 'EB') {
+        setNewClass(prev => ({ ...prev, option: firstNonEB.value }));
+      }
+    }
+  }, [newClass.level]);
 
   const handleNext = async () => {
     if (step === 1) {
@@ -62,7 +80,13 @@ export default function SetupWizard() {
       for (const cls of classes) {
         const classResult = await window.api.db.execute(
           'INSERT INTO classes (name, level, option, section, academic_year_id) VALUES (?, ?, ?, ?, ?)',
-          [`${cls.level} ${cls.option === 'EB' ? '' : cls.option} ${cls.section}`.trim(), cls.level, cls.option, cls.section, yearId]
+          [
+            getClassDisplayName(cls.level, cls.option, cls.section),
+            cls.level,
+            cls.option,
+            cls.section,
+            yearId
+          ]
         );
         const classId = classResult.lastInsertRowid;
 
@@ -210,22 +234,30 @@ export default function SetupWizard() {
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-slate-500 mb-1">Option</label>
                   <select
-                    className="w-full p-2 border border-slate-300 rounded-md text-sm"
+                    className="w-full p-2 border border-slate-300 rounded-md text-sm disabled:bg-slate-100"
                     value={newClass.option}
                     onChange={(e) => setNewClass({ ...newClass, option: e.target.value })}
+                    disabled={newClass.level === '7ème' || newClass.level === '8ème'}
                   >
-                    {OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    {OPTIONS.filter(o => {
+                      // 7ème/8ème: only EB
+                      if (newClass.level === '7ème' || newClass.level === '8ème') return o.value === 'EB';
+                      // 1ère-4ème: everything except EB
+                      return o.value !== 'EB';
+                    }).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-500 mb-1">Section</label>
-                  <input
-                    type="text"
+                  <select
                     className="w-full p-2 border border-slate-300 rounded-md text-sm"
                     value={newClass.section}
-                    onChange={(e) => setNewClass({ ...newClass, section: e.target.value.toUpperCase() })}
-                    maxLength={1}
-                  />
+                    onChange={(e) => setNewClass({ ...newClass, section: e.target.value })}
+                  >
+                    {/* Sans section not allowed for 7ème/8ème */}
+                    {(newClass.level !== '7ème' && newClass.level !== '8ème') && <option value="-">Sans section</option>}
+                    {['A', 'B', 'C', 'D', 'E'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
                 <button
                   onClick={addClass}
@@ -247,7 +279,7 @@ export default function SetupWizard() {
                     {classes.map((c, i) => (
                       <tr key={i}>
                         <td className="p-3">
-                          {c.level} {c.option === 'EB' ? '' : c.option} {c.section}
+                          {getClassDisplayName(c.level, c.option, c.section)}
                         </td>
                         <td className="p-3 text-right">
                           <button onClick={() => removeClass(i)} className="text-red-500 hover:text-red-700">

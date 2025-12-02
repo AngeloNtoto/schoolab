@@ -29,21 +29,21 @@ export default function StudentTooltip({ student, stats }: StudentTooltipProps) 
         
         <div className="space-y-1 text-sm">
           <div className="flex justify-between">
+            <span className="text-slate-400">ID:</span>
+            <span className="font-mono text-slate-200">#{student.id}</span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-slate-400">Sexe:</span>
             <span>{student.gender === 'M' ? 'Masculin' : 'Féminin'}</span>
           </div>
-          {student.birthplace && (
-            <div className="flex justify-between">
-              <span className="text-slate-400">Lieu naiss.:</span>
-              <span>{student.birthplace}</span>
-            </div>
-          )}
-          {student.birth_date && (
-            <div className="flex justify-between">
-              <span className="text-slate-400">Date naiss.:</span>
-              <span>{new Date(student.birth_date).toLocaleDateString('fr-FR')}</span>
-            </div>
-          )}
+          <div className="flex justify-between">
+            <span className="text-slate-400">Né(e) le:</span>
+            <span>{student.birth_date ? new Date(student.birth_date).toLocaleDateString('fr-FR') : '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">À:</span>
+            <span>{student.birthplace || '-'}</span>
+          </div>
         </div>
 
         {stats && (

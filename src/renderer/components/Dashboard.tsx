@@ -5,6 +5,7 @@ import Tutorial from './Tutorial';
 import ContextMenu from './ContextMenu';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import EditClassModal from './EditClassModal';
+import { getClassDisplayName } from '../lib/classUtils';
 
 interface Class {
   id: number;
@@ -43,6 +44,7 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
 
   const handleContextMenu = (e: React.MouseEvent, cls: Class) => {
     e.preventDefault();
@@ -133,6 +135,12 @@ export default function Dashboard() {
         <EditClassModal
           classData={editModal}
           onClose={() => setEditModal(null)}
+          onSuccess={loadData}
+        />
+      )}
+      {showCreateModal && (
+        <EditClassModal
+          onClose={() => setShowCreateModal(false)}
           onSuccess={loadData}
         />
       )}
