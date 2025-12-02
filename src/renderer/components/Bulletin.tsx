@@ -64,7 +64,7 @@ export default function Bulletin() {
         setClassInfo(cls);
 
         const subjs = await window.api.db.query<Subject>(
-          'SELECT * FROM subjects WHERE class_id = ? ORDER BY name',
+          'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC,name ASC',
           [studentData.class_id]
         );
         setSubjects(subjs);

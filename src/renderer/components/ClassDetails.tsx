@@ -69,7 +69,9 @@ export default function ClassDetails() {
       const [classes, studentData, subjectData, gradeData] = await Promise.all([
         window.api.db.query<ClassData>('SELECT * FROM classes WHERE id = ?', [Number(id)]),
         window.api.db.query<Student>('SELECT * FROM students WHERE class_id = ? ORDER BY last_name, first_name', [Number(id)]),
-        window.api.db.query<Subject>('SELECT * FROM subjects WHERE class_id = ? ORDER BY name', [Number(id)]),
+        window.api.db.query<Subject>(
+  'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC, name ASC',
+  [Number(id)]),
         window.api.db.query<Grade>('SELECT * FROM grades g INNER JOIN students s ON g.student_id = s.id WHERE s.class_id = ?', [Number(id)]),
       ]);
 

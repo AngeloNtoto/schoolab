@@ -1,3 +1,2 @@
--- Migration: Add postnom and birthplace to students table
-ALTER TABLE students ADD COLUMN post_name TEXT DEFAULT '';
-ALTER TABLE students ADD COLUMN birthplace TEXT DEFAULT '';
+ALTER TABLE subjects ADD COLUMN created_at TEXT DEFAULT (datetime('now'));
+ALTER TABLE subjects ADD COLUMN updated_at TEXT DEFAULT (datetime('now'));

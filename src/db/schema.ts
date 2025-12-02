@@ -36,14 +36,17 @@ export const SCHEMA = `
     UNIQUE(first_name, last_name, class_id)
   );
 
-  CREATE TABLE IF NOT EXISTS subjects (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    code TEXT NOT NULL,
-    max_score INTEGER NOT NULL,
-    class_id INTEGER NOT NULL,
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
-  );
+CREATE TABLE IF NOT EXISTS subjects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  code TEXT NOT NULL,
+  max_score INTEGER NOT NULL,
+  class_id INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+);
+
 
   CREATE TABLE IF NOT EXISTS grades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
