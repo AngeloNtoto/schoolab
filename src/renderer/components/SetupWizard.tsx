@@ -141,7 +141,7 @@ export default function SetupWizard() {
                   className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={schoolName}
                   onChange={(e) => setSchoolName(e.target.value)}
-                  placeholder="Ex: Institut Saint-Joseph"
+                  placeholder="Ex: ITP Mosala"
                 />
               </div>
               <div>
@@ -151,7 +151,7 @@ export default function SetupWizard() {
                   className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={schoolCity}
                   onChange={(e) => setSchoolCity(e.target.value)}
-                  placeholder="Ex: Kinshasa"
+                  placeholder="Ex: Bandundu"
                 />
               </div>
             </div>

@@ -3,6 +3,8 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SetupWizard from './components/SetupWizard';
 import Dashboard from './components/Dashboard';
 import ClassDetails from './components/ClassDetails';
+import StudentDetails from './components/StudentDetails';
+import Bulletin from './components/Bulletin';
 
 export default function App() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
@@ -47,6 +49,8 @@ export default function App() {
         <Route path="/setup" element={<SetupWizard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/class/:id" element={<ClassDetails />} />
+        <Route path="/student/:id" element={<StudentDetails />} />
+        <Route path="/bulletin/:id" element={<Bulletin />} />
         <Route path="/" element={<Navigate to={isSetupComplete ? "/dashboard" : "/setup"} replace />} />
       </Routes>
     </HashRouter>

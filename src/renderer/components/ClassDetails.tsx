@@ -351,7 +351,8 @@ export default function ClassDetails() {
                 <p className="text-slate-500 mb-6">
                   Cette classe n'a pas encore d'élèves enregistrés
                 </p>
-                <button 
+                
+                <button //bouuton pour rajouter eleves
                   onClick={() => setShowAddModal(true)}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 mx-auto"
                 >
@@ -360,6 +361,7 @@ export default function ClassDetails() {
                 </button>
               </div>
             ) : (
+              //Modal pour rajouter les eleves
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b-2 border-slate-200">
