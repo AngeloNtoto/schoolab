@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, MapPin, GraduationCap, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MapPin, GraduationCap } from 'lucide-react';
 
 interface Student {
   id: number;
@@ -149,17 +149,17 @@ export default function StudentDetails() {
 
         {/* Placeholder for grades and bulletin */}
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-slate-800">Notes et Bulletin</h2>
             <button
               onClick={() => navigate(`/bulletin/${student.id}`)}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <FileSpreadsheet size={18} />
-              Voir le bulletin
+              <GraduationCap size={20} />
+              Voir le Bulletin
             </button>
           </div>
-          <p className="text-slate-500">Cliquez sur le bouton ci-dessus pour voir le bulletin complet...</p>
+          <p className="text-slate-500">Cliquez sur le bouton ci-dessus pour générer et imprimer le bulletin de l'élève.</p>
         </div>
       </main>
     </div>

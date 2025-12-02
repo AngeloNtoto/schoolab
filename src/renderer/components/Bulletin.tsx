@@ -1,431 +1,440 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Printer } from 'lucide-react';
 
-interface BulletinData {
-  student: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    post_name: string;
-    gender: string;
-    birth_date: string;
-    birthplace: string;
-  };
-  class: {
-    name: string;
-    level: string;
-    option: string;
-  };
-  school: {
-    name: string;
-    city: string;
-  };
-  year: {
-    name: string;
-  };
-  grades: {
-    subject_name: string;
-    subject_code: string;
-    max_score: number;
-    p1: number | null;
-    p2: number | null;
-    exam1: number | null;
-    p3: number | null;
-    p4: number | null;
-    exam2: number | null;
-  }[];
+interface Student {
+  id: number;
+  first_name: string;
+  last_name: string;
+  post_name: string;
+  gender: string;
+  birth_date: string;
+  birthplace: string;
+  class_id: number;
+}
+
+interface ClassInfo {
+  id: number;
+  name: string;
+  level: string;
+  option: string;
+  section: string;
+}
+
+interface Subject {
+  id: number;
+  name: string;
+  max_score: number;
+}
+
+interface Grade {
+  subject_id: number;
+  period: string;
+  value: number;
 }
 
 export default function Bulletin() {
-  const { id } = useParams<{ id: string }>();
-  const [data, setData] = useState<BulletinData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { studentId } = useParams<{ studentId: string }>();
+  const navigate = useNavigate();
+  const [student, setStudent] = useState<Student | null>(null);
+  const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [schoolName, setSchoolName] = useState('');
+  const [schoolCity, setSchoolCity] = useState('');
 
   useEffect(() => {
-    loadBulletinData();
-  }, [id]);
+    loadData();
+  }, [studentId]);
 
-  const loadBulletinData = async () => {
+  const loadData = async () => {
     try {
-      // Load student info
-      const [student] = await window.api.db.query(
+      const [studentData] = await window.api.db.query<Student>(
         'SELECT * FROM students WHERE id = ?',
-        [Number(id)]
+        [Number(studentId)]
       );
 
-      if (!student) {
-        setLoading(false);
-        return;
+      if (studentData) {
+        setStudent(studentData);
+        
+        const [cls] = await window.api.db.query<ClassInfo>(
+          'SELECT * FROM classes WHERE id = ?',
+          [studentData.class_id]
+        );
+        setClassInfo(cls);
+
+        const subjs = await window.api.db.query<Subject>(
+          'SELECT * FROM subjects WHERE class_id = ? ORDER BY name',
+          [studentData.class_id]
+        );
+        setSubjects(subjs);
+
+        const grds = await window.api.db.query<Grade>(
+          'SELECT * FROM grades WHERE student_id = ?',
+          [Number(studentId)]
+        );
+        setGrades(grds);
+
+        const [sName] = await window.api.db.query<{ value: string }>(
+          "SELECT value FROM settings WHERE key = 'school_name'"
+        );
+        setSchoolName(sName?.value || '');
+
+        const [sCity] = await window.api.db.query<{ value: string }>(
+          "SELECT value FROM settings WHERE key = 'school_city'"
+        );
+        setSchoolCity(sCity?.value || '');
       }
-
-      // Load class info
-      const [classInfo] = await window.api.db.query(
-        'SELECT * FROM classes WHERE id = ?',
-        [student.class_id]
-      );
-
-      // Load school info
-      const [schoolData] = await window.api.db.query(
-        "SELECT value FROM settings WHERE key = 'school_name'"
-      );
-      const [cityData] = await window.api.db.query(
-        "SELECT value FROM settings WHERE key = 'school_city'"
-      );
-
-      // Load academic year
-      const [year] = await window.api.db.query(
-        'SELECT * FROM academic_years WHERE is_active = 1'
-      );
-
-      // Load grades with subjects
-      const grades = await window.api.db.query(`
-        SELECT 
-          s.name as subject_name,
-          s.code as subject_code,
-          s.max_score,
-          MAX(CASE WHEN g.period = 'P1' THEN g.value END) as p1,
-          MAX(CASE WHEN g.period = 'P2' THEN g.value END) as p2,
-          MAX(CASE WHEN g.period = 'EXAM1' THEN g.value END) as exam1,
-          MAX(CASE WHEN g.period = 'P3' THEN g.value END) as p3,
-          MAX(CASE WHEN g.period = 'P4' THEN g.value END) as p4,
-          MAX(CASE WHEN g.period = 'EXAM2' THEN g.value END) as exam2
-        FROM subjects s
-        LEFT JOIN grades g ON s.id = g.subject_id AND g.student_id = ?
-        WHERE s.class_id = ?
-        GROUP BY s.id
-        ORDER BY s.name
-      `, [Number(id), student.class_id]);
-
-      setData({
-        student,
-        class: classInfo,
-        school: {
-          name: schoolData?.value || '',
-          city: cityData?.value || '',
-        },
-        year,
-        grades,
-      });
     } catch (error) {
       console.error('Failed to load bulletin data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const calculateTotal = (p1: number | null, p2: number | null, exam: number | null) => {
-    if (p1 === null && p2 === null && exam === null) return null;
-    return (p1 || 0) + (p2 || 0) + (exam || 0);
+  const getGrade = (subjectId: number, period: string) => {
+    const g = grades.find(g => g.subject_id === subjectId && g.period === period);
+    return g ? g.value : null;
   };
 
-  const calculateGrandTotal = () => {
-    if (!data) return { sem1: 0, sem2: 0, total: 0, max: 0 };
-    
-    let sem1 = 0, sem2 = 0, max = 0;
-    
-    data.grades.forEach(g => {
-      const s1 = calculateTotal(g.p1, g.p2, g.exam1);
-      const s2 = calculateTotal(g.p3, g.p4, g.exam2);
-      if (s1) sem1 += s1;
-      if (s2) sem2 += s2;
-      max += g.max_score * 2; // x2 for both semesters
+  const calculateTotal = (subjectId: number, periods: string[]) => {
+    let total = 0;
+    let count = 0;
+    periods.forEach(p => {
+      const val = getGrade(subjectId, p);
+      if (val !== null) {
+        total += val;
+        count++;
+      }
     });
-    
-    return { sem1, sem2, total: sem1 + sem2, max };
+    return count > 0 ? total : null;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return <div className="p-8">Données non disponibles</div>;
-  }
-
-  const totals = calculateGrandTotal();
-  const percentage = totals.max > 0 ? ((totals.total / totals.max) * 100).toFixed(2) : '0';
+  if (!student || !classInfo) return <div>Chargement...</div>;
 
   return (
-    <div className="p-8 bg-white">
-      {/* A4 Page Container */}
-      <div className="w-[210mm] mx-auto bg-white shadow-lg border-4 border-black p-2">
+    <div className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white">
+      {/* Print Controls */}
+      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+        >
+          <ArrowLeft size={20} />
+          Retour
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        >
+          <Printer size={20} />
+          Imprimer
+        </button>
+      </div>
+
+      {/* Bulletin Page - A4 */}
+      <div className="max-w-[210mm] mx-auto bg-white shadow-xl print:shadow-none p-8 min-h-[297mm] relative text-black text-[11px] font-serif leading-tight">
+        
         {/* Header */}
-        <div className="border-2 border-black">
-          {/* Top Section with Flag and Title */}
-          <div className="flex items-start border-b-2 border-black">
-            <div className="w-16 h-20 border-r-2 border-black flex items-center justify-center bg-blue-500">
-              {/* DRC Flag colors */}
-              <div className="w-full h-full relative bg-blue-600">
-                <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-t-yellow-400 border-l-[16px] border-l-transparent"></div>
-                <div className="absolute bottom-0 left-0 w-full h-1/3 bg-red-600"></div>
+        <div className="border-2 border-black mb-1">
+          <div className="flex border-b border-black">
+            {/* Flag */}
+            <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+              <div className="w-full aspect-[4/3] bg-[#007a3d] relative overflow-hidden border border-black">
+                <div className="absolute inset-0 bg-sky-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}></div>
+                <div className="absolute top-1 left-1 text-yellow-400 text-xl">★</div>
+                <div className="absolute bottom-0 right-0 w-full h-2 bg-red-600 transform -rotate-45 origin-bottom-right translate-y-1"></div>
               </div>
             </div>
             
-            <div className="flex-1 text-center py-1">
-              <div className="font-bold text-sm">REPUBLIQUE DEMOCRATIQUE DU CONGO</div>
-              <div className="font-bold text-sm">MINISTERE DE L'EDUCATION NATIONALE</div>
-              <div className="font-bold text-sm">ET NOUVELLE CITOYENNETE</div>
+            {/* Title */}
+            <div className="flex-1 text-center py-2">
+              <h1 className="font-bold text-lg uppercase">Republique Democratique du Congo</h1>
+              <h2 className="font-bold text-lg uppercase">Ministere de l'Education Nationale</h2>
+              <h3 className="font-bold text-lg uppercase">Et Nouvelle Citoyennete</h3>
             </div>
-            
-            <div className="w-16 h-20 border-l-2 border-black flex items-center justify-center">
-              {/* Logo placeholder */}
-              <div className="w-14 h-14 rounded-full border-2 border-black"></div>
+
+            {/* Logo */}
+            <div className="w-24 border-l border-black p-2 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full border border-black flex items-center justify-center">
+                <span className="text-[8px] text-center">LOGO<br/>ECOLE</span>
+              </div>
             </div>
           </div>
 
-          {/* ID Number */}
-          <div className="flex border-b-2 border-black">
-            <div className="font-bold text-xs px-2 py-1 border-r-2 border-black">N° ID.</div>
+          {/* ID Row */}
+          <div className="flex border-b border-black">
+            <div className="w-20 font-bold p-1 border-r border-black bg-slate-100">N° ID.</div>
             <div className="flex-1 flex">
-              {[...Array(20)].map((_, i) => (
-                <div key={i} className="flex-1 border-r border-black h-6"></div>
+              {Array(20).fill(0).map((_, i) => (
+                <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
               ))}
             </div>
           </div>
 
-          {/* School Info Section */}
-          <div className="border-b-2 border-black">
-            <div className="px-2 py-1 text-xs font-bold">PROVINCE EDUCATIONNELLE :</div>
+          {/* Province */}
+          <div className="p-1 font-bold border-b border-black bg-slate-100">
+            PROVINCE EDUCATIONNELLE :
+          </div>
+        </div>
+
+        {/* Info Grid */}
+        <div className="border-2 border-black mb-1 p-2 grid grid-cols-2 gap-x-8 gap-y-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">VILLE :</span>
+            <span className="border-b border-dotted border-black flex-1 text-center font-bold">{schoolCity}</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">ELEVE :</span>
+            <span className="border-b border-dotted border-black flex-1 text-center font-bold uppercase">
+              {student.last_name} {student.post_name} {student.first_name}
+            </span>
+            <span className="font-bold">SEXE : {student.gender}</span>
           </div>
 
-          <div className="flex text-xs border-b-2 border-black">
-            <div className="flex-1 border-r-2 border-black">
-              <div className="px-2 py-1">
-                <div>VILLE <span className="mx-20">:</span>.....................................................</div>
-                <div className="mt-1">COMMUNE / TER. (1) :.........................................</div>
-                <div className="mt-1">ECOLE :...................................................................</div>
-                <div className="mt-1 flex items-center">
-                  CODE : 
-                  <div className="flex ml-2">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className="w-4 h-4 border border-black mx-0.5"></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex-1 px-2 py-1">
-              <div>ELEVE :................................................................. SEXE :....</div>
-              <div className="mt-1">NE(E) A :......................................................... LE ..../..../......</div>
-              <div className="mt-1">CLASSE :....................................................................................</div>
-              <div className="mt-1 flex items-center">
-                N° PERM. : 
-                <div className="flex ml-2">
-                  {[...Array(10)].map((_, i) => (
-                    <div key={i} className="w-4 h-4 border border-black mx-0.5"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">COMMUNE :</span>
+            <span className="border-b border-dotted border-black flex-1"></span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">NE(E) A :</span>
+            <span className="border-b border-dotted border-black flex-1 text-center">
+              {student.birthplace}
+            </span>
+            <span className="font-bold">LE</span>
+            <span className="border-b border-dotted border-black w-24 text-center">
+              {new Date(student.birth_date).toLocaleDateString('fr-FR')}
+            </span>
           </div>
 
-          {/* Title */}
-          <div className="text-center font-bold text-xs py-1 border-b-2 border-black">
-            BULLETIN DE LA {data.class.level} ANNEE HUMANITES / {data.class.option.toUpperCase()} ANNEE SCOLAIRE {data.year.name}
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">ECOLE :</span>
+            <span className="border-b border-dotted border-black flex-1 text-center font-bold">{schoolName}</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">CLASSE :</span>
+            <span className="border-b border-dotted border-black flex-1 text-center font-bold">
+              {classInfo.level} {classInfo.option} {classInfo.section}
+            </span>
           </div>
 
-          {/* Grades Table */}
-          <table className="w-full text-[8px]">
-            <thead>
-              <tr className="border-b-2 border-black">
-                <th rowSpan={2} className="border-r-2 border-black px-1 py-1 text-left font-bold w-32">
-                  <div>BRANCHES</div>
-                </th>
-                <th colSpan={4} className="border-r-2 border-black px-1 font-bold">
-                  <div>PREMIER SEMESTRE</div>
-                  <div className="flex border-t border-black">
-                    <div className="flex-1 text-center border-r border-black">TR. JOURNAL</div>
-                    <div className="w-12 text-center border-r border-black">EXAM.</div>
-                    <div className="w-12 text-center">TOT.</div>
-                  </div>
-                </th>
-                <th colSpan={4} className="border-r-2 border-black px-1 font-bold">
-                  <div>SECOND SEMESTRE</div>
-                  <div className="flex border-t border-black">
-                    <div className="flex-1 text-center border-r border-black">TR. JOURNAL</div>
-                    <div className="w-12 text-center border-r border-black">EXAM.</div>
-                    <div className="w-12 text-center">TOT.</div>
-                  </div>
-                </th>
-                <th rowSpan={2} className="border-r-2 border-black px-1 font-bold w-12">T.G.</th>
-                <th colSpan={2} className="px-1 font-bold">
-                  <div>EXAMEN D'ETAT</div>
-                  <div className="flex border-t border-black">
-                    <div className="flex-1 text-center border-r border-black">Points<br/>Obtenus</div>
-                    <div className="flex-1 text-center">MAX</div>
-                  </div>
-                </th>
-              </tr>
-              <tr className="border-b-2 border-black text-center">
-                <th className="border-r border-black w-10">1re P.</th>
-                <th className="border-r border-black w-10">2e P.</th>
-                <th className="border-r border-black w-12"></th>
-                <th className="border-r-2 border-black w-12"></th>
-                <th className="border-r border-black w-10">3e P.</th>
-                <th className="border-r border-black w-10">4e P.</th>
-                <th className="border-r border-black w-12"></th>
-                <th className="border-r-2 border-black w-12"></th>
-                <th className="border-r border-black"></th>
-                <th className=""></th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* MAXIMA row */}
-              <tr className="border-b border-black font-bold bg-gray-100">
-                <td className="border-r-2 border-black px-1">MAXIMA</td>
-                <td className="border-r border-black text-center">10</td>
-                <td className="border-r border-black text-center">10</td>
-                <td className="border-r border-black text-center">20</td>
-                <td className="border-r-2 border-black text-center">40</td>
-                <td className="border-r border-black text-center">10</td>
-                <td className="border-r border-black text-center">10</td>
-                <td className="border-r border-black text-center">20</td>
-                <td className="border-r-2 border-black text-center">40</td>
-                <td className="border-r-2 border-black text-center">80</td>
-                <td className="border-r border-black text-center">%</td>
-                <td className="text-center"></td>
-              </tr>
-
-              {/* Subject rows */}
-              {data.grades.map((grade, idx) => {
-                const sem1 = calculateTotal(grade.p1, grade.p2, grade.exam1);
-                const sem2 = calculateTotal(grade.p3, grade.p4, grade.exam2);
-                const tg = sem1 !== null && sem2 !== null ? sem1 + sem2 : null;
-                
-                return (
-                  <tr key={idx} className="border-b border-black">
-                    <td className="border-r-2 border-black px-1">{grade.subject_name}</td>
-                    <td className="border-r border-black text-center">{grade.p1 ?? ''}</td>
-                    <td className="border-r border-black text-center">{grade.p2 ?? ''}</td>
-                    <td className="border-r border-black text-center">{grade.exam1 ?? ''}</td>
-                    <td className="border-r-2 border-black text-center font-bold">{sem1 ?? ''}</td>
-                    <td className="border-r border-black text-center">{grade.p3 ?? ''}</td>
-                    <td className="border-r border-black text-center">{grade.p4 ?? ''}</td>
-                    <td className="border-r border-black text-center">{grade.exam2 ?? ''}</td>
-                    <td className="border-r-2 border-black text-center font-bold">{sem2 ?? ''}</td>
-                    <td className="border-r-2 border-black text-center font-bold">{tg ?? ''}</td>
-                    <td className="border-r border-black text-center"></td>
-                    <td className="text-center"></td>
-                  </tr>
-                );
-              })}
-
-              {/* TOTAUX row */}
-              <tr className="border-b-2 border-black font-bold bg-gray-200">
-                <td className="border-r-2 border-black px-1">TOTAUX</td>
-                <td colSpan={3} className="border-r-2 border-black"></td>
-                <td className="border-r-2 border-black text-center">{totals.sem1}</td>
-                <td colSpan={3} className="border-r-2 border-black"></td>
-                <td className="border-r-2 border-black text-center">{totals.sem2}</td>
-                <td className="border-r-2 border-black text-center">{totals.total}</td>
-                <td colSpan={2} className=""></td>
-              </tr>
-
-              <tr className="border-b border-black">
-                <td className="border-r-2 border-black px-1">POURCENTAGE</td>
-                <td colSpan={8} className="border-r-2 border-black"></td>
-                <td className="border-r-2 border-black text-center font-bold">{percentage} %</td>
-                <td colSpan={2}></td>
-              </tr>
-
-              <tr className="border-b border-black">
-                <td className="border-r-2 border-black px-1">PLACE / NBRE D'ELEVES</td>
-                <td colSpan={8} className="border-r-2 border-black"></td>
-                <td className="border-r-2 border-black text-center">/</td>
-                <td colSpan={2} className="text-right px-1">
-                  <div>PASSE: (1)</div>
-                  <div>DOUBLE: (1)</div>
-                  <div>Lf: ......./20</div>
-                </td>
-              </tr>
-
-              <tr className="border-b border-black">
-                <td className="border-r-2 border-black px-1">APPLICATION</td>
-                <td colSpan={10} className="text-center" style={{
-                  backgroundImage: 'repeating-linear-gradient(90deg, black 0, black 1px, transparent 1px, transparent 3px)',
-                  height: '15px'
-                }}></td>
-                <td className="text-xs px-1">
-                  <div>Le Chef d'Établissement</div>
-                  <div className="mt-1">Sceau de l'École</div>
-                </td>
-              </tr>
-
-              <tr className="border-b-2 border-black">
-                <td className="border-r-2 border-black px-1">CONDUITE</td>
-                <td colSpan={10} className="text-center" style={{
-                  backgroundImage: 'repeating-linear-gradient(90deg, black 0, black 1px, transparent 1px, transparent 3px)',
-                  height: '15px'
-                }}></td>
-                <td></td>
-              </tr>
-
-              <tr>
-                <td className="border-r-2 border-black px-1 text-xs">Signature du responsable</td>
-                <td colSpan={10}></td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Footer */}
-          <div className="border-t-2 border-black text-[7px] px-2 py-1">
-            <div className="mb-1">
-              L'élève qui passe dans la classe supérieure (1) ...................................................................
-              Est autorisé à fréquenter un établissement scolaire agréé dans le réseau (sous-réseau) de ..............................................................
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">CODE :</span>
+            <div className="flex border border-black h-6 w-48">
+              {Array(10).fill(0).map((_, i) => (
+                <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
+              ))}
             </div>
-            <div className="mb-1">
-              L'élève doit présenter ce bulletin à l'inscription dans une nouvelle école Fait à .....................................le........./.........../20........
-            </div>
-            <div className="flex justify-between items-end mt-2">
-              <div className="text-center">
-                <div className="font-bold">Signature de l'élève</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold">Sceau de l'Ecole</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold">Chef d'Établissement,</div>
-                <div className="mt-4">Noms et Signature</div>
-              </div>
-            </div>
-            <div className="text-right mt-1">IGP / P.S./113</div>
-            <div className="mt-2 text-center italic">
-              (1) Biffer la mention inutile.<br/>
-              Note importante : Le bulletin est sans valeur s'il est maculé ou surchargé
-              <br/>
-              <span className="font-bold">Interdiction formelle de reproduire ce bulletin sous peine des sanctions prévues par la loi.</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">N° PERM :</span>
+            <div className="flex border border-black h-6 w-64">
+              {Array(14).fill(0).map((_, i) => (
+                <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Print Button */}
-      <div className="text-center mt-4 no-print">
-        <button
-          onClick={() => window.print()}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
-        >
-          Imprimer le bulletin
-        </button>
-      </div>
+        {/* Bulletin Title */}
+        <div className="border-2 border-black border-b-0 p-1 text-center font-bold bg-slate-100 uppercase text-sm">
+          BULLETIN DE LA {classInfo.level} ANNEE HUMANITES / {classInfo.option} &nbsp;&nbsp;&nbsp; ANNEE SCOLAIRE 2024 - 2025
+        </div>
 
-      <style>{`
-        @media print {
-          .no-print {
-            display: none;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-          }
-        }
-      `}</style>
+        {/* Grades Table */}
+        <table className="w-full border-2 border-black border-collapse text-center text-[10px]">
+          <thead>
+            <tr>
+              <th rowSpan={3} className="border border-black w-[25%] p-1">BRANCHES</th>
+              <th colSpan={4} className="border border-black bg-slate-50">PREMIER SEMESTRE</th>
+              <th colSpan={4} className="border border-black bg-slate-50">SECOND SEMESTRE</th>
+              <th rowSpan={3} className="border border-black w-[5%]">T.G.</th>
+              <th colSpan={2} className="border border-black w-[15%]">EXAMEN DE<br/>REPECHAGE</th>
+            </tr>
+            <tr>
+              <th colSpan={2} className="border border-black">TR. JOURNAL</th>
+              <th rowSpan={2} className="border border-black w-[6%]">EXAM.</th>
+              <th rowSpan={2} className="border border-black w-[6%]">TOT.</th>
+              <th colSpan={2} className="border border-black">TR. JOURNAL</th>
+              <th rowSpan={2} className="border border-black w-[6%]">EXAM.</th>
+              <th rowSpan={2} className="border border-black w-[6%]">TOT.</th>
+              <th rowSpan={2} className="border border-black w-[5%]">%</th>
+              <th rowSpan={2} className="border border-black">Sign. Prof.</th>
+            </tr>
+            <tr>
+              <th className="border border-black w-[6%]">1ère P.</th>
+              <th className="border border-black w-[6%]">2e P.</th>
+              <th className="border border-black w-[6%]">3e P.</th>
+              <th className="border border-black w-[6%]">4e P.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Maxima Row */}
+            <tr className="font-bold bg-slate-100">
+              <td className="border border-black text-left px-2">MAXIMA</td>
+              <td className="border border-black">10</td>
+              <td className="border border-black">10</td>
+              <td className="border border-black">20</td>
+              <td className="border border-black">40</td>
+              <td className="border border-black">10</td>
+              <td className="border border-black">10</td>
+              <td className="border border-black">20</td>
+              <td className="border border-black">40</td>
+              <td className="border border-black">80</td>
+              <td className="border border-black bg-black"></td>
+              <td className="border border-black bg-black"></td>
+            </tr>
+
+            {/* Subjects */}
+            {subjects.map((subject) => {
+              const p1 = getGrade(subject.id, 'P1');
+              const p2 = getGrade(subject.id, 'P2');
+              const ex1 = getGrade(subject.id, 'EXAM1');
+              const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
+
+              const p3 = getGrade(subject.id, 'P3');
+              const p4 = getGrade(subject.id, 'P4');
+              const ex2 = getGrade(subject.id, 'EXAM2');
+              const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
+
+              const tg = (tot1 || 0) + (tot2 || 0);
+
+              return (
+                <tr key={subject.id}>
+                  <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
+                  <td className="border border-black">{p1 ?? ''}</td>
+                  <td className="border border-black">{p2 ?? ''}</td>
+                  <td className="border border-black">{ex1 ?? ''}</td>
+                  <td className="border border-black font-bold">{tot1 ?? ''}</td>
+                  <td className="border border-black">{p3 ?? ''}</td>
+                  <td className="border border-black">{p4 ?? ''}</td>
+                  <td className="border border-black">{ex2 ?? ''}</td>
+                  <td className="border border-black font-bold">{tot2 ?? ''}</td>
+                  <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                </tr>
+              );
+            })}
+
+            {/* Empty rows to fill space if needed */}
+            {Array(Math.max(0, 20 - subjects.length)).fill(0).map((_, i) => (
+              <tr key={`empty-${i}`}>
+                <td className="border border-black text-left px-2 py-0.5">&nbsp;</td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+                <td className="border border-black"></td>
+              </tr>
+            ))}
+
+            {/* Totals Row */}
+            <tr className="font-bold border-t-2 border-black">
+              <td className="border border-black text-left px-2">TOTAUX</td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black bg-slate-100"></td>
+              <td className="border border-black bg-black" rowSpan={6}></td>
+              <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={2}>
+                - PASSE (1)<br/>- DOUBLE (1)<br/>LE ... / ... / 20
+              </td>
+            </tr>
+            <tr className="font-bold">
+              <td className="border border-black text-left px-2">POURCENTAGE</td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black"></td>
+              <td className="border border-black bg-slate-100"></td>
+            </tr>
+            <tr>
+              <td className="border border-black text-left px-2 font-bold">PLACE / NBRE D'ELEVES</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black">/</td>
+              <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={4}>
+                Le Chef d'Etablissement<br/>Sceau de l'Ecole
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-black text-left px-2 font-bold">APPLICATION</td>
+              <td className="border border-black bg-slate-200" colSpan={4}></td>
+              <td className="border border-black bg-slate-200" colSpan={4}></td>
+              <td className="border border-black bg-slate-200"></td>
+            </tr>
+            <tr>
+              <td className="border border-black text-left px-2 font-bold">CONDUITE</td>
+              <td className="border border-black bg-slate-200" colSpan={4}></td>
+              <td className="border border-black bg-slate-200" colSpan={4}></td>
+              <td className="border border-black bg-slate-200"></td>
+            </tr>
+            <tr>
+              <td className="border border-black text-left px-2 font-bold">Signature du responsable</td>
+              <td className="border border-black" colSpan={4}></td>
+              <td className="border border-black" colSpan={4}></td>
+              <td className="border border-black"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Footer Notes */}
+        <div className="mt-2 text-[9px] border-2 border-black p-2">
+          <p>- L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en..................................................................................................</p>
+          <p className="text-right">..................................................................................................................................................................................................................................................................(1)</p>
+          <p>- L'élève passe dans la classe supérieure (1)</p>
+          <p>- L'élève double la classe (1)</p>
+          
+          <div className="flex justify-between mt-8 mb-4 px-8">
+            <div className="text-center">
+              <p className="font-bold mb-16">Signature de l'élève</p>
+            </div>
+            <div className="text-center">
+              <p className="font-bold mb-4">Sceau de l'Ecole</p>
+            </div>
+            <div className="text-center">
+              <p className="mb-1">Fait à .........................................., le......../......../20.......</p>
+              <p className="font-bold mb-16">Chef d'Etablissement,</p>
+              <p className="font-bold">Noms et Signature</p>
+            </div>
+          </div>
+
+          <div className="flex justify-between text-[8px] mt-4 border-t border-slate-300 pt-1">
+            <p>(1) Biffer la mention inutile.</p>
+            <p>IGE / P.S./113</p>
+          </div>
+          <p className="text-[8px] italic">Note importante : Le bulletin est sans valeur s'il est raturé ou surchargé.</p>
+          <p className="text-[8px] font-bold text-center mt-1">Interdiction formelle de reproduire ce bulletin sous peine des sanctions prévues par la loi.</p>
+        </div>
+
+        {/* Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0">
+          <div className="w-[500px] h-[500px] rounded-full border-[20px] border-black flex items-center justify-center">
+            <span className="text-9xl font-bold transform -rotate-45">RDC</span>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

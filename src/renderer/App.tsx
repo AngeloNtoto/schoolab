@@ -50,7 +50,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/class/:id" element={<ClassDetails />} />
         <Route path="/student/:id" element={<StudentDetails />} />
-        <Route path="/bulletin/:id" element={<Bulletin />} />
+        <Route path="/bulletin/:studentId" element={<Bulletin />} />
         <Route path="/" element={<Navigate to={isSetupComplete ? "/dashboard" : "/setup"} replace />} />
       </Routes>
     </HashRouter>

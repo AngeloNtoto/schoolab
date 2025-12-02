@@ -4,6 +4,7 @@ import { GraduationCap, Users, Trash2, Edit } from 'lucide-react';
 import Tutorial from './Tutorial';
 import ContextMenu from './ContextMenu';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import EditClassModal from './EditClassModal';
 
 interface Class {
   id: number;
@@ -20,6 +21,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; classId: number } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
+  const [editModal, setEditModal] = useState<Class | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -97,6 +100,14 @@ export default function Dashboard() {
             },
             { divider: true },
             {
+              label: 'Modifier',
+              icon: <Edit size={18} />,
+              onClick: () => {
+                const cls = classes.find(c => c.id === contextMenu.classId);
+                if (cls) setEditModal(cls);
+              }
+            },
+            {
               label: 'Supprimer',
               icon: <Trash2 size={18} />,
               danger: true,
@@ -116,6 +127,13 @@ export default function Dashboard() {
           itemName={deleteModal.name}
           onConfirm={handleDeleteClass}
           onCancel={() => setDeleteModal(null)}
+        />
+      )}
+      {editModal && (
+        <EditClassModal
+          classData={editModal}
+          onClose={() => setEditModal(null)}
+          onSuccess={loadData}
         />
       )}
     <div className="min-h-screen bg-slate-50 relative">
@@ -143,6 +161,15 @@ export default function Dashboard() {
                 <p className="text-blue-100 mt-1">Tableau de bord - Gestion Scolaire</p>
               </div>
             </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-colors flex items-center gap-2 font-medium"
+            >
+              <div className="bg-white text-blue-600 rounded-full p-1">
+                <Users size={14} />
+              </div>
+              Ajouter une classe
+            </button>
           </div>
         </div>
       </header>
@@ -158,7 +185,14 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl border-2 border-dashed border-slate-300 p-20 text-center">
             <Users className="mx-auto text-slate-300 mb-4" size={80} />
             <h3 className="text-xl font-medium text-slate-600 mb-2">Aucune classe</h3>
-            <p className="text-slate-500">Retournez à la configuration pour créer des classes</p>
+            <h3 className="text-xl font-medium text-slate-600 mb-2">Aucune classe</h3>
+            <p className="text-slate-500 mb-6">Commencez par créer votre première classe</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            >
+              Créer une classe
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

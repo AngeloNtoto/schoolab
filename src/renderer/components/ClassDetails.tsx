@@ -2,11 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Users, FileSpreadsheet, GraduationCap, 
-  Download, Upload, TrendingUp, UserPlus 
+  Download, Upload, TrendingUp, UserPlus, Trash2 
 } from 'lucide-react';
 import AddStudentModal from './AddStudentModal';
 import Tutorial from './Tutorial';
 import StudentTooltip from './StudentTooltip';
+import AddSubjectModal from './AddSubjectModal';
+import ContextMenu from './ContextMenu';
+import DeleteConfirmModal from './DeleteConfirmModal';
 import * as XLSX from 'xlsx';
 
 interface ClassData {
@@ -51,7 +54,10 @@ export default function ClassDetails() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [hoveredStudent, setHoveredStudent] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; studentId: number } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -98,6 +104,67 @@ export default function ClassDetails() {
       return g1 + g2 + gExam;
     }
     return null;
+  };
+
+  const handleUpdateGrade = async (studentId: number, subjectId: number, period: string, value: number | null) => {
+    try {
+      // Check if grade exists
+      const existing = grades.find(g => g.student_id === studentId && g.subject_id === subjectId && g.period === period);
+      
+      if (existing) {
+        if (value === null) {
+          await window.api.db.execute(
+            'DELETE FROM grades WHERE student_id = ? AND subject_id = ? AND period = ?',
+            [studentId, subjectId, period]
+          );
+        } else {
+          await window.api.db.execute(
+            'UPDATE grades SET value = ? WHERE student_id = ? AND subject_id = ? AND period = ?',
+            [value, studentId, subjectId, period]
+          );
+        }
+      } else if (value !== null) {
+        await window.api.db.execute(
+          'INSERT INTO grades (student_id, subject_id, period, value) VALUES (?, ?, ?, ?)',
+          [studentId, subjectId, period, value]
+        );
+      }
+
+      // Refresh grades locally
+      const newGrades = [...grades];
+      const idx = newGrades.findIndex(g => g.student_id === studentId && g.subject_id === subjectId && g.period === period);
+      
+      if (value === null) {
+        if (idx !== -1) newGrades.splice(idx, 1);
+      } else {
+        if (idx !== -1) {
+          newGrades[idx].value = value;
+        } else {
+          newGrades.push({ student_id: studentId, subject_id: subjectId, period, value });
+        }
+      }
+      setGrades(newGrades);
+    } catch (error) {
+      console.error('Failed to update grade:', error);
+      alert('Erreur lors de la sauvegarde de la note');
+    }
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!deleteModal) return;
+    try {
+      await window.api.db.execute('DELETE FROM students WHERE id = ?', [deleteModal.id]);
+      await loadClassData();
+      setDeleteModal(null);
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, student: Student) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, studentId: student.id });
   };
 
   const handleImportStudents = () => {
@@ -236,6 +303,58 @@ export default function ClassDetails() {
           onSuccess={() => loadClassData()}
         />
       )}
+      {showSubjectModal && (
+        <AddSubjectModal
+          classId={Number(id)}
+          subjects={subjects}
+          onClose={() => setShowSubjectModal(false)}
+          onSuccess={() => loadClassData()}
+        />
+      )}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={[
+            {
+              label: 'Voir le bulletin',
+              icon: <GraduationCap size={18} />,
+              onClick: () => {
+                const s = students.find(s => s.id === contextMenu.studentId);
+                if (s) navigate(`/bulletin/${s.id}`);
+              }
+            },
+            {
+              label: 'Détails élève',
+              icon: <Users size={18} />,
+              onClick: () => {
+                const s = students.find(s => s.id === contextMenu.studentId);
+                if (s) navigate(`/student/${s.id}`);
+              }
+            },
+            { divider: true },
+            {
+              label: 'Supprimer',
+              icon: <div className="text-red-600"><Trash2 size={18} /></div>,
+              danger: true,
+              onClick: () => {
+                const s = students.find(s => s.id === contextMenu.studentId);
+                if (s) setDeleteModal({ id: s.id, name: `${s.last_name} ${s.first_name}` });
+              }
+            }
+          ]}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+      {deleteModal && (
+        <DeleteConfirmModal
+          title="Supprimer l'élève"
+          message="Êtes-vous sûr de vouloir supprimer cet élève ? Ses notes seront également supprimées."
+          itemName={deleteModal.name}
+          onConfirm={handleDeleteStudent}
+          onCancel={() => setDeleteModal(null)}
+        />
+      )}
     <div className="min-h-screen bg-slate-50">
       {/* Desktop-oriented Header */}
       <header className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
@@ -270,6 +389,13 @@ export default function ClassDetails() {
 
             {/* Quick Actions */}
             <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowSubjectModal(true)}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors backdrop-blur-sm"
+              >
+                <FileSpreadsheet size={18} />
+                <span className="font-medium">Matières</span>
+              </button>
               <button 
                 onClick={handleImportStudents}
                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors backdrop-blur-sm"
@@ -335,13 +461,22 @@ export default function ClassDetails() {
                   Cliquez sur un élève pour voir ses détails et bulletin
                 </p>
               </div>
-              <button 
-                onClick={handleImportStudents}
-                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
-              >
-                <Upload size={18} />
-                Importer des élèves
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+                >
+                  <UserPlus size={18} />
+                  Ajouter
+                </button>
+                <button 
+                  onClick={handleImportStudents}
+                  className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 font-medium flex items-center gap-2"
+                >
+                  <Upload size={18} />
+                  Importer
+                </button>
+              </div>
             </div>
 
             {students.length === 0 ? (
@@ -352,7 +487,7 @@ export default function ClassDetails() {
                   Cette classe n'a pas encore d'élèves enregistrés
                 </p>
                 
-                <button //bouuton pour rajouter eleves
+                <button
                   onClick={() => setShowAddModal(true)}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 mx-auto"
                 >
@@ -361,7 +496,6 @@ export default function ClassDetails() {
                 </button>
               </div>
             ) : (
-              //Modal pour rajouter les eleves
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-50 border-b-2 border-slate-200">
@@ -395,6 +529,7 @@ export default function ClassDetails() {
                         key={student.id}
                         className="hover:bg-blue-50 cursor-pointer transition-colors relative"
                         onClick={() => navigate(`/student/${student.id}`)}
+                        onContextMenu={(e) => handleContextMenu(e, student)}
                         onMouseEnter={() => setHoveredStudent(student.id)}
                         onMouseLeave={() => setHoveredStudent(null)}
                       >
@@ -444,6 +579,9 @@ export default function ClassDetails() {
             grades={grades}
             getGrade={getGrade}
             calculateSemesterTotal={calculateSemesterTotal}
+            calculateSemesterTotal={calculateSemesterTotal}
+            onUpdateGrade={handleUpdateGrade}
+            onContextMenu={handleContextMenu}
           />
         )}
       </main>
@@ -459,9 +597,12 @@ interface GradeGridProps {
   grades: Grade[];
   getGrade: (studentId: number, subjectId: number, period: string) => number | null;
   calculateSemesterTotal: (studentId: number, subjectId: number, semester: 1 | 2) => number | null;
+  calculateSemesterTotal: (studentId: number, subjectId: number, semester: 1 | 2) => number | null;
+  onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => void;
+  onContextMenu: (e: React.MouseEvent, student: Student) => void;
 }
 
-function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal }: GradeGridProps) {
+function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal, onUpdateGrade, onContextMenu }: GradeGridProps) {
   if (students.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-16 text-center">
@@ -525,7 +666,11 @@ function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal }: Gra
                 key={student.id}
                 className={`border-b border-slate-200 hover:bg-slate-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
               >
-                <td className="sticky left-0 bg-inherit px-4 py-3 font-medium text-slate-800 border-r-2 border-slate-300">
+                <td 
+                  className="sticky left-0 bg-inherit px-4 py-3 font-medium text-slate-800 border-r-2 border-slate-300 cursor-pointer hover:text-blue-600"
+                  onContextMenu={(e) => onContextMenu(e, student)}
+                  onClick={() => window.location.hash = `#/student/${student.id}`} // Quick hack for navigation if needed, or better pass navigate
+                >
                   {student.last_name} {student.first_name}
                 </td>
                 {subjects.map(subject => {
@@ -534,15 +679,35 @@ function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal }: Gra
 
                   return (
                     <React.Fragment key={subject.id}>
-                      <GradeCell value={getGrade(student.id, subject.id, 'P1')} />
-                      <GradeCell value={getGrade(student.id, subject.id, 'P2')} />
-                      <GradeCell value={getGrade(student.id, subject.id, 'EXAM1')} isExam />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'P1')} 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)}
+                      />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'P2')} 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)}
+                      />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'EXAM1')} 
+                        isExam 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)}
+                      />
                       <td className="px-2 py-3 text-center font-bold text-blue-700 bg-blue-50 border-r-2 border-slate-400">
                         {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
                       </td>
-                      <GradeCell value={getGrade(student.id, subject.id, 'P3')} />
-                      <GradeCell value={getGrade(student.id, subject.id, 'P4')} />
-                      <GradeCell value={getGrade(student.id, subject.id, 'EXAM2')} isExam />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'P3')} 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)}
+                      />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'P4')} 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)}
+                      />
+                      <GradeCell 
+                        value={getGrade(student.id, subject.id, 'EXAM2')} 
+                        isExam 
+                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)}
+                      />
                       <td className="px-2 py-3 text-center font-bold text-green-700 bg-green-50 border-r-2 border-slate-400">
                         {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
                       </td>
@@ -559,12 +724,67 @@ function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal }: Gra
 }
 
 // Grade Cell Component
-function GradeCell({ value, isExam = false }: { value: number | null; isExam?: boolean }) {
+function GradeCell({ value, isExam = false, onChange }: { value: number | null; isExam?: boolean; onChange: (val: number | null) => void }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value?.toString() || '');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(value?.toString() || '');
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (editValue.trim() === '') {
+      onChange(null);
+    } else {
+      const num = parseFloat(editValue);
+      if (!isNaN(num)) {
+        onChange(num);
+      } else {
+        setEditValue(value?.toString() || '');
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleBlur();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditValue(value?.toString() || '');
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <td className="p-0 border-r border-slate-200">
+        <input
+          ref={inputRef}
+          type="number"
+          className="w-full h-full px-1 py-3 text-center outline-none bg-blue-50 focus:bg-blue-100 font-medium"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+        />
+      </td>
+    );
+  }
+
   return (
     <td 
       className={`px-2 py-3 text-center border-r border-slate-200 cursor-pointer hover:bg-yellow-50 transition-colors ${
         isExam ? 'bg-slate-50 font-medium' : ''
       }`}
+      onDoubleClick={() => setIsEditing(true)}
     >
       <div className="min-w-[40px]">
         {value !== null ? value : '-'}
