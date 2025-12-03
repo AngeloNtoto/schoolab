@@ -5,7 +5,12 @@ interface Subject {
   id: number;
   name: string;
   code: string;
-  max_score: number;
+  max_p1: number;
+  max_p2: number;
+  max_exam1: number;
+  max_p3: number;
+  max_p4: number;
+  max_exam2: number;
 }
 
 interface AddSubjectModalProps {
@@ -18,7 +23,12 @@ interface AddSubjectModalProps {
 export default function AddSubjectModal({ classId, subjects, onClose, onSuccess }: AddSubjectModalProps) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [maxScore, setMaxScore] = useState('20');
+  const [maxP1, setMaxP1] = useState('10');
+  const [maxP2, setMaxP2] = useState('10');
+  const [maxExam1, setMaxExam1] = useState('20');
+  const [maxP3, setMaxP3] = useState('10');
+  const [maxP4, setMaxP4] = useState('10');
+  const [maxExam2, setMaxExam2] = useState('20');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,12 +37,17 @@ export default function AddSubjectModal({ classId, subjects, onClose, onSuccess 
 
     try {
       await window.api.db.execute(
-        'INSERT INTO subjects (name, code, max_score, class_id) VALUES (?, ?, ?, ?)',
-        [name, code, Number(maxScore), classId]
+        'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, code, Number(maxP1), Number(maxP2), Number(maxExam1), Number(maxP3), Number(maxP4), Number(maxExam2), classId]
       );
       setName('');
       setCode('');
-      setMaxScore('20');
+      setMaxP1('10');
+      setMaxP2('10');
+      setMaxExam1('20');
+      setMaxP3('10');
+      setMaxP4('10');
+      setMaxExam2('20');
       onSuccess();
     } catch (error) {
       console.error('Failed to add subject:', error);
@@ -94,31 +109,103 @@ export default function AddSubjectModal({ classId, subjects, onClose, onSuccess 
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Code
-                    </label>
-                    <input
-                      type="text"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Ex: MATH"
-                    />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Code
+                  </label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Ex: MATH"
+                  />
+                </div>
+                
+                {/* Maxima Section */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Maxima par période
+                  </label>
+                  
+                  {/* Semester 1 */}
+                  <div className="mb-3">
+                    <p className="text-xs text-slate-500 mb-1 font-medium">1er Semestre</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">P1</label>
+                        <input
+                          type="number"
+                          value={maxP1}
+                          onChange={(e) => setMaxP1(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">P2</label>
+                        <input
+                          type="number"
+                          value={maxP2}
+                          onChange={(e) => setMaxP2(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">Exam1</label>
+                        <input
+                          type="number"
+                          value={maxExam1}
+                          onChange={(e) => setMaxExam1(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
+                  
+                  {/* Semester 2 */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Max. Points
-                    </label>
-                    <input
-                      type="number"
-                      value={maxScore}
-                      onChange={(e) => setMaxScore(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      min="1"
-                      required
-                    />
+                    <p className="text-xs text-slate-500 mb-1 font-medium">2ème Semestre</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">P3</label>
+                        <input
+                          type="number"
+                          value={maxP3}
+                          onChange={(e) => setMaxP3(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">P4</label>
+                        <input
+                          type="number"
+                          value={maxP4}
+                          onChange={(e) => setMaxP4(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 mb-1">Exam2</label>
+                        <input
+                          type="number"
+                          value={maxExam2}
+                          onChange={(e) => setMaxExam2(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -143,7 +230,7 @@ export default function AddSubjectModal({ classId, subjects, onClose, onSuccess 
                       <div>
                         <p className="font-medium text-slate-800">{subject.name}</p>
                         <p className="text-xs text-slate-500">
-                          Code: {subject.code || '-'} • Max: {subject.max_score}
+                          Code: {subject.code || '-'} • P1:{subject.max_p1} P2:{subject.max_p2} Ex1:{subject.max_exam1} | P3:{subject.max_p3} P4:{subject.max_p4} Ex2:{subject.max_exam2}
                         </p>
                       </div>
                       <button

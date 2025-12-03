@@ -12,6 +12,7 @@ export default function SetupWizard() {
   // Step 1: School Info
   const [schoolName, setSchoolName] = useState('');
   const [schoolCity, setSchoolCity] = useState('');
+  const [schoolPoBox, setSchoolPoBox] = useState('');
 
   // Step 2: Academic Year
   const [yearName, setYearName] = useState('2024-2025');
@@ -68,6 +69,7 @@ export default function SetupWizard() {
       // 1. Save Settings
       await window.api.db.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['school_name', schoolName]);
       await window.api.db.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['school_city', schoolCity]);
+      await window.api.db.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['school_pobox', schoolPoBox]);
 
       // 2. Create Academic Year
       const yearResult = await window.api.db.execute(
@@ -95,8 +97,8 @@ export default function SetupWizard() {
         if (subjects) {
           for (const sub of subjects) {
             await window.api.db.execute(
-              'INSERT INTO subjects (name, code, max_score, class_id) VALUES (?, ?, ?, ?)',
-              [sub.name, sub.code, sub.max, classId]
+              'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              [sub.name, sub.code, sub.max_p1, sub.max_p2, sub.max_exam1, sub.max_p3, sub.max_p4, sub.max_exam2, classId]
             );
           }
         }
@@ -176,6 +178,16 @@ export default function SetupWizard() {
                   value={schoolCity}
                   onChange={(e) => setSchoolCity(e.target.value)}
                   placeholder="Ex: Bandundu"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Boîte Postale</label>
+                <input
+                  type="text"
+                  className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={schoolPoBox}
+                  onChange={(e) => setSchoolPoBox(e.target.value)}
+                  placeholder="Ex: BP 1234"
                 />
               </div>
             </div>

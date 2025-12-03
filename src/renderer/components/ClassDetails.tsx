@@ -34,7 +34,12 @@ interface Subject {
   id: number;
   name: string;
   code: string;
-  max_score: number;
+  max_p1: number;
+  max_p2: number;
+  max_exam1: number;
+  max_p3: number;
+  max_p4: number;
+  max_exam2: number;
 }
 
 interface Grade {
@@ -212,6 +217,7 @@ export default function ClassDetails() {
             );
             imported++;
           } catch (err: any) {
+            console.log(err)
             if (err.code === 'SQLITE_CONSTRAINT') {
               duplicates++;
             } else {
@@ -224,7 +230,7 @@ export default function ClassDetails() {
         alert(message);
         loadClassData();
       } catch (error) {
-        console.error('Import error:', error);
+        console.error('Import error:', error,error.code);
         alert('Erreur lors de l\'importation. Vérifiez le format du fichier.');
       }
     };
@@ -413,7 +419,10 @@ export default function ClassDetails() {
                 <Download size={18} />
                 <span className="font-medium">Exporter</span>
               </button>
-              <button className="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors font-medium">
+              <button 
+                onClick={() => navigate(`/palmares/${id}`)}
+                className="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors font-medium"
+              >
                 <TrendingUp size={18} />
                 <span>Palmares</span>
               </button>
@@ -582,7 +591,6 @@ export default function ClassDetails() {
             grades={grades}
             getGrade={getGrade}
             calculateSemesterTotal={calculateSemesterTotal}
-            calculateSemesterTotal={calculateSemesterTotal}
             onUpdateGrade={handleUpdateGrade}
             onContextMenu={handleContextMenu}
           />
@@ -640,23 +648,39 @@ function GradeGrid({ students, subjects, getGrade, calculateSemesterTotal, onUpd
                   colSpan={8}
                   className="bg-slate-100 px-2 py-2 text-center font-semibold text-slate-700 border-x border-slate-300"
                 >
-                  {subject.name} (/{subject.max_score})
+                  {subject.name}
                 </th>
               ))}
             </tr>
 
-            {/* Sub Header Row */}
+            {/* Sub Header Row with Maxima */}
             <tr className="border-b-2 border-slate-300 bg-slate-50">
               {subjects.map(subject => (
                 <React.Fragment key={subject.id}>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">P1</th>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">P2</th>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-300 bg-blue-50">Ex1</th>
-                  <th className="px-2 py-2 text-xs font-semibold text-blue-700 border-r-2 border-slate-400 bg-blue-100">Sem1</th>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">P3</th>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">P4</th>
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-300 bg-green-50">Ex2</th>
-                  <th className="px-2 py-2 text-xs font-semibold text-green-700 border-r-2 border-slate-400 bg-green-100">Sem2</th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                    P1<br/><span className="text-[10px] text-slate-400">/{subject.max_p1}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                    P2<br/><span className="text-[10px] text-slate-400">/{subject.max_p2}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-300 bg-blue-50">
+                    Ex1<br/><span className="text-[10px] text-slate-400">/{subject.max_exam1}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-blue-700 border-r-2 border-slate-400 bg-blue-100">
+                    Sem1<br/><span className="text-[10px] text-slate-400">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                    P3<br/><span className="text-[10px] text-slate-400">/{subject.max_p3}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                    P4<br/><span className="text-[10px] text-slate-400">/{subject.max_p4}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-300 bg-green-50">
+                    Ex2<br/><span className="text-[10px] text-slate-400">/{subject.max_exam2}</span>
+                  </th>
+                  <th className="px-2 py-2 text-xs font-semibold text-green-700 border-r-2 border-slate-400 bg-green-100">
+                    Sem2<br/><span className="text-[10px] text-slate-400">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
+                  </th>
                 </React.Fragment>
               ))}
             </tr>

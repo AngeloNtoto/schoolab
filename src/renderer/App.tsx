@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import ClassDetails from './components/ClassDetails';
 import StudentDetails from './components/StudentDetails';
 import Bulletin from './components/Bulletin';
+import Palmares from './components/Palmares';
 import StartupLoader from './components/StartupLoader';
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/class/:id" element={<ClassDetails />} />
         <Route path="/student/:id" element={<StudentDetails />} />
         <Route path="/bulletin/:studentId" element={<Bulletin />} />
+        <Route path="/palmares/:classId" element={<Palmares />} />
         <Route path="/" element={<Navigate to={isSetupComplete ? "/dashboard" : "/setup"} replace />} />
       </Routes>
     </HashRouter>

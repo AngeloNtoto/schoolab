@@ -24,7 +24,12 @@ interface ClassInfo {
 interface Subject {
   id: number;
   name: string;
-  max_score: number;
+  max_p1: number;
+  max_p2: number;
+  max_exam1: number;
+  max_p3: number;
+  max_p4: number;
+  max_exam2: number;
 }
 
 interface Grade {
@@ -267,18 +272,18 @@ export default function Bulletin() {
             </tr>
           </thead>
           <tbody>
-            {/* Maxima Row */}
+            {/* Maxima Row - use first subject's maxima (assuming all subjects use same scale pattern) */}
             <tr className="font-bold bg-slate-100">
               <td className="border border-black text-left px-2">MAXIMA</td>
-              <td className="border border-black">10</td>
-              <td className="border border-black">10</td>
-              <td className="border border-black">20</td>
-              <td className="border border-black">40</td>
-              <td className="border border-black">10</td>
-              <td className="border border-black">10</td>
-              <td className="border border-black">20</td>
-              <td className="border border-black">40</td>
-              <td className="border border-black">80</td>
+              <td className="border border-black">{subjects[0]?.max_p1 || 10}</td>
+              <td className="border border-black">{subjects[0]?.max_p2 || 10}</td>
+              <td className="border border-black">{subjects[0]?.max_exam1 || 20}</td>
+              <td className="border border-black">{subjects[0] ? subjects[0].max_p1 + subjects[0].max_p2 + subjects[0].max_exam1 : 40}</td>
+              <td className="border border-black">{subjects[0]?.max_p3 || 10}</td>
+              <td className="border border-black">{subjects[0]?.max_p4 || 10}</td>
+              <td className="border border-black">{subjects[0]?.max_exam2 || 20}</td>
+              <td className="border border-black">{subjects[0] ? subjects[0].max_p3 + subjects[0].max_p4 + subjects[0].max_exam2 : 40}</td>
+              <td className="border border-black">{subjects[0] ? (subjects[0].max_p1 + subjects[0].max_p2 + subjects[0].max_exam1 + subjects[0].max_p3 + subjects[0].max_p4 + subjects[0].max_exam2) : 80}</td>
               <td className="border border-black bg-black"></td>
               <td className="border border-black bg-black"></td>
             </tr>

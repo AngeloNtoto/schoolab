@@ -25,19 +25,28 @@ export const PERIODS = [
   { id: 'EXAM2', label: 'Examen 2nd Sem', type: 'EXAM' },
 ] as const;
 
-export const SUBJECT_TEMPLATES: Record<string, { name: string; code: string; max: number }[]> = {
+export const SUBJECT_TEMPLATES: Record<string, { 
+  name: string; 
+  code: string; 
+  max_p1: number;
+  max_p2: number;
+  max_exam1: number;
+  max_p3: number;
+  max_p4: number;
+  max_exam2: number;
+}[]> = {
   'EB': [
-    { name: 'Mathématiques', code: 'MATH', max: 20 },
-    { name: 'Français', code: 'FR', max: 20 },
-    { name: 'Anglais', code: 'ANG', max: 10 },
-    { name: 'Histoire', code: 'HIST', max: 10 },
-    { name: 'Géographie', code: 'GEO', max: 10 },
+    { name: 'Mathématiques', code: 'MATH', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
+    { name: 'Français', code: 'FR', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
+    { name: 'Anglais', code: 'ANG', max_p1: 5, max_p2: 5, max_exam1: 10, max_p3: 5, max_p4: 5, max_exam2: 10 },
+    { name: 'Histoire', code: 'HIST', max_p1: 5, max_p2: 5, max_exam1: 10, max_p3: 5, max_p4: 5, max_exam2: 10 },
+    { name: 'Géographie', code: 'GEO', max_p1: 5, max_p2: 5, max_exam1: 10, max_p3: 5, max_p4: 5, max_exam2: 10 },
   ],
   'ELECTRONIQUE': [
-    { name: 'Mathématiques', code: 'MATH', max: 40 },
-    { name: 'Physique', code: 'PHYS', max: 20 },
-    { name: 'Électronique Fondamentale', code: 'ELF', max: 40 },
-    { name: 'Laboratoire', code: 'LAB', max: 20 },
-    { name: 'Français', code: 'FR', max: 20 },
+    { name: 'Mathématiques', code: 'MATH', max_p1: 20, max_p2: 20, max_exam1: 40, max_p3: 20, max_p4: 20, max_exam2: 40 },
+    { name: 'Physique', code: 'PHYS', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
+    { name: 'Électronique Fondamentale', code: 'ELF', max_p1: 20, max_p2: 20, max_exam1: 40, max_p3: 20, max_p4: 20, max_exam2: 40 },
+    { name: 'Laboratoire', code: 'LAB', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
+    { name: 'Français', code: 'FR', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
   ],
 };
