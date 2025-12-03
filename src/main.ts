@@ -35,6 +35,7 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 import { getDb } from './db';
+import { populateTestData } from './main/populateTestData';
 
 // ...
 
@@ -59,6 +60,15 @@ app.on('ready', () => {
       return stmt.run(params || []);
     } catch (err: any) {
       console.error('Database execute error:', err);
+      throw err;
+    }
+  });
+
+  ipcMain.handle('db:populateTestData', async () => {
+    try {
+      return await populateTestData(db);
+    } catch (err: any) {
+      console.error('Populate test data error:', err);
       throw err;
     }
   });

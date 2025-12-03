@@ -7,6 +7,7 @@ import StudentDetails from './components/StudentDetails';
 import Bulletin from './components/Bulletin';
 import Palmares from './components/Palmares';
 import StartupLoader from './components/StartupLoader';
+import PopulateTestData from './components/PopulateTestData';
 
 export default function App() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/student/:id" element={<StudentDetails />} />
         <Route path="/bulletin/:studentId" element={<Bulletin />} />
         <Route path="/palmares/:classId" element={<Palmares />} />
+        <Route path="/populate-test-data" element={<PopulateTestData />} />
         <Route path="/" element={<Navigate to={isSetupComplete ? "/dashboard" : "/setup"} replace />} />
       </Routes>
     </HashRouter>

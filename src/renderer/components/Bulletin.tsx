@@ -47,6 +47,12 @@ export default function Bulletin() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [schoolCity, setSchoolCity] = useState('');
+  const [studentRanks, setStudentRanks] = useState({
+    p1: 0, p2: 0, ex1: 0, tot1: 0,
+    p3: 0, p4: 0, ex2: 0, tot2: 0,
+    tg: 0
+  });
+  const [totalStudents, setTotalStudents] = useState<number>(0);
 
   useEffect(() => {
     loadData();
@@ -69,10 +75,18 @@ export default function Bulletin() {
         setClassInfo(cls);
 
         const subjs = await window.api.db.query<Subject>(
-          'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC,name ASC',
+          'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC, name ASC',
           [studentData.class_id]
         );
-        setSubjects(subjs);
+        
+        // Sort subjects by total maxima (descending)
+        const sortedSubjects = subjs.sort((a, b) => {
+          const totalA = a.max_p1 + a.max_p2 + a.max_exam1 + a.max_p3 + a.max_p4 + a.max_exam2;
+          const totalB = b.max_p1 + b.max_p2 + b.max_exam1 + b.max_p3 + b.max_p4 + b.max_exam2;
+          return totalB - totalA;
+        });
+        
+        setSubjects(sortedSubjects);
 
         const grds = await window.api.db.query<Grade>(
           'SELECT * FROM grades WHERE student_id = ?',
@@ -89,6 +103,61 @@ export default function Bulletin() {
           "SELECT value FROM settings WHERE key = 'school_city'"
         );
         setSchoolCity(sCity?.value || '');
+
+        // Calculate student ranking for each column
+        const allStudents = await window.api.db.query<{ id: number }>(
+          'SELECT id FROM students WHERE class_id = ?',
+          [studentData.class_id]
+        );
+        setTotalStudents(allStudents.length);
+
+        // Get all students' scores
+        const studentScores = await Promise.all(
+          allStudents.map(async (s) => {
+            const sGrades = await window.api.db.query<Grade>(
+              'SELECT * FROM grades WHERE student_id = ?',
+              [s.id]
+            );
+            
+            let p1 = 0, p2 = 0, ex1 = 0;
+            let p3 = 0, p4 = 0, ex2 = 0;
+            
+            sGrades.forEach(g => {
+              if (g.period === 'P1') p1 += g.value;
+              if (g.period === 'P2') p2 += g.value;
+              if (g.period === 'EXAM1') ex1 += g.value;
+              if (g.period === 'P3') p3 += g.value;
+              if (g.period === 'P4') p4 += g.value;
+              if (g.period === 'EXAM2') ex2 += g.value;
+            });
+            
+            const tot1 = p1 + p2 + ex1;
+            const tot2 = p3 + p4 + ex2;
+            const tg = tot1 + tot2;
+            
+            return { id: s.id, p1, p2, ex1, tot1, p3, p4, ex2, tot2, tg };
+          })
+        );
+
+        // Helper to find rank for a specific field
+        const getRank = (field: keyof typeof studentScores[0]) => {
+          // Sort descending
+          const sorted = [...studentScores].sort((a, b) => b[field] - a[field]);
+          // Find index (1-based)
+          return sorted.findIndex(s => s.id === Number(studentId)) + 1;
+        };
+        
+        setStudentRanks({
+          p1: getRank('p1'),
+          p2: getRank('p2'),
+          ex1: getRank('ex1'),
+          tot1: getRank('tot1'),
+          p3: getRank('p3'),
+          p4: getRank('p4'),
+          ex2: getRank('ex2'),
+          tot2: getRank('tot2'),
+          tg: getRank('tg')
+        });
       }
     } catch (error) {
       console.error('Failed to load bulletin data:', error);
@@ -272,53 +341,88 @@ export default function Bulletin() {
             </tr>
           </thead>
           <tbody>
-            {/* Maxima Row - use first subject's maxima (assuming all subjects use same scale pattern) */}
-            <tr className="font-bold bg-slate-100">
-              <td className="border border-black text-left px-2">MAXIMA</td>
-              <td className="border border-black">{subjects[0]?.max_p1 || 10}</td>
-              <td className="border border-black">{subjects[0]?.max_p2 || 10}</td>
-              <td className="border border-black">{subjects[0]?.max_exam1 || 20}</td>
-              <td className="border border-black">{subjects[0] ? subjects[0].max_p1 + subjects[0].max_p2 + subjects[0].max_exam1 : 40}</td>
-              <td className="border border-black">{subjects[0]?.max_p3 || 10}</td>
-              <td className="border border-black">{subjects[0]?.max_p4 || 10}</td>
-              <td className="border border-black">{subjects[0]?.max_exam2 || 20}</td>
-              <td className="border border-black">{subjects[0] ? subjects[0].max_p3 + subjects[0].max_p4 + subjects[0].max_exam2 : 40}</td>
-              <td className="border border-black">{subjects[0] ? (subjects[0].max_p1 + subjects[0].max_p2 + subjects[0].max_exam1 + subjects[0].max_p3 + subjects[0].max_p4 + subjects[0].max_exam2) : 80}</td>
-              <td className="border border-black bg-black"></td>
-              <td className="border border-black bg-black"></td>
-            </tr>
+            {/* Group subjects by their maxima and display each group with its MAXIMA row */}
+            {(() => {
+              // Group subjects by their maxima pattern
+              const groupedSubjects: { [key: string]: Subject[] } = {};
+              
+              subjects.forEach(subject => {
+                const key = `${subject.max_p1}-${subject.max_p2}-${subject.max_exam1}-${subject.max_p3}-${subject.max_p4}-${subject.max_exam2}`;
+                if (!groupedSubjects[key]) {
+                  groupedSubjects[key] = [];
+                }
+                groupedSubjects[key].push(subject);
+              });
+              
+              // Sort groups by total maxima (ascending)
+              const sortedGroups = Object.entries(groupedSubjects).sort(([keyA], [keyB]) => {
+                const [p1A, p2A, ex1A, p3A, p4A, ex2A] = keyA.split('-').map(Number);
+                const [p1B, p2B, ex1B, p3B, p4B, ex2B] = keyB.split('-').map(Number);
+                const totalA = p1A + p2A + ex1A + p3A + p4A + ex2A;
+                const totalB = p1B + p2B + ex1B + p3B + p4B + ex2B;
+                return totalA - totalB;
+              });
+              
+              return sortedGroups.map(([key, groupSubjects]) => {
+                const firstSubject = groupSubjects[0];
+                const sem1Total = firstSubject.max_p1 + firstSubject.max_p2 + firstSubject.max_exam1;
+                const sem2Total = firstSubject.max_p3 + firstSubject.max_p4 + firstSubject.max_exam2;
+                const totalMax = sem1Total + sem2Total;
+                
+                return (
+                  <React.Fragment key={key}>
+                    {/* MAXIMA row for this group */}
+                    <tr className="font-bold bg-slate-100">
+                      <td className="border border-black text-left px-2">MAXIMA</td>
+                      <td className="border border-black">{firstSubject.max_p1}</td>
+                      <td className="border border-black">{firstSubject.max_p2}</td>
+                      <td className="border border-black">{firstSubject.max_exam1}</td>
+                      <td className="border border-black">{sem1Total}</td>
+                      <td className="border border-black">{firstSubject.max_p3}</td>
+                      <td className="border border-black">{firstSubject.max_p4}</td>
+                      <td className="border border-black">{firstSubject.max_exam2}</td>
+                      <td className="border border-black">{sem2Total}</td>
+                      <td className="border border-black">{totalMax}</td>
+                      <td className="border border-black bg-black"></td>
+                      <td className="border border-black bg-black"></td>
+                    </tr>
+                    
+                    {/* Subjects in this group */}
+                    {groupSubjects.map((subject) => {
+                      const p1 = getGrade(subject.id, 'P1');
+                      const p2 = getGrade(subject.id, 'P2');
+                      const ex1 = getGrade(subject.id, 'EXAM1');
+                      const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
 
-            {/* Subjects */}
-            {subjects.map((subject) => {
-              const p1 = getGrade(subject.id, 'P1');
-              const p2 = getGrade(subject.id, 'P2');
-              const ex1 = getGrade(subject.id, 'EXAM1');
-              const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
+                      const p3 = getGrade(subject.id, 'P3');
+                      const p4 = getGrade(subject.id, 'P4');
+                      const ex2 = getGrade(subject.id, 'EXAM2');
+                      const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
 
-              const p3 = getGrade(subject.id, 'P3');
-              const p4 = getGrade(subject.id, 'P4');
-              const ex2 = getGrade(subject.id, 'EXAM2');
-              const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
+                      const tg = (tot1 || 0) + (tot2 || 0);
 
-              const tg = (tot1 || 0) + (tot2 || 0);
+                      return (
+                        <tr key={subject.id}>
+                          <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
+                          <td className="border border-black">{p1 ?? ''}</td>
+                          <td className="border border-black">{p2 ?? ''}</td>
+                          <td className="border border-black">{ex1 ?? ''}</td>
+                          <td className="border border-black font-bold">{tot1 ?? ''}</td>
+                          <td className="border border-black">{p3 ?? ''}</td>
+                          <td className="border border-black">{p4 ?? ''}</td>
+                          <td className="border border-black">{ex2 ?? ''}</td>
+                          <td className="border border-black font-bold">{tot2 ?? ''}</td>
+                          <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
+                          <td className="border border-black"></td>
+                          <td className="border border-black"></td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              });
+            })()}
 
-              return (
-                <tr key={subject.id}>
-                  <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
-                  <td className="border border-black">{p1 ?? ''}</td>
-                  <td className="border border-black">{p2 ?? ''}</td>
-                  <td className="border border-black">{ex1 ?? ''}</td>
-                  <td className="border border-black font-bold">{tot1 ?? ''}</td>
-                  <td className="border border-black">{p3 ?? ''}</td>
-                  <td className="border border-black">{p4 ?? ''}</td>
-                  <td className="border border-black">{ex2 ?? ''}</td>
-                  <td className="border border-black font-bold">{tot2 ?? ''}</td>
-                  <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                </tr>
-              );
-            })}
 
             {/* Empty rows to fill space if needed */}
             {Array(Math.max(0, 20 - subjects.length)).fill(0).map((_, i) => (
@@ -338,50 +442,155 @@ export default function Bulletin() {
               </tr>
             ))}
 
+
+            {/* MAXIMA GENERAUX - Sum of all maxima */}
+            {(() => {
+              let maxP1 = 0, maxP2 = 0, maxEx1 = 0, maxTot1 = 0;
+              let maxP3 = 0, maxP4 = 0, maxEx2 = 0, maxTot2 = 0;
+              let maxTG = 0;
+              
+              subjects.forEach(subject => {
+                maxP1 += subject.max_p1;
+                maxP2 += subject.max_p2;
+                maxEx1 += subject.max_exam1;
+                maxTot1 += subject.max_p1 + subject.max_p2 + subject.max_exam1;
+                
+                maxP3 += subject.max_p3;
+                maxP4 += subject.max_p4;
+                maxEx2 += subject.max_exam2;
+                maxTot2 += subject.max_p3 + subject.max_p4 + subject.max_exam2;
+                
+                maxTG += subject.max_p1 + subject.max_p2 + subject.max_exam1 + subject.max_p3 + subject.max_p4 + subject.max_exam2;
+              });
+              
+              return (
+                <tr className="font-bold bg-slate-200 border-t-2 border-black">
+                  <td className="border border-black text-left px-2">MAXIMA GENERAUX</td>
+                  <td className="border border-black">{maxP1}</td>
+                  <td className="border border-black">{maxP2}</td>
+                  <td className="border border-black">{maxEx1}</td>
+                  <td className="border border-black">{maxTot1}</td>
+                  <td className="border border-black">{maxP3}</td>
+                  <td className="border border-black">{maxP4}</td>
+                  <td className="border border-black">{maxEx2}</td>
+                  <td className="border border-black">{maxTot2}</td>
+                  <td className="border border-black">{maxTG}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
+                </tr>
+              );
+            })()}
+
             {/* Totals Row */}
-            <tr className="font-bold border-t-2 border-black">
-              <td className="border border-black text-left px-2">TOTAUX</td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black bg-slate-100"></td>
-              <td className="border border-black bg-black" rowSpan={6}></td>
-              <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={2}>
-                - PASSE (1)<br/>- DOUBLE (1)<br/>LE ... / ... / 20
-              </td>
-            </tr>
-            <tr className="font-bold">
-              <td className="border border-black text-left px-2">POURCENTAGE</td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black"></td>
-              <td className="border border-black bg-slate-100"></td>
-            </tr>
-            <tr>
-              <td className="border border-black text-left px-2 font-bold">PLACE / NBRE D'ELEVES</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black">/</td>
-              <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={4}>
-                Le Chef d'Etablissement<br/>Sceau de l'Ecole
-              </td>
-            </tr>
+            {(() => {
+              // Calculate totals for each column
+              let totalP1 = 0, totalP2 = 0, totalEx1 = 0, totalTot1 = 0;
+              let totalP3 = 0, totalP4 = 0, totalEx2 = 0, totalTot2 = 0;
+              let totalTG = 0;
+              
+              // Calculate maxima totals
+              let maxP1 = 0, maxP2 = 0, maxEx1 = 0, maxTot1 = 0;
+              let maxP3 = 0, maxP4 = 0, maxEx2 = 0, maxTot2 = 0;
+              let maxTG = 0;
+              
+              subjects.forEach(subject => {
+                const p1 = getGrade(subject.id, 'P1');
+                const p2 = getGrade(subject.id, 'P2');
+                const ex1 = getGrade(subject.id, 'EXAM1');
+                const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
+                
+                const p3 = getGrade(subject.id, 'P3');
+                const p4 = getGrade(subject.id, 'P4');
+                const ex2 = getGrade(subject.id, 'EXAM2');
+                const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
+                
+                if (p1 !== null) totalP1 += p1;
+                if (p2 !== null) totalP2 += p2;
+                if (ex1 !== null) totalEx1 += ex1;
+                if (tot1 !== null) totalTot1 += tot1;
+                
+                if (p3 !== null) totalP3 += p3;
+                if (p4 !== null) totalP4 += p4;
+                if (ex2 !== null) totalEx2 += ex2;
+                if (tot2 !== null) totalTot2 += tot2;
+                
+                totalTG += (tot1 || 0) + (tot2 || 0);
+                
+                // Sum maxima
+                maxP1 += subject.max_p1;
+                maxP2 += subject.max_p2;
+                maxEx1 += subject.max_exam1;
+                maxTot1 += subject.max_p1 + subject.max_p2 + subject.max_exam1;
+                
+                maxP3 += subject.max_p3;
+                maxP4 += subject.max_p4;
+                maxEx2 += subject.max_exam2;
+                maxTot2 += subject.max_p3 + subject.max_p4 + subject.max_exam2;
+                
+                maxTG += subject.max_p1 + subject.max_p2 + subject.max_exam1 + subject.max_p3 + subject.max_p4 + subject.max_exam2;
+              });
+              
+              // Calculate percentages
+              const pctP1 = maxP1 > 0 ? ((totalP1 / maxP1) * 100).toFixed(1) : '0';
+              const pctP2 = maxP2 > 0 ? ((totalP2 / maxP2) * 100).toFixed(1) : '0';
+              const pctEx1 = maxEx1 > 0 ? ((totalEx1 / maxEx1) * 100).toFixed(1) : '0';
+              const pctTot1 = maxTot1 > 0 ? ((totalTot1 / maxTot1) * 100).toFixed(1) : '0';
+              
+              const pctP3 = maxP3 > 0 ? ((totalP3 / maxP3) * 100).toFixed(1) : '0';
+              const pctP4 = maxP4 > 0 ? ((totalP4 / maxP4) * 100).toFixed(1) : '0';
+              const pctEx2 = maxEx2 > 0 ? ((totalEx2 / maxEx2) * 100).toFixed(1) : '0';
+              const pctTot2 = maxTot2 > 0 ? ((totalTot2 / maxTot2) * 100).toFixed(1) : '0';
+              
+              const pctTG = maxTG > 0 ? ((totalTG / maxTG) * 100).toFixed(1) : '0';
+              
+              return (
+                <>
+                  <tr className="font-bold border-t-2 border-black">
+                    <td className="border border-black text-left px-2">TOTAUX</td>
+                    <td className="border border-black">{totalP1 || ''}</td>
+                    <td className="border border-black">{totalP2 || ''}</td>
+                    <td className="border border-black">{totalEx1 || ''}</td>
+                    <td className="border border-black">{totalTot1 || ''}</td>
+                    <td className="border border-black">{totalP3 || ''}</td>
+                    <td className="border border-black">{totalP4 || ''}</td>
+                    <td className="border border-black">{totalEx2 || ''}</td>
+                    <td className="border border-black">{totalTot2 || ''}</td>
+                    <td className="border border-black bg-slate-100">{totalTG || ''}</td>
+                    <td className="border border-black bg-black" rowSpan={6}></td>
+                    <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={2}>
+                      - PASSE (1)<br/>- DOUBLE (1)<br/>LE ... / ... / 20
+                    </td>
+                  </tr>
+                  <tr className="font-bold">
+                    <td className="border border-black text-left px-2">POURCENTAGE</td>
+                    <td className="border border-black text-[9px]">{pctP1}%</td>
+                    <td className="border border-black text-[9px]">{pctP2}%</td>
+                    <td className="border border-black text-[9px]">{pctEx1}%</td>
+                    <td className="border border-black text-[9px]">{pctTot1}%</td>
+                    <td className="border border-black text-[9px]">{pctP3}%</td>
+                    <td className="border border-black text-[9px]">{pctP4}%</td>
+                    <td className="border border-black text-[9px]">{pctEx2}%</td>
+                    <td className="border border-black text-[9px]">{pctTot2}%</td>
+                    <td className="border border-black bg-slate-100 text-[9px]">{pctTG}%</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black text-left px-2 font-bold">PLACE / NBRE D'ELEVES</td>
+                    <td className="border border-black text-sm">{studentRanks.p1}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.p2}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.ex1}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.tot1}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.p3}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.p4}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.ex2}/{totalStudents}</td>
+                    <td className="border border-black text-sm">{studentRanks.tot2}/{totalStudents}</td>
+                    <td className="border border-black font-bold text-sm bg-slate-100">{studentRanks.tg}/{totalStudents}</td>
+                    <td className="border border-black text-[8px] text-left align-top p-1" rowSpan={4}>
+                      Le Chef d'Etablissement<br/>Sceau de l'Ecole
+                    </td>
+                  </tr>
+                </>
+              );
+            })()}
             <tr>
               <td className="border border-black text-left px-2 font-bold">APPLICATION</td>
               <td className="border border-black bg-slate-200" colSpan={4}></td>
