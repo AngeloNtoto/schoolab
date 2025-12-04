@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
+import ProfessionalLoader from './ProfessionalLoader';
 
 interface Student {
   id: number;
@@ -232,7 +233,7 @@ export default function Palmares() {
     unranked: rankedStudents.filter(r => r.isUnranked).length,
   };
 
-  if (!classInfo) return <div>Chargement...</div>;
+  if (!classInfo) return <ProfessionalLoader message="Génération du palmarès..." subMessage="Calcul des classements en cours" />;
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white">

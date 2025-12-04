@@ -114,13 +114,13 @@ export default function StartupLoader({ onComplete }: StartupLoaderProps) {
   const [messages, setMessages] = useState<string[]>([]);
   const [selectedMessages] = useState(() => {
     // Sélectionner aléatoirement entre 50 et 90 messages
-    const count = Math.floor(Math.random() * 41) + 50;
+    const count = Math.floor(Math.random() * 11) + 20;
     const shuffled = [...ALL_LOADING_MESSAGES].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
   });
   
   // Durée aléatoire entre 30-40 secondes
-  const [totalDuration] = useState(() => Math.random() * 10000 + 30000);
+  const [totalDuration] = useState(() => Math.random() * 10000+ 3000);
 
   useEffect(() => {
 let messageTimer: ReturnType<typeof setTimeout>;
@@ -132,7 +132,7 @@ let progressTimer: ReturnType<typeof setInterval>;
     const updateProgress = () => {
       // Ralentir ou accélérer aléatoirement
       if (Math.random() < 0.1) {
-        currentSpeed = Math.random() < 0.5 ? 0.3 : 1.5;
+        currentSpeed = Math.random() < 0.1 ? 0.2 : 0.5;
       }
 
       elapsed += 50 * currentSpeed;
