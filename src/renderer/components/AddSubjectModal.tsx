@@ -205,11 +205,11 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                       <select
                         value={selectedDomainId ?? ''}
                         onChange={(e) => setSelectedDomainId(e.target.value ? Number(e.target.value) : null)}
-                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-w-0 max-w-[200px] truncate"
                       >
                         <option value="">Aucun domaine</option>
                         {domains.map(domain => (
-                          <option key={domain.id} value={domain.id}>{domain.name}</option>
+                          <option key={domain.id} value={domain.id} className="truncate">{domain.name}</option>
                         ))}
                       </select>
                       <button

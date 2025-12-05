@@ -10,12 +10,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
 import ProfessionalLoader from './ProfessionalLoader';
 import BulletinHumanitesContent from './BulletinHumanitesContent';
+import BulletinPrimaireContent from './BulletinPrimaireContent';
 
 // Services
 import { Student } from '../services/studentService';
 import { classService, ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
 import { bulletinService, StudentRanks } from '../services/bulletinService';
+import { domainService, Domain } from '../services/domainService';
 
 export default function ClassBulletins() {
   const { classId } = useParams<{ classId: string }>();
@@ -25,6 +27,7 @@ export default function ClassBulletins() {
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
   const [allGrades, setAllGrades] = useState<Grade[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [schoolCity, setSchoolCity] = useState('');
@@ -63,6 +66,10 @@ export default function ClassBulletins() {
       // 3. Charger les matières
       const subjectData = await classService.getSubjectsByClass(Number(classId));
       setSubjects(subjectData);
+
+      // 3b. Charger les domaines (pour le primaire)
+      const domainData = await domainService.getAllDomains();
+      setDomains(domainData);
 
       // 4. Charger toutes les notes
       const gradesData = await window.api.db.query<Grade>(
@@ -150,6 +157,24 @@ export default function ClassBulletins() {
             p3: 0, p4: 0, ex2: 0, tot2: 0,
             tg: 0
           };
+
+          // Déterminer quel type de bulletin afficher
+          const isPrimary = classInfo.level === '7ème' || classInfo.level === '8ème';
+
+          if (isPrimary) {
+            return (
+              <BulletinPrimaireContent
+                key={student.id}
+                student={student}
+                classInfo={classInfo}
+                subjects={subjects}
+                grades={studentGrades}
+                domains={domains}
+                schoolName={schoolName}
+                schoolCity={schoolCity}
+              />
+            );
+          }
 
           return (
             <BulletinHumanitesContent

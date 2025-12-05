@@ -15,9 +15,9 @@ export default function SetupWizard() {
   const [schoolPoBox, setSchoolPoBox] = useState('');
 
   // Step 2: Academic Year
-  const [yearName, setYearName] = useState('2024-2025');
-  const [startDate, setStartDate] = useState('2024-09-02');
-  const [endDate, setEndDate] = useState('2025-07-02');
+  const [yearName, setYearName] = useState('2025-2026');
+  const [startDate, setStartDate] = useState('2025-09-02');
+  const [endDate, setEndDate] = useState('2026-07-02');
 
   // Step 3: Classes
   const [classes, setClasses] = useState<{ level: string; option: string; section: string }[]>([]);
@@ -187,7 +187,7 @@ export default function SetupWizard() {
                   className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={schoolPoBox}
                   onChange={(e) => setSchoolPoBox(e.target.value)}
-                  placeholder="Ex: BP 1234"
+                  placeholder="Ex: BP 213"
                 />
               </div>
             </div>
