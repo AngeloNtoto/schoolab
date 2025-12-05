@@ -42,6 +42,7 @@ interface RankedStudent {
   rank: number;
   application: string;
   isUnranked: boolean;
+  failedSubjects: string[]; // Cours où l'élève a échoué (<50%)
 }
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
@@ -129,6 +130,7 @@ export default function Palmares() {
       let totalPoints = 0;
       let totalMaxPoints = 0;
       let hasAllGrades = true;
+      const failedSubjects: string[] = [];
 
       // Determine which periods to include based on selection
       const periodsConfig = getPeriodConfig(selectedPeriod);
@@ -151,6 +153,14 @@ export default function Palmares() {
 
         totalPoints += subjectPoints;
         totalMaxPoints += subjectMaxPoints;
+
+        // Vérifier si l'élève a échoué dans cette matière (<50%)
+        if (subjectMaxPoints > 0) {
+          const subjectPercentage = (subjectPoints / subjectMaxPoints) * 100;
+          if (subjectPercentage < 50) {
+            failedSubjects.push(subject.name);
+          }
+        }
       }
 
       const percentage = hasAllGrades && totalMaxPoints > 0 
@@ -164,7 +174,8 @@ export default function Palmares() {
         percentage: hasAllGrades ? percentage : 0,
         rank: 0, // Will be assigned later
         application,
-        isUnranked: !hasAllGrades
+        isUnranked: !hasAllGrades,
+        failedSubjects
       });
     }
 
@@ -331,8 +342,15 @@ export default function Palmares() {
                   {rankedStudent.application}
                 </td>
                 <td className="border border-black px-4 py-2"></td>
-                <td className="border border-black px-4 py-2">
-                  {rankedStudent.isUnranked ? 'Non classé' : ''}
+                <td className="border border-black px-4 py-2 text-xs">
+                  {rankedStudent.isUnranked 
+                    ? 'Non classé' 
+                    : rankedStudent.percentage < 50 
+                      ? <span className="text-red-600 font-bold">Redouble la classe</span>
+                      : rankedStudent.failedSubjects.length > 0 
+                        ? <span className="text-amber-600">Échec ({rankedStudent.failedSubjects.length} cours): {rankedStudent.failedSubjects.join(', ')}</span>
+                        : <span className="text-green-600">-</span>
+                  }
                 </td>
               </tr>
             ))}
