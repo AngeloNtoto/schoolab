@@ -10,10 +10,13 @@ import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-nati
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
-      unpack: '**/*.node',
+      unpack: "*.{node,dll}",
     },
+    ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    force: true,
+  },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ['darwin']),
