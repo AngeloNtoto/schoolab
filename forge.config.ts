@@ -18,9 +18,11 @@ const config: ForgeConfig = {
     force: true,
   },
   makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin']),
+    //new MakerSquirrel({
+    //  setupExe: 'ecole-setup.exe',
+    //}),
     new MakerDeb({}),
+    new MakerZIP({}),
   ],
   plugins: [
     new VitePlugin({

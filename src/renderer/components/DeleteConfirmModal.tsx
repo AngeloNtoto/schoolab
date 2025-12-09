@@ -4,9 +4,10 @@ import { Trash2, X } from 'lucide-react';
 interface DeleteConfirmModalProps {
   title: string;
   message: string;
-  itemName: string;
+  itemName?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  isOpen: boolean;
 }
 
 export default function DeleteConfirmModal({ 
@@ -14,7 +15,8 @@ export default function DeleteConfirmModal({
   message, 
   itemName, 
   onConfirm, 
-  onCancel 
+  onCancel ,
+  isOpen
 }: DeleteConfirmModalProps) {
   const [loading, setLoading] = useState(false);
 

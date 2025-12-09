@@ -195,6 +195,28 @@ export default function CouponSemestre({
             <td colSpan={3} className="border border-black text-right px-1">Maximum: {totalMax}</td>
             <td colSpan={2} className="border border-black text-center">Pourcentage: {percentage}%</td>
           </tr>
+          {/* ECHECS */}
+          <tr className="font-bold">
+            <td className="border border-black text-left px-1">ECHECS</td>
+            <td colSpan={4} className="border border-black text-left px-1 text-[8px]">
+              {(() => {
+                const failures: string[] = [];
+                subjects.forEach(subject => {
+                  const p1 = getGrade(subject.id, config.periods[0]);
+                  const p2 = getGrade(subject.id, config.periods[1]);
+                  const exam = getGrade(subject.id, config.exam);
+                  const totalObtained = (p1 || 0) + (p2 || 0) + (exam || 0);
+                  
+                  const maxTotal = getMaxP1(subject) + getMaxP2(subject) + getMaxExam(subject);
+                  
+                  if (maxTotal > 0 && totalObtained < maxTotal / 2) {
+                    failures.push(`${subject.name}: ${totalObtained}/${maxTotal}`);
+                  }
+                });
+                return failures.length > 0 ? failures.join(', ') : 'Néant';
+              })()}
+            </td>
+          </tr>
         </tfoot>
       </table>
     </div>

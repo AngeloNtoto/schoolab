@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { studentService } from '../services/studentService';
+import { studentService, Student } from '../services/studentService';
+import { useToast } from '../context/ToastContext';
 
 /**
  * INTERFACE DU MODAL D'AJOUT D'ÉLÈVES
@@ -51,10 +52,12 @@ interface AddStudentModalProps {
   }>) => Promise<void>;
   
   classId: number;  // ID de la classe courante (passé aux fonctions ci-dessus)
+  existingStudents: Student[]; // Liste des élèves existants pour vérification des doublons
 }
 
-export default function AddStudentModal({ isOpen, onClose, onAdd, onImport,classId}: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onAdd, onImport, classId, existingStudents }: AddStudentModalProps) {
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
+  const toast = useToast();
   
   // Manual form state
   const [firstName, setFirstName] = useState('');
@@ -113,7 +116,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport,class
       // FEEDBACK VISUEL DE SUCCÈS :
       // On informe l'utilisateur que l'ajout a réussi
       // Note : le hook useStudents rafraîchit automatiquement la liste
-      alert(`Élève ${firstName} ${lastName} ajouté avec succès !`);
+      toast.success(`Élève ${firstName} ${lastName} ajouté avec succès !`);
       
       // FERMETURE AUTOMATIQUE DU MODAL :
       // Après l'ajout réussi, on ferme le modal
@@ -123,7 +126,7 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport,class
       // GESTION D'ERREUR :
       // Si l'ajout échoue, on affiche un message à l'utilisateur
       console.error('Failed to add student:', error);
-      alert('Erreur lors de l\'ajout de l\'élève');
+      toast.error('Erreur lors de l\'ajout de l\'élève');
     } finally {
       // NETTOYAGE :
       // Quoi qu'il arrive (succès ou erreur), on désactive le loading
@@ -150,13 +153,42 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport,class
         gender: (row['Sexe'] === 'M' || row['Sexe'] === 'F') ? row['Sexe'] : 'M',
         birth_date: row['Date de naissance'] || '',
         birthplace: row['Lieu de naissance'] || ''
-      }));
+      })).filter(s => s.first_name && s.last_name); // Basic validation
 
-      await onImport(students);
-      onClose();
+      // Filter duplicates
+      const newStudents: any[] = [];
+      const duplicates: any[] = [];
+
+      students.forEach(student => {
+        const exists = existingStudents.some(existing => 
+          existing.first_name.toLowerCase() === student.first_name.toLowerCase() &&
+          existing.last_name.toLowerCase() === student.last_name.toLowerCase() &&
+          (existing.post_name || '').toLowerCase() === (student.post_name || '').toLowerCase()
+        );
+
+        if (exists) {
+          duplicates.push(student);
+        } else {
+          newStudents.push(student);
+        }
+      });
+
+      if (newStudents.length > 0) {
+        await onImport(newStudents);
+        
+        let message = `${newStudents.length} élève(s) importé(s) avec succès.`;
+        if (duplicates.length > 0) {
+          message += ` ${duplicates.length} doublon(s) ignoré(s).`;
+        }
+        toast.success(message);
+        onClose();
+      } else {
+        toast.warning(`Aucun nouvel élève à importer. ${duplicates.length} doublon(s) trouvé(s).`);
+      }
+
     } catch (error) {
       console.error('Failed to import students:', error);
-      alert('Erreur lors de l\'importation du fichier Excel');
+      toast.error('Erreur lors de l\'importation du fichier Excel');
     } finally {
       setLoading(false);
     }

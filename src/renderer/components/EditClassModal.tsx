@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, School, Save } from 'lucide-react';
 import { LEVELS, OPTIONS } from '../../constants/school';
 import { getClassDisplayName } from '../lib/classUtils';
+import { useToast } from '../context/ToastContext';
 
 interface Class {
   id: number;
@@ -24,6 +25,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   const [section, setSection] = useState(classData?.section || (classData?.level === '7ème' || classData?.level === '8ème' ? 'A' : '-'));
   const [loading, setLoading] = useState(false);
   const [academicYearId, setAcademicYearId] = useState<number | null>(null);
+  const toast = useToast();
 
   // Auto-adjust section when level changes to/from 7ème/8ème
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
         if (result.length > 0) {
           setAcademicYearId(result[0].id);
         } else {
-          alert("Aucune année académique active trouvée. Veuillez en configurer une.");
+          toast.error("Aucune année académique active trouvée. Veuillez en configurer une.");
           onClose();
         }
       } catch (error) {
@@ -101,7 +103,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       console.log('Duplicate check result:', isDuplicate);
       
       if (isDuplicate) {
-        alert("Une classe avec ces paramètres existe déjà. Impossible de créer des doublons.");
+        toast.warning("Une classe avec ces paramètres existe déjà. Impossible de créer des doublons.");
         setLoading(false);
         return;
       }
@@ -128,7 +130,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       onClose();
     } catch (error) {
       console.error('Failed to save class:', error);
-      alert('Erreur lors de l\'enregistrement de la classe');
+      toast.error('Erreur lors de l\'enregistrement de la classe');
     } finally {
       setLoading(false);
     }

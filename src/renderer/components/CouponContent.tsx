@@ -378,6 +378,29 @@ export default function CouponContent({
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                 </tr>
+
+                {/* ECHECS */}
+                <tr className="font-bold">
+                  <td className="border border-black text-left px-2">ECHECS</td>
+                  <td className="border border-black text-left px-2 text-[9px]" colSpan={9}>
+                    {(() => {
+                      const failures: string[] = [];
+                      subjects.forEach(subject => {
+                        const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
+                        const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
+                        const totalObtained = (tot1 || 0) + (tot2 || 0);
+                        
+                        const maxTotal = subject.max_p1 + subject.max_p2 + subject.max_exam1 + 
+                                       subject.max_p3 + subject.max_p4 + subject.max_exam2;
+                        
+                        if (maxTotal > 0 && totalObtained < maxTotal / 2) {
+                          failures.push(`${subject.name}: ${totalObtained}/${maxTotal}`);
+                        }
+                      });
+                      return failures.length > 0 ? failures.join(', ') : 'Néant';
+                    })()}
+                  </td>
+                </tr>
                 
                 {/* POURCENTAGE */}
                 <tr className="font-bold">

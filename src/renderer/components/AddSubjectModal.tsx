@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { domainService, Domain } from '../services/domainService';
+import { useToast } from '../context/ToastContext';
 
 interface Subject {
   id: number;
@@ -28,6 +29,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const isPrimaryClass = classLevel === '7ème' || classLevel === '8ème';
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const toast = useToast();
   
   // ÉTATS POUR LES MAXIMA
   const [maxPeriod, setMaxPeriod] = useState('10');
@@ -83,9 +85,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       setSelectedDomainId(newId);
       setNewDomainName('');
       setShowDomainCreate(false);
+      toast.success('Domaine créé avec succès');
     } catch (error) {
       console.error('Failed to create domain:', error);
-      alert('Erreur lors de la création du domaine');
+      toast.error('Erreur lors de la création du domaine');
     }
   };
 
@@ -120,10 +123,12 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       setMaxExam('20');
       setSelectedDomainId(null);
       
+      
       onSuccess();
+      toast.success('Matière ajoutée avec succès');
     } catch (error) {
       console.error('Failed to add subject:', error);
-      alert('Erreur lors de l\'ajout de la matière');
+      toast.error('Erreur lors de l\'ajout de la matière');
     } finally {
       setLoading(false);
     }
@@ -135,9 +140,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     try {
       await window.api.db.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
       onSuccess();
+      toast.success('Matière supprimée');
     } catch (error) {
       console.error('Failed to delete subject:', error);
-      alert('Erreur lors de la suppression');
+      toast.error('Erreur lors de la suppression');
     }
   };
 
