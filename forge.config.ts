@@ -7,6 +7,18 @@ import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 
+//1) Lire la version depuis package.json
+// (méthode CommonJS sûre côté config)
+const pkg = require('./package.json') as {
+  name: string;
+  productName?: string;
+  version: string;
+};
+
+//2) Source de vérité runtime "soft"
+const APP_VERSION = pkg.version;
+
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
@@ -15,12 +27,12 @@ const config: ForgeConfig = {
     executableName:"ecole",
     ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
-  //rebuildConfig: {
-    //force: true,
-  //},
+  rebuildConfig: {
+    force: true,
+  },
   makers: [
     new MakerSquirrel({
-    setupExe: 'ecole-setup-%version%.exe',
+    setupExe: pkg.productName+'-setup-'+APP_VERSION+'.exe',
     }),
     new MakerDeb({}),
     new MakerZIP({}),
