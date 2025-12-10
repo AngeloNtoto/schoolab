@@ -80,6 +80,13 @@ export default function TransferInbox() {
           }
         }
       }
+      // Notify other views that DB changed (new class)
+      try {
+        console.debug('[TransferInbox] dispatch db:changed newClass', { classId: newClassId });
+        window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId: newClassId } }));
+      } catch (e) {
+        console.error('Failed to dispatch db:changed (newClass)', e);
+      }
       return true;
     } catch (error) {
       console.error('Import error:', error);
@@ -190,12 +197,21 @@ export default function TransferInbox() {
           }
         }
       }
+      // Notify other views that DB changed (merged class)
+      try {
+        console.debug('[TransferInbox] dispatch db:changed mergedClass', { classId: existingClassId });
+        window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId: existingClassId } }));
+      } catch (e) {
+        console.error('Failed to dispatch db:changed (mergedClass)', e);
+      }
       return true;
     } catch (error) {
       console.error('Merge error:', error);
       return false;
     }
+    
   };
+
 
   const handleAccept = async (filename: string) => {
     const content = await window.api.network.acceptTransfer(filename);

@@ -12,18 +12,20 @@ const config: ForgeConfig = {
     asar: {
       unpack: "*.{node,dll}",
     },
+    executableName:"ecole",
     ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
-  rebuildConfig: {
-    force: true,
-  },
+  //rebuildConfig: {
+    //force: true,
+  //},
   makers: [
-    //new MakerSquirrel({
-    //  setupExe: 'ecole-setup.exe',
-    //}),
+    new MakerSquirrel({
+    setupExe: 'ecole-setup-%version%.exe',
+    }),
     new MakerDeb({}),
     new MakerZIP({}),
   ],
+
   plugins: [
     new VitePlugin({
       // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.

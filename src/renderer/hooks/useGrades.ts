@@ -54,6 +54,9 @@ export function useGrades(classId: number) {
 
   const refresh = () => loadGrades(true);
 
+  // Memoize refresh so its reference is stable across renders
+  const memoizedRefresh = useCallback(() => loadGrades(true), [loadGrades]);
+
   // Helper pour mettre à jour une note localement et dans la BDD
   const updateGrade = async (studentId: number, subjectId: number, period: string, value: number | null) => {
     try {
@@ -97,5 +100,5 @@ export function useGrades(classId: number) {
     }
   };
 
-  return { grades, gradesMap, loading, refresh, updateGrade };
+  return { grades, gradesMap, loading, refresh: memoizedRefresh, updateGrade };
 }

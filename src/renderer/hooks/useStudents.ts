@@ -51,6 +51,9 @@ export function useStudents(classId: number) {
    */
   const refresh = () => loadStudents(true);
 
+  // Memoize refresh so its reference is stable across renders
+  const memoizedRefresh = useCallback(() => loadStudents(true), [loadStudents]);
+
   /**
    * Wrapper autour de studentService.importStudents avec gestion du cache.
    * 
@@ -103,6 +106,9 @@ export function useStudents(classId: number) {
     // RAFRAÎCHISSEMENT DE LA LISTE :
     // On recharge immédiatement la liste pour montrer les nouveaux élèves
     // Cela améliore l'expérience utilisateur (feedback immédiat)
+    // Notify other components that students changed
+    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
+
     await loadStudents(true);
   };
 
@@ -135,6 +141,7 @@ export function useStudents(classId: number) {
     // RAFRAÎCHISSEMENT IMMÉDIAT :
     // On recharge la liste pour montrer le nouvel élève
     // Cela donne un feedback visuel immédiat à l'utilisateur
+    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
     await loadStudents(true);
   };
 
@@ -155,6 +162,7 @@ export function useStudents(classId: number) {
     cache.invalidate(cacheKey);
 
     // RAFRAÎCHISSEMENT IMMÉDIAT :
+    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
     await loadStudents(true);
   };
 
@@ -170,6 +178,6 @@ export function useStudents(classId: number) {
     students,           // État : liste des élèves
     loading,            // État : chargement en cours
     error,              // État : erreur éventuelle
-    refresh             // Fonction : forcer le rechargement manuel si besoin
+    refresh: memoizedRefresh,             // Fonction : forcer le rechargement manuel si besoin
   };
 }

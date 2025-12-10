@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { domainService, Domain } from '../services/domainService';
 import { useToast } from '../context/ToastContext';
@@ -30,6 +30,13 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const toast = useToast();
+  // 1) État local pour refléter instantanément les changements
+const [localSubjects, setLocalSubjects] = useState<Subject[]>(subjects);
+
+useEffect(() => {
+  setLocalSubjects(subjects);
+}, [subjects]);
+
   
   // ÉTATS POUR LES MAXIMA
   const [maxPeriod, setMaxPeriod] = useState('10');
@@ -75,6 +82,41 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       console.error('Failed to load domains:', error);
     }
   };
+
+  // Ref pour le premier champ afin de forcer le focus (évite le cas où l'input devient non éditable jusqu'à switch de fenêtre)
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // Focus à l'ouverture et après changements de la liste de matières
+    const doFocus = () => {
+      try { nameInputRef.current?.focus(); } catch (e) { console.debug('focus failed', e); }
+    };
+
+    // focus immediately (next tick) and also after a short delay to survive re-renders
+    const t1 = setTimeout(doFocus, 0);
+    const t2 = setTimeout(doFocus, 50);
+
+    const handler = () => {
+      // When db:changed happens, schedule focus after re-render
+      const t3 = setTimeout(doFocus, 30);
+      setTimeout(() => clearTimeout(t3), 1000);
+    };
+
+    window.addEventListener('db:changed', handler as EventListener);
+    return () => {
+      window.removeEventListener('db:changed', handler as EventListener);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+
+  // Si la prop subjects change, forcer le focus après le re-render
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { nameInputRef.current?.focus(); } catch (e) { console.debug('focus failed', e); }
+    }, 20);
+    return () => clearTimeout(t);
+  }, [subjects]);
 
   const handleCreateDomain = async () => {
     if (!newDomainName.trim()) return;
@@ -123,7 +165,14 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       setMaxExam('20');
       setSelectedDomainId(null);
       
-      
+      // Notify other components that DB changed (subject added)
+      try {
+        console.debug('[AddSubjectModal] dispatch db:changed subjectAdded', { classId });
+        window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } }));
+      } catch (e) {
+        console.error('Failed to dispatch db:changed (subjectAdded)', e);
+      }
+
       onSuccess();
       toast.success('Matière ajoutée avec succès');
     } catch (error) {
@@ -139,6 +188,16 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
 
     try {
       await window.api.db.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
+      // 2) Mise à jour locale immédiate (anti-latence)
+setLocalSubjects(prev => prev.filter(s => s.id !== subjectId));
+
+      // Notify other components that DB changed (subject deleted)
+      try {
+        console.debug('[AddSubjectModal] dispatch db:changed subjectDeleted', { classId, subjectId });
+        window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } }));
+      } catch (e) {
+        console.error('Failed to dispatch db:changed (subjectDeleted)', e);
+      }
       onSuccess();
       toast.success('Matière supprimée');
     } catch (error) {
@@ -180,6 +239,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   </label>
                   <input
                     type="text"
+                    ref={nameInputRef}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"

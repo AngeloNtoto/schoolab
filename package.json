@@ -1,7 +1,7 @@
 {
   "name": "ecole",
   "productName": "Ecole",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "Ecole Est une application qui vous permet de gerer votre école de la bonne de maniere",
   "main": ".vite/build/main.js",
   "scripts": {

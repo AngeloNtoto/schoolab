@@ -167,6 +167,7 @@ export default function SetupWizard() {
       }
 
       navigate('/dashboard');
+      try { window.dispatchEvent(new CustomEvent('db:changed', { detail: {} })); } catch (e) { console.error('dispatch db:changed failed', e); }
     } catch (error) {
       console.error('Setup failed:', error);
       toast.error('Erreur lors de la configuration. Vérifiez la console.');

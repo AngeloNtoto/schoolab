@@ -27,6 +27,7 @@ export default function App() {
       const result = await window.api.db.query<{ value: string }>(
         "SELECT value FROM settings WHERE key = 'school_name' LIMIT 1"
       );
+      console.debug('[App] checkSetup result length=', result.length, result?.[0]);
       setIsSetupComplete(result.length > 0);
     } catch (error) {
       console.error('Failed to check setup:', error);
@@ -45,7 +46,12 @@ export default function App() {
           {showLoader && isSetupComplete === true && (
             <StartupLoader onComplete={handleLoaderComplete} />
           )}
-          <Routes>
+
+          {/* Wait until we know if setup is complete before rendering routes/redirects */}
+          {isSetupComplete === null ? (
+            <div className="min-h-screen flex items-center justify-center">Chargement…</div>
+          ) : (
+            <Routes>
             <Route path="/setup" element={<SetupWizard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/class/:id" element={<ClassDetails />} />
@@ -55,8 +61,9 @@ export default function App() {
             <Route path="/print-coupons/:classId" element={<ClassCoupons />} />
             <Route path="/print-bulletins/:classId" element={<ClassBulletins />} />
             <Route path="/network" element={<NetworkDashboard />} />
-            <Route path="/" element={<Navigate to={isSetupComplete ? "/dashboard" : "/setup"} replace />} />
-          </Routes>
+            <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
+            </Routes>
+          )}
         </ToastProvider>
       </CacheProvider>
     </HashRouter>

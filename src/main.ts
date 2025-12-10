@@ -26,15 +26,19 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+console.log("isPackaged:", app.isPackaged, "devUrl:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
 
   // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
-  }
+  const devUrl = MAIN_WINDOW_VITE_DEV_SERVER_URL;
+
+// ✅ Garde logique : en prod, on ignore toujours le devUrl
+if (!app.isPackaged && devUrl) {
+  mainWindow.loadURL(devUrl);
+} else {
+  mainWindow.loadFile(
+    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+  );
+}
 
   // Open the DevTools.
   if (!app.isPackaged) {
