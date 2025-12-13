@@ -393,12 +393,12 @@ setLocalSubjects(prev => prev.filter(s => s.id !== subjectId));
 
             {/* List */}
             <div>
-              <h3 className="font-semibold text-slate-800 mb-4">Matières existantes ({subjects.length})</h3>
+              <h3 className="font-semibold text-slate-800 mb-4">Matières existantes ({localSubjects.length})</h3>
               <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                {subjects.length === 0 ? (
+                {localSubjects.length === 0 ? (
                   <p className="text-sm text-slate-500 italic">Aucune matière configurée.</p>
                 ) : (
-                  subjects.map(subject => {
+                  localSubjects.map(subject => {
                     const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
                     return (
                       <div key={subject.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-300 transition-colors group">

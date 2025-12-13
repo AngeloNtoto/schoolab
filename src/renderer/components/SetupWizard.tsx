@@ -105,6 +105,10 @@ export default function SetupWizard() {
       // Sync mode stays on step 0
     } else if (step === 1) {
       if (!schoolName || !schoolCity) return;
+      if (!schoolName.toLocaleLowerCase().match("mosala")){
+        toast.warning("Le nom de l'école doit contenir le mot 'mosala'", 10000);
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
       if (!yearName || !startDate || !endDate) return;

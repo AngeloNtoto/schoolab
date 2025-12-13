@@ -91,7 +91,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     
     if (!academicYearId) {
       console.error('No academic year ID found!');
-      alert("Erreur: Année académique non trouvée");
+      toast.error("Erreur: Année académique non trouvée");
       return;
     }
 
