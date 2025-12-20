@@ -140,7 +140,7 @@ export default function SetupWizard() {
               <GraduationCap size={40} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Bienvenue sur EcoleGest</h1>
+              <h1 className="text-3xl font-bold">Bienvenue sur Ecole</h1>
               <p className="text-blue-100 mt-1">Assistant de configuration initiale - Configuration de votre établissement</p>
             </div>
           </div>

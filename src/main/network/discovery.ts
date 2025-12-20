@@ -1,14 +1,16 @@
 import { Bonjour } from 'bonjour-service';
 import { BrowserWindow } from 'electron';
-import os from 'os';
 
 const bonjour = new Bonjour();
 let service: any = null;
 let browser: any = null;
 
+/**
+ * Démarre la découverte automatique sur le réseau local
+ */
 export function startDiscovery(name: string, port: number) {
-  // 1. Publish our service
-  console.log(`Publishing service: ${name} on port ${port}`);
+  // 1. Publier notre propre service
+  console.log(`Publication du service : ${name} sur le port ${port}`);
   service = bonjour.publish({
     name: name,
     type: 'ecole-sync',
@@ -16,24 +18,27 @@ export function startDiscovery(name: string, port: number) {
     txt: { version: '1.0.0' }
   });
 
-  // 2. Browse for other services
+  // 2. Rechercher d'autres services sur le réseau
   browser = bonjour.find({ type: 'ecole-sync' });
   
   browser.on('up', (service: any) => {
-    console.log('Found peer:', service.name);
+    console.log('Pair trouvé :', service.name);
     broadcastPeers();
   });
 
   browser.on('down', (service: any) => {
-    console.log('Peer lost:', service.name);
+    console.log('Pair déconnecté :', service.name);
     broadcastPeers();
   });
 }
 
+/**
+ * Diffuse la liste des pairs trouvés à tous les processus renderer
+ */
 function broadcastPeers() {
   const peers = browser.services.map((s: any) => ({
     name: s.name,
-    ip: s.referer.address, // Note: might need better IP resolution
+    ip: s.referer.address, // Note : peut nécessiter une meilleure résolution d'IP si complexe
     port: s.port,
     hostname: s.host
   }));
@@ -43,6 +48,9 @@ function broadcastPeers() {
   });
 }
 
+/**
+ * Arrête le service de découverte
+ */
 export function stopDiscovery() {
   if (service) {
     service.stop();
@@ -54,6 +62,9 @@ export function stopDiscovery() {
   }
 }
 
+/**
+ * Récupère la liste actuelle des pairs
+ */
 export function getPeers() {
   if (!browser) return [];
   return browser.services.map((s: any) => ({
@@ -63,3 +74,4 @@ export function getPeers() {
     hostname: s.host
   }));
 }
+

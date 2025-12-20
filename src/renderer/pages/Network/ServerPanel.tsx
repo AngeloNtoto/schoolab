@@ -30,7 +30,7 @@ export default function ServerPanel() {
       <div className="mb-8">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <Monitor size={24} className="text-blue-600" />
-          Serveur Web EcoleGest
+          Serveur Web Ecole
         </h2>
         <p className="text-slate-500 mt-1">Transformez ce PC en serveur pour permettre aux autres de saisir les points.</p>
       </div>

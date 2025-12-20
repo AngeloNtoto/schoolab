@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer } from 'lucide-react';
-import ProfessionalLoader from './ProfessionalLoader';
 import * as XLSX from 'xlsx';
 
 // Services & Hooks
@@ -10,7 +9,7 @@ import { useStudents } from '../hooks/useStudents';
 import { useGrades } from '../hooks/useGrades';
 import { Student } from '../services/studentService';
 
-// Components
+// Composants
 import AddStudentModal from './AddStudentModal';
 import AddSubjectModal from './AddSubjectModal';
 
@@ -42,19 +41,7 @@ export default function ClassDetails() {
 
   const { gradesMap, loading: gradesLoading, updateGrade } = useGrades(Number(id));
   
-  // UTILISATION DU HOOK useStudents :
-  // Ce hook gère tout l'état et les opérations liées aux élèves de cette classe
-  // Il expose plusieurs fonctions et états :
-  // - students : la liste des élèves (avec cache pour optimisation)
-  // - loading : indicateur de chargement
-  // - addStudent : fonction pour ajouter UN élève manuellement
-  // - deleteStudent : fonction pour supprimer un élève
-  // - importStudents : fonction pour importer PLUSIEURS élèves depuis Excel
-  //
-  // PRINCIPE DE MODULARITÉ :
-  // Le composant ne connaît PAS les détails de l'implémentation
-  // Il appelle simplement les fonctions exposées par le hook
-  // Le hook orchestre entre le service et le composant
+  // Utilisation du hook useStudents pour gérer les élèves
   const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents } = useStudents(Number(id));
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
@@ -62,11 +49,12 @@ export default function ClassDetails() {
 
   const loading = classLoading || gradesLoading || studentsLoading;
 
-  // Optimized getGrade using Map (O(1))
+  // Récupération optimisée d'une note via la Map (O(1))
   const getGrade = (studentId: number, subjectId: number, period: string) => {
     return gradesMap.get(`${studentId}-${subjectId}-${period}`) ?? null;
   };
 
+  // Calcul du total semestriel
   const calculateSemesterTotal = (studentId: number, subjectId: number, semester: 1 | 2) => {
     if (semester === 1) {
       const p1 = getGrade(studentId, subjectId, 'P1');
@@ -99,7 +87,7 @@ export default function ClassDetails() {
 
     const workbook = XLSX.utils.book_new();
     
-    // Prepare data for export
+    // Préparation des données pour l'exportation
     const data = students.map(student => {
       const row: any = {
         'Nom': student.last_name,
@@ -146,15 +134,11 @@ export default function ClassDetails() {
     }
   };
 
-  if (loading) {
-    return <ProfessionalLoader message="Chargement de la classe..." subMessage="Récupération des élèves et des notes" />;
-  }
-
   if (!classInfo) return <div className="p-8 text-center text-slate-500">Aucune classe trouvée.</div>;
 
   return (
     <div className="flex flex-col h-screen bg-slate-50">
-      {/* Header */}
+      {/* En-tête */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
         <div className="flex items-center gap-4">
           <button 
@@ -220,11 +204,11 @@ export default function ClassDetails() {
         </div>
       </div>
 
-      {/* Main Content - Scrollable Grid */}
+      {/* Contenu Principal - Grille scrollable */}
       <div className="flex-1 overflow-auto relative">
         <table className="w-full border-collapse min-w-max">
           <thead className="sticky top-0 z-20 shadow-sm">
-            {/* Main Header Row */}
+            {/* Ligne d'en-tête principale */}
             <tr className="bg-slate-100 border-b border-slate-300">
               <th className="sticky left-0 z-30 bg-slate-100 px-4 py-3 text-left font-bold text-slate-700 border-r-2 border-slate-300 min-w-[200px]">
                 Élèves
@@ -240,7 +224,7 @@ export default function ClassDetails() {
               ))}
             </tr>
 
-            {/* Sub Header Row with Maxima */}
+            {/* Ligne de sous-en-tête avec les Maxima */}
             <tr className="border-b-2 border-slate-300 bg-slate-50">
               <th className="sticky left-0 z-30 bg-slate-50 border-r-2 border-slate-300"></th>
               {subjects.map(subject => {
@@ -271,7 +255,7 @@ export default function ClassDetails() {
                     </span>
                   </th>
                   
-                  {/* Sem1 */}
+                  {/* Semestre 1 */}
                   <th className="px-2 py-2 text-xs font-semibold text-blue-700 border-r-2 border-slate-400 bg-blue-100">
                     Sem1<br/><span className="text-[10px] text-slate-400">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
                   </th>
@@ -297,7 +281,7 @@ export default function ClassDetails() {
                     </span>
                   </th>
                   
-                  {/* Sem2 */}
+                  {/* Semestre 2 */}
                   <th className="px-2 py-2 text-xs font-semibold text-green-700 border-r-2 border-slate-400 bg-green-100">
                     Sem2<br/><span className="text-[10px] text-slate-400">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
                   </th>
@@ -391,27 +375,7 @@ export default function ClassDetails() {
       </div>
 
       {/* Add Student Modal */}
-      {/* 
-        MODAL D'AJOUT D'ÉLÈVE :
-        Ce modal permet deux modes d'ajout :
-        1. Manuel : formulaire pour ajouter UN élève
-        2. Import : upload Excel pour ajouter PLUSIEURS élèves
-        
-        PROPS PASSÉES AU MODAL :
-        - isOpen : contrôle l'affichage du modal (état local du composant)
-        - onClose : callback pour fermer le modal
-        - onAdd : fonction pour ajouter un élève manuellement (vient du hook useStudents)
-        - onImport : fonction pour importer plusieurs élèves (vient du hook useStudents)
-        - classId : ID de la classe courante (CRUCIAL pour associer les élèves à la bonne classe)
-        
-        FLUX DE DONNÉES :
-        Component (ClassDetails) → Hook (useStudents) → Service (studentService) → Database
-        
-        POURQUOI classId EST IMPORTANT :
-        - Chaque élève DOIT être lié à une classe (contrainte de la BDD)
-        - Le modal ne connaît pas la classe, c'est le composant parent qui la connaît
-        - On passe donc classId comme prop pour que le modal puisse créer les élèves correctement
-      */}
+      {/* Modal d'ajout d'élève */}
       {isAddModalOpen && (
         <AddStudentModal 
           isOpen={isAddModalOpen}
@@ -480,15 +444,8 @@ export default function ClassDetails() {
   );
 }
 
-// Grade Cell Component
 /**
- * COMPOSANT DE CELLULE DE NOTE
- * 
- * Permet l'édition inline des notes avec double-clic.
- * 
- * NOUVEAUTÉ : Support du mode désactivé pour les cellules d'examen
- * - Quand disabled=true : cellule grisée,  non éditable, affiche "N/A"
- * - Utilisé pour les cours à 100 points (pas d'examen)
+ * Composant de cellule de note avec édition inline
  */
 function GradeCell({ value, isExam = false, disabled = false, onChange }: { 
   value: number | null; 

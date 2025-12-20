@@ -4,7 +4,6 @@ import { defineConfig } from 'vite';
 export default defineConfig((env) => {
   const forgeEnv = env as ConfigEnv<'build'>;
   const { root, mode, forgeConfigSelf } = forgeEnv;
-  const name = forgeConfigSelf.name ?? '';
 
   return {
     root,

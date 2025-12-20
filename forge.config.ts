@@ -27,9 +27,6 @@ const config: ForgeConfig = {
     executableName:"ecole",
     ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
-  rebuildConfig: {
-    force: true,
-  },
   makers: [
     new MakerSquirrel({
     setupExe: pkg.productName+'-setup-'+APP_VERSION+'.exe',

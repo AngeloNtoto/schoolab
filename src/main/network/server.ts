@@ -1,21 +1,24 @@
 import express from 'express';
-import { Server } from 'http';
+import { Server } from 'node:http';
 import { saveTransfer } from './staging';
 import { TransferPayload } from './types';
 import { BrowserWindow } from 'electron';
-
 import Database from 'better-sqlite3';
-import path from 'path';
+import path from 'node:path';
+import fs from 'node:fs';
 
 let server: Server | null = null;
 let currentPort = 0;
 
+/**
+ * Démarre le serveur Express pour l'API et l'interface Web
+ */
 export function startServer(db: Database.Database): Promise<number> {
   return new Promise((resolve, reject) => {
     const app = express();
     app.use(express.json({ limit: '50mb' }));
 
-    // Request Logger
+    // Journalisation des requêtes (Logger)
     app.use((req, res, next) => {
       console.log(`[NETWORK] ${new Date().toISOString()} ${req.method} ${req.url}`);
       next();
@@ -23,9 +26,8 @@ export function startServer(db: Database.Database): Promise<number> {
 
     const { app: electronApp } = require('electron');
     const isDev = !electronApp.isPackaged;
-    const fs = require('fs');
 
-    // SSE Clients
+    // Clients SSE (Server-Sent Events) pour les mises à jour en temps réel
     const clients: any[] = [];
     app.get('/api/events', (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -42,18 +44,18 @@ export function startServer(db: Database.Database): Promise<number> {
       });
     });
 
-    const broadcast = (event: string, data: any) => {
-      const payload = `data: ${JSON.stringify({ event, data })}\n\n`;
+    const broadcast = (event: string, data: any, senderId?: string) => {
+      const payload = `data: ${JSON.stringify({ event, data, senderId })}\n\n`;
       clients.forEach(c => {
         try {
           c.res.write(payload);
         } catch (e) {
-          console.error('[NETWORK] Failed to write to SSE client', e);
+          console.error('[RÉSEAU] Échec de l\'écriture vers le client SSE', e);
         }
       });
     };
     
-    // Integration Vite (HMR)
+    // Intégration Vite pour le développement (HMR)
     if (isDev) {
       try {
         const { createServer } = require('vite');
@@ -71,7 +73,7 @@ export function startServer(db: Database.Database): Promise<number> {
       }
     }
     
-    // Attempt to find web-UI files in multiple locations
+    // Tentative de localisation des fichiers de l'interface Web
     const possiblePaths = [
       path.join(electronApp.getAppPath(), 'dist-web'),
       path.join(process.cwd(), 'dist-web'),
@@ -81,7 +83,7 @@ export function startServer(db: Database.Database): Promise<number> {
     let staticPath = '';
     for (const p of possiblePaths) {
       if (fs.existsSync(p)) {
-        console.log('[NETWORK] Serving Web-UI from:', p);
+        console.log('[RÉSEAU] Service de l\'UI Web depuis :', p);
         app.use(express.static(p));
         staticPath = p;
         break;
@@ -89,10 +91,10 @@ export function startServer(db: Database.Database): Promise<number> {
     }
 
     if (!staticPath) {
-      console.error('[NETWORK] Web-UI static files NOT FOUND! Searched in:', possiblePaths);
+      console.error('[RÉSEAU] Fichiers statiques de l\'UI Web INTROUVABLES ! Chemins testés :', possiblePaths);
     }
 
-    // API: Classes
+    // API : Récupérer les classes
     app.get('/api/classes', (req, res) => {
       try {
         const classes = db.prepare('SELECT * FROM classes ORDER BY level, section').all();
@@ -102,7 +104,7 @@ export function startServer(db: Database.Database): Promise<number> {
       }
     });
 
-    // API: Full Class Data (Students, Subjects, Grades)
+    // API : Récupérer toutes les données d'une classe (Élèves, Matières, Notes)
     app.get('/api/classes/:id/full', (req, res) => {
       try {
         const classId = req.params.id;
@@ -120,14 +122,14 @@ export function startServer(db: Database.Database): Promise<number> {
       }
     });
 
-    // API: Batch Save Grades
+    // API : Enregistrement par lot des notes
     app.post('/api/grades/batch', (req, res) => {
       try {
-        const { updates } = req.body; // Array of { student_id, subject_id, period, value }
-        console.log(`[NETWORK] Received ${updates?.length || 0} grade updates`);
+        const { updates, senderId } = req.body;
+        console.log(`[RÉSEAU] Reçu ${updates?.length || 0} mises à jour de notes de ${senderId || 'inconnu'}`);
         
         if (!updates || !Array.isArray(updates)) {
-          return res.status(400).json({ success: false, error: 'Valid updates array required' });
+          return res.status(400).json({ success: false, error: 'Tableau de mises à jour valide requis' });
         }
 
         const upsert = db.prepare(`
@@ -138,37 +140,37 @@ export function startServer(db: Database.Database): Promise<number> {
 
         const transaction = db.transaction((data) => {
           for (const item of data) {
-            console.log(`[DB] Upserting grade: student=${item.student_id}, subject=${item.subject_id}, period=${item.period}, value=${item.value}`);
             upsert.run(item.student_id, item.subject_id, item.period, item.value);
           }
         });
 
         transaction(updates);
-        console.log('[NETWORK] Batch grade update successful');
+        console.log('[RÉSEAU] Mise à jour par lot réussie');
 
-        // Notify renderer
+        // Notification au processus renderer d'Electron
         BrowserWindow.getAllWindows().forEach(win => {
-          win.webContents.send('db:changed', { type: 'grades_batch' });
+          win.webContents.send('db:changed', { type: 'grades_batch', senderId });
         });
 
-        // Notify Web-UI
-        broadcast('db:changed', { type: 'grades_batch' });
+        // Notification à l'interface Web (SSE)
+        broadcast('db:changed', { type: 'grades_batch' }, senderId);
 
         res.json({ success: true });
       } catch (err: any) {
-        console.error('[NETWORK] Batch update error:', err);
+        console.error('[RÉSEAU] Erreur de mise à jour par lot :', err);
         res.status(500).json({ success: false, error: err.message });
       }
     });
 
+    // API : Réception d'un transfert de fichier
     app.post('/api/transfer', (req, res) => {
       try {
         const payload: TransferPayload = req.body;
-        console.log('[NETWORK] Received transfer from:', payload.sender);
+        console.log('[RÉSEAU] Transfert reçu de :', payload.sender);
         
         const filename = saveTransfer(payload);
         
-        // Notify renderer
+        // Notification au renderer
         BrowserWindow.getAllWindows().forEach(win => {
           win.webContents.send('network:transfer-received', { filename, sender: payload.sender });
         });
@@ -180,37 +182,40 @@ export function startServer(db: Database.Database): Promise<number> {
       }
     });
 
-    // SPA Catch-all (using regex for compatibility with all Express versions)
+    // Gestion du routage SPA (Single Page Application)
     app.get(/^\/(?!api).*/, (req, res) => {
       if (staticPath) {
         const indexPath = path.resolve(path.join(staticPath, 'index.html'));
         if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
         } else {
-          res.status(404).send(`index.html not found in ${staticPath}`);
+          res.status(404).send(`index.html introuvable dans ${staticPath}`);
         }
       } else {
-        res.status(404).send('Web-UI not configured (no static folder found). Searched in: ' + possiblePaths.join(', '));
+        res.status(404).send('UI Web non configurée (aucun dossier statique trouvé).');
       }
     });
 
-    // Listen on port 0 (random available port)
+    // Écoute sur un port aléatoire disponible (port 0)
     server = app.listen(0, '0.0.0.0', () => {
       const addr = server?.address();
       if (addr && typeof addr !== 'string') {
         currentPort = addr.port;
         console.log('==============================================');
-        console.log(`[NETWORK] SERVER STARTED ON PORT: ${currentPort}`);
-        console.log(`[NETWORK] SERVING WEB-UI FROM: ${staticPath || 'NOT FOUND'}`);
+        console.log(`[RÉSEAU] SERVEUR DÉMARRÉ SUR LE PORT : ${currentPort}`);
+        console.log(`[RÉSEAU] SERVICE DE L'UI WEB DEPUIS : ${staticPath || 'NON TROUVÉ'}`);
         console.log('==============================================');
         resolve(currentPort);
       } else {
-        reject(new Error('Failed to get server port'));
+        reject(new Error('Échec de la récupération du port du serveur'));
       }
     });
   });
 }
 
+/**
+ * Arrête le serveur
+ */
 export function stopServer() {
   if (server) {
     server.close();
@@ -218,6 +223,10 @@ export function stopServer() {
   }
 }
 
+/**
+ * Récupère le port actuel du serveur
+ */
 export function getServerPort(): number {
   return currentPort;
 }
+

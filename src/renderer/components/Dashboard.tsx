@@ -41,7 +41,7 @@ export default function Dashboard() {
       ]);
 
       setClasses(classesData);
-      setSchoolName(schoolData[0]?.value || 'EcoleGest');
+      setSchoolName(schoolData[0]?.value || 'Ecole');
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       toast.error('Erreur lors du chargement du tableau de bord.');
@@ -195,7 +195,7 @@ export default function Dashboard() {
         pageId="dashboard"
         steps={[
           {
-            title: "Bienvenue sur EcoleGest !",
+            title: "Bienvenue sur Ecole !",
             content: "Votre tableau de bord affiche toutes vos classes.\n\nVous êtes au cœur de votre système de gestion scolaire. Ici, vous avez une vue d'ensemble de toutes les classes que vous gérez."
           },
           {

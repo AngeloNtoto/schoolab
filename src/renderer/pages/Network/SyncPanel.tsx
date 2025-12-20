@@ -58,7 +58,7 @@ export default function SyncPanel() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Clonage de données</h2>
-          <p className="text-sm text-slate-500">Récupérez toutes les données d'un autre ordinateur EcoleGest sur votre réseau.</p>
+          <p className="text-sm text-slate-500">Récupérez toutes les données d'un autre ordinateur Ecole sur votre réseau.</p>
         </div>
         <button onClick={loadPeers} className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1 font-medium bg-blue-50 px-3 py-1 rounded-full">
           <Wifi size={14} /> Actualiser les machines

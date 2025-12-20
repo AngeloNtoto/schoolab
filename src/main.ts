@@ -1,23 +1,22 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
+import os from 'node:os';
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (process.platform=="win32") {
-try{
-  //eslint-disable-next-line
-  const started = require("electron-squirrel-startup");
-
-if (started) {
-  app.quit();
-}
-}
-catch(e){
-  //si erreur on ignore
-}
+// Gère la création/suppression des raccourcis sur Windows lors de l'installation/désinstallation.
+if (process.platform === "win32") {
+  try {
+    // eslint-disable-next-line
+    const started = require("electron-squirrel-startup");
+    if (started) {
+      app.quit();
+    }
+  } catch (e) {
+    // Si une erreur survient, on ignore
+  }
 }
 
 const createWindow = () => {
-  // Create the browser window.
+  // Création de la fenêtre du navigateur.
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -26,42 +25,38 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
-  
-  mainWindow.setMenuBarVisibility(false);
-console.log("isPackaged:", app.isPackaged, "devUrl:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
 
-  // and load the index.html of the app.
+  mainWindow.setMenuBarVisibility(false);
+  console.log("isPackaged:", app.isPackaged, "devUrl:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
+
+  // Chargement de l'URL de développement ou du fichier index.html.
   const devUrl = MAIN_WINDOW_VITE_DEV_SERVER_URL;
 
-// ✅ Garde logique : en prod, on ignore toujours le devUrl
-if (!app.isPackaged && devUrl) {
-  mainWindow.loadURL(devUrl);
-} else {
-  mainWindow.loadFile(
-    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-  );
-}
+  // En production, on ignore toujours le devUrl
+  if (!app.isPackaged && devUrl) {
+    mainWindow.loadURL(devUrl);
+  } else {
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+    );
+  }
 
-  // Open the DevTools.
+  // Ouvre les outils de développement en mode non-packagé.
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools();
   }
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// Cette méthode sera appelée quand Electron aura fini l'initialisation.
 import { getDb } from './db';
 import { startServer, stopServer, getServerPort } from './main/network/server';
 import { startDiscovery, stopDiscovery, getPeers } from './main/network/discovery';
 import { listPendingTransfers, getTransferContent, deleteTransfer } from './main/network/staging';
 
-// ...
-
 app.on('ready', () => {
   const db = getDb();
 
-  // IPC DB
+  // IPC pour la Base de Données
   ipcMain.handle('db:query', (_event, sql, params) => {
     const stmt = db.prepare(sql);
     return stmt.all(params || []);
@@ -72,7 +67,7 @@ app.on('ready', () => {
     return stmt.run(params || []);
   });
 
-  // NETWORK
+  // Services RÉSEAU
   const startNetwork = async () => {
     try {
       let machineName = db
@@ -88,7 +83,7 @@ app.on('ready', () => {
       const port = await startServer(db);
       startDiscovery(machineName.value, port);
     } catch (err) {
-      console.error('Failed to start network services:', err);
+      console.error('Erreur lors du démarrage des services réseau:', err);
     }
   };
 
@@ -96,7 +91,7 @@ app.on('ready', () => {
 
   ipcMain.handle('network:get-identity', () => {
     const res = db.prepare("SELECT value FROM settings WHERE key = 'machine_name'").get() as { value: string };
-    return res?.value || 'Unknown';
+    return res?.value || 'Inconnu';
   });
 
   ipcMain.handle('network:set-identity', (_event, name) => {
@@ -114,10 +109,27 @@ app.on('ready', () => {
     return true;
   });
 
+  // Récupère l'adresse IP locale sans dépendre du module 'ip' qui cause des erreurs une fois packagé
   ipcMain.handle('network:get-server-info', () => {
-    const ip = require('ip');
+    const interfaces = os.networkInterfaces();
+    let localIp = '127.0.0.1';
+
+    for (const name of Object.keys(interfaces)) {
+      const netInterface = interfaces[name];
+      if (netInterface) {
+        for (const iface of netInterface) {
+          // On cherche une adresse IPv4 qui n'est pas interne (loopback)
+          if (iface.family === 'IPv4' && !iface.internal) {
+            localIp = iface.address;
+            break;
+          }
+        }
+      }
+      if (localIp !== '127.0.0.1') break;
+    }
+
     return {
-      ip: ip.address(),
+      ip: localIp,
       port: getServerPort()
     };
   });
@@ -129,13 +141,20 @@ app.on('ready', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`Erreur HTTP ! statut: ${response.status}`);
     return await response.json();
   });
 
-  // Seulement après, la fenêtre
+  // Création de la fenêtre
   createWindow();
 });
+
+// Fermer le serveur lors de la fermeture de l'application
+app.on('will-quit', () => {
+  stopServer();
+  stopDiscovery();
+});
+
 
 
 // In this file you can include the rest of your app's specific main process
