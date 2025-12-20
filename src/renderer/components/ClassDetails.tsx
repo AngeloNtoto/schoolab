@@ -16,7 +16,6 @@ import AddSubjectModal from './AddSubjectModal';
 
 export default function ClassDetails() {
   const { id } = useParams<{ id: string }>();
-  const classId = id ? Number(id) : 0;
   const navigate = useNavigate();
   
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
@@ -25,12 +24,12 @@ export default function ClassDetails() {
 
   useEffect(() => {
     const loadClassData = async () => {
-      if (!classId) return;
+      if (!id) return;
       try {
-        const cData = await classService.getClassById(classId);
+        const cData = await classService.getClassById(Number(id));
         if (cData) setClassInfo(cData);
         
-        const sData = await classService.getSubjectsByClass(classId);
+        const sData = await classService.getSubjectsByClass(Number(id));
         setSubjects(sData);
       } catch (error) {
         console.error('Failed to load class data:', error);
@@ -41,7 +40,7 @@ export default function ClassDetails() {
     loadClassData();
   }, [id]);
 
-  const { gradesMap, loading: gradesLoading, updateGrade, refresh: refreshGrades } = useGrades(classId);
+  const { gradesMap, loading: gradesLoading, updateGrade } = useGrades(Number(id));
   
   // UTILISATION DU HOOK useStudents :
   // Ce hook gère tout l'état et les opérations liées aux élèves de cette classe
@@ -56,7 +55,7 @@ export default function ClassDetails() {
   // Le composant ne connaît PAS les détails de l'implémentation
   // Il appelle simplement les fonctions exposées par le hook
   // Le hook orchestre entre le service et le composant
-  const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents, refresh: refreshStudents } = useStudents(classId);
+  const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents } = useStudents(Number(id));
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
@@ -138,44 +137,6 @@ export default function ClassDetails() {
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
-
-  // Rafraîchir la vue lorsque la base de données change ailleurs (import réseau, suppression, etc.)
-  useEffect(() => {
-    const handler = async (ev: Event) => {
-      try {
-        const detail = (ev as CustomEvent<any>)?.detail;
-        console.debug('[ClassDetails] received db:changed', detail);
-        const incomingClassId = detail?.classId;
-
-        // If the event targets another class, ignore
-        if (incomingClassId && Number(incomingClassId) !== Number(id)) return;
-
-        const targetClassId = incomingClassId ? Number(incomingClassId) : Number(id);
-
-        // Si la modal d'ajout de matière est ouverte, ne pas recharger les sujets
-        // car cela provoque un re-render qui détruit le focus de l'input.
-        // Nous continuons toutefois à rafraîchir notes et élèves.
-        try { await refreshGrades(); } catch (e) { console.error('refreshGrades failed', e); }
-        try { await refreshStudents(); } catch (e) { console.error('refreshStudents failed', e); }
-
-        if (!isAddSubjectModalOpen) {
-          try {
-            const subs = await classService.getSubjectsByClass(targetClassId);
-            setSubjects(subs);
-          } catch (e) {
-            console.error('Failed to reload subjects on db:changed', e);
-          }
-        } else {
-          console.debug('[ClassDetails] skipping subjects reload because AddSubjectModal is open');
-        }
-      } catch (err) {
-        console.error('db:changed handler failed', err);
-      }
-    };
-
-    window.addEventListener('db:changed', handler as EventListener);
-    return () => window.removeEventListener('db:changed', handler as EventListener);
-  }, [id, refreshGrades, refreshStudents, isAddSubjectModalOpen]);
 
   const handleDeleteStudent = async () => {
     if (contextMenu) {
@@ -471,7 +432,7 @@ export default function ClassDetails() {
           onClose={() => setIsAddSubjectModalOpen(false)}
           onSuccess={() => {
             // Refresh subjects
-            classService.getSubjectsByClass(classId).then(setSubjects);
+            classService.getSubjectsByClass(Number(id)).then(setSubjects);
           }}
         />
       )}

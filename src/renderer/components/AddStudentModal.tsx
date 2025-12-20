@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, UserPlus, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { studentService, Student } from '../services/studentService';
+import { Student } from '../services/studentService';
 import { useToast } from '../context/ToastContext';
 
 /**
@@ -67,20 +67,6 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport, clas
   const [birthDate, setBirthDate] = useState('');
   const [birthplace, setBirthplace] = useState('');
   const [loading, setLoading] = useState(false);
-  const lastNameRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    // focus the first input when modal opens
-    const t = setTimeout(() => {
-      try { lastNameRef.current?.focus(); } catch (e) { console.debug('focus failed', e); }
-    }, 0);
-
-    const handler = () => {
-      try { lastNameRef.current?.focus(); } catch (e) { console.debug('focus failed', e); }
-    };
-    window.addEventListener('db:changed', handler as EventListener);
-    return () => { clearTimeout(t); window.removeEventListener('db:changed', handler as EventListener); };
-  }, []);
 
   /**
    * GESTION DE LA SOUMISSION MANUELLE DU FORMULAIRE
@@ -262,7 +248,6 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport, clas
                   </label>
                   <input
                     type="text"
-                    ref={lastNameRef}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"

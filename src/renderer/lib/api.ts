@@ -14,6 +14,7 @@ export interface Api {
     setIdentity: (name: string) => Promise<boolean>;
     onTransferReceived: (callback: (event: any, data: any) => void) => () => void;
     onPeersUpdated: (callback: (event: any, peers: any[]) => void) => () => void;
+    onDbChanged: (callback: (event: any, data: any) => void) => () => void;
   };
 }
 

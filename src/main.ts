@@ -26,6 +26,8 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+  
+  mainWindow.setMenuBarVisibility(false);
 console.log("isPackaged:", app.isPackaged, "devUrl:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
 
   // and load the index.html of the app.
@@ -83,7 +85,7 @@ app.on('ready', () => {
         machineName = { value: defaultName };
       }
 
-      const port = await startServer();
+      const port = await startServer(db);
       startDiscovery(machineName.value, port);
     } catch (err) {
       console.error('Failed to start network services:', err);
@@ -110,6 +112,14 @@ app.on('ready', () => {
   ipcMain.handle('network:reject-transfer', (_event, filename) => {
     deleteTransfer(filename);
     return true;
+  });
+
+  ipcMain.handle('network:get-server-info', () => {
+    const ip = require('ip');
+    return {
+      ip: ip.address(),
+      port: getServerPort()
+    };
   });
 
   ipcMain.handle('network:send-file', async (_event, peer, data) => {

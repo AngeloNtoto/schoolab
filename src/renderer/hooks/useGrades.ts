@@ -49,6 +49,18 @@ export function useGrades(classId: number) {
   useEffect(() => {
     if (classId) {
       loadGrades();
+
+      // Listen for database changes from other clients/processes
+      const unsubscribe = window.api.network.onDbChanged((_event: any, payload: any) => {
+        console.log('[SYNC] Database changed event received:', payload);
+        if (payload.type === 'grades_batch' || payload.type === 'grade_update') {
+          loadGrades(true); // Force refresh
+        }
+      });
+
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, [classId, loadGrades]);
 

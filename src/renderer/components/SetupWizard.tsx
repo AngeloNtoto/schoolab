@@ -7,15 +7,10 @@ import { useToast } from '../context/ToastContext';
 
 export default function SetupWizard() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0); // Start at step 0 (choice)
+  const [step, setStep] = useState(1); // Start directly at step 1
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'new' | 'sync' | null>(null);
+  const [mode, setMode] = useState<'new' | 'sync' | 'new'>('new');
   
-  // Network sync
-  const [peers, setPeers] = useState<any[]>([]);
-  const [selectedPeer, setSelectedPeer] = useState<any | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<string>('');
   const toast = useToast();
 
   // Step 1: School Info
@@ -49,63 +44,11 @@ export default function SetupWizard() {
     }
   }, [newClass.level]);
 
-  // Peer discovery for sync mode
-  useEffect(() => {
-    if (mode === 'sync') {
-      loadPeers();
-      const removeListener = window.api.network.onPeersUpdated((_event, updatedPeers) => {
-        setPeers(updatedPeers.filter((p: any) => p.name !== 'Ecole-' + Math.floor(Math.random() * 1000)));
-      });
-      return () => removeListener();
-    }
-  }, [mode]);
-
-  const loadPeers = async () => {
-    try {
-      const p = await window.api.network.getPeers();
-      setPeers(p || []);
-    } catch (e) {
-      console.error('Failed to load peers:', e);
-    }
-  };
-
-  const handleSyncFromPeer = async () => {
-    if (!selectedPeer) return;
-    
-    setSyncing(true);
-    setSyncStatus('Demande de synchronisation en cours...');
-    
-    try {
-      // Request full database export from peer
-      const response = await window.api.network.sendFile(selectedPeer, {
-        sender: await window.api.network.getIdentity(),
-        type: 'SYNC_REQUEST',
-        timestamp: Date.now(),
-        data: {},
-        description: 'Demande de synchronisation initiale'
-      });
-      
-      setSyncStatus('En attente de la réponse...');
-      setSyncStatus('En attente de la réponse...');
-      // The actual sync will happen when the host sends back data
-      // For now, redirect to dashboard and let the inbox handle it
-      toast.info('Demande envoyée ! Attendez que la machine hôte approuve le transfert, puis vérifiez votre boîte de réception.', 10000);
-      navigate('/network');
-    } catch (err: any) {
-      console.error('Sync failed:', err);
-      setSyncStatus('Erreur: ' + err.message);
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleNext = async () => {
-    if (step === 0) {
-      if (mode === 'new') setStep(1);
-      // Sync mode stays on step 0
-    } else if (step === 1) {
+    if (step === 1) {
       if (!schoolName || !schoolCity) return;
-      if (!schoolName.toLocaleLowerCase().match("mosala")){
+      if (!schoolName.toLocaleLowerCase().includes("mosala")){
         toast.warning("Le nom de l'école doit contenir le mot 'mosala'", 10000);
         return;
       }
@@ -226,110 +169,6 @@ export default function SetupWizard() {
 
         {/* Content */}
         <div className="p-8">
-          {/* Step 0: Mode Selection */}
-          {step === 0 && !mode && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800 text-center">Comment souhaitez-vous configurer EcoleGest ?</h2>
-              
-              <div className="grid grid-cols-2 gap-6">
-                {/* New School */}
-                <button
-                  onClick={() => { setMode('new'); setStep(1); }}
-                  className="p-8 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
-                >
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200">
-                    <Plus size={32} className="text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">Nouvelle configuration</h3>
-                  <p className="text-sm text-slate-500">Créer une nouvelle école avec vos propres classes et élèves</p>
-                </button>
-
-                {/* Sync from Network */}
-                <button
-                  onClick={() => setMode('sync')}
-                  className="p-8 border-2 border-slate-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all text-center group"
-                >
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200">
-                    <Download size={32} className="text-green-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800 mb-2">Synchroniser depuis le réseau</h3>
-                  <p className="text-sm text-slate-500">Charger les données depuis une autre machine sur le réseau</p>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 0: Sync Mode - Peer Selection */}
-          {step === 0 && mode === 'sync' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-800">Machines disponibles sur le réseau</h2>
-                <button onClick={loadPeers} className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1">
-                  <Wifi size={16} /> Actualiser
-                </button>
-              </div>
-              
-              {peers.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                  <Wifi size={48} className="mx-auto mb-2 opacity-50" />
-                  <p>Aucune autre machine détectée.</p>
-                  <p className="text-sm">Assurez-vous que l'autre ordinateur est sur le même réseau WiFi.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  {peers.map((peer, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedPeer(peer)}
-                      className={`p-4 rounded-xl border text-left transition-all ${
-                        selectedPeer === peer
-                          ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
-                          : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-slate-100 shadow-sm">
-                          <Wifi size={20} className={selectedPeer === peer ? 'text-green-600' : 'text-slate-400'} />
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-800">{peer.name}</div>
-                          <div className="text-xs text-slate-500 font-mono">{peer.ip}</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {syncStatus && (
-                <div className="bg-blue-50 text-blue-700 p-4 rounded-lg text-center">
-                  {syncing && <Loader2 size={18} className="animate-spin inline mr-2" />}
-                  {syncStatus}
-                </div>
-              )}
-
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => { setMode(null); setSelectedPeer(null); }}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-                >
-                  Retour
-                </button>
-                <button
-                  onClick={handleSyncFromPeer}
-                  disabled={!selectedPeer || syncing}
-                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-white ${
-                    !selectedPeer || syncing
-                      ? 'bg-slate-300 cursor-not-allowed'
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
-                >
-                  {syncing ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
-                  Demander la synchronisation
-                </button>
-              </div>
-            </div>
-          )}
 
           {step === 1 && (
             <div className="space-y-4">

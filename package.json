@@ -1,16 +1,20 @@
 {
   "name": "ecole",
   "productName": "Ecole",
-  "version": "0.0.6",
-  "description": "Ecole Est une application qui vous permet de gerer votre école de la bonne de maniere",
+  "version": "0.0.7",
+  "description": "Ecole Est la Première Application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
   "main": ".vite/build/main.js",
   "scripts": {
-    "dev": "electron-forge start",
+    "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make",
+    "make:win":"export npm_config_platform=win32 && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Windows Terminé Avec Succes\" && electron-forge make --platform=win32 --arch=x64",
+    "make:linux": "export npm_config_platform=linux && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Linux Terminé Avec Succes\" && electron-forge make --platform=linux --arch=x64",
+    "make":"export npm_config_platform=win32 && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Windows Terminé Avec Succes\" && electron-forge make --platform=win32 --arch=x64 export npm_config_platform=linux && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Linux Terminé Avec Succes\" && electron-forge make --platform=linux --arch=x64",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "rebuild": "electron-rebuild -f -w better-sqlite3"
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+     "build:web": "vite build src/web-ui",
+     "prestart": "pnpm run build:web"
   },
   "executableName": "ecole",
   "keywords": [],

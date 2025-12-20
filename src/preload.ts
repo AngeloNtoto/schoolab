@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('api', {
     rejectTransfer: (filename: string) => ipcRenderer.invoke('network:reject-transfer', filename),
     getIdentity: () => ipcRenderer.invoke('network:get-identity'),
     setIdentity: (name: string) => ipcRenderer.invoke('network:set-identity', name),
+    getServerInfo: () => ipcRenderer.invoke('network:get-server-info'),
     onTransferReceived: (callback: (event: any, data: any) => void) => {
       ipcRenderer.on('network:transfer-received', callback);
       return () => ipcRenderer.removeListener('network:transfer-received', callback);
@@ -22,5 +23,14 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('network:peers-updated', callback);
       return () => ipcRenderer.removeListener('network:peers-updated', callback);
     },
+    onDbChanged: (callback: (event: any, data: any) => void) => {
+      ipcRenderer.on('db:changed', callback);
+      return () => ipcRenderer.removeListener('db:changed', callback);
+    },
   },
+});
+
+// Bridge DB change events to window
+ipcRenderer.on('db:changed', (_event, data) => {
+  window.dispatchEvent(new CustomEvent('db:changed', { detail: data }));
 });
