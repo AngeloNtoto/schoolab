@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer, Search, ArrowUpDown, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Services & Hooks
@@ -20,6 +20,10 @@ export default function ClassDetails() {
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classLoading, setClassLoading] = useState(true);
+
+  // Search & Sort State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const loadClassData = async () => {
@@ -48,6 +52,31 @@ export default function ClassDetails() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
 
   const loading = classLoading || gradesLoading || studentsLoading;
+
+  // Filter & Sort Logic
+  const filteredAndSortedStudents = useMemo(() => {
+    let result = [...students];
+
+    // Filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.last_name.toLowerCase().includes(q) || 
+        s.first_name.toLowerCase().includes(q) || 
+        (s.post_name && s.post_name.toLowerCase().includes(q))
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      const nameA = `${a.last_name} ${a.first_name}`;
+      const nameB = `${b.last_name} ${b.first_name}`;
+      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
+
+    return result;
+  }, [students, searchQuery, sortOrder]);
+
 
   // Récupération optimisée d'une note via la Map (O(1))
   const getGrade = (studentId: number, subjectId: number, period: string) => {
@@ -138,71 +167,106 @@ export default function ClassDetails() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50">
-      {/* En-tête */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              {classInfo.level} {classInfo.option} {classInfo.section}
-            </h1>
-            <p className="text-slate-500 text-sm">
-              {students.length} élèves • {subjects.length} cours
-            </p>
-          </div>
+      {/* En-tête Unifié */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div className="px-6 py-4">
+           {/* Top Row: Navigation & Title */}
+           <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="p-2 hover:bg-slate-100 rounded-full text-slate-500 hover:text-blue-600 transition-colors"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    {classInfo.level} {classInfo.option} <span className="text-slate-400 font-light">|</span> {classInfo.section}
+                  </h1>
+                   <p className="text-slate-500 text-sm font-medium flex gap-3">
+                      <span className="flex items-center gap-1"><User size={14}/> {students.length} élèves</span>
+                      <span className="flex items-center gap-1"><BookOpen size={14}/> {subjects.length} cours</span>
+                  </p>
+                </div>
+               </div>
+
+                <div className="flex gap-2">
+                   <button 
+                    onClick={() => navigate(`/palmares/${id}`)}
+                    className="flex items-center gap-2 bg-purple-50 text-purple-700 hover:bg-purple-100 px-4 py-2 rounded-lg font-medium transition-colors border border-purple-200"
+                  >
+                    <Award size={18} />
+                    Palmarès
+                  </button>
+                  <button 
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-2 rounded-lg font-medium transition-colors border border-emerald-200"
+                  >
+                    <FileSpreadsheet size={18} />
+                    Excel
+                  </button>
+                   <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+                    <button 
+                        onClick={() => navigate(`/print-coupons/${id}`)}
+                        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-md transition-all"
+                        title="Imprimer tous les coupons"
+                    >
+                        <Printer size={18} />
+                    </button>
+                    <button 
+                        onClick={() => navigate(`/print-bulletins/${id}`)}
+                        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-md transition-all"
+                        title="Imprimer tous les bulletins"
+                    >
+                        <FileText size={18} />
+                    </button>
+                   </div>
+                </div>
+           </div>
+
+           {/* Bottom Row: Controls & Actions */}
+           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              {/* Search & Sort */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                 <div className="relative group w-full md:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Rechercher un élève..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none text-sm"
+                    />
+                 </div>
+                 <button 
+                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors border border-slate-200"
+                    title={sortOrder === 'asc' ? "Trier Z-A" : "Trier A-Z"}
+                 >
+                    <ArrowUpDown size={18} className={sortOrder === 'desc' ? 'transform rotate-180' : ''} />
+                 </button>
+              </div>
+
+              {/* Major Actions */}
+              <div className="flex gap-3 w-full md:w-auto justify-end">
+                <button 
+                  onClick={() => setIsAddSubjectModalOpen(true)}
+                  className="flex items-center gap-2 bg-white text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-300 font-medium shadow-sm text-sm"
+                >
+                  <BookOpen size={18} />
+                  Gérer les cours
+                </button>
+                <button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md font-bold text-sm"
+                >
+                  <Plus size={18} />
+                  Ajouter un élève
+                </button>
+              </div>
+           </div>
         </div>
-        
-        <div className="flex gap-3">
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <Plus size={18} />
-            Ajouter un élève
-          </button>
-          <button 
-            onClick={() => setIsAddSubjectModalOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            <BookOpen size={18} />
-            Ajouter une matière
-          </button>
-          <button 
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <FileSpreadsheet size={18} />
-            Exporter Excel
-          </button>
-          <button 
-            onClick={() => navigate(`/palmares/${id}`)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
-          >
-            <Award size={18} />
-            Palmarès
-          </button>
-          <div className="h-8 w-px bg-slate-300 mx-2"></div>
-          <button 
-            onClick={() => navigate(`/print-coupons/${id}`)}
-            className="flex items-center gap-2 bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-sm"
-            title="Imprimer tous les coupons"
-          >
-            <Printer size={18} />
-          </button>
-          <button 
-            onClick={() => navigate(`/print-bulletins/${id}`)}
-            className="flex items-center gap-2 bg-slate-700 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-sm"
-            title="Imprimer tous les bulletins"
-          >
-            <Printer size={18} />
-          </button>
-        </div>
-      </div>
+      </header>
 
       {/* Contenu Principal - Grille scrollable */}
       <div className="flex-1 overflow-auto relative">
@@ -211,7 +275,7 @@ export default function ClassDetails() {
             {/* Ligne d'en-tête principale */}
             <tr className="bg-slate-100 border-b border-slate-300">
               <th className="sticky left-0 z-30 bg-slate-100 px-4 py-3 text-left font-bold text-slate-700 border-r-2 border-slate-300 min-w-[200px]">
-                Élèves
+                Élèves ({filteredAndSortedStudents.length})
               </th>
               {subjects.map(subject => (
                 <th 
@@ -235,17 +299,17 @@ export default function ClassDetails() {
                 return (
                 <React.Fragment key={subject.id}>
                   {/* P1 - Toujours actif */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 min-w-[50px]">
                     P1<br/><span className="text-[10px] text-slate-400">/{subject.max_p1}</span>
                   </th>
                   
                   {/* P2 - Toujours actif */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 min-w-[50px]">
                     P2<br/><span className="text-[10px] text-slate-400">/{subject.max_p2}</span>
                   </th>
                   
                   {/* Ex1 - STYLING CONDITIONNEL si désactivé */}
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 ${
+                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 min-w-[50px] ${
                     hasExam1 
                       ? 'text-slate-600 bg-blue-50' 
                       : 'text-slate-400 bg-slate-100 opacity-60'  // Grisé si pas d'examen
@@ -256,22 +320,22 @@ export default function ClassDetails() {
                   </th>
                   
                   {/* Semestre 1 */}
-                  <th className="px-2 py-2 text-xs font-semibold text-blue-700 border-r-2 border-slate-400 bg-blue-100">
+                  <th className="px-2 py-2 text-xs font-semibold text-blue-700 border-r-2 border-slate-400 bg-blue-100 min-w-[60px]">
                     Sem1<br/><span className="text-[10px] text-slate-400">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
                   </th>
                   
                   {/* P3 - Toujours actif */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 min-w-[50px]">
                     P3<br/><span className="text-[10px] text-slate-400">/{subject.max_p3}</span>
                   </th>
                   
                   {/* P4 - Toujours actif */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200">
+                  <th className="px-2 py-2 text-xs font-medium text-slate-600 border-r border-slate-200 min-w-[50px]">
                     P4<br/><span className="text-[10px] text-slate-400">/{subject.max_p4}</span>
                   </th>
                   
                   {/* Ex2 - STYLING CONDITIONNEL si désactivé */}
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 ${
+                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 min-w-[50px] ${
                     hasExam2 
                       ? 'text-slate-600 bg-green-50' 
                       : 'text-slate-400 bg-slate-100 opacity-60'  // Grisé si pas d'examen
@@ -282,7 +346,7 @@ export default function ClassDetails() {
                   </th>
                   
                   {/* Semestre 2 */}
-                  <th className="px-2 py-2 text-xs font-semibold text-green-700 border-r-2 border-slate-400 bg-green-100">
+                  <th className="px-2 py-2 text-xs font-semibold text-green-700 border-r-2 border-slate-400 bg-green-100 min-w-[60px]">
                     Sem2<br/><span className="text-[10px] text-slate-400">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
                   </th>
                 </React.Fragment>
@@ -292,7 +356,7 @@ export default function ClassDetails() {
           </thead>
 
           <tbody>
-            {students.map((student, idx) => (
+            {filteredAndSortedStudents.map((student, idx) => (
               <tr 
                 key={student.id}
                 className={`border-b border-slate-200 hover:bg-slate-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}

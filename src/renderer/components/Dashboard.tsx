@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, Trash2, Edit, Wifi } from 'lucide-react';
+import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown } from 'lucide-react';
 import Tutorial from './Tutorial';
 import ContextMenu from './ContextMenu';
 import DeleteConfirmModal from './DeleteConfirmModal';
@@ -18,15 +18,28 @@ interface Class {
   academic_year_id?: number;
 }
 
+type ViewMode = 'grid' | 'list' | 'grouped_level' | 'grouped_option';
+type SortOption = 'name' | 'level' | 'option';
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<Class[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  // Filtering & Sorting State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortOption>('level');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Modals & Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; classId: number } | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
   const [editModal, setEditModal] = useState<Class | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
   const toast = useToast();
 
   useEffect(() => {
@@ -49,6 +62,61 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  // Filter and Sort Logic
+  const filteredAndSortedClasses = useMemo(() => {
+    let result = [...classes];
+
+    // Filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(c => 
+        c.name.toLowerCase().includes(q) || 
+        c.level.toLowerCase().includes(q) || 
+        c.option.toLowerCase().includes(q) ||
+        getClassDisplayName(c.level, c.option, c.section).toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = getClassDisplayName(a.level, a.option, a.section).localeCompare(getClassDisplayName(b.level, b.option, b.section));
+          break;
+        case 'level':
+          // Attempt to sort numerically if levels are numbers, otherwise alphabetically
+          const levelA = parseInt(a.level) || a.level;
+          const levelB = parseInt(b.level) || b.level;
+          if (typeof levelA === 'number' && typeof levelB === 'number') {
+            comparison = levelA - levelB;
+          } else {
+            comparison = String(levelA).localeCompare(String(levelB));
+          }
+          break;
+        case 'option':
+          comparison = a.option.localeCompare(b.option);
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [classes, searchQuery, sortBy, sortOrder]);
+
+  // Grouping Logic
+  const groupedClasses = useMemo(() => {
+    if (viewMode === 'grid' || viewMode === 'list') return null;
+
+    const groups: Record<string, Class[]> = {};
+    filteredAndSortedClasses.forEach(cls => {
+      const key = viewMode === 'grouped_level' ? cls.level : cls.option;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(cls);
+    });
+    return groups;
+  }, [filteredAndSortedClasses, viewMode]);
 
 
   const handleContextMenu = (e: React.MouseEvent, cls: Class) => {
@@ -99,95 +167,165 @@ export default function Dashboard() {
         }}
       />
 
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg relative">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                <GraduationCap size={32} className="text-white" />
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">
+          <div className="flex flex-col gap-6">
+            {/* Top Bar: Title & Primary Actions */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-600 p-3 rounded-xl shadow-md">
+                  <GraduationCap size={32} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{schoolName}</h1>
+                  <p className="text-slate-500 font-medium text-sm">Tableau de bord</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">{schoolName}</h1>
-                <p className="text-blue-100 font-medium">Tableau de bord</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => navigate('/network')}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 border border-slate-200"
+                >
+                  <Wifi size={18} />
+                  <span className="hidden sm:inline">Réseau</span>
+                </button>
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <Users size={18} />
+                  <span>Nouvelle Classe</span>
+                </button>
               </div>
             </div>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => navigate('/network')}
-                className="bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 backdrop-blur-sm border border-white/10"
-              >
-                <Wifi size={20} />
-                Réseau
-              </button>
-              <button 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-white text-blue-600 px-6 py-2.5 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-lg flex items-center gap-2"
-              >
-                <Users size={20} />
-                Nouvelle Classe
-              </button>
+
+            {/* Controls Bar: Search, Sort, View Options */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="relative w-full sm:w-96 group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="Rechercher une classe, une option..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-none rounded-xl text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+                {/* View Mode Dropdown */}
+                <div className="relative">
+                    <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Grille"
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Liste"
+                        >
+                            <List size={18} />
+                        </button>
+                        <div className="w-px bg-slate-300 mx-1 self-center h-4"></div>
+                         <button 
+                            onClick={() => setViewMode('grouped_level')}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_level' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Par Niveau
+                        </button>
+                         <button 
+                            onClick={() => setViewMode('grouped_option')}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_option' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Par Option
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                     <span className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">Trier</span>
+                     <select 
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortOption)}
+                        className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer"
+                     >
+                        <option value="level">Niveau</option>
+                        <option value="option">Option</option>
+                        <option value="name">Nom</option>
+                     </select>
+                     <button 
+                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                        className="ml-2 p-1.5 hover:bg-white rounded-md text-slate-500 hover:text-blue-600 transition-colors"
+                     >
+                         <ArrowUpDown size={14} className={sortOrder === 'desc' ? 'transform rotate-180' : ''} />
+                     </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {classes.map((cls) => (
-            <div 
-              key={cls.id}
-              onClick={() => navigate(`/class/${cls.id}`)}
-              onContextMenu={(e) => handleContextMenu(e, cls)}
-              className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditModal(cls);
-                  }}
-                  className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-blue-600 transition-colors"
-                >
-                  <Edit size={18} />
-                </button>
-              </div>
-
-              <div className="flex items-start justify-between mb-4">
-                <div className="bg-blue-50 p-3 rounded-xl group-hover:bg-blue-100 transition-colors">
-                  <Users className="text-blue-600" size={24} />
-                </div>
-                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                  {cls.academic_year_id ? '2025-2026' : 'N/A'}
-                </span>
-              </div>
-              
-              <h3 className="text-xl font-bold text-slate-800 mb-1">
-                {getClassDisplayName(cls.level, cls.option, cls.section)}
-              </h3>
-              <p className="text-slate-500 text-sm font-medium">
-                {cls.level} • {cls.option}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {classes.length === 0 && (
-          <div className="text-center py-20">
+        
+        {/* Empty State */}
+        {filteredAndSortedClasses.length === 0 ? (
+           <div className="text-center py-20">
             <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users size={40} className="text-slate-400" />
+              <Search size={40} className="text-slate-400" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Aucune classe</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Aucune classe trouvée</h3>
             <p className="text-slate-500 max-w-md mx-auto mb-8">
-              Commencez par créer votre première classe pour gérer vos élèves et leurs notes.
+               {classes.length === 0 
+                  ? "Commencez par créer votre première classe pour gérer vos élèves." 
+                  : "Aucune classe ne correspond à votre recherche. Essayez d'autres termes."}
             </p>
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg inline-flex items-center gap-2"
-            >
-              <Users size={20} />
-              Créer une classe
-            </button>
+            {classes.length === 0 && (
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg inline-flex items-center gap-2"
+              >
+                <Users size={20} />
+                Créer une classe
+              </button>
+            )}
           </div>
+        ) : (
+          /* Content Grid/List */
+          <>
+            {viewMode === 'grid' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredAndSortedClasses.map(cls => <ClassCard key={cls.id} cls={cls} navigate={navigate} onEdit={setEditModal} onContextMenu={handleContextMenu} />)}
+              </div>
+            )}
+
+            {viewMode === 'list' && (
+               <div className="space-y-3">
+                 {filteredAndSortedClasses.map(cls => <ClassListItem key={cls.id} cls={cls} navigate={navigate} onEdit={setEditModal} onContextMenu={handleContextMenu} />)}
+               </div>
+            )}
+
+            {(viewMode === 'grouped_level' || viewMode === 'grouped_option') && groupedClasses && (
+                <div className="space-y-10">
+                    {Object.entries(groupedClasses).map(([groupName, groupClasses]) => (
+                        <div key={groupName}>
+                            <h2 className="text-lg font-bold text-slate-700 mb-4 px-2 border-l-4 border-blue-500 flex items-center gap-2">
+                                {viewMode === 'grouped_level' ? `${groupName}` : groupName}
+                                <span className="bg-slate-200 text-slate-600 text-xs py-0.5 px-2 rounded-full">{groupClasses.length}</span>
+                            </h2>
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {groupClasses.map(cls => <ClassCard key={cls.id} cls={cls} navigate={navigate} onEdit={setEditModal} onContextMenu={handleContextMenu} />)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+          </>
         )}
       </main>
 
@@ -196,15 +334,15 @@ export default function Dashboard() {
         steps={[
           {
             title: "Bienvenue sur Ecole !",
-            content: "Votre tableau de bord affiche toutes vos classes.\n\nVous êtes au cœur de votre système de gestion scolaire. Ici, vous avez une vue d'ensemble de toutes les classes que vous gérez."
+            content: "Votre nouveau tableau de bord pro vous donne le contrôle total : recherchez, triez et organisez vos classes comme jamais auparavant."
+          },
+          {
+            title: "Modes d'affichage",
+            content: "En haut à droite, basculez entre la vue Grille, Liste, ou groupez vos classes par Niveau/Option pour une meilleure lisibilité."
           },
           {
             title: "Navigation facile",
-            content: "Cliquez simplement sur une carte de classe pour accéder :\n\n• À la liste des élèves\n• À la grille de notes\n• Aux rapports et bulletins\n• Au palmarès de la classe\n\nTout est centralisé dans une interface simple et intuitive."
-          },
-          {
-            title: "Prochaines étapes",
-            content: "Pour commencer :\n\n1️⃣ Cliquez sur une classe\n2️⃣ Ajoutez ou importez vos élèves\n3️⃣ Saisissez les notes dans la grille\n4️⃣ Générez les bulletins\n\nC'est aussi simple que ça !"
+            content: "Cliquez sur une classe pour gérer notes et bulletins. Utilisez le clic droit pour des actions rapides."
           }
         ]}
         onComplete={() => {}}
@@ -284,3 +422,108 @@ export default function Dashboard() {
     </div>
   );
 }
+
+// --- Subcomponents for Rendering ---
+
+function ClassCard({ cls, navigate, onEdit, onContextMenu }: { cls: Class, navigate: any, onEdit: any, onContextMenu: any }) {
+    return (
+        <div 
+          onClick={() => navigate(`/class/${cls.id}`)}
+          onContextMenu={(e) => onContextMenu(e, cls)}
+          className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer group relative overflow-hidden"
+        >
+          {/* Decorative Gradient Background on Hover */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-transparent opacity-0 group-hover:opacity-50 transition-opacity rounded-bl-full pointer-events-none"></div>
+
+          <div className="absolute top-2 right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(cls);
+              }}
+              className="p-2 hover:bg-white/80 rounded-full text-slate-400 hover:text-blue-600 transition-colors shadow-sm backdrop-blur-sm"
+              title="Modifier"
+            >
+              <Edit size={16} />
+            </button>
+          </div>
+
+          <div className="flex items-start justify-between mb-4 relative z-0">
+            <div className="bg-blue-50 p-3.5 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+              <Users size={24} className="group-hover:scale-110 transition-transform" />
+            </div>
+            {cls.academic_year_id && (
+                <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-slate-200">
+                2025-2026
+                </span>
+            )}
+          </div>
+          
+          <h3 className="text-xl font-bold text-slate-800 mb-1 group-hover:text-blue-700 transition-colors">
+            {getClassDisplayName(cls.level, cls.option, cls.section)}
+          </h3>
+          <p className="text-slate-500 text-sm font-medium flex gap-2">
+            <span>{cls.level}</span>
+            <span className="text-slate-300">•</span>
+            <span>{cls.option}</span>
+          </p>
+        </div>
+    );
+}
+
+function ClassListItem({ cls, navigate, onEdit, onContextMenu }: { cls: Class, navigate: any, onEdit: any, onContextMenu: any }) {
+    return (
+        <div 
+          onClick={() => navigate(`/class/${cls.id}`)}
+          onContextMenu={(e) => onContextMenu(e, cls)}
+          className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 hover:bg-blue-50/30 hover:border-blue-300 transition-all cursor-pointer flex items-center justify-between group"
+        >
+           <div className="flex items-center gap-4">
+               <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                  <Users size={20} />
+               </div>
+               <div>
+                    <h3 className="text-base font-bold text-slate-800">
+                        {getClassDisplayName(cls.level, cls.option, cls.section)}
+                    </h3>
+                    <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
+                         <span>{cls.level}</span>
+                         <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                         <span>{cls.option}</span>
+                    </div>
+               </div>
+           </div>
+
+           <div className="flex items-center gap-3">
+                {cls.academic_year_id && (
+                    <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-md">
+                    2025-2026
+                    </span>
+                )}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                         onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(cls);
+                        }}
+                        className="p-2 hover:bg-slate-200 rounded-lg text-slate-500 hover:text-blue-600 transition-colors"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button 
+                         className="p-2 ml-1 hover:bg-red-100 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                         onClick={(e) => {
+                             // Logic to trigger delete from list view if needed, or just context menu
+                             e.preventDefault();
+                             e.stopPropagation();
+                             onContextMenu(e, cls);
+                         }}
+                    >
+                         <Trash2 size={16} />
+                    </button>
+                </div>
+           </div>
+        </div>
+    );
+}
+

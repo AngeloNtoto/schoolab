@@ -67,11 +67,26 @@ export default function BulletinPrimaireContent({
       <div className="border-2 border-black mb-1">
         <div className="flex border-b border-black">
           {/* Flag */}
-          <div className="w-16 border-r border-black p-1 flex items-center justify-center">
-            <div className="w-full aspect-[4/3] bg-[#007a3d] relative overflow-hidden border border-black">
-              <div className="absolute inset-0 bg-sky-400" style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}></div>
-              <div className="absolute top-0.5 left-0.5 text-yellow-400 text-sm">★</div>
-              <div className="absolute bottom-0 right-0 w-full h-1.5 bg-red-600 transform -rotate-45 origin-bottom-right translate-y-1"></div>
+          <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+            <div 
+              className="w-full aspect-[4/3] relative overflow-hidden border border-black shadow-sm"
+              style={{
+                backgroundColor: '#007FFF',
+                backgroundImage: `linear-gradient(to top left, 
+                  transparent 0% 38%, 
+                  #FAD02E 38% 40%, 
+                  #CE1126 40% 60%, 
+                  #FAD02E 60% 62%, 
+                  transparent 62% 100%
+                )`
+              }}
+            >
+              <div 
+                className="absolute top-[0%] left-[8%] text-[#FAD02E] leading-none"
+                style={{ fontSize: '24px', filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.5))' }}
+              >
+                ★
+              </div>
             </div>
           </div>
           

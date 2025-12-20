@@ -1,7 +1,7 @@
 {
   "name": "ecole",
   "productName": "Ecole",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "description": "Ecole Est la Première Application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -16,11 +16,11 @@
      "build:web": "vite build src/web-ui",
      "prestart": "pnpm run build:web"
   },
-  "executableName": "ecole",
+  "executableName": "Ecole",
   "keywords": [],
   "author": {
-    "name": "angelo",
-    "email": "angelontoto7@gmail.com"
+    "name": "Angelo",
+    "email": "Angelontoto7@gmail.com"
   },
   "license": "MIT",
   "pnpm": {
