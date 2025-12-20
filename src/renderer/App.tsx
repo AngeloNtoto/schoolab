@@ -8,7 +8,6 @@ import Bulletin from './components/Bulletin';
 import Palmares from './components/Palmares';
 import ClassCoupons from './components/ClassCoupons';
 import ClassBulletins from './components/ClassBulletins';
-import StartupLoader from './components/StartupLoader';
 import NetworkDashboard from './pages/Network/NetworkDashboard';
 import { CacheProvider } from './context/CacheContext';
 import { ToastProvider } from './context/ToastContext';
@@ -43,10 +42,6 @@ export default function App() {
     <HashRouter>
       <CacheProvider>
         <ToastProvider>
-          {showLoader && isSetupComplete === true && (
-            <StartupLoader onComplete={handleLoaderComplete} />
-          )}
-
           {/* Wait until we know if setup is complete before rendering routes/redirects */}
           {isSetupComplete === null ? (
             <div className="min-h-screen flex items-center justify-center">Chargement…</div>
