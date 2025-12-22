@@ -44,7 +44,7 @@ class ClassService {
    */
   async getSubjectsByClass(classId: number): Promise<Subject[]> {
     return await dbService.query<Subject>(
-      'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC, name ASC',
+      'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at ASC, name ASC',
       [classId]
     );
   }

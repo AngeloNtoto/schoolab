@@ -87,7 +87,7 @@ export default function Palmares() {
       setStudents(studentData);
 
       const subjectData = await window.api.db.query<Subject>(
-        'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at DESC, name ASC',
+        'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at ASC, name ASC',
         [Number(classId)]
       );
       setSubjects(subjectData);

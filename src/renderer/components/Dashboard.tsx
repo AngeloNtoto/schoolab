@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown } from 'lucide-react';
-import Tutorial from './Tutorial';
+import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
+import { useTutorial } from '../context/TutorialContext';
 import ContextMenu from './ContextMenu';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import AddNoteModal from './AddNoteModal';
 import { classService, ClassData } from '../services/classService';
 import EditClassModal from './EditClassModal';
 import { useToast } from '../context/ToastContext';
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [totalStudents, setTotalStudents] = useState(0);
   
   // Filtering & Sorting State
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,22 +41,46 @@ export default function Dashboard() {
   const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
   const [editModal, setEditModal] = useState<Class | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [addNoteModal, setAddNoteModal] = useState<{ type: 'class' | 'student' | 'general', id?: number } | null>(null);
   
   const toast = useToast();
+  const tutorial = useTutorial();
 
   useEffect(() => {
     loadData();
+    // Show tutorial on first visit
+    tutorial.showTutorial('dashboard');
   }, []);
+
+  // Show tutorial for view-mode the first time user switches view modes
+  useEffect(() => {
+    if (viewMode) {
+      tutorial.showTutorial('dashboard.viewModes');
+    }
+  }, [viewMode]);
 
   const loadData = async () => {
     try {
-      const [classesData, schoolData] = await Promise.all([
-        window.api.db.query<Class>('SELECT * FROM classes ORDER BY level, section'),
+      // 1. Get active academic year
+      const activeYear = await window.api.db.query<{ id: number, name: string }>('SELECT id, name FROM academic_years WHERE is_active = 1 LIMIT 1');
+      const activeYearId = activeYear[0]?.id;
+
+      if (!activeYearId) {
+        toast.warning("Aucune année académique active. Veuillez en configurer une.");
+        setClasses([]); // Or show all? Better to show empty to prompt configuration.
+        setLoading(false);
+        return;
+      }
+
+      const [classesData, schoolData, studentCountData] = await Promise.all([
+        window.api.db.query<Class>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [activeYearId]),
         window.api.db.query<{ value: string }>("SELECT value FROM settings WHERE key = 'school_name'"),
+        window.api.db.query<{ count: number }>(`SELECT COUNT(*) as count FROM students WHERE class_id IN (SELECT id FROM classes WHERE academic_year_id = ?)`, [activeYearId]),
       ]);
 
       setClasses(classesData);
       setSchoolName(schoolData[0]?.value || 'Ecole');
+      setTotalStudents(studentCountData[0]?.count || 0);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       toast.error('Erreur lors du chargement du tableau de bord.');
@@ -156,7 +182,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative">
+    <div className="min-h-screen bg-white relative">
       <div 
         className="fixed inset-0 opacity-5 pointer-events-none"
         style={{
@@ -167,31 +193,31 @@ export default function Dashboard() {
         }}
       />
 
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 pt-6 pb-6">
-          <div className="flex flex-col gap-6">
+      <header className="bg-blue-600 text-white sticky top-0 z-30 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex flex-col gap-4">
             {/* Top Bar: Title & Primary Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-600 p-3 rounded-xl shadow-md">
+                <div className="bg-white/20 p-3 rounded-xl">
                   <GraduationCap size={32} className="text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{schoolName}</h1>
-                  <p className="text-slate-500 font-medium text-sm">Tableau de bord</p>
+                  <h1 className="text-2xl font-bold text-white tracking-tight">{schoolName}</h1>
+                  <p className="text-blue-100 font-medium text-sm">Tableau de bord</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button 
                   onClick={() => navigate('/network')}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 border border-slate-200"
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 border border-white/30"
                 >
                   <Wifi size={18} />
                   <span className="hidden sm:inline">Réseau</span>
                 </button>
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  className="bg-white text-blue-600 px-5 py-2.5 rounded-lg font-bold hover:bg-blue-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
                 >
                   <Users size={18} />
                   <span>Nouvelle Classe</span>
@@ -199,47 +225,95 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/30 p-2 rounded-lg text-white">
+                    <Users size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{totalStudents}</p>
+                    <p className="text-xs text-blue-100 font-medium">Élèves</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/30 p-2 rounded-lg text-white">
+                    <GraduationCap size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{classes.length}</p>
+                    <p className="text-xs text-blue-100 font-medium">Classes</p>
+                  </div>
+                </div>
+              </div>
+              <div className="hidden md:block bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/30 p-2 rounded-lg text-white">
+                    <Layers size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{[...new Set(classes.map(c => c.option))].length}</p>
+                    <p className="text-xs text-blue-100 font-medium">Options</p>
+                  </div>
+                </div>
+              </div>
+              <div className="hidden md:block bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/30 p-2 rounded-lg text-white">
+                    <ArrowUpDown size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-white">{[...new Set(classes.map(c => c.level))].length}</p>
+                    <p className="text-xs text-blue-100 font-medium">Niveaux</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Controls Bar: Search, Sort, View Options */}
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="relative w-full sm:w-96 group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-focus-within:text-white transition-colors" size={20} />
                 <input 
                   type="text" 
                   placeholder="Rechercher une classe, une option..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-none rounded-xl text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:ring-2 focus:ring-white/30 focus:bg-white/30 transition-all outline-none"
                 />
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
                 {/* View Mode Dropdown */}
                 <div className="relative">
-                    <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+                    <div className="flex bg-white/20 rounded-lg p-1 border border-white/30">
                         <button 
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'}`}
                             title="Grille"
                         >
                             <LayoutGrid size={18} />
                         </button>
                         <button 
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'}`}
                             title="Liste"
                         >
                             <List size={18} />
                         </button>
-                        <div className="w-px bg-slate-300 mx-1 self-center h-4"></div>
+                        <div className="w-px bg-white/30 mx-1 self-center h-4"></div>
                          <button 
                             onClick={() => setViewMode('grouped_level')}
-                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_level' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_level' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'}`}
                         >
                             Par Niveau
                         </button>
                          <button 
                             onClick={() => setViewMode('grouped_option')}
-                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_option' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === 'grouped_option' ? 'bg-white text-blue-600 shadow-sm' : 'text-white/80 hover:text-white'}`}
                         >
                             Par Option
                         </button>
@@ -247,20 +321,20 @@ export default function Dashboard() {
                 </div>
 
                 {/* Sort Dropdown */}
-                <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200">
-                     <span className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider">Trier</span>
+                <div className="flex items-center bg-white/20 rounded-lg p-1 border border-white/30">
+                     <span className="text-xs font-bold text-white/60 px-2 uppercase tracking-wider">Trier</span>
                      <select 
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortOption)}
-                        className="bg-transparent text-sm font-semibold text-slate-700 outline-none cursor-pointer"
+                        className="bg-transparent text-sm font-semibold text-white outline-none cursor-pointer"
                      >
-                        <option value="level">Niveau</option>
-                        <option value="option">Option</option>
-                        <option value="name">Nom</option>
+                        <option value="level" className="text-slate-800">Niveau</option>
+                        <option value="option" className="text-slate-800">Option</option>
+                        <option value="name" className="text-slate-800">Nom</option>
                      </select>
                      <button 
                         onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                        className="ml-2 p-1.5 hover:bg-white rounded-md text-slate-500 hover:text-blue-600 transition-colors"
+                        className="ml-2 p-1.5 hover:bg-white/20 rounded-md text-white/80 hover:text-white transition-colors"
                      >
                          <ArrowUpDown size={14} className={sortOrder === 'desc' ? 'transform rotate-180' : ''} />
                      </button>
@@ -329,25 +403,6 @@ export default function Dashboard() {
         )}
       </main>
 
-      <Tutorial
-        pageId="dashboard"
-        steps={[
-          {
-            title: "Bienvenue sur Ecole !",
-            content: "Votre nouveau tableau de bord pro vous donne le contrôle total : recherchez, triez et organisez vos classes comme jamais auparavant."
-          },
-          {
-            title: "Modes d'affichage",
-            content: "En haut à droite, basculez entre la vue Grille, Liste, ou groupez vos classes par Niveau/Option pour une meilleure lisibilité."
-          },
-          {
-            title: "Navigation facile",
-            content: "Cliquez sur une classe pour gérer notes et bulletins. Utilisez le clic droit pour des actions rapides."
-          }
-        ]}
-        onComplete={() => {}}
-      />
-
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -361,6 +416,14 @@ export default function Dashboard() {
                 const cls = classes.find(c => c.id === contextMenu.classId);
                 if (cls) navigate(`/class/${cls.id}`);
                 closeContextMenu();
+              }
+            },
+            {
+              label: 'Ajouter une note',
+              icon: <StickyNote size={18} />,
+              onClick: () => {
+                 setAddNoteModal({ type: 'class', id: contextMenu.classId });
+                 closeContextMenu();
               }
             },
             { divider: true },
@@ -417,6 +480,19 @@ export default function Dashboard() {
             setShowCreateModal(false);
             toast.success('Classe créée avec succès');
           }}
+        />
+      )}
+
+
+      {addNoteModal && (
+        <AddNoteModal
+          onClose={() => setAddNoteModal(null)}
+          onSuccess={() => {
+             setAddNoteModal(null);
+             toast.success("Note ajoutée !");
+          }}
+          initialTargetType={addNoteModal.type}
+          initialTargetId={addNoteModal.id}
         />
       )}
     </div>

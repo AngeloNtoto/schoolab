@@ -90,9 +90,6 @@ export default function NetworkDashboard() {
             {/* Tab Switcher */}
             <div className="flex bg-black/20 p-1.5 rounded-xl backdrop-blur-sm flex-wrap">
               {[
-                { id: 'receive', label: 'Boîte', icon: Download },
-                { id: 'send', label: 'Envoyer', icon: Send },
-                { id: 'sync', label: 'Clonage', icon: RefreshCw },
                 { id: 'server', label: 'Serveur Web', icon: Globe },
               ].map((tab) => (
                 <button
@@ -116,10 +113,7 @@ export default function NetworkDashboard() {
       {/* Main Content */}
       <main className="max-w-[95%] mx-auto px-8 py-8 relative">
         <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {activeTab === 'send' ? <SendPanel /> : 
-           activeTab === 'receive' ? <TransferInbox /> : 
-           activeTab === 'sync' ? <SyncPanel /> : 
-           <ServerPanel />}
+           <ServerPanel />
         </div>
       </main>
     </div>

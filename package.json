@@ -1,11 +1,12 @@
 {
   "name": "ecole",
   "productName": "Ecole",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ecole Est la Première Application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
   "main": ".vite/build/main.js",
+  "displayName": "Ecole",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "rm -rf .vite && electron-forge start",
     "package": "electron-forge package",
     "make:win":"export npm_config_platform=win32 && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Windows Terminé Avec Succes\" && electron-forge make --platform=win32 --arch=x64",
     "make:linux": "export npm_config_platform=linux && export npm_config_arch=x64 && export npm_config_target=39.2.4 && export npm_config_runtime=electron && export npm_config_disturl=https://electronjs.org/headers && pnpm rebuild better-sqlite3 && echo \"Rebuild pour Linux Terminé Avec Succes\" && electron-forge make --platform=linux --arch=x64",
@@ -18,6 +19,7 @@
   },
   "executableName": "Ecole",
   "keywords": [],
+  "year": "2025",
   "author": {
     "name": "Angelo",
     "email": "Angelontoto7@gmail.com"

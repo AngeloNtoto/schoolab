@@ -26,7 +26,6 @@ const createWindow = () => {
     },
   });
 
-  mainWindow.setMenuBarVisibility(false);
   console.log("isPackaged:", app.isPackaged, "devUrl:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
 
   // Chargement de l'URL de développement ou du fichier index.html.
@@ -44,6 +43,7 @@ const createWindow = () => {
   // Ouvre les outils de développement en mode non-packagé.
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools();
+    mainWindow.setMenuBarVisibility(true);
   }
 };
 

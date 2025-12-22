@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer, Search, ArrowUpDown, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // Services & Hooks
@@ -8,6 +8,7 @@ import { classService, ClassData, Subject } from '../services/classService';
 import { useStudents } from '../hooks/useStudents';
 import { useGrades } from '../hooks/useGrades';
 import { Student } from '../services/studentService';
+import { useTutorial } from '../context/TutorialContext';
 
 // Composants
 import AddStudentModal from './AddStudentModal';
@@ -16,6 +17,7 @@ import AddSubjectModal from './AddSubjectModal';
 export default function ClassDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const tutorial = useTutorial();
   
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -41,7 +43,16 @@ export default function ClassDetails() {
       }
     };
     loadClassData();
+    // Show tutorial on first visit
+    tutorial.showTutorial('classDetails');
   }, [id]);
+
+  // When subjects are loaded (table of notes available), show the grades tutorial
+  useEffect(() => {
+    if (subjects.length > 0) {
+      tutorial.showTutorial('classDetails.grades');
+    }
+  }, [subjects.length]);
 
   const { gradesMap, loading: gradesLoading, updateGrade } = useGrades(Number(id));
   
@@ -277,6 +288,7 @@ export default function ClassDetails() {
               <th className="sticky left-0 z-30 bg-slate-100 px-4 py-3 text-left font-bold text-slate-700 border-r-2 border-slate-300 min-w-[200px]">
                 Élèves ({filteredAndSortedStudents.length})
               </th>
+              
               {subjects.map(subject => (
                 <th 
                   key={subject.id} 
@@ -290,7 +302,10 @@ export default function ClassDetails() {
 
             {/* Ligne de sous-en-tête avec les Maxima */}
             <tr className="border-b-2 border-slate-300 bg-slate-50">
-              <th className="sticky left-0 z-30 bg-slate-50 border-r-2 border-slate-300"></th>
+              {/* TODO: Ajouter  la colonne Nom et PostNom sur la meme ligne que les maximas */}
+              <th className='sticky left-0 z-30 bg-slate-50 border-r-2 border-slate-300 text-left px-4 py-3 font-bold text-blue-700'>
+                Nom et PostNom
+              </th>
               {subjects.map(subject => {
                 // Détection cours sans examen pour styling conditionnel des en-têtes
                 const hasExam1 = subject.max_exam1 > 0;
@@ -480,6 +495,16 @@ export default function ClassDetails() {
           >
             <User size={16} />
             Voir le profil
+          </button>
+          <button 
+            onClick={() => {
+              window.location.hash = `#/student/edit/${contextMenu.student.id}`;
+              closeContextMenu();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
+          >
+            <Edit size={16} />
+            Éditer l'élève
           </button>
           <button 
             onClick={() => {

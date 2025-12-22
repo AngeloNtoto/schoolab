@@ -7,9 +7,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, StickyNote } from 'lucide-react';
 import ProfessionalLoader from './ProfessionalLoader';
 import CouponContent, { SchoolInfo } from './CouponContent';
+import ContextMenu from './ContextMenu';
+import AddNoteModal from './AddNoteModal';
+import { useToast } from '../context/ToastContext';
 
 // Services
 import { studentService, Student } from '../services/studentService';
@@ -28,6 +31,7 @@ interface AcademicYear {
 export default function CouponEleve() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // États pour les données
   const [student, setStudent] = useState<Student | null>(null);
@@ -37,6 +41,10 @@ export default function CouponEleve() {
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>({ name: '', city: '', pobox: '' });
   const [academicYear, setAcademicYear] = useState<string>('');
   const [loading, setLoading] = useState(true);
+
+  // Context Menu & Modals
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
 
   // ============================================================================
   // CHARGEMENT DES DONNÉES
@@ -101,6 +109,16 @@ export default function CouponEleve() {
     }
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handlePrint = () => {
+    window.print();
+    setContextMenu(null);
+  };
+
   // ============================================================================
   // AFFICHAGE
   // ============================================================================
@@ -124,7 +142,10 @@ export default function CouponEleve() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white">
+    <div 
+      className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white"
+      onContextMenu={handleContextMenu}
+    >
       {/* Boutons de contrôle */}
       <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
         <button
@@ -135,7 +156,7 @@ export default function CouponEleve() {
           Retour
         </button>
         <button
-          onClick={() => window.print()}
+          onClick={handlePrint}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           <Printer size={20} />
@@ -152,6 +173,39 @@ export default function CouponEleve() {
         schoolInfo={schoolInfo}
         academicYear={academicYear}
       />
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            {
+              label: 'Ajouter une note',
+              icon: <StickyNote size={18} />,
+              onClick: () => setShowAddNoteModal(true)
+            },
+            { divider: true },
+            {
+              label: 'Imprimer le coupon',
+              icon: <Printer size={18} />,
+              onClick: handlePrint
+            }
+          ]}
+        />
+      )}
+
+      {showAddNoteModal && student && (
+        <AddNoteModal
+            onClose={() => setShowAddNoteModal(false)}
+            onSuccess={() => {
+                setShowAddNoteModal(false);
+                toast.success('Note ajoutée à l\'élève');
+            }}
+            initialTargetType="student"
+            initialTargetId={student.id}
+        />
+      )}
     </div>
   );
 }

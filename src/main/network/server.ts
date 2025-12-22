@@ -109,7 +109,7 @@ export function startServer(db: Database.Database): Promise<number> {
       try {
         const classId = req.params.id;
         const students = db.prepare('SELECT * FROM students WHERE class_id = ?').all(classId);
-        const subjects = db.prepare('SELECT * FROM subjects WHERE class_id = ?').all(classId);
+        const subjects = db.prepare('SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at ASC').all(classId);
         const grades = db.prepare(`
           SELECT g.* FROM grades g 
           JOIN students s ON g.student_id = s.id 

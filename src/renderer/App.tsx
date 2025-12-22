@@ -9,13 +9,20 @@ import Palmares from './components/Palmares';
 import ClassCoupons from './components/ClassCoupons';
 import ClassBulletins from './components/ClassBulletins';
 import NetworkDashboard from './pages/Network/NetworkDashboard';
+import Layout from './components/Layout';
+import AcademicYearsManager from './components/AcademicYearsManager';
+import SettingsPage from './pages/SettingsPage';
+import NotesPage from './pages/NotesPage';
+import TutorialModal from './components/TutorialModal';
 import { CacheProvider } from './context/CacheContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { TutorialProvider } from './context/TutorialContext';
+import EditEleve from './components/EditEleve';
 
 
 export default function App() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
-  const [showLoader, setShowLoader] = useState(true);
 
   useEffect(() => {
     checkSetup();
@@ -34,13 +41,12 @@ export default function App() {
     }
   };
 
-  const handleLoaderComplete = () => {
-    setShowLoader(false);
-  };
 
   return (
     <HashRouter>
+      <ThemeProvider>
       <CacheProvider>
+        <TutorialProvider>
         <ToastProvider>
           {/* Wait until we know if setup is complete before rendering routes/redirects */}
           {isSetupComplete === null ? (
@@ -48,19 +54,29 @@ export default function App() {
           ) : (
             <Routes>
             <Route path="/setup" element={<SetupWizard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/class/:id" element={<ClassDetails />} />
-            <Route path="/student/:id" element={<CouponEleve />} />
-            <Route path="/bulletin/:studentId" element={<Bulletin />} />
-            <Route path="/palmares/:classId" element={<Palmares />} />
-            <Route path="/print-coupons/:classId" element={<ClassCoupons />} />
-            <Route path="/print-bulletins/:classId" element={<ClassBulletins />} />
-            <Route path="/network" element={<NetworkDashboard />} />
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/class/:id" element={<ClassDetails />} />
+              <Route path="/student/:id" element={<CouponEleve />} />
+              <Route path="/bulletin/:studentId" element={<Bulletin />} />
+              <Route path="/student/edit/:id" element={<EditEleve/>}></Route>
+              <Route path="/palmares/:classId" element={<Palmares />} />
+              <Route path="/print-coupons/:classId" element={<ClassCoupons />} />
+              <Route path="/print-bulletins/:classId" element={<ClassBulletins />} />
+              <Route path="/network" element={<NetworkDashboard />} />
+              <Route path="/academic-years" element={<AcademicYearsManager />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/notes" element={<NotesPage />} />
+            </Route>
             <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
             </Routes>
           )}
+          {/* Global Tutorial Modal */}
+          <TutorialModal />
         </ToastProvider>
+        </TutorialProvider>
       </CacheProvider>
+      </ThemeProvider>
     </HashRouter>
   );
 }

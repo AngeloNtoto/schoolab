@@ -91,6 +91,16 @@ function initializeSchema(db: Database.Database) {
       FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
       UNIQUE(student_id, subject_id, period)
     );
+
+    CREATE TABLE IF NOT EXISTS notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      target_type TEXT NOT NULL, -- 'student', 'class', 'general'
+      target_id INTEGER,
+      tags TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
@@ -136,5 +146,19 @@ function runMigrations(db: Database.Database) {
       ALTER TABLE subjects ADD COLUMN domain_id INTEGER REFERENCES domains(id) ON DELETE SET NULL;
     `);
     console.log('domain_id column added to subjects');
+  }
+
+  // Check if conduite column exists in students table and add it if missing
+  const studentsInfo = db.pragma('table_info(students)') as Array<{ name: string }>;
+  const hasConduite = studentsInfo.some((col) => col.name === 'conduite');
+
+  if (!hasConduite) {
+    console.log('Adding conduite column to students table...');
+    try {
+      db.exec(`ALTER TABLE students ADD COLUMN conduite TEXT DEFAULT ''`);
+      console.log('conduite column added to students');
+    } catch (err) {
+      console.error('Failed to add conduite column:', err);
+    }
   }
 }
