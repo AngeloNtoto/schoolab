@@ -1,11 +1,10 @@
 /**
  * CouponEleve.tsx
- * 
- * Composant "Smart" qui charge les données pour un seul élève
+ * * Composant "Smart" qui charge les données pour un seul élève
  * et délègue l'affichage à CouponContent.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, StickyNote } from 'lucide-react';
 import ProfessionalLoader from './ProfessionalLoader';
@@ -13,6 +12,9 @@ import CouponContent, { SchoolInfo } from './CouponContent';
 import ContextMenu from './ContextMenu';
 import AddNoteModal from './AddNoteModal';
 import { useToast } from '../context/ToastContext';
+
+// Système d'impression
+import PrintButton from './PrintWrapper';
 
 // Services
 import { studentService, Student } from '../services/studentService';
@@ -33,6 +35,9 @@ export default function CouponEleve() {
   const navigate = useNavigate();
   const toast = useToast();
 
+  // Réf pour l'impression isolée
+  const couponRef = useRef<HTMLDivElement>(null);
+
   // États pour les données
   const [student, setStudent] = useState<Student | null>(null);
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
@@ -45,6 +50,42 @@ export default function CouponEleve() {
   // Context Menu & Modals
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+
+  // Configuration CSS pour l'impression
+  const printCss = `
+    @page { 
+      size: A4; 
+      margin: 10mm; 
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body { 
+      background: white; 
+      margin: 0; 
+      padding: 0; 
+    }
+    @page { 
+      size: A4; 
+      margin: 10mm; 
+    }
+    html, body {
+      height: 100%;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden; /* Empêche le contenu de "baver" sur une 2e page */
+    }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .print-target {
+      width: 100% !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+  `;
 
   // ============================================================================
   // CHARGEMENT DES DONNÉES
@@ -59,29 +100,19 @@ export default function CouponEleve() {
     setLoading(true);
 
     try {
-      // 1. Charger l'élève
       const studentData = await studentService.getStudentById(Number(id));
-      if (!studentData) {
-        console.error('Élève non trouvé');
-        return;
-      }
+      if (!studentData) return;
       setStudent(studentData);
 
-      // 2. Charger la classe
       const classData = await classService.getClassById(studentData.class_id);
-      if (classData) {
-        setClassInfo(classData);
-      }
+      if (classData) setClassInfo(classData);
 
-      // 3. Charger les matières de la classe
       const subjectData = await classService.getSubjectsByClass(studentData.class_id);
       setSubjects(subjectData);
 
-      // 4. Charger les notes de l'élève
       const gradeData = await gradeService.getGradesByStudent(Number(id));
       setGrades(gradeData);
 
-      // 5. Charger les informations de l'école depuis les settings
       const [nameResult, cityResult, poboxResult] = await Promise.all([
         window.api.db.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_name']),
         window.api.db.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_city']),
@@ -94,16 +125,13 @@ export default function CouponEleve() {
         pobox: poboxResult?.[0]?.value || ''
       });
 
-      // 6. Charger l'année académique active
       const yearResult = await window.api.db.query<AcademicYear>(
         'SELECT * FROM academic_years WHERE is_active = 1 LIMIT 1'
       );
-      if (yearResult?.[0]) {
-        setAcademicYear(yearResult[0].name);
-      }
+      if (yearResult?.[0]) setAcademicYear(yearResult[0].name);
 
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
+      console.error('Erreur chargement:', error);
     } finally {
       setLoading(false);
     }
@@ -114,29 +142,15 @@ export default function CouponEleve() {
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
-  const handlePrint = () => {
-    window.print();
-    setContextMenu(null);
-  };
-
-  // ============================================================================
-  // AFFICHAGE
-  // ============================================================================
-
   if (loading) {
-    return <ProfessionalLoader message="Génération du coupon..." subMessage="Calcul des moyennes et classements en cours" />;
+    return <ProfessionalLoader message="Génération du coupon..." subMessage="Calcul des moyennes en cours" />;
   }
 
   if (!student || !classInfo) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <p className="text-slate-600">Données introuvables.</p>
-        <button 
-          onClick={() => navigate(-1)}
-          className="mt-4 text-blue-600 hover:underline"
-        >
-          Retour
-        </button>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 hover:underline">Retour</button>
       </div>
     );
   }
@@ -146,33 +160,38 @@ export default function CouponEleve() {
       className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white"
       onContextMenu={handleContextMenu}
     >
-      {/* Boutons de contrôle */}
+      {/* Barre de navigation (Masquée à l'impression) */}
       <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft size={20} />
           Retour
         </button>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+
+        <PrintButton
+          targetRef={couponRef}
+          title={`Coupon_${student.last_name}_${student.first_name}`}
+          extraCss={printCss}
+          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md transition-all"
         >
           <Printer size={20} />
-          Imprimer
-        </button>
+          Imprimer le coupon
+        </PrintButton>
       </div>
 
-      {/* Contenu du coupon */}
-      <CouponContent
-        student={student}
-        classInfo={classInfo}
-        subjects={subjects}
-        grades={grades}
-        schoolInfo={schoolInfo}
-        academicYear={academicYear}
-      />
+      {/* Zone du coupon isolée pour l'impression */}
+      <div ref={couponRef} className="print-target">
+        <CouponContent
+          student={student}
+          classInfo={classInfo}
+          subjects={subjects}
+          grades={grades}
+          schoolInfo={schoolInfo}
+          academicYear={academicYear}
+        />
+      </div>
 
       {contextMenu && (
         <ContextMenu
@@ -187,9 +206,14 @@ export default function CouponEleve() {
             },
             { divider: true },
             {
-              label: 'Imprimer le coupon',
+              label: 'Imprimer (Standard)',
               icon: <Printer size={18} />,
-              onClick: handlePrint
+              onClick: () => {
+                setContextMenu(null);
+                // On peut soit déclencher le printButton par ref, 
+                // soit garder window.print() ici si on accepte les menus dans l'impression
+                window.print(); 
+              }
             }
           ]}
         />

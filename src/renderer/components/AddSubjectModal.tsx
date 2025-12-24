@@ -22,9 +22,11 @@ interface AddSubjectModalProps {
   subjects: Subject[];
   onClose: () => void;
   onSuccess: () => void;
+  editingSubject?: Subject | null;
+  onSelectSubject?: (subject: Subject) => void;
 }
 
-export default function AddSubjectModal({ classId, classLevel, subjects, onClose, onSuccess }: AddSubjectModalProps) {
+export default function AddSubjectModal({ classId, classLevel, subjects, onClose, onSuccess, editingSubject, onSelectSubject }: AddSubjectModalProps) {
   // Check if this is a primary class (7ème or 8ème) to show domain selection
   const isPrimaryClass = classLevel === '7ème' || classLevel === '8ème';
   const [name, setName] = useState('');
@@ -51,6 +53,18 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   useEffect(() => {
     loadDomains();
   }, []);
+
+  // If editingSubject is provided, prefill the form
+  useEffect(() => {
+    if (editingSubject) {
+      setName(editingSubject.name || '');
+      setCode(editingSubject.code || '');
+      setMaxPeriod(String(editingSubject.max_p1 ?? '10'));
+      // assume exam1 and exam2 are same
+      setMaxExam(String(editingSubject.max_exam1 ?? '20'));
+      setSelectedDomainId(editingSubject.domain_id ?? null);
+    }
+  }, [editingSubject]);
 
   // EFFET : Mise à jour automatique des examens quand la période change
   // Si période = 100 → examen = 0 (bloqué)
@@ -100,7 +114,6 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const pMax = Number(maxPeriod);
       
@@ -109,12 +122,17 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       // Sinon : utiliser la valeur saisie (même valeur pour les 2 semestres)
       const examMax = pMax === 100 ? 0 : Number(maxExam);
 
-      // INSERTION EN BDD :
-      // maxExam est utilisé pour exam1 ET exam2
-      await window.api.db.execute(
-        'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, code, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
-      );
+      if (editingSubject) {
+        await window.api.db.execute(
+          'UPDATE subjects SET name = ?, code = ?, max_p1 = ?, max_p2 = ?, max_exam1 = ?, max_p3 = ?, max_p4 = ?, max_exam2 = ?, domain_id = ? WHERE id = ?',
+          [name, code, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
+        );
+      } else {
+        await window.api.db.execute(
+          'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [name, code, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
+        );
+      }
       
       // RÉINITIALISATION DU FORMULAIRE :
       setName('');
@@ -125,10 +143,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       
       
       onSuccess();
-      toast.success('Matière ajoutée avec succès');
+      toast.success(editingSubject ? 'Matière mise à jour' : 'Matière ajoutée avec succès');
     } catch (error) {
       console.error('Failed to add subject:', error);
-      toast.error('Erreur lors de l\'ajout de la matière');
+      toast.error('Erreur lors de l\'enregistrement de la matière');
     } finally {
       setLoading(false);
     }
@@ -321,13 +339,24 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
-                >
-                  {loading ? 'Ajout...' : 'Ajouter la matière'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Enregistrement...' : (editingSubject ? 'Enregistrer' : 'Ajouter la matière')}
+                  </button>
+                  {editingSubject && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(editingSubject.id)}
+                      className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-100"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -341,7 +370,16 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   subjects.map(subject => {
                     const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
                     return (
-                      <div key={subject.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-300 transition-colors group">
+                      <div
+  key={subject.id}
+  onClick={() => {
+    // signal au parent : "ce sujet devient l’état actif"
+    onSelectSubject(subject);
+  }}
+  className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg
+             hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all"
+>
+
                         <div>
                           <p className="font-medium text-slate-800">{subject.name}</p>
                           <p className="text-xs text-slate-500">

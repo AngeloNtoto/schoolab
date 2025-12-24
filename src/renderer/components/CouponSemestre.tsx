@@ -213,7 +213,7 @@ export default function CouponSemestre({
                     failures.push(`${subject.name}: ${totalObtained}/${maxTotal}`);
                   }
                 });
-                return failures.length > 0 ? failures.join(', ') : 'Néant';
+                return failures.length > 0 ? failures.join(', ') : 'Aucune';
               })()}
             </td>
           </tr>

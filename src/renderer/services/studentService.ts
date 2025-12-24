@@ -9,8 +9,21 @@ export interface Student {
   birth_date: string;
   birthplace: string;
   class_id: number;
+  conduite?: string;
+  conduite_p1?: string;
+  conduite_p2?: string;
+  conduite_p3?: string;
+  conduite_p4?: string;
+  is_abandoned?: number | boolean;
+  abandon_reason?: string;
 }
 
+export interface StudentExport {
+  'Nom': string;
+  'Post-nom': string;
+  'Prénom': string;
+  'Sexe': string
+}
 /**
  * Service responsable de la gestion des élèves.
  */
@@ -44,7 +57,7 @@ class StudentService {
    */
   async createStudent(student: Omit<Student, 'id'>): Promise<number> {
     const result = await dbService.execute(
-      'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, class_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         student.first_name,
         student.last_name,
@@ -52,6 +65,11 @@ class StudentService {
         student.gender,
         student.birth_date,
         student.birthplace,
+        student.conduite ?? '',
+        (student.conduite_p1 ?? ''),
+        (student.conduite_p2 ?? ''),
+        (student.conduite_p3 ?? ''),
+        (student.conduite_p4 ?? ''),
         student.class_id
       ]
     );
@@ -66,6 +84,7 @@ class StudentService {
   async updateStudent(id: number, student: Partial<Student>): Promise<void> {
     // Construction dynamique de la requête UPDATE
     const fields: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const values: any[] = [];
 
     if (student.first_name !== undefined) { fields.push('first_name = ?'); values.push(student.first_name); }
@@ -74,6 +93,13 @@ class StudentService {
     if (student.gender !== undefined) { fields.push('gender = ?'); values.push(student.gender); }
     if (student.birth_date !== undefined) { fields.push('birth_date = ?'); values.push(student.birth_date); }
     if (student.birthplace !== undefined) { fields.push('birthplace = ?'); values.push(student.birthplace); }
+    if (student.conduite !== undefined) { fields.push('conduite = ?'); values.push(student.conduite); }
+    if (student.conduite_p1 !== undefined) { fields.push('conduite_p1 = ?'); values.push(student.conduite_p1); }
+    if (student.conduite_p2 !== undefined) { fields.push('conduite_p2 = ?'); values.push(student.conduite_p2); }
+    if (student.conduite_p3 !== undefined) { fields.push('conduite_p3 = ?'); values.push(student.conduite_p3); }
+    if (student.conduite_p4 !== undefined) { fields.push('conduite_p4 = ?'); values.push(student.conduite_p4); }
+    if (student.is_abandoned !== undefined) { fields.push('is_abandoned = ?'); values.push(student.is_abandoned ? 1 : 0); }
+    if (student.abandon_reason !== undefined) { fields.push('abandon_reason = ?'); values.push(student.abandon_reason); }
     
     if (fields.length === 0) return;
 

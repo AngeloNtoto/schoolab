@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';
-import fs from 'fs';
+
 
 let db: Database.Database;
 
@@ -159,6 +159,46 @@ function runMigrations(db: Database.Database) {
       console.log('conduite column added to students');
     } catch (err) {
       console.error('Failed to add conduite column:', err);
+    }
+  }
+
+  // Ensure conduite for each period exists (conduite_p1 .. conduite_p4)
+  const hasConduiteP1 = studentsInfo.some((col) => col.name === 'conduite_p1');
+  if (!hasConduiteP1) {
+    console.log('Adding conduite_p1..p4 columns to students table...');
+    try {
+      db.exec(`ALTER TABLE students ADD COLUMN conduite_p1 TEXT DEFAULT ''`);
+      db.exec(`ALTER TABLE students ADD COLUMN conduite_p2 TEXT DEFAULT ''`);
+      db.exec(`ALTER TABLE students ADD COLUMN conduite_p3 TEXT DEFAULT ''`);
+      db.exec(`ALTER TABLE students ADD COLUMN conduite_p4 TEXT DEFAULT ''`);
+      console.log('conduite_p1..p4 columns added to students');
+    } catch (err) {
+      console.error('Failed to add conduite_p1..p4 columns:', err);
+    }
+  }
+
+  // Check and add is_abandoned flag to students table
+  const hasIsAbandoned = studentsInfo.some((col) => col.name === 'is_abandoned');
+  if (!hasIsAbandoned) {
+    console.log('Adding is_abandoned column to students table...');
+    try {
+      db.exec(`ALTER TABLE students ADD COLUMN is_abandoned INTEGER DEFAULT 0`);
+      console.log('is_abandoned column added to students');
+    } catch (err) {
+      console.error('Failed to add is_abandoned column:', err);
+    }
+  }
+
+  // Check and add abandon_reason column to students table
+  const studentsInfoAfter = db.pragma('table_info(students)') as Array<{ name: string }>;
+  const hasAbandonReason = studentsInfoAfter.some((col) => col.name === 'abandon_reason');
+  if (!hasAbandonReason) {
+    console.log('Adding abandon_reason column to students table...');
+    try {
+      db.exec(`ALTER TABLE students ADD COLUMN abandon_reason TEXT DEFAULT ''`);
+      console.log('abandon_reason column added to students');
+    } catch (err) {
+      console.error('Failed to add abandon_reason column:', err);
     }
   }
 }

@@ -18,7 +18,7 @@ export interface Subject {
   max_p3: number;
   max_p4: number;
   max_exam2: number;
-  class_id: number;
+  class_id?: number;
   domain_id?: number;
 }
 

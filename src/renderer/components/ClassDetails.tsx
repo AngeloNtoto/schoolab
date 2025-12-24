@@ -9,6 +9,8 @@ import { useStudents } from '../hooks/useStudents';
 import { useGrades } from '../hooks/useGrades';
 import { Student } from '../services/studentService';
 import { useTutorial } from '../context/TutorialContext';
+import { useToast } from '../context/ToastContext';
+import { ExportExcelForClass } from './ExportExcel';
 
 // Composants
 import AddStudentModal from './AddStudentModal';
@@ -22,10 +24,15 @@ export default function ClassDetails() {
   const [classInfo, setClassInfo] = useState<ClassData | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [classLoading, setClassLoading] = useState(true);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
   // Search & Sort State
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
+
+
+  const toast = useToast();
 
   useEffect(() => {
     const loadClassData = async () => {
@@ -61,12 +68,19 @@ export default function ClassDetails() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
-
+  
+  
+  //TODO:Implemnter la logique pour lors du chargement des données
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const loading = classLoading || gradesLoading || studentsLoading;
 
   // Filter & Sort Logic
   const filteredAndSortedStudents = useMemo(() => {
     let result = [...students];
+    // Filter by abandon status if requested
+    if (showOnlyAbandons) {
+      result = result.filter(s => Boolean((s as Student).is_abandoned));
+    }
 
     // Filter
     if (searchQuery) {
@@ -119,38 +133,14 @@ export default function ClassDetails() {
     } catch (error) {
       console.error('Failed to update grade:', error);
       // TODO: Show error toast
+      toast.error('Erreur lors de la mise à jour de la note');
     }
   };
 
-  const handleExportExcel = () => {
-    if (!classInfo || students.length === 0) return;
-
-    const workbook = XLSX.utils.book_new();
-    
-    // Préparation des données pour l'exportation
-    const data = students.map(student => {
-      const row: any = {
-        'Nom': student.last_name,
-        'Post-nom': student.post_name,
-        'Prénom': student.first_name,
-        'Sexe': student.gender
-      };
-
-      subjects.forEach(subject => {
-        row[`${subject.name} - P1`] = getGrade(student.id, subject.id, 'P1');
-        row[`${subject.name} - P2`] = getGrade(student.id, subject.id, 'P2');
-        row[`${subject.name} - Ex1`] = getGrade(student.id, subject.id, 'EXAM1');
-        row[`${subject.name} - P3`] = getGrade(student.id, subject.id, 'P3');
-        row[`${subject.name} - P4`] = getGrade(student.id, subject.id, 'P4');
-        row[`${subject.name} - Ex2`] = getGrade(student.id, subject.id, 'EXAM2');
-      });
-
-      return row;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Notes");
-    XLSX.writeFile(workbook, `Notes_${classInfo.level}_${classInfo.option}.xlsx`);
+  const handleExportExcel = async (id: string) => {
+    if (!id) return;
+    await ExportExcelForClass(Number(id));
+    toast.success('Notes exportées avec succès');
   };
 
   const onContextMenu = (e: React.MouseEvent, student: Student) => {
@@ -197,6 +187,15 @@ export default function ClassDetails() {
                    <p className="text-slate-500 text-sm font-medium flex gap-3">
                       <span className="flex items-center gap-1"><User size={14}/> {students.length} élèves</span>
                       <span className="flex items-center gap-1"><BookOpen size={14}/> {subjects.length} cours</span>
+                     <span className="flex items-center gap-1">
+                        <button
+                          onClick={() => setShowOnlyAbandons(prev => !prev)}
+                          className={`px-2 py-0.5 rounded-full text-sm font-medium ${showOnlyAbandons ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700'}`}
+                          title="Afficher uniquement les élèves en abandon"
+                        >
+                          Abandons: {students.filter(s => Boolean((s as Student).is_abandoned)).length}
+                        </button>
+                     </span>
                   </p>
                 </div>
                </div>
@@ -210,7 +209,7 @@ export default function ClassDetails() {
                     Palmarès
                   </button>
                   <button 
-                    onClick={handleExportExcel}
+                    onClick={() => handleExportExcel(id)}
                     className="flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-2 rounded-lg font-medium transition-colors border border-emerald-200"
                   >
                     <FileSpreadsheet size={18} />
@@ -469,21 +468,30 @@ export default function ClassDetails() {
       {/* Add Subject Modal */}
       {isAddSubjectModalOpen && (
         <AddSubjectModal
-          classId={Number(id)}
-          classLevel={classInfo.level}
-          subjects={subjects}
-          onClose={() => setIsAddSubjectModalOpen(false)}
-          onSuccess={() => {
-            // Refresh subjects
-            classService.getSubjectsByClass(Number(id)).then(setSubjects);
-          }}
-        />
+  classId={Number(id)}
+  classLevel={classInfo.level}
+  subjects={subjects}
+  editingSubject={editingSubject}
+  onSelectSubject={(subject) => {
+    setEditingSubject(subject);
+    setIsAddSubjectModalOpen(true);
+  }}
+  onClose={() => {
+    setEditingSubject(null); // reset → retour à l’état neutre
+    setIsAddSubjectModalOpen(false);
+  }}
+  onSuccess={() => {
+    classService.getSubjectsByClass(Number(id)).then(setSubjects);
+    setEditingSubject(null);
+  }}
+/>
+
       )}
 
       {/* Context Menu */}
       {contextMenu && (
         <div 
-          className="fixed bg-white shadow-lg rounded-lg py-1 z-50 border border-slate-200 min-w-[160px]"
+          className="fixed bg-white shadow-lg rounded-lg py-1 z-50 border border-slate-200 min-w-40px"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button 

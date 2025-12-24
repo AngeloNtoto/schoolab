@@ -9,6 +9,10 @@ export default function ServerPanel() {
 
   useEffect(() => {
     loadServerInfo();
+    const interval = setInterval(() => {
+      loadServerInfo();
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadServerInfo = async () => {
@@ -84,10 +88,18 @@ export default function ServerPanel() {
         <div className="space-y-4">
            <div className="flex items-center justify-between py-2 border-b border-slate-200">
               <span className="text-sm text-slate-600">Serveur API</span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
-                 <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-                 ACTIF
-              </span>
+              {serverInfo?.ip === "127.0.0.1" ? (
+  <span className="flex items-center gap-1.5 text-xs font-bold text-red-600">
+    <span className="w-2 h-2 bg-red-600 rounded-full" />
+    INNACTIF
+  </span>
+) : (
+  <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
+    <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+    ACTIF
+  </span>
+)}
+
            </div>
            <div className="flex items-center justify-between py-2 border-b border-slate-200">
               <span className="text-sm text-slate-600">Interface Web</span>

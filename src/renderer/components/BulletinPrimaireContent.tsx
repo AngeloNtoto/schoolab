@@ -361,7 +361,9 @@ export default function BulletinPrimaireContent({
                 </tr>
                 <tr>
                   <td className="border border-black p-0.5 text-left">CONDUITE</td>
-                  <td className="border border-black p-0.5" colSpan={15}></td>
+                  <td className="border border-black p-0.5" colSpan={15}>
+                    {`P1: ${student.conduite_p1 || '-'} — P2: ${student.conduite_p2 || '-'} — P3: ${student.conduite_p3 || '-'} — P4: ${student.conduite_p4 || '-'}`}
+                  </td>
                 </tr>
                 <tr>
                   <td className="border border-black p-0.5 text-left">SIGNATURE DU RESP.</td>

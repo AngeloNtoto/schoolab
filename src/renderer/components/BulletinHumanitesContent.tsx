@@ -54,6 +54,15 @@ export default function BulletinHumanitesContent({
     return count > 0 ? total : null;
   };
 
+  const abregeConduite = (conduite: string) => {
+    switch(conduite.toUpperCase()){ 
+      case 'EXCELLENT': return 'E';
+      case 'TRES BIEN': return 'TB';
+      case 'BIEN': return 'B';
+      case 'MAUVAIS': return 'Ma';
+      case 'MEDIOCRE': return 'Me';
+  }}
+
   return (
     <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[11px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always">
       
@@ -233,7 +242,8 @@ export default function BulletinHumanitesContent({
               const sem1Total = firstSubject.max_p1 + firstSubject.max_p2 + firstSubject.max_exam1;
               const sem2Total = firstSubject.max_p3 + firstSubject.max_p4 + firstSubject.max_exam2;
               const totalMax = sem1Total + sem2Total;
-              
+
+
               return (
                 <React.Fragment key={key}>
                   {/* MAXIMA row for this group */}
@@ -241,11 +251,11 @@ export default function BulletinHumanitesContent({
                     <td className="border border-black text-left px-2">MAXIMA</td>
                     <td className="border border-black">{firstSubject.max_p1}</td>
                     <td className="border border-black">{firstSubject.max_p2}</td>
-                    <td className="border border-black">{firstSubject.max_exam1}</td>
+                    {firstSubject.max_exam1==0?(<td className="border bg-black border-black"></td>):(<td className="border border-black">{firstSubject.max_exam1}</td>)}
                     <td className="border border-black">{sem1Total}</td>
                     <td className="border border-black">{firstSubject.max_p3}</td>
                     <td className="border border-black">{firstSubject.max_p4}</td>
-                    <td className="border border-black">{firstSubject.max_exam2}</td>
+                    {firstSubject.max_exam2===0?(<td className="border bg-black border-black"></td>):(<td className="border border-black">{firstSubject.max_exam2}</td>)}
                     <td className="border border-black">{sem2Total}</td>
                     <td className="border border-black">{totalMax}</td>
                     <td className="border border-black bg-black"></td>
@@ -271,11 +281,11 @@ export default function BulletinHumanitesContent({
                         <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
                         <td className="border border-black">{p1 ?? ''}</td>
                         <td className="border border-black">{p2 ?? ''}</td>
-                        <td className="border border-black">{ex1 ?? ''}</td>
+                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black"></td>) : (<td className="border border-black">{ex1 ?? ''}</td>)}
                         <td className="border border-black font-bold">{tot1 ?? ''}</td>
                         <td className="border border-black">{p3 ?? ''}</td>
                         <td className="border border-black">{p4 ?? ''}</td>
-                        <td className="border border-black">{ex2 ?? ''}</td>
+                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black"></td>) : (<td className="border border-black">{ex2 ?? ''}</td>)}
                         <td className="border border-black font-bold">{tot2 ?? ''}</td>
                         <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
                         <td className="border border-black"></td>
@@ -290,7 +300,7 @@ export default function BulletinHumanitesContent({
 
 
           {/* Empty rows to fill space if needed */}
-          {Array(Math.max(0, 20 - subjects.length)).fill(0).map((_, i) => (
+          {Array(Math.max(0,5 - subjects.length)).fill(0).map((_, i) => (
             <tr key={`empty-${i}`}>
               <td className="border border-black text-left px-2 py-0.5">&nbsp;</td>
               <td className="border border-black"></td>
@@ -467,12 +477,12 @@ export default function BulletinHumanitesContent({
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold">CONDUITE</td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
+                  <td className="border border-black">{abregeConduite(student.conduite_p1)}</td>
+                  <td className="border border-black"> {abregeConduite(student.conduite_p2)} </td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
+                  <td className="border border-black">{abregeConduite(student.conduite_p3)}</td>
+                  <td className="border border-black">{abregeConduite(student.conduite_p4)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
@@ -521,7 +531,7 @@ export default function BulletinHumanitesContent({
           </div>
         </div>
 
-        <div className="mt-4 text-[9px]">
+        <div className="mt-1 text-[9px]">
           <p>(1) Biffer la mention inutile.</p>
           <p>Note importante : Le bulletin est sans valeur s'il est raturé ou surchargé.</p>
           <p className="text-right font-bold">IGE / P.S./113</p>

@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { studentService, Student } from '../services/studentService';
 import { useToast } from '../context/ToastContext';
 
+
 const EditEleve: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const toast = useToast();
-
+    const [isAbandon,setIsAbandon]=useState<Number | Boolean>();
     const [formData, setFormData] = useState<Partial<Student>>({
         first_name: '',
         last_name: '',
@@ -15,7 +16,14 @@ const EditEleve: React.FC = () => {
         gender: '',
         birth_date: '',
         birthplace: '',
+        conduite: '',
+        conduite_p1: '',
+        conduite_p2: '',
+        conduite_p3: '',
+        conduite_p4: '',
         class_id: undefined,
+        is_abandoned: false,
+        abandon_reason: '',
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,7 +48,14 @@ const EditEleve: React.FC = () => {
                 gender: data.gender,
                 birth_date: data.birth_date,
                 birthplace: data.birthplace,
+                conduite: data.conduite ?? '',
+                conduite_p1: (data as any).conduite_p1 ?? '',
+                conduite_p2: (data as any).conduite_p2 ?? '',
+                conduite_p3: (data as any).conduite_p3 ?? '',
+                conduite_p4: (data as any).conduite_p4 ?? '',
                 class_id: data.class_id,
+                is_abandoned: (data as any).is_abandoned ? true : false,
+                abandon_reason: (data as any).abandon_reason ?? '',
             });
         } catch (err) {
             console.error(err);
@@ -66,8 +81,16 @@ const EditEleve: React.FC = () => {
                 post_name: formData.post_name,
                 gender: formData.gender,
                 birth_date: formData.birth_date,
-                birthplace: formData.birthplace,
+                    birthplace: formData.birthplace,
+                    conduite: formData.conduite,
+                    conduite_p1: (formData as any).conduite_p1,
+                    conduite_p2: (formData as any).conduite_p2,
+                    conduite_p3: (formData as any).conduite_p3,
+                    conduite_p4: (formData as any).conduite_p4,
+                    is_abandoned: (formData as any).is_abandoned,
+                    abandon_reason: (formData as any).abandon_reason,
             });
+            setIsAbandon(formData.is_abandoned);
             toast.success('Élève mis à jour');
             navigate(-1);
         } catch (err) {
@@ -122,10 +145,63 @@ const EditEleve: React.FC = () => {
                         <input name="birthplace" value={formData.birthplace || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                 </div>
+                
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Conduite — évaluations par période</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        {[
+                            { key: 'conduite_p1', label: 'P1' },
+                            { key: 'conduite_p2', label: 'P2' },
+                            { key: 'conduite_p3', label: 'P3' },
+                            { key: 'conduite_p4', label: 'P4' },
+                        ].map(({ key, label }) => (
+                            <div key={key}>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+                                <select name={key} value={(formData as any)[key] || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg">
+                                    <option value="">--</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="tres bien">Très bien</option>
+                                    <option value="bien">Bien</option>
+                                    <option value="mauvais">Mauvais</option>
+                                    <option value="mediocre">Médiocre</option>
+                                </select>
+                            </div>
+                        ))}
+                    </div>
+                </div>
 
                 <div className="flex items-center gap-3 justify-end pt-4">
                     <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg border">Annuler</button>
-                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Enregistrer</button>
+                    </div>
+
+                <div className="mt-4 border-t pt-4">
+                    <label className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            checked={(formData as any).is_abandoned ? true : false}
+                            onChange={(e) => setFormData(prev => ({ ...prev, is_abandoned: e.target.checked }))}
+                            className="h-5 w-5 rounded-md text-red-600"
+                        />
+                        <span className="text-sm font-medium text-slate-700">Élève en situation d'abandon</span>
+                    </label>
+
+                    {(formData as any).is_abandoned && (
+                        <div className="mt-3">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Cause de l'abandon (optionnel)</label>
+                            <textarea
+                                name="abandon_reason"
+                                value={(formData as any).abandon_reason || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, abandon_reason: e.target.value }))}
+                                className="w-full px-4 py-2 border rounded-lg"
+                                rows={3}
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-3 justify-end pt-4">
+                        <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg border">Annuler</button>
+                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Enregistrer</button>
+                    </div>
                 </div>
             </form>
         </div>

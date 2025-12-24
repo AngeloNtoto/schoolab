@@ -134,65 +134,299 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport, clas
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  // --- Helpers locaux ---
+  const normalize = (s: any) =>
+    String(s ?? '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // remove accents
+      .replace(/[^a-z0-9]/gi, ' ')
+      .trim()
+      .toLowerCase();
 
-      const students = jsonData.map((row: any) => ({
-        first_name: row['Prénom'] || row['Prenom'] || '',
-        last_name: row['Nom'] || '',
-        post_name: row['Post-nom'] || row['Postnom'] || '',
-        gender: (row['Sexe'] === 'M' || row['Sexe'] === 'F') ? row['Sexe'] : 'M',
-        birth_date: row['Date de naissance'] || '',
-        birthplace: row['Lieu de naissance'] || ''
-      })).filter(s => s.first_name && s.last_name); // Basic validation
+  const mapGender = (raw: any): 'M' | 'F' => {
+    if (!raw) return 'M';
+    const g = normalize(raw);
+    if (['m', 'male', 'masculin', 'homme', 'garcon', 'garçon', 'h'].includes(g)) return 'M';
+    if (['f', 'female', 'feminin', 'femme', 'fille'].includes(g)) return 'F';
+    // fallback heuristic: first letter
+    const first = String(raw).trim()[0]?.toLowerCase();
+    return first === 'f' ? 'F' : 'M';
+  };
 
-      // Filter duplicates
-      const newStudents: any[] = [];
-      const duplicates: any[] = [];
+  const parseDate = (raw: any): string => {
+    // returns ISO yyyy-mm-dd or empty string
+    if (!raw) return '';
+    const s = String(raw).trim();
 
-      students.forEach(student => {
-        const exists = existingStudents.some(existing => 
-          existing.first_name.toLowerCase() === student.first_name.toLowerCase() &&
-          existing.last_name.toLowerCase() === student.last_name.toLowerCase() &&
-          (existing.post_name || '').toLowerCase() === (student.post_name || '').toLowerCase()
-        );
+    // If already ISO-like yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
-        if (exists) {
-          duplicates.push(student);
+    // dd/mm/yyyy or d/m/yyyy
+    if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s)) {
+      const parts = s.split(/[/\-]/).map(p => p.padStart(2, '0'));
+      // if format looks like dd/mm/yyyy
+      let [a, b, c] = parts;
+      // if c length === 2 assume 20xx
+      if (c.length === 2) c = '20' + c;
+      // Heuristic: if a > 31, probably yyyy-mm-dd already handled above, else a is day
+      const day = a.padStart(2, '0');
+      const month = b.padStart(2, '0');
+      const year = c;
+      return `${year}-${month}-${day}`;
+    }
+
+    // Excel serial numbers (sometimes come as numbers)
+    if (!isNaN(Number(s))) {
+      try {
+        const d = XLSX.SSF.parse_date_code(Number(s));
+        if (d && d.y) {
+          const mm = String(d.m).padStart(2, '0');
+          const dd = String(d.d).padStart(2, '0');
+          return `${d.y}-${mm}-${dd}`;
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Fallback: try Date.parse
+    const dt = new Date(s);
+    if (!isNaN(dt.getTime())) {
+      const iso = dt.toISOString().slice(0, 10);
+      return iso;
+    }
+
+    return '';
+  };
+
+  const splitNomPostnom = (raw: string) => {
+    // raw may be "Nom Postnom" or "Nom, Postnom" or "Nom / Postnom"
+    if (!raw) return { last_name: '', post_name: '' };
+    const s = String(raw).trim();
+    // if comma present, split on comma
+    if (s.includes(',')) {
+      const [last, ...rest] = s.split(',');
+      return { last_name: last.trim(), post_name: rest.join(',').trim() };
+    }
+    // if slash or dash
+    if (/[\/\-|]/.test(s)) {
+      const parts = s.split(/[\/\-\|]/).map(p => p.trim()).filter(Boolean);
+      return { last_name: parts[0] || '', post_name: (parts[1] || '') };
+    }
+    // else split by whitespace: first token = last_name, rest = post_name
+    const tokens = s.split(/\s+/).filter(Boolean);
+    if (tokens.length === 1) return { last_name: tokens[0], post_name: '' };
+    const last = tokens[0];
+    const post = tokens.slice(1).join(' ');
+    return { last_name: last, post_name: post };
+  };
+
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    // use defval to ensure keys exist (not undefined)
+    const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Array<Record<string, any>>;
+
+    if (!rawJson || rawJson.length === 0) {
+      toast.warning('Le fichier est vide ou mal formaté.');
+      setLoading(false);
+      return;
+    }
+
+    // --- Détection et normalisation des en-têtes ---
+    const headers = Object.keys(rawJson[0]).map(h => ({ raw: h, norm: normalize(h) }));
+    // mapping heuristique : map normalized header to canonical field names
+    const headerToField: Record<string, string> = {};
+    const headerAliases: Record<string, string[]> = {
+      last_name: ['nom', 'nom de famille', 'surname', 'lastname', 'nompostnom', 'nom et postnom', 'nom et post-nom'],
+      post_name: ['post-nom', 'postnom', 'post name', 'post_name'],
+      first_name: ['prenom', 'prénom', 'first name', 'firstname'],
+      gender: ['sexe', 'gender', 'genre', 'sex'],
+      birth_date: ['date de naissance', 'birth date', 'birthday', 'dob'],
+      birthplace: ['lieu de naissance', 'birthplace', 'place of birth'],
+      // also accept combined
+      name_combined: ['nom et postnom', 'nompostnom', 'nom postnom', 'name', 'full name', 'nom complet']
+    };
+
+    // Build reverse lookup
+    for (const { raw, norm } of headers) {
+      let assigned = false;
+      for (const [field, aliases] of Object.entries(headerAliases)) {
+        for (const a of aliases) {
+          if (norm.includes(normalize(a))) {
+            headerToField[raw] = field;
+            assigned = true;
+            break;
+          }
+        }
+        if (assigned) break;
+      }
+      if (!assigned) {
+        // fallback heuristics
+        if (norm.includes('nom') && norm.includes('post')) headerToField[raw] = 'name_combined';
+        else if (norm.includes('nom') && !headerToField[raw]) headerToField[raw] = 'last_name';
+        else if (norm.includes('prenom') || norm.includes('first')) headerToField[raw] = 'first_name';
+        else headerToField[raw] = 'unknown';
+      }
+    }
+
+    // --- Convert rows to students with flexible parsing ---
+    const parsedRows: Array<{ rowIndex: number; student?: any; errors?: string[] }> = [];
+
+    rawJson.forEach((row, idx) => {
+      const errors: string[] = [];
+      const out: any = {};
+
+      // For each raw column, map to canonical field if known
+      for (const rawKey of Object.keys(row)) {
+        const field = headerToField[rawKey] ?? 'unknown';
+        const value = row[rawKey];
+        if (field === 'unknown') continue;
+        if (field === 'name_combined') {
+          const { last_name, post_name } = splitNomPostnom(value);
+          if (last_name) out.last_name = out.last_name || last_name;
+          if (post_name) out.post_name = out.post_name || post_name;
         } else {
-          newStudents.push(student);
+          out[field] = out[field] || value;
         }
-      });
-
-      if (newStudents.length > 0) {
-        await onImport(newStudents);
-        
-        let message = `${newStudents.length} élève(s) importé(s) avec succès.`;
-        if (duplicates.length > 0) {
-          message += ` ${duplicates.length} doublon(s) ignoré(s).`;
-        }
-        toast.success(message);
-        onClose();
-      } else {
-        toast.warning(`Aucun nouvel élève à importer. ${duplicates.length} doublon(s) trouvé(s).`);
       }
 
-    } catch (error) {
-      console.error('Failed to import students:', error);
-      toast.error('Erreur lors de l\'importation du fichier Excel');
-    } finally {
-      setLoading(false);
+      // If last_name is missing but there's a column like "Nom et PostNom" not detected, try common fallback keys
+      if (!out.last_name) {
+        // try fields with common raw headers
+        const possible = ['nom', 'name', 'full name', 'nom et postnom', 'nompostnom'];
+        for (const rawKey of Object.keys(row)) {
+          const n = normalize(rawKey);
+          if (possible.some(p => n.includes(normalize(p)))) {
+            const { last_name, post_name } = splitNomPostnom(row[rawKey]);
+            out.last_name = last_name || out.last_name;
+            out.post_name = post_name || out.post_name;
+            break;
+          }
+        }
+      }
+
+      // If post_name absent, ensure it's at least ''
+      out.post_name = out.post_name || '';
+
+      // Gender normalization
+      out.gender = mapGender(out.gender || out.genre || '');
+
+      // first name normalization (try columns with 'prenom' or 'first')
+      if (!out.first_name) {
+        for (const rawKey of Object.keys(row)) {
+          const n = normalize(rawKey);
+          if (n.includes('prenom') || n.includes('first')) {
+            out.first_name = row[rawKey];
+            break;
+          }
+        }
+      }
+      out.first_name = (out.first_name || '').toString().trim();
+
+      // birth_date parsing
+      out.birth_date = parseDate(out.birth_date || row['Date de naissance'] || row['date'] || '');
+
+      // birthplace
+      out.birthplace = (out.birthplace || '').toString().trim();
+
+      // Basic validations
+      if (!out.last_name) errors.push('Nom manquant');
+      if (!out.first_name) errors.push('Prénom manquant');
+      if (!['M', 'F'].includes(out.gender)) errors.push('Genre invalide');
+
+      parsedRows.push({
+        rowIndex: idx + 2, // +2 because sheet header row + 1-based index
+        student: errors.length === 0 ? {
+          first_name: out.first_name,
+          last_name: out.last_name,
+          post_name: out.post_name,
+          gender: out.gender,
+          birth_date: out.birth_date,
+          birthplace: out.birthplace
+        } : undefined,
+        errors: errors.length ? errors : undefined
+      });
+    });
+
+    // --- Separate valid / invalid rows ---
+    const validRows = parsedRows.filter(r => r.student);
+    const invalidRows = parsedRows.filter(r => r.errors);
+
+    // Deduplicate: compare normalized triple (first,last,post)
+    const normalizeKey = (s: any) =>
+      `${(s.first_name || '').toString().trim().toLowerCase()}|${(s.last_name || '').toString().trim().toLowerCase()}|${(s.post_name || '').toString().trim().toLowerCase()}`;
+
+    const existingSet = new Set(
+      existingStudents.map(ex => normalizeKey({
+        first_name: ex.first_name,
+        last_name: ex.last_name,
+        post_name: ex.post_name
+      }))
+    );
+
+    const seenInFile = new Set<string>();
+    const toImport: any[] = [];
+    const dupExisting: any[] = [];
+    const dupInFile: any[] = [];
+
+    for (const r of validRows) {
+      const key = normalizeKey(r.student);
+      if (existingSet.has(key)) {
+        dupExisting.push(r.student);
+      } else if (seenInFile.has(key)) {
+        dupInFile.push(r.student);
+      } else {
+        seenInFile.add(key);
+        toImport.push(r.student);
+      }
     }
-  };
+
+    // Provide a summary and handle import
+    if (toImport.length === 0) {
+      let msg = 'Aucun nouvel élève à importer.';
+      if (dupExisting.length > 0) msg += ` ${dupExisting.length} doublon(s) existant(s) ignoré(s).`;
+      if (dupInFile.length > 0) msg += ` ${dupInFile.length} doublon(s) dans le fichier ignoré(s).`;
+      if (invalidRows.length > 0) msg += ` ${invalidRows.length} ligne(s) invalides.`;
+      toast.warning(msg);
+      setLoading(false);
+
+      // Optionally show first invalid lines in console for debugging
+      if (invalidRows.length > 0) {
+        console.warn('Lignes invalides:', invalidRows.slice(0, 10));
+      }
+      return;
+    }
+
+    // Call onImport with sanitized students (onImport adds classId internally)
+    await onImport(toImport);
+
+    // Toast summary
+    let successMsg = `${toImport.length} élève(s) importé(s) avec succès.`;
+    if (dupExisting.length > 0) successMsg += ` ${dupExisting.length} doublon(s) existant(s) ignoré(s).`;
+    if (dupInFile.length > 0) successMsg += ` ${dupInFile.length} doublon(s) dans le fichier ignoré(s).`;
+    if (invalidRows.length > 0) successMsg += ` ${invalidRows.length} ligne(s) invalides.`;
+    toast.success(successMsg);
+
+    // Option: log invalid rows for developer
+    if (invalidRows.length > 0) console.warn('Invalid rows examples:', invalidRows.slice(0, 10));
+
+    // Close modal
+    onClose();
+
+  } catch (error) {
+    console.error('Failed to import students:', error);
+    toast.error('Erreur lors de l\'importation du fichier Excel');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (!isOpen) return null;
 

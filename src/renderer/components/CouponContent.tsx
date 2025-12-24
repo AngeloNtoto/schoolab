@@ -394,10 +394,10 @@ export default function CouponContent({
                                        subject.max_p3 + subject.max_p4 + subject.max_exam2;
                         
                         if (maxTotal > 0 && totalObtained < maxTotal / 2) {
-                          failures.push(`${subject.name}: ${totalObtained}/${maxTotal}`);
+                          failures.push(`${subject.code}: ${totalObtained}/${maxTotal}`);
                         }
                       });
-                      return failures.length > 0 ? failures.join(', ') : 'Néant';
+                      return failures.length > 0 ? failures.join(', ') : 'Aucune';
                     })()}
                   </td>
                 </tr>

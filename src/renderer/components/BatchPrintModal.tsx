@@ -51,6 +51,7 @@ export default function BatchPrintModal({
   );
   const [couponsPerPage, setCouponsPerPage] = useState<1 | 2 | 4 | 6>(2);
   const [searchTerm, setSearchTerm] = useState('');
+  const [onlyAbandons, setOnlyAbandons] = useState(false);
 
   // Filtrer les élèves par recherche
   const filteredStudents = useMemo(() => {
@@ -181,6 +182,18 @@ export default function BatchPrintModal({
 
           {/* Sélection des élèves */}
           <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStudentIds(students.filter(s => !((s as Student).is_abandoned)).map(s => s.id))}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  >
+                    Exclure les abandons
+                  </button>
+                </div>
+                <div className="text-sm text-slate-500">{selectedStudentIds.length} sélectionné(s)</div>
+              </div>
             <div className="flex items-center justify-between mb-2">
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 <Users size={16} />
