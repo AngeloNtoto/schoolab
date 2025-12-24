@@ -202,32 +202,32 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[8.5px]">
+      <table className="w-full border-2 border-black border-collapse text-center text-[8px]">
         <thead>
           <tr>
-            <th rowSpan={3} className="border border-black w-[22%] p-1">BRANCHE</th>
-            <th colSpan={5} className="border border-black bg-slate-50 uppercase py-0.5">Premier Semestre</th>
-            <th colSpan={5} className="border border-black bg-slate-50 uppercase py-0.5">Second Semestre</th>
-            <th rowSpan={3} className="border border-black w-[5%] py-0.5">T.G.</th>
+            <th rowSpan={3} className="border border-black w-[18%] p-1">BRANCHE</th>
+            <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Premier Semestre</th>
+            <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Second Semestre</th>
+            <th colSpan={2} rowSpan={3} className="border border-black bg-slate-100 w-[8%]">T.G.</th>
             <th colSpan={2} className="border border-black uppercase py-0.5">Examen de Repechage</th>
           </tr>
           <tr>
-            <th rowSpan={2} className="border border-black w-[4%]">MAX</th>
+            <th rowSpan={2} className="border border-black w-[3%]">MAX</th>
             <th colSpan={2} className="border border-black">TRAVAUX JOURNAL</th>
-            <th rowSpan={2} className="border border-black w-[5%]">MAX EXAMEN</th>
-            <th rowSpan={2} className="border border-black w-[5%]">TOT</th>
-            <th rowSpan={2} className="border border-black w-[4%]">MAX</th>
+            <th colSpan={2} rowSpan={2} className="border border-black w-[8%]">MAX EXAMEN</th>
+            <th colSpan={2} rowSpan={2} className="border border-black w-[10%]">TOT</th>
+            <th rowSpan={2} className="border border-black w-[3%]">MAX</th>
             <th colSpan={2} className="border border-black">TRAVAUX JOURNAL</th>
-            <th rowSpan={2} className="border border-black w-[5%]">EXAMEN</th>
-            <th rowSpan={2} className="border border-black w-[5%]">TOT</th>
+            <th colSpan={2} rowSpan={2} className="border border-black w-[8%]">MAX EXAMEN</th>
+            <th colSpan={2} rowSpan={2} className="border border-black w-[10%]">TOT</th>
             <th rowSpan={2} className="border border-black w-[4%]">%</th>
             <th rowSpan={2} className="border border-black text-[7px] w-[8%]">Sign. Prof</th>
           </tr>
           <tr>
-            <th className="border border-black w-[4%]">1ere P</th>
-            <th className="border border-black w-[4%]">2e P</th>
-            <th className="border border-black w-[4%]">3e P</th>
-            <th className="border border-black w-[4%]">4e P</th>
+            <th className="border border-black w-[3%]">1ere P</th>
+            <th className="border border-black w-[3%]">2e P</th>
+            <th className="border border-black w-[3%]">3e P</th>
+            <th className="border border-black w-[3%]">4e P</th>
           </tr>
         </thead>
         <tbody>
@@ -249,7 +249,7 @@ export default function BulletinPrimaireContent({
               <React.Fragment key={domainId ?? 'no-domain'}>
                 {/* Domain Header */}
                 <tr className="bg-slate-200">
-                  <td colSpan={15} className="border border-black p-1 font-bold uppercase text-left text-[9px]">
+                  <td colSpan={20} className="border border-black p-1 font-bold uppercase text-left text-[9px]">
                     {domainName}
                   </td>
                 </tr>
@@ -299,13 +299,18 @@ export default function BulletinPrimaireContent({
                       <td className="border border-black">{formatValue(p1)}</td>
                       <td className="border border-black">{formatValue(p2)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx1)}</td>
+                      <td className="border border-black">{formatValue(ex1)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot1)}</td>
                       <td className="border border-black font-bold">{formatValue(tot1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className="border border-black">{formatValue(p3)}</td>
                       <td className="border border-black">{formatValue(p4)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx2)}</td>
+                      <td className="border border-black">{formatValue(ex2)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot2)}</td>
                       <td className="border border-black font-bold">{formatValue(tot2)}</td>
-                      <td className="border border-black font-bold bg-slate-50">{formatValue(tg)}</td>
+                      <td className="border border-black font-bold bg-slate-100">{formatValue(maxTG)}</td>
+                      <td className="border border-black font-bold bg-slate-100">{formatValue(tg)}</td>
                       <td className="border border-black"></td>
                       <td className="border border-black"></td>
                     </tr>
@@ -319,13 +324,18 @@ export default function BulletinPrimaireContent({
                   <td className="border border-black">{formatValue(domainP1)}</td>
                   <td className="border border-black">{formatValue(domainP2)}</td>
                   <td className="border border-black">{formatValue(domainMaxEx1)}</td>
+                  <td className="border border-black">{formatValue(domainEx1)}</td>
+                  <td className="border border-black">{formatValue(domainMaxTot1)}</td>
                   <td className="border border-black">{formatValue(domainTot1)}</td>
                   <td className="border border-black">{formatValue(domainMaxP)}</td>
                   <td className="border border-black">{formatValue(domainP3)}</td>
                   <td className="border border-black">{formatValue(domainP4)}</td>
                   <td className="border border-black">{formatValue(domainMaxEx2)}</td>
+                  <td className="border border-black">{formatValue(domainEx2)}</td>
+                  <td className="border border-black">{formatValue(domainMaxTot2)}</td>
                   <td className="border border-black">{formatValue(domainTot2)}</td>
-                  <td className="border border-black">{formatValue(domainTG)}</td>
+                  <td className="border border-black bg-slate-100">{formatValue(domainMaxTG)}</td>
+                  <td className="border border-black bg-slate-100">{formatValue(domainTG)}</td>
                   <td className="border border-black"></td>
                   <td className="border border-black"></td>
                 </tr>
@@ -352,12 +362,17 @@ export default function BulletinPrimaireContent({
                 <td className="border border-black">{formatValue(grandMaxP)}</td>
                 <td className="border border-black" colSpan={2}></td>
                 <td className="border border-black">{formatValue(grandMaxEx1)}</td>
-                <td className="border border-black">{formatValue(grandMaxTot1)}</td>
+                <td className="border border-black"></td>
+                <td className="border border-black font-bold">{formatValue(grandMaxTot1)}</td>
+                <td className="border border-black"></td>
                 <td className="border border-black">{formatValue(grandMaxP)}</td>
                 <td className="border border-black" colSpan={2}></td>
                 <td className="border border-black">{formatValue(grandMaxEx2)}</td>
-                <td className="border border-black">{formatValue(grandMaxTot2)}</td>
-                <td className="border border-black">{formatValue(grandMaxTG)}</td>
+                <td className="border border-black"></td>
+                <td className="border border-black font-bold">{formatValue(grandMaxTot2)}</td>
+                <td className="border border-black"></td>
+                <td className="border border-black font-bold bg-slate-100">{formatValue(grandMaxTG)}</td>
+                <td className="border border-black bg-slate-100"></td>
                 <td className="border border-black" colSpan={2}></td>
               </tr>
             );
@@ -369,8 +384,8 @@ export default function BulletinPrimaireContent({
             let totalP3 = 0, totalP4 = 0, totalEx2 = 0, totalTot2 = 0;
             let totalTG = 0;
             
-            let maxP1 = 0, maxEx1 = 0, maxTot1 = 0;
-            let maxP3 = 0, maxEx2 = 0, maxTot2 = 0;
+            let maxP1 = 0, maxP2 = 0, maxEx1 = 0, maxTot1 = 0;
+            let maxP3 = 0, maxP4 = 0, maxEx2 = 0, maxTot2 = 0;
             let maxTG = 0;
             
             subjects.forEach(subject => {
@@ -393,19 +408,29 @@ export default function BulletinPrimaireContent({
               
               totalTG += (p1 || 0) + (p2 || 0) + (ex1 || 0) + (p3 || 0) + (p4 || 0) + (ex2 || 0);
 
-              maxP1 += (subject.max_p1 * 2);
+              maxP1 += subject.max_p1;
+              maxP2 += subject.max_p1;
               maxEx1 += subject.max_exam1;
               maxTot1 += (subject.max_p1 * 2) + subject.max_exam1;
               
-              maxP3 += (subject.max_p1 * 2);
+              maxP3 += subject.max_p1;
+              maxP4 += subject.max_p1;
               maxEx2 += subject.max_exam2;
               maxTot2 += (subject.max_p1 * 2) + subject.max_exam2;
               
               maxTG += (subject.max_p1 * 4) + subject.max_exam1 + subject.max_exam2;
             });
             
+            const pctP1 = maxP1 > 0 ? ((totalP1 / maxP1) * 100).toFixed(1) : '0';
+            const pctP2 = maxP2 > 0 ? ((totalP2 / maxP2) * 100).toFixed(1) : '0';
+            const pctEx1 = maxEx1 > 0 ? ((totalEx1 / maxEx1) * 100).toFixed(1) : '0';
             const pct1 = maxTot1 > 0 ? ((totalTot1 / maxTot1) * 100).toFixed(1) : '0';
+
+            const pctP3 = maxP3 > 0 ? ((totalP3 / maxP3) * 100).toFixed(1) : '0';
+            const pctP4 = maxP4 > 0 ? ((totalP4 / maxP4) * 100).toFixed(1) : '0';
+            const pctEx2 = maxEx2 > 0 ? ((totalEx2 / maxEx2) * 100).toFixed(1) : '0';
             const pct2 = maxTot2 > 0 ? ((totalTot2 / maxTot2) * 100).toFixed(1) : '0';
+
             const pctG = maxTG > 0 ? ((totalTG / maxTG) * 100).toFixed(1) : '0';
 
             return (
@@ -415,13 +440,18 @@ export default function BulletinPrimaireContent({
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalP1)}</td>
                   <td className="border border-black">{formatValue(totalP2)}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalEx1)}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalTot1)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalP3)}</td>
                   <td className="border border-black">{formatValue(totalP4)}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalEx2)}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalTot2)}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalTG)}</td>
                   <td className="border border-black" colSpan={2} rowSpan={6}>
                     <div className="text-left p-1 space-y-2 text-[7px] leading-tight">
@@ -436,35 +466,56 @@ export default function BulletinPrimaireContent({
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 uppercase">POURCENTAGE</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black" colSpan={4}>{pct1}%</td>
+                  <td className="border border-black text-center">{pctP1}%</td>
+                  <td className="border border-black text-center">{pctP2}%</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black" colSpan={4}>{pct2}%</td>
-                  <td className="border border-black bg-slate-100">{pctG}%</td>
+                  <td className="border border-black text-center">{pctEx1}%</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-center">{pct1}%</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-center">{pctP3}%</td>
+                  <td className="border border-black text-center">{pctP4}%</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-center">{pctEx2}%</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-center">{pct2}%</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-center bg-slate-100">{pctG}%</td>
                 </tr>
                 <tr>
-                  <td className="border border-black text-left px-2 font-bold uppercase underline">PLACE/NBRE D'ELEVES</td>
+                  <td className="border border-black text-left px-2 font-bold uppercase underline text-[8px]">PLACE/NBRE D'ELEVES</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black text-sm">{studentRanks?.p1}/{totalStudents}</td>
                   <td className="border border-black text-sm">{studentRanks?.p2}/{totalStudents}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-sm">{studentRanks?.ex1}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black text-sm">{studentRanks?.tot1}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black text-sm">{studentRanks?.p3}/{totalStudents}</td>
                   <td className="border border-black text-sm">{studentRanks?.p4}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-sm">{studentRanks?.ex2}/{totalStudents}</td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black text-sm">{studentRanks?.tot2}/{totalStudents}</td>
-                  <td className="border border-black font-bold bg-slate-50">{studentRanks?.tg}/{totalStudents}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black font-bold bg-slate-100">{studentRanks?.tg}/{totalStudents}</td>
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold uppercase underline">APPLICATION</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black">{getApplication(totalP1 && maxP1 ? parseFloat(pct1) : null)}</td>
-                  <td className="border border-black">{getApplication(totalP2 && maxP1 ? parseFloat(pct1) : null)}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP1))}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP2))}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black">{getApplication(totalP3 && maxP3 ? parseFloat(pct2) : null)}</td>
-                  <td className="border border-black">{getApplication(totalP4 && maxP3 ? parseFloat(pct2) : null)}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP3))}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP4))}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
@@ -477,15 +528,20 @@ export default function BulletinPrimaireContent({
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black">{abregeConduite(student.conduite_p3)}</td>
                   <td className="border border-black">{abregeConduite(student.conduite_p4)}</td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                 </tr>
                 <tr className="h-6">
                   <td className="border border-black text-left px-2 font-bold uppercase underline">SIGNATURE</td>
-                  <td className="border border-black" colSpan={11}></td>
+                  <td className="border border-black" colSpan={16}></td>
                 </tr>
               </>
             );
