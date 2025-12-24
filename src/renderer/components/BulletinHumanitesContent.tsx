@@ -21,6 +21,15 @@ export interface BulletinHumanitesContentProps {
   totalStudents: number;
 }
 
+const getApplication = (percentage: number | null): string => {
+  if (percentage === null) return '';
+  if (percentage >= 80) return 'E';
+  if (percentage >= 60) return 'TB';
+  if (percentage >= 50) return 'B';
+  if (percentage >= 30) return 'Ma';
+  return 'Mé';
+};
+
 export default function BulletinHumanitesContent({
   student,
   classInfo,
@@ -64,40 +73,33 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[11px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always">
+    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[10px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
       
       {/* Header */}
       <div className="border-2 border-black mb-1">
         <div className="flex border-b border-black">
           {/* Flag */}
           <div className="w-24 border-r border-black p-2 flex items-center justify-center">
-            <div 
-              className="w-full aspect-[4/3] relative overflow-hidden border border-black shadow-sm"
-              style={{
-                backgroundColor: '#007FFF',
-                backgroundImage: `linear-gradient(to top left, 
-                  transparent 0% 38%, 
-                  #FAD02E 38% 40%, 
-                  #CE1126 40% 60%, 
-                  #FAD02E 60% 62%, 
-                  transparent 62% 100%
-                )`
-              }}
-            >
-              <div 
-                className="absolute top-[0%] left-[8%] text-[#FAD02E] leading-none"
-                style={{ fontSize: '24px', filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.5))' }}
-              >
-                ★
-              </div>
+            <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-[#007FFF]">
+              <svg viewBox="0 0 400 300" className="w-full h-full">
+                {/* Diagonal stripe (red with yellow borders) */}
+                <path d="M400 0 L400 60 L60 300 L0 300 L0 240 L340 0 Z" fill="#FAD02E" />
+                <path d="M400 15 L400 45 L45 300 L15 300 L0 285 L0 255 Z" fill="#CE1126" />
+                
+                {/* Yellow star in the top left */}
+                <path 
+                  d="M50 20 L58.5 45 L85 45 L63.5 60 L71.5 85 L50 70 L28.5 85 L36.5 60 L15 45 L41.5 45 Z" 
+                  fill="#FAD02E" 
+                />
+              </svg>
             </div>
           </div>
           
           {/* Title */}
-          <div className="flex-1 text-center py-2">
-            <h1 className="font-bold text-lg uppercase">Republique Democratique du Congo</h1>
-            <h2 className="font-bold text-lg uppercase">Ministere de l'Education Nationale</h2>
-            <h3 className="font-bold text-lg uppercase">Et Nouvelle Citoyennete</h3>
+          <div className="flex-1 text-center py-1">
+            <h1 className="font-medium text-[13px] uppercase">Republique Democratique du Congo</h1>
+            <h2 className="font-medium text-[13px] uppercase">Ministere de l'Education Nationale</h2>
+            <h3 className="font-medium text-[13px] uppercase">Et Nouvelle Citoyennete</h3>
           </div>
 
           {/* Logo */}
@@ -125,29 +127,29 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Info Grid */}
-      <div className="border-2 border-black mb-1 p-2 grid grid-cols-2 gap-x-8 gap-y-1">
+      <div className="border-2 border-black mb-1 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
         <div className="flex items-baseline gap-2">
-          <span className="font-bold min-w-[60px]">VILLE :</span>
-          <span className="border-b border-dotted border-black flex-1 text-center font-bold">{schoolCity}</span>
+          <span className="font-semibold min-w-[60px]">VILLE :</span>
+          <span className="border-b border-dotted border-black flex-1 text-center font-semibold">{schoolCity}</span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="font-bold min-w-[60px]">ELEVE :</span>
-          <span className="border-b border-dotted border-black flex-1 text-center font-bold uppercase">
+          <span className="font-semibold min-w-[60px]">ELEVE :</span>
+          <span className="border-b border-dotted border-black flex-1 text-center font-semibold uppercase">
             {student.last_name} {student.post_name} {student.first_name}
           </span>
-          <span className="font-bold">SEXE : {student.gender}</span>
+          <span className="font-semibold">SEXE : {student.gender}</span>
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="font-bold min-w-[60px]">COMMUNE :</span>
+          <span className="font-semibold min-w-[60px]">COMMUNE :</span>
           <span className="border-b border-dotted border-black flex-1"></span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="font-bold min-w-[60px]">NE(E) A :</span>
+          <span className="font-semibold min-w-[60px]">NE(E) A :</span>
           <span className="border-b border-dotted border-black flex-1 text-center">
             {student.birthplace}
           </span>
-          <span className="font-bold">LE</span>
+          <span className="font-semibold">LE</span>
           <span className="border-b border-dotted border-black w-24 text-center">
             {new Date(student.birth_date).toLocaleDateString('fr-FR')}
           </span>
@@ -188,30 +190,30 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[10px]">
+      <table className="w-full border-2 border-black border-collapse text-center text-[9px]">
         <thead>
           <tr>
-            <th rowSpan={3} className="border border-black w-[25%] p-1">BRANCHES</th>
-            <th colSpan={4} className="border border-black bg-slate-50">PREMIER SEMESTRE</th>
-            <th colSpan={4} className="border border-black bg-slate-50">SECOND SEMESTRE</th>
-            <th rowSpan={3} className="border border-black w-[5%]">T.G.</th>
-            <th colSpan={2} className="border border-black w-[15%]">EXAMEN DE<br/>REPECHAGE</th>
+            <th rowSpan={3} className="border border-black w-[25%] p-0">BRANCHES</th>
+            <th colSpan={4} className="border border-black bg-slate-50 p-0">PREMIER SEMESTRE</th>
+            <th colSpan={4} className="border border-black bg-slate-50 p-0">SECOND SEMESTRE</th>
+            <th rowSpan={3} className="border border-black w-[5%] p-0">T.G.</th>
+            <th colSpan={2} className="border border-black w-[15%] p-0">EXAMEN DE<br/>REPECHAGE</th>
           </tr>
           <tr>
-            <th colSpan={2} className="border border-black">TR. JOURNAL</th>
-            <th rowSpan={2} className="border border-black w-[6%]">EXAM.</th>
-            <th rowSpan={2} className="border border-black w-[6%]">TOT.</th>
-            <th colSpan={2} className="border border-black">TR. JOURNAL</th>
-            <th rowSpan={2} className="border border-black w-[6%]">EXAM.</th>
-            <th rowSpan={2} className="border border-black w-[6%]">TOT.</th>
-            <th rowSpan={2} className="border border-black w-[5%]">%</th>
-            <th rowSpan={2} className="border border-black">Sign. Prof.</th>
+            <th colSpan={2} className="border border-black p-0">TR. JOURNAL</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">EXAM..</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">TOT.</th>
+            <th colSpan={2} className="border border-black p-0">TR. JOURNAL</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">EXAM..</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">TOT.</th>
+            <th rowSpan={2} className="border border-black w-[5%] p-0">%</th>
+            <th rowSpan={2} className="border border-black p-0">Sign. Prof.</th>
           </tr>
           <tr>
-            <th className="border border-black w-[6%]">1ère P.</th>
-            <th className="border border-black w-[6%]">2e P.</th>
-            <th className="border border-black w-[6%]">3e P.</th>
-            <th className="border border-black w-[6%]">4e P.</th>
+            <th className="border border-black w-[6%] p-0">1ère P.</th>
+            <th className="border border-black w-[6%] p-0">2e P.</th>
+            <th className="border border-black w-[6%] p-0">3e P.</th>
+            <th className="border border-black w-[6%] p-0">4e P.</th>
           </tr>
         </thead>
         <tbody>
@@ -248,18 +250,18 @@ export default function BulletinHumanitesContent({
                 <React.Fragment key={key}>
                   {/* MAXIMA row for this group */}
                   <tr className="font-bold bg-slate-100">
-                    <td className="border border-black text-left px-2">MAXIMA</td>
-                    <td className="border border-black">{firstSubject.max_p1}</td>
-                    <td className="border border-black">{firstSubject.max_p2}</td>
-                    {firstSubject.max_exam1==0?(<td className="border bg-black border-black"></td>):(<td className="border border-black">{firstSubject.max_exam1}</td>)}
-                    <td className="border border-black">{sem1Total}</td>
-                    <td className="border border-black">{firstSubject.max_p3}</td>
-                    <td className="border border-black">{firstSubject.max_p4}</td>
-                    {firstSubject.max_exam2===0?(<td className="border bg-black border-black"></td>):(<td className="border border-black">{firstSubject.max_exam2}</td>)}
-                    <td className="border border-black">{sem2Total}</td>
-                    <td className="border border-black">{totalMax}</td>
-                    <td className="border border-black bg-black"></td>
-                    <td className="border border-black bg-black"></td>
+                    <td className="border border-black text-left px-2 py-0.5">MAXIMA</td>
+                    <td className="border border-black py-0.5">{firstSubject.max_p1}</td>
+                    <td className="border border-black py-0.5">{firstSubject.max_p2}</td>
+                    {firstSubject.max_exam1==0?(<td className="border bg-black border-black py-0.5"></td>):(<td className="border border-black py-0.5">{firstSubject.max_exam1}</td>)}
+                    <td className="border border-black py-0.5">{sem1Total}</td>
+                    <td className="border border-black py-0.5">{firstSubject.max_p3}</td>
+                    <td className="border border-black py-0.5">{firstSubject.max_p4}</td>
+                    {firstSubject.max_exam2===0?(<td className="border bg-black border-black py-0.5"></td>):(<td className="border border-black py-0.5">{firstSubject.max_exam2}</td>)}
+                    <td className="border border-black py-0.5">{sem2Total}</td>
+                    <td className="border border-black py-0.5">{totalMax}</td>
+                    <td className="border border-black bg-black py-0.5"></td>
+                    <td className="border border-black bg-black py-0.5"></td>
                   </tr>
                   
                   {/* Subjects in this group */}
@@ -278,18 +280,18 @@ export default function BulletinHumanitesContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
-                        <td className="border border-black">{p1 ?? ''}</td>
-                        <td className="border border-black">{p2 ?? ''}</td>
-                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black"></td>) : (<td className="border border-black">{ex1 ?? ''}</td>)}
-                        <td className="border border-black font-bold">{tot1 ?? ''}</td>
-                        <td className="border border-black">{p3 ?? ''}</td>
-                        <td className="border border-black">{p4 ?? ''}</td>
-                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black"></td>) : (<td className="border border-black">{ex2 ?? ''}</td>)}
-                        <td className="border border-black font-bold">{tot2 ?? ''}</td>
-                        <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
-                        <td className="border border-black"></td>
-                        <td className="border border-black"></td>
+                        <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
+                        <td className="border border-black py-0.5">{p1 ?? ''}</td>
+                        <td className="border border-black py-0.5">{p2 ?? ''}</td>
+                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex1 ?? ''}</td>)}
+                        <td className="border border-black font-bold py-0.5">{tot1 ?? ''}</td>
+                        <td className="border border-black py-0.5">{p3 ?? ''}</td>
+                        <td className="border border-black py-0.5">{p4 ?? ''}</td>
+                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex2 ?? ''}</td>)}
+                        <td className="border border-black font-bold py-0.5">{tot2 ?? ''}</td>
+                        <td className="border border-black font-bold bg-slate-50 py-0.5">{tg || ''}</td>
+                        <td className="border border-black py-0.5"></td>
+                        <td className="border border-black py-0.5"></td>
                       </tr>
                     );
                   })}
@@ -340,18 +342,18 @@ export default function BulletinHumanitesContent({
             
             return (
               <tr className="font-bold bg-slate-200 border-t-2 border-black">
-                <td className="border border-black text-left px-2">MAXIMA GENERAUX</td>
-                <td className="border border-black">{maxP1}</td>
-                <td className="border border-black">{maxP2}</td>
-                <td className="border border-black">{maxEx1}</td>
-                <td className="border border-black">{maxTot1}</td>
-                <td className="border border-black">{maxP3}</td>
-                <td className="border border-black">{maxP4}</td>
-                <td className="border border-black">{maxEx2}</td>
-                <td className="border border-black">{maxTot2}</td>
-                <td className="border border-black">{maxTG}</td>
-                <td className="border border-black bg-black"></td>
-                <td className="border border-black bg-black"></td>
+                <td className="border border-black text-left px-2 py-0.5">MAXIMA GENERAUX</td>
+                <td className="border border-black py-0.5">{maxP1}</td>
+                <td className="border border-black py-0.5">{maxP2}</td>
+                <td className="border border-black py-0.5">{maxEx1}</td>
+                <td className="border border-black py-0.5">{maxTot1}</td>
+                <td className="border border-black py-0.5">{maxP3}</td>
+                <td className="border border-black py-0.5">{maxP4}</td>
+                <td className="border border-black py-0.5">{maxEx2}</td>
+                <td className="border border-black py-0.5">{maxTot2}</td>
+                <td className="border border-black py-0.5">{maxTG}</td>
+                <td className="border border-black bg-black py-0.5"></td>
+                <td className="border border-black bg-black py-0.5"></td>
               </tr>
             );
           })()}
@@ -465,12 +467,12 @@ export default function BulletinHumanitesContent({
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold">APPLICATION</td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-slate-200"></td>
+                  <td className="border border-black">{getApplication(pctP1 !== '0' ? parseFloat(pctP1) : null)}</td>
+                  <td className="border border-black">{getApplication(pctP2 !== '0' ? parseFloat(pctP2) : null)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-slate-200"></td>
+                  <td className="border border-black">{getApplication(pctP3 !== '0' ? parseFloat(pctP3) : null)}</td>
+                  <td className="border border-black">{getApplication(pctP4 !== '0' ? parseFloat(pctP4) : null)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>

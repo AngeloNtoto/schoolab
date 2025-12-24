@@ -21,6 +21,7 @@ interface Student {
 interface Subject {
   id: number;
   name: string;
+  code: string;
   max_p1: number;
   max_p2: number;
   max_exam1: number;
@@ -60,6 +61,54 @@ interface RankedStudent {
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
 
+
+/**
+ * Composant pour l'affichage propre de l'observation d'un élève
+ */
+const StudentObservation = ({ rankedStudent, selectedPeriod }: { rankedStudent: RankedStudent, selectedPeriod: Period }) => {
+  const student = rankedStudent.student;
+  
+  // 1. Cas de l'abandon
+  if (student.is_abandoned) {
+    return (
+      <span className="text-red-600 font-bold text-[7.5px]">
+        Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
+      </span>
+    );
+  }
+
+  // 2. Cas non classé
+  if (rankedStudent.isUnranked) {
+    return <span className="text-slate-500 italic text-[7.5px]">Non classé</span>;
+  }
+
+  // 3. Cas échec / redoublement
+  if (rankedStudent.percentage < 50) {
+    return <span className="text-red-600 font-bold text-[7.5px] uppercase">Redouble la classe</span>;
+  }
+
+  if (rankedStudent.failedSubjects.length > 0) {
+    const failures = rankedStudent.subjectDetails
+      .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
+      .map((s: any) => s.subjectName + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
+      .join(', ');
+
+    return (
+      <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
+        <span className="text-amber-600 font-semibold whitespace-nowrap">
+          Échec ({rankedStudent.failedSubjects.length} cours) :
+        </span>
+        <span className="text-slate-700">{failures}</span>
+      </div>
+    );
+  }
+
+  // 4. Cas réussite sans échec
+  return <span className="text-green-600 font-medium text-[7.5px]">— Passé</span>;
+};
+
+
+
 export default function Palmares() {
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
@@ -74,7 +123,9 @@ export default function Palmares() {
   const [schoolName, setSchoolName] = useState('');
   const [schoolCity, setSchoolCity] = useState('');
   const [schoolPoBox, setSchoolPoBox] = useState('');
-  
+  const [loading,setLoading]=useState(true);
+
+
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('SEM1');
   const [rankedStudents, setRankedStudents] = useState<RankedStudent[]>([]);
   const [onlyAbandons, setOnlyAbandons] = useState(false);
@@ -96,8 +147,13 @@ const printCss = `
     body { 
       background: white; 
       margin: 0; 
+      font-size: 10px;
     }
     
+    table {
+      font-size: 9px !important;
+    }
+
     .bulletin-page-wrapper {
       page-break-after: always;
       break-after: page;
@@ -210,6 +266,8 @@ const printCss = `
 
     } catch (error) {
       console.error('Failed to load palmares data:', error);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -259,11 +317,11 @@ const printCss = `
         if (subjectMaxPoints > 0) {
           const subjectPercentage = (subjectPoints / subjectMaxPoints) * 100;
           if (subjectPercentage < 50) {
-            failedSubjects.push(subject.name);
+            failedSubjects.push(subject.code || subject.name);
           }
         }
         subjectDetails.push({
-          subjectName: subject.name,
+          subjectName: subject.code || subject.name,
           points: subjectPoints,
           maxPoints: subjectMaxPoints,
         });
@@ -289,14 +347,19 @@ const printCss = `
     const ranked = rankings.filter(r => !r.isUnranked);
     const unranked = rankings.filter(r => r.isUnranked);
 
-    ranked.sort((a, b) => b.percentage - a.percentage);
-
-    let currentRank = 1;
-    for (let i = 0; i < ranked.length; i++) {
-      if (i > 0 && ranked[i].percentage < ranked[i - 1].percentage) {
-        currentRank = i + 1;
+    ranked.sort((a, b) => {
+      if (b.percentage !== a.percentage) {
+        return b.percentage - a.percentage;
       }
-      ranked[i].rank = currentRank;
+      // Si égalité de pourcentage, tri par nom (alphabétique) comme "tie-breaker"
+      const nameA = `${a.student.last_name} ${a.student.post_name || ''} ${a.student.first_name || ''}`;
+      const nameB = `${b.student.last_name} ${b.student.post_name || ''} ${b.student.first_name || ''}`;
+      return nameA.localeCompare(nameB, 'fr', { sensitivity: 'base' });
+    });
+
+    // Attribution des rangs séquentiels (plus de doublons de rang)
+    for (let i = 0; i < ranked.length; i++) {
+        ranked[i].rank = i + 1;
     }
 
     setRankedStudents([...ranked, ...unranked]);
@@ -323,7 +386,7 @@ const printCss = `
     unranked: rankedStudents.filter(r => r.isUnranked).length,
   };
 
-  if (!classInfo) return <ProfessionalLoader message="Génération du palmarès..." subMessage="Calcul des classements en cours" />;
+  if (loading || !classInfo) return <ProfessionalLoader message="Génération du palmarès..." subMessage="Calcul des classements en cours" />;
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 print:p-0 print:bg-white">
@@ -386,14 +449,14 @@ const printCss = `
         {/* Header */}
         <div className="border-2 border-black mb-4">
           <div className="flex justify-between items-start p-4">
-            <div className="text-sm">
-              <p className="font-bold">École: {schoolName}</p>
+            <div className="text-[10px]">
+              <p className="font-medium text-slate-800">École: {schoolName}</p>
               <p>Ville: {schoolCity}</p>
               <p>Boîte Postale: {schoolPoBox}</p>
             </div>
             
-            <div className="text-sm text-right">
-              <p className="font-bold">Classe: {classInfo.name}</p>
+            <div className="text-[10px] text-right">
+              <p className="font-medium text-slate-800">Classe: {classInfo.name}</p>
               <p>Effectif: {stats.total}</p>
               <p>Ont réussi: {stats.passed}</p>
               <p>Ont échoué: {stats.failed}</p>
@@ -403,83 +466,42 @@ const printCss = `
         </div>
 
         {/* Title */}
-        <h1 className="text-center text-xl font-bold mb-4 uppercase">
+        <h1 className="text-center text-[15px] font-medium mb-2 uppercase text-slate-800">
           Palmarès - {classInfo.name} - {selectedPeriod}
         </h1>
 
         {/* Rankings Table */}
-        <table className="w-full border-collapse border-2 border-black text-sm">
+        <table className="w-full border-collapse border-2 border-black text-[10px]">
           <thead>
-            <tr className="bg-slate-100">
-              <th className="border border-black px-2 py-2 w-12">N°</th>
-              <th className="border border-black px-4 py-2 text-left">Nom et Postnom</th>
-              <th className="border border-black px-4 py-2 w-20">%</th>
-              <th className="border border-black px-4 py-2 w-32">Application</th>
-              <th className="border border-black px-4 py-2 w-32">Conduite</th>
-              <th className="border border-black px-4 py-2">Observation</th>
+            <tr className="bg-slate-100 text-[8px]">
+              <th className="border border-black px-1 py-0 w-8">N°</th>
+              <th className="border border-black px-1.5 py-0 text-left">Nom et Postnom</th>
+              <th className="border border-black px-1.5 py-0 w-14">%</th>
+              <th className="border border-black px-1.5 py-0 w-20">Application</th>
+              <th className="border border-black px-1.5 py-0 w-20">Conduite</th>
+              <th className="border border-black px-1.5 py-0">Observation</th>
             </tr>
           </thead>
           <tbody>
             {rankedStudents.map((rankedStudent) => (
               <tr key={rankedStudent.student.id} className={rankedStudent.isUnranked ? 'bg-slate-50' : ''}>
-                <td className="border border-black px-2 py-2 text-center font-medium">
+                <td className="border border-black px-1 py-0.5 text-center font-medium">
                   {rankedStudent.isUnranked ? '-' : rankedStudent.rank}
                 </td>
-                <td className="border border-black px-4 py-2 font-medium">
+                <td className="border border-black px-2 py-0.5 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                   {rankedStudent.student.last_name} {rankedStudent.student.post_name}
                 </td>
-                <td className="border border-black px-4 py-2 text-center font-bold">
+                <td className="border border-black px-2 py-0.5 text-center font-bold">
                   {rankedStudent.isUnranked ? '-' : `${rankedStudent.percentage.toFixed(1)}%`}
                 </td>
-                <td className="border border-black px-4 py-2 text-center">
+                <td className="border border-black px-2 py-0.5 text-center">
                   {rankedStudent.application}
                 </td>
-                <td className="border border-black px-4 py-2 text-center">
+                <td className="border border-black px-1 py-0.5 text-center">
                   {formatConduite((rankedStudent.student as Student))}
                 </td>
-
-                <td className="border border-black px-4 py-2 text-xs">
-                  { (rankedStudent.student as Student).is_abandoned ? (
-                    <span className="text-red-600 font-bold">
-                      Abandon
-                      {(rankedStudent.student as Student).abandon_reason
-                        ? ': ' + (rankedStudent.student as Student).abandon_reason
-                        : ''}
-                    </span>
-                  ) : rankedStudent.isUnranked ? (
-                    'Non classé'
-                  ) : (
-                    <>
-                      {rankedStudent.percentage < 50 ? (
-                        <span className="text-red-600 font-bold block">
-                          Redouble la classe
-                        </span>
-                      ) : rankedStudent.failedSubjects.length > 0 ? (
-                        <span className="text-amber-600 block">
-                          Échec ({rankedStudent.failedSubjects.length} cours)
-                        </span>
-                      ) : (
-                        <span className="text-green-600 block">-</span>
-                      )}
-
-                      {/* Détail échecs */}
-                      {rankedStudent.failedSubjects.length > 0 && (
-                        <div className="mt-1 text-[10px] text-slate-700 leading-tight">
-                          {rankedStudent.subjectDetails
-                            .filter(s => {
-                              const percentage = (s.points / s.maxPoints) * 100;
-                              return percentage < 50;
-                            })
-                            .map(s => (
-                              <div key={s.subjectName}>
-                                {s.subjectName} 
-                                {selectedPeriod==="ANNUAL" && (`: ${s.points} / ${s.maxPoints}`)}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </>
-                  )}
+                <td className="border border-black px-1.5 py-0.5">
+                  <StudentObservation rankedStudent={rankedStudent} selectedPeriod={selectedPeriod} />
                 </td>
               </tr>
             ))}

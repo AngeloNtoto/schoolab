@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Activity, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
 import { useTutorial } from '../context/TutorialContext';
@@ -9,6 +9,7 @@ import { classService, ClassData } from '../services/classService';
 import EditClassModal from './EditClassModal';
 import { useToast } from '../context/ToastContext';
 import { getClassDisplayName } from '../lib/classUtils';
+import ProfessionalLoader from './ProfessionalLoader';
 
 interface Class {
   id: number;
@@ -174,11 +175,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <ProfessionalLoader message="Chargement du tableau de bord..." />;
   }
 
   return (
@@ -346,6 +343,7 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 relative">
+        <Suspense fallback={<ProfessionalLoader message="Chargement des classes..." />}>
         
         {/* Empty State */}
         {filteredAndSortedClasses.length === 0 ? (
@@ -401,6 +399,7 @@ export default function Dashboard() {
             )}
           </>
         )}
+        </Suspense>
       </main>
 
       {contextMenu && (
@@ -450,29 +449,33 @@ export default function Dashboard() {
         />
       )}
 
-      {deleteModal && (
-        <DeleteConfirmModal
-          isOpen={!!deleteModal}
-          title="Supprimer la classe"
-          message={`Êtes-vous sûr de vouloir supprimer la classe ${deleteModal.name} ? Cette action est irréversible.`}
-          onConfirm={handleDeleteClass}
-          onCancel={() => setDeleteModal(null)}
-        />
-      )}
+      <Activity mode={!!deleteModal ? 'visible' : 'hidden'}>
+        {deleteModal && (
+          <DeleteConfirmModal
+            isOpen={!!deleteModal}
+            title="Supprimer la classe"
+            message={`Êtes-vous sûr de vouloir supprimer la classe ${deleteModal.name} ? Cette action est irréversible.`}
+            onConfirm={handleDeleteClass}
+            onCancel={() => setDeleteModal(null)}
+          />
+        )}
+      </Activity>
 
-      {editModal && (
-        <EditClassModal
-          classData={editModal}
-          onClose={() => setEditModal(null)}
-          onSuccess={() => {
-            loadData();
-            setEditModal(null);
-            toast.success('Classe modifiée avec succès');
-          }}
-        />
-      )}
+      <Activity mode={!!editModal ? 'visible' : 'hidden'}>
+        {editModal && (
+          <EditClassModal
+            classData={editModal}
+            onClose={() => setEditModal(null)}
+            onSuccess={() => {
+              loadData();
+              setEditModal(null);
+              toast.success('Classe modifiée avec succès');
+            }}
+          />
+        )}
+      </Activity>
 
-      {showCreateModal && (
+      <Activity mode={showCreateModal ? 'visible' : 'hidden'}>
         <EditClassModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
@@ -481,20 +484,21 @@ export default function Dashboard() {
             toast.success('Classe créée avec succès');
           }}
         />
-      )}
+      </Activity>
 
-
-      {addNoteModal && (
-        <AddNoteModal
-          onClose={() => setAddNoteModal(null)}
-          onSuccess={() => {
-             setAddNoteModal(null);
-             toast.success("Note ajoutée !");
-          }}
-          initialTargetType={addNoteModal.type}
-          initialTargetId={addNoteModal.id}
-        />
-      )}
+      <Activity mode={!!addNoteModal ? 'visible' : 'hidden'}>
+        {addNoteModal && (
+          <AddNoteModal
+            onClose={() => setAddNoteModal(null)}
+            onSuccess={() => {
+               setAddNoteModal(null);
+               toast.success("Note ajoutée !");
+            }}
+            initialTargetType={addNoteModal.type}
+            initialTargetId={addNoteModal.id}
+          />
+        )}
+      </Activity>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, Activity, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -15,6 +15,7 @@ import { ExportExcelForClass } from './ExportExcel';
 // Composants
 import AddStudentModal from './AddStudentModal';
 import AddSubjectModal from './AddSubjectModal';
+import ProfessionalLoader from './ProfessionalLoader';
 
 export default function ClassDetails() {
   const { id } = useParams<{ id: string }>();
@@ -65,8 +66,8 @@ export default function ClassDetails() {
   
   // Utilisation du hook useStudents pour gérer les élèves
   const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents } = useStudents(Number(id));
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
   
   
@@ -127,15 +128,14 @@ export default function ClassDetails() {
     }
   };
 
-  const onUpdateGrade = async (studentId: number, subjectId: number, period: string, value: number | null) => {
+  const onUpdateGrade = useCallback(async (studentId: number, subjectId: number, period: string, value: number | null) => {
     try {
       await updateGrade(studentId, subjectId, period, value);
     } catch (error) {
       console.error('Failed to update grade:', error);
-      // TODO: Show error toast
       toast.error('Erreur lors de la mise à jour de la note');
     }
-  };
+  }, [updateGrade, toast]);
 
   const handleExportExcel = async (id: string) => {
     if (!id) return;
@@ -143,10 +143,10 @@ export default function ClassDetails() {
     toast.success('Notes exportées avec succès');
   };
 
-  const onContextMenu = (e: React.MouseEvent, student: Student) => {
+  const onContextMenu = useCallback((e: React.MouseEvent, student: Student) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, student });
-  };
+  }, []);
 
   const closeContextMenu = () => setContextMenu(null);
 
@@ -164,6 +164,7 @@ export default function ClassDetails() {
     }
   };
 
+  if (classLoading) return <ProfessionalLoader message="Chargement des détails de la classe..." />;
   if (!classInfo) return <div className="p-8 text-center text-slate-500">Aucune classe trouvée.</div>;
 
   return (
@@ -260,14 +261,14 @@ export default function ClassDetails() {
               {/* Major Actions */}
               <div className="flex gap-3 w-full md:w-auto justify-end">
                 <button 
-                  onClick={() => setIsAddSubjectModalOpen(true)}
+                  onClick={() => setShowAddSubjectModal(true)}
                   className="flex items-center gap-2 bg-white text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-300 font-medium shadow-sm text-sm"
                 >
                   <BookOpen size={18} />
                   Gérer les cours
                 </button>
                 <button 
-                  onClick={() => setIsAddModalOpen(true)}
+                  onClick={() => setShowAddModal(true)}
                   className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md font-bold text-sm"
                 >
                   <Plus size={18} />
@@ -371,122 +372,52 @@ export default function ClassDetails() {
 
           <tbody>
             {filteredAndSortedStudents.map((student, idx) => (
-              <tr 
+              <StudentRow 
                 key={student.id}
-                className={`border-b border-slate-200 hover:bg-slate-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}
-              >
-                <td 
-                  className="sticky left-0 bg-inherit px-4 py-3 font-medium text-slate-800 border-r-2 border-slate-300 cursor-pointer hover:text-blue-600"
-                  onContextMenu={(e) => onContextMenu(e, student)}
-                  onClick={() => window.location.hash = `#/student/${student.id}`}
-                >
-                  {student.last_name} {student.first_name}
-                </td>
-                {subjects.map(subject => {
-                  const sem1Total = calculateSemesterTotal(student.id, subject.id, 1);
-                  const sem2Total = calculateSemesterTotal(student.id, subject.id, 2);
-
-                  // DÉTECTION DES COURS À 100 POINTS :
-                  // Si max_exam = 0, c'est un cours en évaluation continue (pas d'examen)
-                  // Les cellules d'examen seront désactivées visuellement
-                  const hasExam1 = subject.max_exam1 > 0;
-                  const hasExam2 = subject.max_exam2 > 0;
-
-                  return (
-                    <React.Fragment key={subject.id}>
-                      {/* Période 1 - Toujours active */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'P1')} 
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)}
-                      />
-                      
-                      {/* Période 2 - Toujours active */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'P2')} 
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)}
-                      />
-                      
-                      {/* Examen 1 - DÉSACTIVÉ si max_exam1 = 0 */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'EXAM1')} 
-                        isExam 
-                        disabled={!hasExam1}  // NOUVEAUTÉ : désactive si pas d'examen
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)}
-                      />
-                      
-                      {/* Total Semestre 1 */}
-                      <td className="px-2 py-3 text-center font-bold text-blue-700 bg-blue-50 border-r-2 border-slate-400">
-                        {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
- </td>
-                      
-                      {/* Période 3 - Toujours active */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'P3')} 
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)}
-                      />
-                      
-                      {/* Période 4 - Toujours active */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'P4')} 
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)}
-                      />
-                      
-                      {/* Examen 2 - DÉSACTIVÉ si max_exam2 = 0 */}
-                      <GradeCell 
-                        value={getGrade(student.id, subject.id, 'EXAM2')} 
-                        isExam 
-                        disabled={!hasExam2}  // NOUVEAUTÉ : désactive si pas d'examen
-                        onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)}
-                      />
-                      
-                      {/* Total Semestre 2 */}
-                      <td className="px-2 py-3 text-center font-bold text-green-700 bg-green-50 border-r-2 border-slate-400">
-                        {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
-                      </td>
-                    </React.Fragment>
-                  );
-                })}
-              </tr>
+                student={student}
+                idx={idx}
+                subjects={subjects}
+                gradesMap={gradesMap}
+                onContextMenu={onContextMenu}
+                onUpdateGrade={onUpdateGrade}
+              />
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Add Student Modal */}
-      {/* Modal d'ajout d'élève */}
-      {isAddModalOpen && (
+      {/* Modals wraped in Activity for instant appearance and state preservation */}
+      <Activity mode={showAddModal ? 'visible' : 'hidden'}>
         <AddStudentModal 
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
           onAdd={addStudent}
           onImport={importStudents}
           classId={Number(id)}
           existingStudents={students}
         />
-      )}
+      </Activity>
 
-      {/* Add Subject Modal */}
-      {isAddSubjectModalOpen && (
+      <Activity mode={showAddSubjectModal ? 'visible' : 'hidden'}>
         <AddSubjectModal
-  classId={Number(id)}
-  classLevel={classInfo.level}
-  subjects={subjects}
-  editingSubject={editingSubject}
-  onSelectSubject={(subject) => {
-    setEditingSubject(subject);
-    setIsAddSubjectModalOpen(true);
-  }}
-  onClose={() => {
-    setEditingSubject(null); // reset → retour à l’état neutre
-    setIsAddSubjectModalOpen(false);
-  }}
-  onSuccess={() => {
-    classService.getSubjectsByClass(Number(id)).then(setSubjects);
-    setEditingSubject(null);
-  }}
-/>
-
-      )}
+          classId={Number(id)}
+          classLevel={classInfo.level}
+          subjects={subjects}
+          editingSubject={editingSubject}
+          onSelectSubject={(subject) => {
+            setEditingSubject(subject);
+            setShowAddSubjectModal(true);
+          }}
+          onClose={() => {
+            setEditingSubject(null); // reset → retour à l’état neutre
+            setShowAddSubjectModal(false);
+          }}
+          onSuccess={() => {
+            classService.getSubjectsByClass(Number(id)).then(setSubjects);
+            setEditingSubject(null);
+          }}
+        />
+      </Activity>
 
       {/* Context Menu */}
       {contextMenu && (
@@ -542,14 +473,96 @@ export default function ClassDetails() {
 }
 
 /**
- * Composant de cellule de note avec édition inline
+ * Composant de ligne d'élève mémorisé pour éviter les re-rendus inutiles
  */
-function GradeCell({ value, isExam = false, disabled = false, onChange }: { 
+const StudentRow = React.memo(({ 
+  student, 
+  subjects, 
+  idx, 
+  gradesMap, 
+  onContextMenu, 
+  onUpdateGrade 
+}: { 
+  student: Student; 
+  subjects: Subject[]; 
+  idx: number;
+  gradesMap: Map<string, number>;
+  onContextMenu: (e: React.MouseEvent, student: Student) => void;
+  onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+}) => {
+  const getGrade = (subjectId: number, period: string) => {
+    return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
+  };
+
+  const calculateSemesterTotal = (subjectId: number, semester: 1 | 2) => {
+    if (semester === 1) {
+      const p1 = getGrade(subjectId, 'P1');
+      const p2 = getGrade(subjectId, 'P2');
+      const ex1 = getGrade(subjectId, 'EXAM1');
+      if (p1 === null && p2 === null && ex1 === null) return null;
+      return (p1 || 0) + (p2 || 0) + (ex1 || 0);
+    } else {
+      const p3 = getGrade(subjectId, 'P3');
+      const p4 = getGrade(subjectId, 'P4');
+      const ex2 = getGrade(subjectId, 'EXAM2');
+      if (p3 === null && p4 === null && ex2 === null) return null;
+      return (p3 || 0) + (p4 || 0) + (ex2 || 0);
+    }
+  };
+
+  return (
+    <tr className={`border-b border-slate-200 hover:bg-slate-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
+      <td 
+        className="sticky left-0 bg-inherit px-4 py-3 font-medium text-slate-800 border-r-2 border-slate-300 cursor-pointer hover:text-blue-600"
+        onContextMenu={(e) => onContextMenu(e, student)}
+        onClick={() => window.location.hash = `#/student/${student.id}`}
+      >
+        {student.last_name} {student.first_name}
+      </td>
+      {subjects.map(subject => {
+        const sem1Total = calculateSemesterTotal(subject.id, 1);
+        const sem2Total = calculateSemesterTotal(subject.id, 2);
+        const hasExam1 = subject.max_exam1 > 0;
+        const hasExam2 = subject.max_exam2 > 0;
+
+        return (
+          <React.Fragment key={subject.id}>
+            <GradeCell value={getGrade(subject.id, 'P1')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} />
+            <GradeCell value={getGrade(subject.id, 'P2')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} />
+            <GradeCell 
+              value={getGrade(subject.id, 'EXAM1')} 
+              isExam disabled={!hasExam1} 
+              onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
+            />
+            <td className="px-2 py-3 text-center font-bold text-blue-700 bg-blue-50 border-r-2 border-slate-400">
+              {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
+            </td>
+            <GradeCell value={getGrade(subject.id, 'P3')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} />
+            <GradeCell value={getGrade(subject.id, 'P4')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} />
+            <GradeCell 
+              value={getGrade(subject.id, 'EXAM2')} 
+              isExam disabled={!hasExam2} 
+              onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
+            />
+            <td className="px-2 py-3 text-center font-bold text-green-700 bg-green-50 border-r-2 border-slate-400">
+              {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
+            </td>
+          </React.Fragment>
+        );
+      })}
+    </tr>
+  );
+});
+
+/**
+ * Composant de cellule de note avec édition inline - MÉMORISÉ
+ */
+const GradeCell = React.memo(({ value, isExam = false, disabled = false, onChange }: { 
   value: number | null; 
   isExam?: boolean; 
-  disabled?: boolean;  // NOUVEAUTÉ : permet de désactiver la cellule
+  disabled?: boolean;
   onChange: (val: number | null) => void 
-}) {
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value?.toString() || '');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -588,8 +601,7 @@ function GradeCell({ value, isExam = false, disabled = false, onChange }: {
     }
   };
 
-  // MODE ÉDITION : Afficher l'input
-  if (isEditing && !disabled) {  // Ne pas permettre édition si disabled
+  if (isEditing && !disabled) {
     return (
       <td className="p-0 border-r border-slate-200">
         <input
@@ -605,19 +617,17 @@ function GradeCell({ value, isExam = false, disabled = false, onChange }: {
     );
   }
 
-  // MODE LECTURE : Afficher la valeur
-  // STYLING SPÉCIAL si disabled : grisé avec curseur non éditable
   return (
     <td 
       className={`px-1 py-3 text-center border-r border-slate-200 transition-colors ${
         disabled
-          ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'  // Style désactivé
+          ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
           : `cursor-pointer hover:bg-blue-50 ${isExam ? 'bg-slate-50 font-medium' : ''}`
       }`}
-      onDoubleClick={() => !disabled && setIsEditing(true)}  // Désactiver le double-clic si disabled
-      title={disabled ? 'Pas d\'examen pour ce cours (évaluation continue)' : ''}  // Tooltip explicatif
+      onDoubleClick={() => !disabled && setIsEditing(true)}
+      title={disabled ? 'Pas d\'examen pour ce cours (évaluation continue)' : ''}
     >
       {disabled ? 'N/A' : (value !== null ? value : '-')}
     </td>
   );
-}
+});

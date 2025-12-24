@@ -34,6 +34,15 @@ export interface CouponContentProps {
 // COMPOSANT
 // ============================================================================
 
+const getApplication = (percentage: number | null): string => {
+  if (percentage === null) return '';
+  if (percentage >= 80) return 'E';
+  if (percentage >= 60) return 'TB';
+  if (percentage >= 50) return 'B';
+  if (percentage >= 30) return 'Ma';
+  return 'Mé';
+};
+
 export default function CouponContent({
   student,
   classInfo,
@@ -74,44 +83,44 @@ export default function CouponContent({
   };
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[11px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always">
+    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[8px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
       
       {/* ================================================================ */}
       {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
       {/* ================================================================ */}
-      <div className="border-2 border-black mb-4">
+      <div className="border-2 border-black mb-2">
         <div className="flex">
           {/* Colonne gauche : Infos école */}
-          <div className="w-1/4 border-r border-black p-2 text-[10px]">
-            <div className="mb-1">
-              <span className="font-bold">ÉCOLE :</span> {schoolInfo.name}
+          <div className="w-1/4 border-r border-black p-1 text-[7.5px]">
+            <div className="mb-0.5">
+              <span className="font-semibold">ÉCOLE :</span> {schoolInfo.name}
             </div>
-            <div className="mb-1">
-              <span className="font-bold">VILLE :</span> {schoolInfo.city}
+            <div className="mb-0.5">
+              <span className="font-semibold">VILLE :</span> {schoolInfo.city}
             </div>
             <div>
-              <span className="font-bold">B.P. :</span> {schoolInfo.pobox}
+              <span className="font-semibold">B.P. :</span> {schoolInfo.pobox}
             </div>
           </div>
 
           {/* Colonne centrale : Titre du bulletin */}
-          <div className="flex-1 p-2 text-center border-r border-black">
-            <div className="font-bold text-sm uppercase">
+          <div className="flex-1 p-1 text-center border-r border-black flex items-center justify-center">
+            <div className="font-medium text-[8px] uppercase">
               BULLETIN DE L'ÉLÈVE{' '}
-              <span className="border-b border-dotted border-black px-4">
+              <span className="border-b border-dotted border-black px-2">
                 {student.last_name} {student.post_name} {student.first_name}
               </span>
               {' '}DE LA{' '}
-              <span className="border-b border-dotted border-black px-2">
+              <span className="border-b border-dotted border-black px-1">
                 {classInfo.level} {classInfo.option} {classInfo.section}
               </span>
             </div>
           </div>
 
           {/* Colonne droite : Année scolaire */}
-          <div className="w-1/5 p-2 text-center text-[10px]">
-            <div className="font-bold">ANNÉE SCOLAIRE</div>
-            <div className="font-bold text-sm mt-1">{academicYear}</div>
+          <div className="w-1/6 p-1 text-center text-[7px] flex flex-col justify-center">
+            <div className="font-medium">ANNÉE SCOLAIRE</div>
+            <div className="font-medium text-[8px]">{academicYear}</div>
           </div>
         </div>
       </div>
@@ -119,7 +128,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[10px]">
+      <table className="w-full border-2 border-black border-collapse text-center text-[8px]">
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -127,39 +136,39 @@ export default function CouponContent({
         <thead>
           {/* Ligne 1 : Semestres */}
           <tr>
-            <th rowSpan={3} className="border border-black w-[22%] p-1">Branches</th>
-            <th colSpan={4} className="border border-black bg-slate-50">PREMIER SEMESTRE</th>
-            <th colSpan={4} className="border border-black bg-slate-50">SECOND SEMESTRE</th>
-            <th rowSpan={3} className="border border-black w-[5%]">TOTAL<br/>GÉNÉR.</th>
+            <th rowSpan={3} className="border border-black w-[22%] p-0">Branches</th>
+            <th colSpan={4} className="border border-black bg-slate-50 p-0">PREMIER SEMESTRE</th>
+            <th colSpan={4} className="border border-black bg-slate-50 p-0">SECOND SEMESTRE</th>
+            <th rowSpan={3} className="border border-black w-[5%] p-0">TOTAL<br/>GÉNÉR.</th>
           </tr>
           {/* Ligne 2 : Travaux journaliers et examens */}
           <tr>
-            <th colSpan={2} className="border border-black">TR. JOUR</th>
-            <th rowSpan={2} className="border border-black w-[6%]">Comp<br/>osition</th>
-            <th rowSpan={2} className="border border-black w-[6%]">TOT</th>
-            <th colSpan={2} className="border border-black">TR. JOUR</th>
-            <th rowSpan={2} className="border border-black w-[6%]">Comp<br/>osition</th>
-            <th rowSpan={2} className="border border-black w-[6%]">TOT</th>
+            <th colSpan={2} className="border border-black p-0">TR. JOUR</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">Comp<br/>osition</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">TOT</th>
+            <th colSpan={2} className="border border-black p-0">TR. JOUR</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">Comp<br/>osition</th>
+            <th rowSpan={2} className="border border-black w-[6%] p-0">TOT</th>
           </tr>
           {/* Ligne 3 : Périodes */}
           <tr>
-            <th className="border border-black w-[6%]">1ère P.</th>
-            <th className="border border-black w-[6%]">2e P.</th>
-            <th className="border border-black w-[6%]">3e P.</th>
-            <th className="border border-black w-[6%]">4e P.</th>
+            <th className="border border-black w-[6%] p-0">1ère P.</th>
+            <th className="border border-black w-[6%] p-0">2e P.</th>
+            <th className="border border-black w-[6%] p-0">3e P.</th>
+            <th className="border border-black w-[6%] p-0">4e P.</th>
           </tr>
           {/* Ligne MAXIMA (en-tête) */}
           <tr className="font-bold bg-slate-100">
-            <td className="border border-black text-left px-2">MAXIMA</td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
+            <td className="border border-black text-left px-2 py-0">MAXIMA</td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
+            <td className="border border-black py-0"></td>
           </tr>
         </thead>
 
@@ -202,16 +211,16 @@ export default function CouponContent({
                 <React.Fragment key={key}>
                   {/* Ligne MAXIMA pour ce groupe */}
                   <tr className="font-bold bg-slate-100">
-                    <td className="border border-black text-left px-2">MAXIMA</td>
-                    <td className="border border-black">{firstSubject.max_p1}</td>
-                    <td className="border border-black">{firstSubject.max_p2}</td>
-                    <td className={`border border-black ${firstSubject.max_exam1 === 0 ? 'bg-black' : ''}`}>{firstSubject.max_exam1 > 0 ? firstSubject.max_exam1 : ''}</td>
-                    <td className="border border-black">{sem1Total}</td>
-                    <td className="border border-black">{firstSubject.max_p3}</td>
-                    <td className="border border-black">{firstSubject.max_p4}</td>
-                    <td className={`border border-black ${firstSubject.max_exam2 === 0 ? 'bg-black' : ''}`}>{firstSubject.max_exam2 > 0 ? firstSubject.max_exam2 : ''}</td>
-                    <td className="border border-black">{sem2Total}</td>
-                    <td className="border border-black">{totalMax}</td>
+                    <td className="border border-black text-left px-2 py-0">MAXIMA</td>
+                    <td className="border border-black py-0">{firstSubject.max_p1}</td>
+                    <td className="border border-black py-0">{firstSubject.max_p2}</td>
+                    <td className={`border border-black py-0 ${firstSubject.max_exam1 === 0 ? 'bg-black' : ''}`}>{firstSubject.max_exam1 > 0 ? firstSubject.max_exam1 : ''}</td>
+                    <td className="border border-black py-0">{sem1Total}</td>
+                    <td className="border border-black py-0">{firstSubject.max_p3}</td>
+                    <td className="border border-black py-0">{firstSubject.max_p4}</td>
+                    <td className={`border border-black py-0 ${firstSubject.max_exam2 === 0 ? 'bg-black' : ''}`}>{firstSubject.max_exam2 > 0 ? firstSubject.max_exam2 : ''}</td>
+                    <td className="border border-black py-0">{sem2Total}</td>
+                    <td className="border border-black py-0">{totalMax}</td>
                   </tr>
                   
                   {/* Matières de ce groupe */}
@@ -233,16 +242,16 @@ export default function CouponContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="border border-black text-left px-2 py-0.5">{subject.name}</td>
-                        <td className="border border-black">{p1 ?? ''}</td>
-                        <td className="border border-black">{p2 ?? ''}</td>
-                        <td className={`border border-black ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? (ex1 ?? '') : ''}</td>
-                        <td className="border border-black font-bold">{tot1 ?? ''}</td>
-                        <td className="border border-black">{p3 ?? ''}</td>
-                        <td className="border border-black">{p4 ?? ''}</td>
-                        <td className={`border border-black ${subject.max_exam2 === 0 ? 'bg-black' : ''}`}>{subject.max_exam2 > 0 ? (ex2 ?? '') : ''}</td>
-                        <td className="border border-black font-bold">{tot2 ?? ''}</td>
-                        <td className="border border-black font-bold bg-slate-50">{tg || ''}</td>
+                        <td className="border border-black text-left px-2 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
+                        <td className="border border-black py-0">{p1 ?? ''}</td>
+                        <td className="border border-black py-0">{p2 ?? ''}</td>
+                        <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? (ex1 ?? '') : ''}</td>
+                        <td className="border border-black font-bold py-0">{tot1 ?? ''}</td>
+                        <td className="border border-black py-0">{p3 ?? ''}</td>
+                        <td className="border border-black py-0">{p4 ?? ''}</td>
+                        <td className={`border border-black py-0 ${subject.max_exam2 === 0 ? 'bg-black' : ''}`}>{subject.max_exam2 > 0 ? (ex2 ?? '') : ''}</td>
+                        <td className="border border-black font-bold py-0">{tot2 ?? ''}</td>
+                        <td className="border border-black font-bold bg-slate-50 py-0">{tg || ''}</td>
                       </tr>
                     );
                   })}
@@ -339,50 +348,50 @@ export default function CouponContent({
               <>
                 {/* MAXIMA GÉNÉRAUX */}
                 <tr className="font-bold bg-slate-200 border-t-2 border-black">
-                  <td className="border border-black text-left px-2">MAXIMA GÉNÉRAUX</td>
-                  <td className="border border-black">{maxP1}</td>
-                  <td className="border border-black">{maxP2}</td>
-                  <td className={`border border-black ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? maxEx1 : ''}</td>
-                  <td className="border border-black">{maxTot1}</td>
-                  <td className="border border-black">{maxP3}</td>
-                  <td className="border border-black">{maxP4}</td>
-                  <td className={`border border-black ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? maxEx2 : ''}</td>
-                  <td className="border border-black">{maxTot2}</td>
-                  <td className="border border-black">{maxTG}</td>
+                  <td className="border border-black text-left px-2 py-0.5">MAXIMA GÉNÉRAUX</td>
+                  <td className="border border-black py-0.5">{maxP1}</td>
+                  <td className="border border-black py-0.5">{maxP2}</td>
+                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? maxEx1 : ''}</td>
+                  <td className="border border-black py-0.5">{maxTot1}</td>
+                  <td className="border border-black py-0.5">{maxP3}</td>
+                  <td className="border border-black py-0.5">{maxP4}</td>
+                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? maxEx2 : ''}</td>
+                  <td className="border border-black py-0.5">{maxTot2}</td>
+                  <td className="border border-black py-0.5">{maxTG}</td>
                 </tr>
                 
                 {/* TOTAUX */}
                 <tr className="font-bold">
-                  <td className="border border-black text-left px-2">TOTAUX</td>
-                  <td className="border border-black">{totalP1 || ''}</td>
-                  <td className="border border-black">{totalP2 || ''}</td>
-                  <td className={`border border-black ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? (totalEx1 || '') : ''}</td>
-                  <td className="border border-black">{totalTot1 || ''}</td>
-                  <td className="border border-black">{totalP3 || ''}</td>
-                  <td className="border border-black">{totalP4 || ''}</td>
-                  <td className={`border border-black ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? (totalEx2 || '') : ''}</td>
-                  <td className="border border-black">{totalTot2 || ''}</td>
-                  <td className="border border-black bg-slate-100">{totalTG || ''}</td>
+                  <td className="border border-black text-left px-2 py-0.5">TOTAUX</td>
+                  <td className="border border-black py-0.5">{totalP1 || ''}</td>
+                  <td className="border border-black py-0.5">{totalP2 || ''}</td>
+                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? (totalEx1 || '') : ''}</td>
+                  <td className="border border-black py-0.5">{totalTot1 || ''}</td>
+                  <td className="border border-black py-0.5">{totalP3 || ''}</td>
+                  <td className="border border-black py-0.5">{totalP4 || ''}</td>
+                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? (totalEx2 || '') : ''}</td>
+                  <td className="border border-black py-0.5">{totalTot2 || ''}</td>
+                  <td className="border border-black bg-slate-100 py-0.5">{totalTG || ''}</td>
                 </tr>
                 
                 {/* APPLICATION */}
                 <tr className="font-bold">
-                  <td className="border border-black text-left px-2">APPLICATION</td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-black"></td>
-                  <td className="border border-black bg-black"></td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-slate-200"></td>
-                  <td className="border border-black bg-black"></td>
-                  <td className="border border-black bg-black"></td>
-                  <td className="border border-black bg-black"></td>
+                  <td className="border border-black text-left px-2 py-0">APPLICATION</td>
+                  <td className="border border-black py-0">{getApplication(pctP1 !== '0' ? parseFloat(pctP1) : null)}</td>
+                  <td className="border border-black py-0">{getApplication(pctP2 !== '0' ? parseFloat(pctP2) : null)}</td>
+                  <td className="border border-black bg-black py-0"></td>
+                  <td className="border border-black bg-black py-0"></td>
+                  <td className="border border-black py-0">{getApplication(pctP3 !== '0' ? parseFloat(pctP3) : null)}</td>
+                  <td className="border border-black py-0">{getApplication(pctP4 !== '0' ? parseFloat(pctP4) : null)}</td>
+                  <td className="border border-black bg-black py-0"></td>
+                  <td className="border border-black bg-black py-0"></td>
+                  <td className="border border-black bg-black py-0"></td>
                 </tr>
 
                 {/* ECHECS */}
                 <tr className="font-bold">
-                  <td className="border border-black text-left px-2">ECHECS</td>
-                  <td className="border border-black text-left px-2 text-[9px]" colSpan={9}>
+                  <td className="border border-black text-left px-2 py-0.5">ECHECS</td>
+                  <td className="border border-black text-left px-2 py-0.5 text-[9px]" colSpan={9}>
                     {(() => {
                       const failures: string[] = [];
                       subjects.forEach(subject => {
@@ -404,16 +413,16 @@ export default function CouponContent({
                 
                 {/* POURCENTAGE */}
                 <tr className="font-bold">
-                  <td className="border border-black text-left px-2">POURCENTAGE</td>
-                  <td className="border border-black text-[9px]">{pctP1}%</td>
-                  <td className="border border-black text-[9px]">{pctP2}%</td>
-                  <td className={`border border-black text-[9px] ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
-                  <td className="border border-black text-[9px]">{pctTot1}%</td>
-                  <td className="border border-black text-[9px]">{pctP3}%</td>
-                  <td className="border border-black text-[9px]">{pctP4}%</td>
-                  <td className={`border border-black text-[9px] ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
-                  <td className="border border-black text-[9px]">{pctTot2}%</td>
-                  <td className="border border-black bg-slate-100 text-[9px]">{pctTG}%</td>
+                  <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP1}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP2}%</td>
+                  <td className={`border border-black py-0.5 text-[9px] ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctTot1}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP3}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP4}%</td>
+                  <td className={`border border-black py-0.5 text-[9px] ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctTot2}%</td>
+                  <td className="border border-black bg-slate-100 py-0.5 text-[9px]">{pctTG}%</td>
                 </tr>
               </>
             );

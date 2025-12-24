@@ -61,7 +61,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white shadow-xl print:shadow-none p-6 min-h-[297mm] relative text-black text-[9px] font-serif leading-tight page-break-after-always">
+    <div className="max-w-[210mm] mx-auto bg-white shadow-xl print:shadow-none p-6 min-h-[297mm] relative text-black text-[8px] font-serif leading-tight page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
       
       {/* Header */}
       <div className="border-2 border-black mb-1">
@@ -92,9 +92,9 @@ export default function BulletinPrimaireContent({
           
           {/* Title */}
           <div className="flex-1 text-center py-1">
-            <h1 className="font-bold text-sm uppercase">Republique Democratique du Congo</h1>
-            <h2 className="font-bold text-sm uppercase">Ministere de l'Education Nationale</h2>
-            <h3 className="font-bold text-sm uppercase">Et Nouvelle Citoyennete</h3>
+            <h1 className="font-medium text-[9px] uppercase tracking-tight">Republique Democratique du Congo</h1>
+            <h2 className="font-medium text-[9px] uppercase tracking-tight">Ministere de l'Education Nationale</h2>
+            <h3 className="font-medium text-[9px] uppercase tracking-tight">Et Nouvelle Citoyennete</h3>
           </div>
 
           {/* Logo */}
@@ -107,7 +107,7 @@ export default function BulletinPrimaireContent({
 
         {/* ID Row */}
         <div className="flex border-b border-black">
-          <div className="w-16 font-bold p-0.5 border-r border-black bg-slate-100 text-[8px]">N° ID.</div>
+          <div className="w-16 font-semibold p-0.5 border-r border-black bg-slate-100 text-[7px]">N° ID.</div>
           <div className="flex-1 flex">
             {Array(25).fill(0).map((_, i) => (
               <div key={i} className="flex-1 border-r border-black last:border-r-0 h-4"></div>
@@ -116,7 +116,7 @@ export default function BulletinPrimaireContent({
         </div>
 
         {/* Province */}
-        <div className="p-0.5 font-bold border-b border-black bg-slate-100 text-[8px]">
+        <div className="p-0.5 font-semibold border-b border-black bg-slate-100 text-[7px]">
           PROVINCE EDUCATIONNELLE : ....................................
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function BulletinPrimaireContent({
 
           <div className="flex items-baseline">
             <span className="font-bold">COMMUNE :</span>
-            <span className="border-b border-dotted border-black flex-1 mx-1"></span>
+            <span className="border-b border-dotted border-black flex-1 mx-1 h-3"></span>
           </div>
           <div className="flex items-baseline">
             <span className="font-bold">NE(E) A :</span>
@@ -165,7 +165,7 @@ export default function BulletinPrimaireContent({
 
           <div className="flex items-baseline">
             <span className="font-bold">CODE :</span>
-            <div className="flex border border-black h-4 ml-1" style={{ width: '120px' }}>
+            <div className="flex border border-black h-3 ml-1" style={{ width: '120px' }}>
               {Array(10).fill(0).map((_, i) => (
                 <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
               ))}
@@ -173,7 +173,7 @@ export default function BulletinPrimaireContent({
           </div>
           <div className="flex items-baseline">
             <span className="font-bold">N° PERM :</span>
-            <div className="flex border border-black h-4 ml-1 flex-1">
+            <div className="flex border border-black h-3 ml-1 flex-1">
               {Array(14).fill(0).map((_, i) => (
                 <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
               ))}
@@ -183,12 +183,12 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="border-2 border-black border-b-0 p-0.5 text-center font-bold bg-slate-100 uppercase text-[9px]">
+      <div className="border-2 border-black border-b-0 p-0.5 text-center font-medium bg-slate-100 uppercase text-[7.5px]">
         BULLETIN DE L'ELEVE DEGRE ELEMENTAIRE ({classInfo.level}) &nbsp; ANNEE SCOLAIRE 2024 - 2025
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-collapse border-2 border-black text-[7px]">
+      <table className="w-full border-collapse border-2 border-black text-[6.5px]">
         <thead>
           {/* Column Headers */}
           <tr className="bg-slate-50">
@@ -227,7 +227,7 @@ export default function BulletinPrimaireContent({
               <React.Fragment key={domainId ?? 'no-domain'}>
                 {/* Domain Header */}
                 <tr className="bg-slate-200">
-                  <td colSpan={16} className="border border-black p-0.5 font-bold uppercase text-[8px]">
+                  <td colSpan={16} className="border border-black p-0 font-bold uppercase text-[7px]">
                     {domainName}
                   </td>
                 </tr>
@@ -257,7 +257,7 @@ export default function BulletinPrimaireContent({
                   
                   return (
                     <tr key={subject.id}>
-                      <td className="border border-black p-0.5 text-left">{subject.name}</td>
+                      <td className="border border-black p-0 text-left whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
                       <td className="border border-black p-0.5 text-center font-bold">{maxPeriod}</td>
                       <td className="border border-black p-0.5 text-center">{p1 ?? ''}</td>
                       <td className="border border-black p-0.5 text-center">{p2 ?? ''}</td>
@@ -347,26 +347,26 @@ export default function BulletinPrimaireContent({
             return (
               <>
                 <tr className="font-bold">
-                  <td className="border border-black p-0.5 text-left">POURCENTAGE</td>
+                  <td className="border border-black p-0.5 text-left h-3">POURCENTAGE</td>
                   <td className="border border-black p-0.5" colSpan={13}></td>
-                  <td className="border border-black p-0.5 text-center" colSpan={2}>{percentage}%</td>
+                  <td className="border border-black p-0.5 text-center h-3" colSpan={2}>{percentage}%</td>
                 </tr>
                 <tr>
-                  <td className="border border-black p-0.5 text-left">PLACE / NBRE D'ELEVES</td>
+                  <td className="border border-black p-0.5 text-left h-3">PLACE / NBRE D'ELEVES</td>
                   <td className="border border-black p-0.5" colSpan={15}></td>
                 </tr>
                 <tr>
-                  <td className="border border-black p-0.5 text-left">APPLICATION</td>
+                  <td className="border border-black p-0.5 text-left h-3">APPLICATION</td>
                   <td className="border border-black p-0.5" colSpan={15}></td>
                 </tr>
                 <tr>
-                  <td className="border border-black p-0.5 text-left">CONDUITE</td>
+                  <td className="border border-black p-0.5 text-left h-3">CONDUITE</td>
                   <td className="border border-black p-0.5" colSpan={15}>
                     {`P1: ${student.conduite_p1 || '-'} — P2: ${student.conduite_p2 || '-'} — P3: ${student.conduite_p3 || '-'} — P4: ${student.conduite_p4 || '-'}`}
                   </td>
                 </tr>
                 <tr>
-                  <td className="border border-black p-0.5 text-left">SIGNATURE DU RESP.</td>
+                  <td className="border border-black p-0.5 text-left h-3">SIGNATURE DU RESP.</td>
                   <td className="border border-black p-0.5" colSpan={15}></td>
                 </tr>
               </>

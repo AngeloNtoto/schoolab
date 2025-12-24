@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { X, School, Save } from 'lucide-react';
 import { LEVELS, OPTIONS } from '../../constants/school';
 import { getClassDisplayName } from '../lib/classUtils';
@@ -85,56 +86,60 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitting class form...', { name, level, option, section, academicYearId });
-    
+  // React 19 Action for class saving
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
     if (!academicYearId) {
-      console.error('No academic year ID found!');
       toast.error("Erreur: Année académique non trouvée");
-      return;
+      return { success: false };
     }
 
-    setLoading(true);
-
     try {
-      // 1. Check for duplicates
-      const isDuplicate = await checkDuplicate();
-      console.log('Duplicate check result:', isDuplicate);
-      
-      if (isDuplicate) {
+      // Data from formData or local state (since they are sync)
+      const submitData = {
+        name: formData.get('name') as string,
+        level: formData.get('level') as string,
+        option: formData.get('option') as string,
+        section: formData.get('section') as string,
+      };
+
+      // 1. Check for duplicates (using local data is fine here)
+      const query = `
+        SELECT id FROM classes 
+        WHERE name = ? AND level = ? AND option = ? AND section = ? AND academic_year_id = ?
+        ${classData ? 'AND id != ?' : ''}
+      `;
+      const params = [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId];
+      if (classData) params.push(classData.id);
+
+      const dupResult = await window.api.db.query<{ id: number }>(query, params);
+      if (dupResult.length > 0) {
         toast.warning("Une classe avec ces paramètres existe déjà. Impossible de créer des doublons.");
-        setLoading(false);
-        return;
+        return { success: false, error: 'duplicate' };
       }
 
       // 2. Perform Insert or Update
       if (classData) {
-        console.log('Updating existing class:', classData.id);
-        // Update existing class
         await window.api.db.execute(
           'UPDATE classes SET name = ?, level = ?, option = ?, section = ? WHERE id = ?',
-          [name, level, option, section, classData.id]
+          [submitData.name, submitData.level, submitData.option, submitData.section, classData.id]
         );
       } else {
-        console.log('Creating new class');
-        // Create new class (Insert with academic_year_id)
         await window.api.db.execute(
           'INSERT INTO classes (name, level, option, section, academic_year_id) VALUES (?, ?, ?, ?, ?)',
-          [name, level, option, section, academicYearId]
+          [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId]
         );
       }
       
-      console.log('Class saved successfully');
+      toast.success(classData ? 'Classe mise à jour' : 'Classe créée avec succès');
       onSuccess();
       onClose();
+      return { success: true };
     } catch (error) {
       console.error('Failed to save class:', error);
       toast.error('Erreur lors de l\'enregistrement de la classe');
-    } finally {
-      setLoading(false);
+      return { success: false, error: 'failed' };
     }
-  };
+  }, null);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -156,12 +161,13 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form action={formAction} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Nom de la classe
             </label>
             <input
+              name="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -177,6 +183,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                 Niveau
               </label>
               <select
+                name="level"
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
@@ -192,6 +199,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                 Section
               </label>
               <select
+                name="section"
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
@@ -209,6 +217,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
               Option
             </label>
             <select
+              name="option"
               value={option}
               onChange={(e) => setOption(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-slate-100 disabled:text-slate-500"
@@ -239,17 +248,31 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
             >
               Annuler
             </button>
-            <button
-              type="submit"
-              disabled={loading || !academicYearId}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              <Save size={18} />
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
+            <SubmitButton academicYearId={academicYearId} />
           </div>
         </form>
       </div>
     </div>
+  );
+}
+/**
+ * Bouton de soumission avec useFormStatus
+ */
+function SubmitButton({ academicYearId }: { academicYearId: number | null }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending || !academicYearId}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2 disabled:opacity-50 min-w-[120px] justify-center"
+    >
+      {pending ? (
+        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <Save size={18} />
+      )}
+      {pending ? 'Enregistrement...' : 'Enregistrer'}
+    </button>
   );
 }

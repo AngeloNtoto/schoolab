@@ -5,6 +5,7 @@ import AddNoteModal from '../components/AddNoteModal';
 import { useToast } from '../context/ToastContext';
 import { useTutorial } from '../context/TutorialContext';
 import { useNavigate } from 'react-router-dom';
+import ProfessionalLoader from '../components/ProfessionalLoader';
 
 // Types for linked entities
 interface LinkedStudent {
@@ -234,8 +235,8 @@ export default function NotesPage() {
         {/* Notes List */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
           {loading ? (
-            <div className="flex justify-center py-20">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            <div className="flex-1 flex items-center justify-center">
+              <ProfessionalLoader message="Chargement de vos notes..." subMessage="Synchronisation des mémos en cours" />
             </div>
           ) : sortedNotes.length === 0 ? (
             <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl bg-white">

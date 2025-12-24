@@ -73,6 +73,10 @@ export default function ClassCoupons() {
     }
     body { 
       background: white; 
+      font-size: 10px;
+    }
+    table {
+      font-size: 9px !important;
     }
     /* Éviter de couper un coupon en deux entre deux pages */
     .coupon-card, [class*="coupon"] {

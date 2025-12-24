@@ -9,6 +9,7 @@ import { classService, ClassData } from '../services/classService';
 // Bulletin Components
 import BulletinHumanites from './BulletinHumanites';
 import BulletinPrimaire from './BulletinPrimaire';
+import ProfessionalLoader from './ProfessionalLoader';
 
 export default function Bulletin() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -41,12 +42,7 @@ export default function Bulletin() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-        <p className="text-slate-600 font-medium">Chargement du bulletin...</p>
-      </div>
-    );
+    return <ProfessionalLoader message="Préparation du bulletin..." subMessage="Récupération des données de l'élève" />;
   }
 
   if (!classInfo) {

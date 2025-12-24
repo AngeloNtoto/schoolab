@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { X, UserPlus, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Student } from '../services/studentService';
@@ -59,80 +60,32 @@ export default function AddStudentModal({ isOpen, onClose, onAdd, onImport, clas
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
   const toast = useToast();
   
-  // Manual form state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [postName, setPostName] = useState('');
-  const [gender, setGender] = useState<'M' | 'F'>('M');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthplace, setBirthplace] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  /**
-   * GESTION DE LA SOUMISSION MANUELLE DU FORMULAIRE
-   * 
-   * Cette fonction est appelée quand l'utilisateur soumet le formulaire d'ajout manuel.
-   * Elle collecte toutes les données du formulaire et appelle la fonction onAdd.
-   * 
-   * FLUX DE DONNÉES :
-   * 1. L'utilisateur remplit le formulaire (prénom, nom, sexe, etc.)
-   * 2. Cette fonction collecte ces données
-   * 3. Elle ajoute le class_id (reçu en props du composant parent)
-   * 4. Elle appelle onAdd qui vient du hook useStudents
-   * 5. Le hook délègue au service qui insère en BDD
-   * 
-   * POURQUOI AJOUTER class_id ICI :
-   * - Chaque élève DOIT être associé à une classe (contrainte NOT NULL en BDD)
-   * - Le formulaire ne connaît pas la classe (c'est le parent qui la connaît)
-   * - On reçoit classId en props du parent (ClassDetails)
-   * - On doit l'ajouter aux données avant de les passer au service
-   */
-  const handleManualSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  // React 19 Action for manual submission
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
     try {
-      // CRÉATION DE L'OBJET ÉLÈVE :
-      // On collecte toutes les données du formulaire + le class_id
-      await onAdd({
-        first_name: firstName,        // Prénom de l'élève
-        last_name: lastName,          // Nom de famille
-        post_name: postName,          // Post-nom (spécifique à certaines cultures)
-        gender,                       // Sexe (M ou F)
-        birth_date: birthDate,        // Date de naissance
-        birthplace,                   // Lieu de naissance
-        class_id: classId             // ✅ CORRECTION : ID de la classe (CRUCIAL)
-      });
-      
-      // RÉINITIALISATION DU FORMULAIRE :
-      // Après succès, on vide tous les champs pour permettre d'ajouter un autre élève
-      setFirstName('');
-      setLastName('');
-      setPostName('');
-      setGender('M');
-      setBirthDate('');
-      setBirthplace('');
+      const studentData = {
+        first_name: formData.get('first_name') as string,
+        last_name: formData.get('last_name') as string,
+        post_name: formData.get('post_name') as string,
+        gender: formData.get('gender') as 'M' | 'F',
+        birth_date: formData.get('birth_date') as string,
+        birthplace: formData.get('birthplace') as string,
+        class_id: classId
+      };
 
-      // FEEDBACK VISUEL DE SUCCÈS :
-      // On informe l'utilisateur que l'ajout a réussi
-      // Note : le hook useStudents rafraîchit automatiquement la liste
-      toast.success(`Élève ${firstName} ${lastName} ajouté avec succès !`);
+      await onAdd(studentData);
       
-      // FERMETURE AUTOMATIQUE DU MODAL :
-      // Après l'ajout réussi, on ferme le modal
-      // L'utilisateur voit immédiatement le nouvel élève dans la liste
+      toast.success(`Élève ${studentData.first_name} ${studentData.last_name} ajouté avec succès !`);
       onClose();
+      return { success: true };
     } catch (error) {
-      // GESTION D'ERREUR :
-      // Si l'ajout échoue, on affiche un message à l'utilisateur
       console.error('Failed to add student:', error);
       toast.error('Erreur lors de l\'ajout de l\'élève');
-    } finally {
-      // NETTOYAGE :
-      // Quoi qu'il arrive (succès ou erreur), on désactive le loading
-      setLoading(false);
+      return { success: false, error: 'Failed to add student' };
     }
-  };
+  }, null);
+
+  const [loading, setLoading] = useState(false);
 
 const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
@@ -474,16 +427,15 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
         <div className="p-6">
           {activeTab === 'manual' ? (
-            <form onSubmit={handleManualSubmit} className="space-y-4">
+            <form action={formAction} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nom <span className="text-red-500">*</span>
                   </label>
                   <input
+                    name="last_name"
                     type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     required
                   />
@@ -493,9 +445,8 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     Post-nom
                   </label>
                   <input
+                    name="post_name"
                     type="text"
-                    value={postName}
-                    onChange={(e) => setPostName(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
@@ -506,9 +457,8 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   Prénom <span className="text-red-500">*</span>
                 </label>
                 <input
+                  name="first_name"
                   type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   required
                 />
@@ -521,20 +471,19 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="flex gap-4">
                   <label className="flex items-center">
                     <input
+                      name="gender"
                       type="radio"
                       value="M"
-                      checked={gender === 'M'}
-                      onChange={(e) => setGender(e.target.value as 'M' | 'F')}
+                      defaultChecked
                       className="mr-2"
                     />
                     Masculin
                   </label>
                   <label className="flex items-center">
                     <input
+                      name="gender"
                       type="radio"
                       value="F"
-                      checked={gender === 'F'}
-                      onChange={(e) => setGender(e.target.value as 'M' | 'F')}
                       className="mr-2"
                     />
                     Féminin
@@ -547,9 +496,8 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   Date de naissance
                 </label>
                 <input
+                  name="birth_date"
                   type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
@@ -559,20 +507,13 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   Lieu de naissance
                 </label>
                 <input
+                  name="birthplace"
                   type="text"
-                  value={birthplace}
-                  onChange={(e) => setBirthplace(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Ajout...' : 'Ajouter l\'élève'}
-              </button>
+              <SubmitButton label="Ajouter l'élève" loadingLabel="Ajout..." />
             </form>
           ) : (
             <div className="text-center py-8">
@@ -602,5 +543,21 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         </div>
       </div>
     </div>
+  );
+}
+/**
+ * Bouton de soumission qui utilise useFormStatus pour l'état de chargement automatique (React 19)
+ */
+function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+    >
+      {pending && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+      {pending ? loadingLabel : label}
+    </button>
   );
 }

@@ -65,6 +65,10 @@ export default function CouponEleve() {
       background: white; 
       margin: 0; 
       padding: 0; 
+      font-size: 10px;
+    }
+    table {
+      font-size: 9px !important;
     }
     @page { 
       size: A4; 

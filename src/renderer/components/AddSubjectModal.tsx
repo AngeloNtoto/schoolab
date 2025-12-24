@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { X, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { domainService, Domain } from '../services/domainService';
 import { useToast } from '../context/ToastContext';
@@ -111,26 +112,26 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
    * 
    * Un seul maxima d'examen est utilisé pour les deux semestres
    */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  // React 19 Action for subject saving
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
     try {
-      const pMax = Number(maxPeriod);
+      const sName = formData.get('name') as string;
+      const sCode = formData.get('code') as string;
+      const pMax = Number(formData.get('max_period'));
       
       // RÉCUPÉRATION DU MAXIMA D'EXAMEN :
       // Si période = 100 : forcer exam = 0 (sécurité)
-      // Sinon : utiliser la valeur saisie (même valeur pour les 2 semestres)
-      const examMax = pMax === 100 ? 0 : Number(maxExam);
+      const examMax = pMax === 100 ? 0 : Number(formData.get('max_exam'));
 
       if (editingSubject) {
         await window.api.db.execute(
           'UPDATE subjects SET name = ?, code = ?, max_p1 = ?, max_p2 = ?, max_exam1 = ?, max_p3 = ?, max_p4 = ?, max_exam2 = ?, domain_id = ? WHERE id = ?',
-          [name, code, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
+          [sName, sCode, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
         );
       } else {
         await window.api.db.execute(
           'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [name, code, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
+          [sName, sCode, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
         );
       }
       
@@ -141,16 +142,15 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       setMaxExam('20');
       setSelectedDomainId(null);
       
-      
-      onSuccess();
       toast.success(editingSubject ? 'Matière mise à jour' : 'Matière ajoutée avec succès');
+      onSuccess();
+      return { success: true };
     } catch (error) {
-      console.error('Failed to add subject:', error);
+      console.error('Failed to save subject:', error);
       toast.error('Erreur lors de l\'enregistrement de la matière');
-    } finally {
-      setLoading(false);
+      return { success: false };
     }
-  };
+  }, null);
 
   const handleDelete = async (subjectId: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette matière ? Toutes les notes associées seront perdues.')) return;
@@ -191,12 +191,13 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                 <Plus size={18} />
                 Nouvelle Matière
               </h3>
-              <form onSubmit={handleSubmit} className="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <form action={formAction} className="space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nom de la matière <span className="text-red-500">*</span>
                   </label>
                   <input
+                    name="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -210,6 +211,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     Code
                   </label>
                   <input
+                    name="code"
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -289,6 +291,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                       Maxima Période <span className="text-red-500">*</span>
                     </label>
                     <input
+                      name="max_period"
                       type="number"
                       value={maxPeriod}
                       onChange={(e) => setMaxPeriod(e.target.value)}
@@ -311,6 +314,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                       Maxima Examen
                     </label>
                     <input
+                      name="max_exam"
                       type="number"
                       value={maxExam}
                       onChange={(e) => setMaxExam(e.target.value)}
@@ -340,13 +344,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                 </div>
 
                 <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
-                  >
-                    {loading ? 'Enregistrement...' : (editingSubject ? 'Enregistrer' : 'Ajouter la matière')}
-                  </button>
+                  <SubmitButton editingSubject={editingSubject} />
                   {editingSubject && (
                     <button
                       type="button"
@@ -404,5 +402,22 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
         </div>
       </div>
     </div>
+  );
+}
+/**
+ * Bouton de soumission avec useFormStatus
+ */
+function SubmitButton({ editingSubject }: { editingSubject: Subject | null | undefined }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+    >
+      {pending && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+      {pending ? 'Enregistrement...' : (editingSubject ? 'Enregistrer' : 'Ajouter la matière')}
+    </button>
   );
 }

@@ -1,4 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useToast } from '../context/ToastContext';
+import { Loader2 } from 'lucide-react';
 
 /**
  * PrintWrapper.tsx
@@ -155,24 +157,50 @@ type PrintButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export default function PrintButton({ targetRef, title, extraCss, className, children, ...btnProps }: PrintButtonProps) {
+  const [isPrinting, setIsPrinting] = useState(false);
+  const toast = useToast();
+
   const handlePrint = useCallback(async () => {
     const el = targetRef?.current;
     if (!el) {
-      // feedback console — en prod tu peux déclencher un toast
       console.warn('PrintButton: targetRef.current is null');
       return;
     }
-    await printElement(el, { title, extraCss });
-  }, [targetRef, title, extraCss]);
+
+    try {
+      setIsPrinting(true);
+      toast.info('Préparation de l\'impression...',2000 );
+      
+      // Laisser un petit délai pour que le toast apparaisse et que l'utilisateur voie l'état de chargement
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      await printElement(el, { title, extraCss });
+    } catch (error) {
+      console.error('Erreur d\'impression:', error);
+      toast.error('Erreur lors de la préparation de l\'impression');
+    } finally {
+      // On retire l'état de chargement après un court délai car l'iframe 
+      // de print() bloque souvent le thread ou met du temps à se fermer
+      setTimeout(() => setIsPrinting(false), 2000);
+    }
+  }, [targetRef, title, extraCss, toast]);
 
   return (
     <button
       type="button"
       onClick={handlePrint}
-      className={className || 'inline-flex items-center gap-2 px-3 py-2 rounded-md border'}
+      disabled={isPrinting || btnProps.disabled}
+      className={`${className || 'inline-flex items-center gap-2 px-3 py-2 rounded-md border'} ${isPrinting ? 'opacity-70 cursor-not-allowed' : ''}`}
       {...btnProps}
     >
-      {children ?? 'Imprimer (zone)'}
+      {isPrinting ? (
+        <>
+          <Loader2 size={18} className="animate-spin" />
+          <span>Préparation...</span>
+        </>
+      ) : (
+        children ?? 'Imprimer (zone)'
+      )}
     </button>
   );
 }

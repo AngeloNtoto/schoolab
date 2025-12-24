@@ -148,6 +148,14 @@ function runMigrations(db: Database.Database) {
     console.log('domain_id column added to subjects');
   }
 
+  // Check if sub_domain column exists in subjects table
+  const hasSubDomain = subjectsInfo.some((col) => col.name === 'sub_domain');
+  if (!hasSubDomain) {
+    console.log('Adding sub_domain column to subjects table...');
+    db.exec(`ALTER TABLE subjects ADD COLUMN sub_domain TEXT DEFAULT ''`);
+    console.log('sub_domain column added to subjects');
+  }
+
   // Check if conduite column exists in students table and add it if missing
   const studentsInfo = db.pragma('table_info(students)') as Array<{ name: string }>;
   const hasConduite = studentsInfo.some((col) => col.name === 'conduite');
