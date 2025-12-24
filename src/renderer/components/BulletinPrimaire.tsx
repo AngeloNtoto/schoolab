@@ -12,6 +12,7 @@ import { studentService, Student } from '../services/studentService';
 import { classService, ClassData, Subject } from '../services/classService';
 import { gradeService, Grade } from '../services/gradeService';
 import { domainService, Domain } from '../services/domainService';
+import { bulletinService, StudentRanks } from '../services/bulletinService';
 
 export default function BulletinPrimaire() {
   const { studentId } = useParams<{ studentId: string }>();
@@ -27,6 +28,12 @@ export default function BulletinPrimaire() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [schoolName, setSchoolName] = useState('');
   const [schoolCity, setSchoolCity] = useState('');
+  const [studentRanks, setStudentRanks] = useState<StudentRanks>({
+    p1: 0, p2: 0, ex1: 0, tot1: 0,
+    p3: 0, p4: 0, ex2: 0, tot2: 0,
+    tg: 0
+  });
+  const [totalStudents, setTotalStudents] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   // Configuration CSS pour l'impression (Format A4 + Couleurs forcées)
@@ -83,6 +90,10 @@ export default function BulletinPrimaire() {
       if (sName?.length) setSchoolName(sName[0].value);
       if (sCity?.length) setSchoolCity(sCity[0].value);
 
+      const { ranks, totalStudents: count } = await bulletinService.calculateStudentRanks(studentData.class_id, Number(studentId));
+      setStudentRanks(ranks);
+      setTotalStudents(count);
+
     } catch (error) {
       console.error('Failed to load bulletin data:', error);
     } finally {
@@ -130,6 +141,8 @@ export default function BulletinPrimaire() {
           domains={domains}
           schoolName={schoolName}
           schoolCity={schoolCity}
+          studentRanks={studentRanks}
+          totalStudents={totalStudents}
         />
       </div>
     </div>
