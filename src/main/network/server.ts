@@ -67,9 +67,11 @@ export function startServer(db: Database.Database): Promise<number> {
         }).then((vite: any) => {
           app.use(vite.middlewares);
           console.log('[NETWORK] Vite HMR middleware integrated');
+        }).catch((e: any) => {
+          console.error('[NETWORK] Failed to start Vite middleware:', e);
         });
       } catch (e) {
-        console.error('[NETWORK] Failed to start Vite middleware:', e);
+        console.error('[NETWORK] Failed to start Vite middleware (require):', e);
       }
     }
     
@@ -149,7 +151,9 @@ export function startServer(db: Database.Database): Promise<number> {
 
         // Notification au processus renderer d'Electron
         BrowserWindow.getAllWindows().forEach(win => {
-          win.webContents.send('db:changed', { type: 'grades_batch', senderId });
+          if (!win.isDestroyed() && win.webContents) {
+            win.webContents.send('db:changed', { type: 'grades_batch', senderId });
+          }
         });
 
         // Notification à l'interface Web (SSE)
@@ -172,7 +176,9 @@ export function startServer(db: Database.Database): Promise<number> {
         
         // Notification au renderer
         BrowserWindow.getAllWindows().forEach(win => {
-          win.webContents.send('network:transfer-received', { filename, sender: payload.sender });
+          if (!win.isDestroyed() && win.webContents) {
+            win.webContents.send('network:transfer-received', { filename, sender: payload.sender });
+          }
         });
 
         res.json({ success: true, filename });

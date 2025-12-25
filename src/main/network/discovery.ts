@@ -44,7 +44,9 @@ function broadcastPeers() {
   }));
 
   BrowserWindow.getAllWindows().forEach(win => {
-    win.webContents.send('network:peers-updated', peers);
+    if (!win.isDestroyed() && win.webContents) {
+      win.webContents.send('network:peers-updated', peers);
+    }
   });
 }
 
