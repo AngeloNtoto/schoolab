@@ -49,5 +49,29 @@ export const notesService = {
       console.error('Failed to delete note:', error);
       throw error;
     }
+  },
+  
+  update: async (id: number, note: Partial<Omit<Note, 'id' | 'created_at'>>): Promise<void> => {
+    try {
+      const updates: string[] = [];
+      const values: any[] = [];
+      
+      if (note.title !== undefined) { updates.push('title = ?'); values.push(note.title); }
+      if (note.content !== undefined) { updates.push('content = ?'); values.push(note.content); }
+      if (note.target_type !== undefined) { updates.push('target_type = ?'); values.push(note.target_type); }
+      if (note.target_id !== undefined) { updates.push('target_id = ?'); values.push(note.target_id || null); }
+      if (note.tags !== undefined) { updates.push('tags = ?'); values.push(note.tags || ''); }
+      
+      if (updates.length === 0) return;
+      
+      values.push(id);
+      await window.api.db.execute(
+        `UPDATE notes SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+    } catch (error) {
+      console.error('Failed to update note:', error);
+      throw error;
+    }
   }
 };

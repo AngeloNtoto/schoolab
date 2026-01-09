@@ -10,6 +10,7 @@ import React from 'react';
 import { Student } from '../services/studentService';
 import { ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
+import { StudentRanks } from '../services/bulletinService';
 import CouponPeriode, { SchoolInfo } from './CouponPeriode';
 import CouponSemestre from './CouponSemestre';
 import CouponContent from './CouponContent';
@@ -24,6 +25,8 @@ export interface PrintLayoutProps {
   academicYear: string;
   period: PeriodType;
   couponsPerPage: 1 | 2 | 4 | 6;
+  classRanks?: Record<number, StudentRanks>;
+  totalStudents?: number;
 }
 
 // Configuration des grilles selon le nombre de coupons par page
@@ -51,6 +54,8 @@ export default function PrintLayout({
   academicYear,
   period,
   couponsPerPage,
+  classRanks,
+  totalStudents
 }: PrintLayoutProps) {
   // Diviser les élèves en pages
   const pages: Student[][] = [];
@@ -73,6 +78,8 @@ export default function PrintLayout({
           schoolInfo={schoolInfo}
           academicYear={academicYear}
           period={period as 'P1' | 'P2' | 'P3' | 'P4'}
+          ranks={classRanks?.[student.id]}
+          totalStudents={totalStudents}
         />
       );
     }
@@ -88,6 +95,8 @@ export default function PrintLayout({
           schoolInfo={schoolInfo}
           academicYear={academicYear}
           semester={period}
+          ranks={classRanks?.[student.id]}
+          totalStudents={totalStudents}
         />
       );
     }
@@ -101,6 +110,8 @@ export default function PrintLayout({
         grades={studentGrades}
         schoolInfo={schoolInfo}
         academicYear={academicYear}
+        ranks={classRanks?.[student.id]}
+        totalStudents={totalStudents}
       />
     );
   };

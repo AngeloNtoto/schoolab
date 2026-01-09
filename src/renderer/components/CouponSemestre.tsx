@@ -10,6 +10,7 @@ import React from 'react';
 import { Student } from '../services/studentService';
 import { ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
+import { StudentRanks } from '../services/bulletinService';
 
 export interface SchoolInfo {
   name: string;
@@ -25,6 +26,8 @@ export interface CouponSemestreProps {
   schoolInfo: SchoolInfo;
   academicYear: string;
   semester: 'S1' | 'S2';
+  ranks?: StudentRanks;
+  totalStudents?: number;
 }
 
 // Configuration des semestres
@@ -53,6 +56,8 @@ export default function CouponSemestre({
   schoolInfo,
   academicYear,
   semester,
+  ranks,
+  totalStudents
 }: CouponSemestreProps) {
   const config = SEMESTER_CONFIG[semester];
 
@@ -87,12 +92,14 @@ export default function CouponSemestre({
 
   const totalMax = totalMaxP1 + totalMaxP2 + totalMaxExam;
   const totalObtained = totalObtP1 + totalObtP2 + totalObtExam;
-  const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(1) : '0';
+  const percentageSemestre = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(1) : '0';
+  const percentageP1=totalMaxP1>0?((totalObtP1/totalMaxP1)*100).toFixed(1):'0';
+  const percentageP2=totalMaxP2>0?((totalObtP2/totalMaxP2)*100).toFixed(1):'0';
 
   return (
     <div className="bg-white border-2 border-black text-[9px] font-serif p-2 h-full">
       {/* En-tête */}
-      <div className="border-b border-black pb-1 mb-1">
+      <div className="border-b border-black pb-1 mb-1 uppercase">
         <div className="flex justify-between items-start text-[8px]">
           <div>
             <div className="font-bold">{schoolInfo.name}</div>
@@ -124,14 +131,7 @@ export default function CouponSemestre({
           </tr>
         </thead>
         <tbody>
-          {/* Ligne maxima */}
-          <tr className="bg-slate-100 font-bold">
-            <td className="border border-black text-left px-1">MAXIMA</td>
-            <td className="border border-black text-center"></td>
-            <td className="border border-black text-center"></td>
-            <td className="border border-black text-center"></td>
-            <td className="border border-black text-center"></td>
-          </tr>
+         
 
           {/* Grouper les matières par maxima */}
           {(() => {
@@ -151,8 +151,8 @@ export default function CouponSemestre({
 
               return (
                 <React.Fragment key={key}>
-                  <tr className="bg-slate-50 font-semibold text-[7px]">
-                    <td className="border border-black text-left px-1">Max</td>
+                  <tr className="bg-slate-50 font-semibold bg-slate-200 text-[7px]">
+                    <td className="border border-black text-left px-1">MAXIMA</td>
                     <td className="border border-black text-center">{maxP1}</td>
                     <td className="border border-black text-center">{maxP2}</td>
                     <td className={`border border-black text-center ${maxExam === 0 ? 'bg-black' : ''}`}>
@@ -184,37 +184,49 @@ export default function CouponSemestre({
           })()}
         </tbody>
         <tfoot>
-          <tr className="font-bold bg-slate-200">
-            <td className="border border-black text-left px-1">TOTAUX</td>
-            <td className="border border-black text-center">{totalObtP1}</td>
-            <td className="border border-black text-center">{totalObtP2}</td>
-            <td className="border border-black text-center">{totalObtExam}</td>
-            <td className="border border-black text-center">{totalObtained}</td>
+          {/* Ligne TOTAUX avec Max et Notes */}
+          <tr className="bg-slate-200">
+            <td className="border border-black text-left px-1 font-bold">TOTAUX</td>
+            <td className="border border-black text-center py-0">
+              <div className="text-[7px]">{totalObtP1}</div>
+              <div className="border-t border-slate-400 text-[8px] font-bold">{totalMaxP1}</div>
+            </td>
+            <td className="border border-black text-center py-0">
+              <div className="text-[7px]">{totalObtP2}</div>
+              <div className="border-t border-slate-400 text-[8px] font-bold">{totalMaxP2}</div>
+            </td>
+            <td className="border border-black text-center py-0">
+              <div className="text-[7px]">{totalObtExam}</div>
+              <div className="border-t border-slate-400 text-[8px] font-bold">{totalMaxExam}</div>
+            </td>
+            <td className="border border-black text-center py-0">
+              <div className="text-[7px]">{totalObtained}</div>
+              <div className="border-t font-semibold border-slate-400 text-[8px] font-bold">{totalMax}</div>
+            </td>
+          </tr>
+          {/* Ligne du Pourcentage */}
+          <tr className="font-bold">
+            <td className="border border-black text-left px-1">POURCENTAGE</td>
+            <td className="border border-black text-center">{percentageP1}%</td>
+            <td className="border border-black text-center">{percentageP2}%</td>
+            <td className='bg-black border border-black'></td>
+            <td className="border border-black text-center">{percentageSemestre}%</td>
           </tr>
           <tr className="font-bold">
-            <td colSpan={3} className="border border-black text-right px-1">Maximum: {totalMax}</td>
-            <td colSpan={2} className="border border-black text-center">Pourcentage: {percentage}%</td>
+            <td className="border border-black text-left px-1">PLACE</td>
+             {/* todo: ranks  afficher les places pour different periodes*/}
+            <td className='border border-black text-center'>{ranks?.[(semester === 'S1' ? 'p1' : 'p3') as keyof StudentRanks] || '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-center'>{ranks?.[(semester === 'S1' ? 'p2' : 'p4') as keyof StudentRanks] || '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black bg-black'></td>
+            <td className="border border-black text-center">{ranks?.[(semester === 'S1' ? 'totP1' : 'totP2') as keyof StudentRanks] || '?'}/ {totalStudents || '?'}</td>
           </tr>
-          {/* ECHECS */}
           <tr className="font-bold">
-            <td className="border border-black text-left px-1">ECHECS</td>
-            <td colSpan={4} className="border border-black text-left px-1 text-[8px]">
-              {(() => {
-                const failures: string[] = [];
-                subjects.forEach(subject => {
-                  const p1 = getGrade(subject.id, config.periods[0]);
-                  const p2 = getGrade(subject.id, config.periods[1]);
-                  const exam = getGrade(subject.id, config.exam);
-                  const totalObtained = (p1 || 0) + (p2 || 0) + (exam || 0);
-                  
-                  const maxTotal = getMaxP1(subject) + getMaxP2(subject) + getMaxExam(subject);
-                  
-                  if (maxTotal > 0 && totalObtained < maxTotal / 2) {
-                    failures.push(`${subject.name}: ${totalObtained}/${maxTotal}`);
-                  }
-                });
-                return failures.length > 0 ? failures.join(', ') : 'Aucune';
-              })()}
+            <td className="border border-black text-left px-1">CONDUITE</td>
+            <td className='border border-black text-center'>{semester==='S1'?(student.conduite_p1 || ''): (student.conduite_p3 || '')} </td>
+            <td className='border border-black text-center'>{semester==='S1'?(student.conduite_p2 || ''): (student.conduite_p4 || '')} </td>
+            <td className='border border-black text-center bg-black'></td>
+            <td className="border border-black text-center bg-black">
+              {semester === 'S1' ? (student.conduite_p1 || student.conduite_p2 || '') : (student.conduite_p3 || student.conduite_p4 || '')}
             </td>
           </tr>
         </tfoot>

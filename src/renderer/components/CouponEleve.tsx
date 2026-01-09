@@ -20,6 +20,7 @@ import PrintButton from './PrintWrapper';
 import { studentService, Student } from '../services/studentService';
 import { classService, ClassData, Subject } from '../services/classService';
 import { gradeService, Grade } from '../services/gradeService';
+import { bulletinService, StudentRanks } from '../services/bulletinService';
 
 // Types
 interface AcademicYear {
@@ -45,6 +46,8 @@ export default function CouponEleve() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>({ name: '', city: '', pobox: '' });
   const [academicYear, setAcademicYear] = useState<string>('');
+  const [ranks, setRanks] = useState<StudentRanks | undefined>(undefined);
+  const [totalStudents, setTotalStudents] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   // Context Menu & Modals
@@ -134,6 +137,13 @@ export default function CouponEleve() {
       );
       if (yearResult?.[0]) setAcademicYear(yearResult[0].name);
 
+      const { ranks: studentRanks, totalStudents: count } = await bulletinService.calculateStudentRanks(
+        studentData.class_id,
+        Number(id)
+      );
+      setRanks(studentRanks);
+      setTotalStudents(count);
+
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -194,6 +204,8 @@ export default function CouponEleve() {
           grades={grades}
           schoolInfo={schoolInfo}
           academicYear={academicYear}
+          ranks={ranks}
+          totalStudents={totalStudents}
         />
       </div>
 

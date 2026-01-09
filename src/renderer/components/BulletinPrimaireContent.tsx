@@ -22,16 +22,16 @@ const getApplication = (percentage: number | null): string => {
   if (percentage >= 80) return 'E';
   if (percentage >= 60) return 'TB';
   if (percentage >= 50) return 'B';
-  if (percentage >= 30) return 'Ma';
-  return 'Mé';
+  if (percentage >= 30) return 'Mé';
+  return 'Ma';
 };
 
 const abregeConduite = (conduite: string | null) => {
   if (!conduite) return '-';
   switch(conduite.toUpperCase()){ 
-    case 'EXCELLENT': return 'E';
-    case 'TRES BIEN': return 'TB';
-    case 'BIEN': return 'B';
+    case 'ÉLUTE': return 'E';
+    case 'TRES BON': return 'TB';
+    case 'BON': return 'B';
     case 'MAUVAIS': return 'Ma';
     case 'MEDIOCRE': return 'Me';
     default: return conduite.charAt(0);
@@ -294,7 +294,7 @@ export default function BulletinPrimaireContent({
                   
                   return (
                     <tr key={subject.id}>
-                      <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
+                      <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className="border border-black">{formatValue(p1)}</td>
                       <td className="border border-black">{formatValue(p2)}</td>

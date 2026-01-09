@@ -46,7 +46,6 @@ class GradeService {
    * @param value La valeur de la note (ou null pour supprimer)
    */
   async updateGrade(studentId: number, subjectId: number, period: string, value: number | null): Promise<void> {
-    // Vérifier si la note existe déjà
     const existing = await dbService.query<Grade>(
       'SELECT id FROM grades WHERE student_id = ? AND subject_id = ? AND period = ?',
       [studentId, subjectId, period]
@@ -54,7 +53,7 @@ class GradeService {
 
     if (existing.length > 0) {
       if (value === null) {
-        // Supprimer
+        // Supprimer réellement
         await dbService.execute(
           'DELETE FROM grades WHERE student_id = ? AND subject_id = ? AND period = ?',
           [studentId, subjectId, period]

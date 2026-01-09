@@ -19,16 +19,11 @@ export interface StudentRanks {
  */
 class BulletinService {
   /**
-   * Calcule les rangs d'un élève pour chaque colonne (P1, P2, etc.) par rapport à sa classe.
-   * @param classId L'identifiant de la classe
-   * @param studentId L'identifiant de l'élève
+   * Calcule les rangs d'un élève de manière synchrone avec les données fournies.
+   * Optimisé pour éviter les requêtes si les données sont déjà chargées.
    */
-  async calculateStudentRanks(classId: number, studentId: number): Promise<{ ranks: StudentRanks, totalStudents: number }> {
-    const students = await studentService.getStudentsByClass(classId);
+  computeStudentRanks(students: any[], allGrades: Grade[], studentId: number): { ranks: StudentRanks, totalStudents: number } {
     const totalStudents = students.length;
-
-    // Récupérer toutes les notes de la classe en une seule fois pour optimiser
-    const allGrades = await gradeService.getGradesByClass(classId);
 
     // Organiser les notes par élève pour un accès rapide
     const studentGradesMap = new Map<number, Grade[]>();
@@ -80,6 +75,19 @@ class BulletinService {
     };
 
     return { ranks, totalStudents };
+  }
+
+  /**
+   * Calcule les rangs d'un élève pour chaque colonne (P1, P2, etc.) par rapport à sa classe.
+   * @param classId L'identifiant de la classe
+   * @param studentId L'identifiant de l'élève
+   */
+  async calculateStudentRanks(classId: number, studentId: number): Promise<{ ranks: StudentRanks, totalStudents: number }> {
+    const students = await studentService.getStudentsByClass(classId);
+    // Récupérer toutes les notes de la classe en une seule fois pour optimiser
+    const allGrades = await gradeService.getGradesByClass(classId);
+    
+    return this.computeStudentRanks(students, allGrades, studentId);
   }
 
   /**
@@ -172,11 +180,11 @@ class BulletinService {
    * Détermine l'appréciation de l'application en fonction du pourcentage.
    */
   getApplication(percentage: number): string {
-    if (percentage >= 80) return 'Excellent';
-    if (percentage >= 60) return 'Très bien';
-    if (percentage >= 50) return 'Bien';
-    if (percentage >= 30) return 'Mauvaise';
-    return 'Médiocre';
+    if (percentage >= 80) return 'Élute';
+    if (percentage >= 70) return 'Très bon';
+    if (percentage >= 50) return 'Bon';
+    if (percentage >= 40) return 'Médiocre';
+    return 'Mauvais';
   }
 
   /**

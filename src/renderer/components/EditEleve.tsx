@@ -1,69 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { studentService, Student } from '../services/studentService';
 import { useToast } from '../context/ToastContext';
 
+interface EditEleveProps {
+    studentId: number | null;
+    initialData?: Student; // Données passées par le parent (optimisation)
+    onClose: (updatedStudent?: Student) => void;
+}
 
-const EditEleve: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+export default function EditEleve({ studentId, initialData, onClose}: EditEleveProps) {
     const toast = useToast();
-    const [isAbandon,setIsAbandon]=useState<Number | Boolean>();
-    const [formData, setFormData] = useState<Partial<Student>>({
-        first_name: '',
-        last_name: '',
-        post_name: '',
-        gender: '',
-        birth_date: '',
-        birthplace: '',
-        conduite: '',
-        conduite_p1: '',
-        conduite_p2: '',
-        conduite_p3: '',
-        conduite_p4: '',
-        class_id: undefined,
-        is_abandoned: false,
-        abandon_reason: '',
+    const [isAbandon, setIsAbandon] = useState<Number | Boolean>();
+    
+    // Initialisation synchrone si initialData est présent
+    const [formData, setFormData] = useState<Partial<Student>>(() => {
+        if (initialData) {
+            return {
+                first_name: initialData.first_name,
+                last_name: initialData.last_name,
+                post_name: initialData.post_name,
+                gender: initialData.gender,
+                birth_date: initialData.birth_date,
+                birthplace: initialData.birthplace,
+                conduite: initialData.conduite ?? '',
+                conduite_p1: (initialData as any).conduite_p1 ?? '',
+                conduite_p2: (initialData as any).conduite_p2 ?? '',
+                conduite_p3: (initialData as any).conduite_p3 ?? '',
+                conduite_p4: (initialData as any).conduite_p4 ?? '',
+                class_id: initialData.class_id,
+                is_abandoned: (initialData as any).is_abandoned ? true : false,
+                abandon_reason: (initialData as any).abandon_reason ?? '',
+            };
+        }
+        return {
+            first_name: '',
+            last_name: '',
+            post_name: '',
+            gender: '',
+            birth_date: '',
+            birthplace: '',
+            conduite: '',
+            conduite_p1: '',
+            conduite_p2: '',
+            conduite_p3: '',
+            conduite_p4: '',
+            class_id: undefined,
+            is_abandoned: false,
+            abandon_reason: '',
+        };
     });
-    const [loading, setLoading] = useState(true);
+
+    // Si on a initialData, on n'est pas en loading
+    const [loading, setLoading] = useState(!initialData);
     const [error, setError] = useState<string | null>(null);
 
+    // Fetch fallback seulement si pas d'initialData
     useEffect(() => {
-        if (!id) return;
-        fetchEleve(Number(id));
-    }, [id]);
-
-    const fetchEleve = async (studentId: number) => {
-        try {
-            const data = await studentService.getStudentById(studentId);
-            if (!data) {
-                setError('Élève introuvable');
+        if (!studentId || initialData) return;
+        
+        const fetchEleve = async (id: number) => {
+            try {
+                const data = await studentService.getStudentById(id);
+                if (!data) {
+                    setError('Élève introuvable');
+                    setLoading(false);
+                    return;
+                }
+                setFormData({
+                    first_name: data.first_name,
+                    last_name: data.last_name,
+                    post_name: data.post_name,
+                    gender: data.gender,
+                    birth_date: data.birth_date,
+                    birthplace: data.birthplace,
+                    conduite: data.conduite ?? '',
+                    conduite_p1: (data as any).conduite_p1 ?? '',
+                    conduite_p2: (data as any).conduite_p2 ?? '',
+                    conduite_p3: (data as any).conduite_p3 ?? '',
+                    conduite_p4: (data as any).conduite_p4 ?? '',
+                    class_id: data.class_id,
+                    is_abandoned: (data as any).is_abandoned ? true : false,
+                    abandon_reason: (data as any).abandon_reason ?? '',
+                });
+            } catch (err) {
+                console.error(err);
+                setError('Erreur lors du chargement de l\'élève');
+            } finally {
                 setLoading(false);
-                return;
             }
-            setFormData({
-                first_name: data.first_name,
-                last_name: data.last_name,
-                post_name: data.post_name,
-                gender: data.gender,
-                birth_date: data.birth_date,
-                birthplace: data.birthplace,
-                conduite: data.conduite ?? '',
-                conduite_p1: (data as any).conduite_p1 ?? '',
-                conduite_p2: (data as any).conduite_p2 ?? '',
-                conduite_p3: (data as any).conduite_p3 ?? '',
-                conduite_p4: (data as any).conduite_p4 ?? '',
-                class_id: data.class_id,
-                is_abandoned: (data as any).is_abandoned ? true : false,
-                abandon_reason: (data as any).abandon_reason ?? '',
-            });
-        } catch (err) {
-            console.error(err);
-            setError('Erreur lors du chargement de l\'élève');
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+        
+        fetchEleve(studentId);
+    }, [studentId, initialData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -73,26 +101,33 @@ const EditEleve: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        if (!id) return;
+        if (!studentId) return;
         try {
-            await studentService.updateStudent(Number(id), {
+            // Mettre à jour l'élève dans la base de données
+            await studentService.updateStudent(studentId, {
                 first_name: formData.first_name,
                 last_name: formData.last_name,
                 post_name: formData.post_name,
                 gender: formData.gender,
                 birth_date: formData.birth_date,
-                    birthplace: formData.birthplace,
-                    conduite: formData.conduite,
-                    conduite_p1: (formData as any).conduite_p1,
-                    conduite_p2: (formData as any).conduite_p2,
-                    conduite_p3: (formData as any).conduite_p3,
-                    conduite_p4: (formData as any).conduite_p4,
-                    is_abandoned: (formData as any).is_abandoned,
-                    abandon_reason: (formData as any).abandon_reason,
+                birthplace: formData.birthplace,
+                conduite: formData.conduite,
+                conduite_p1: (formData as any).conduite_p1,
+                conduite_p2: (formData as any).conduite_p2,
+                conduite_p3: (formData as any).conduite_p3,
+                conduite_p4: (formData as any).conduite_p4,
+                is_abandoned: (formData as any).is_abandoned,
+                abandon_reason: (formData as any).abandon_reason,
             });
+            
             setIsAbandon(formData.is_abandoned);
             toast.success('Élève mis à jour');
-            navigate(-1);
+            
+            // OPTIMISATION : Récupérer les données à jour de l'élève
+            // et les passer au parent pour une mise à jour locale
+            // Cela évite de recharger toute la liste des élèves
+            const updatedStudent = await studentService.getStudentById(studentId);
+            onClose(updatedStudent || undefined);
         } catch (err) {
             console.error(err);
             setError('Erreur lors de la mise à jour');
@@ -159,11 +194,11 @@ const EditEleve: React.FC = () => {
                                 <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
                                 <select name={key} value={(formData as any)[key] || ''} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg">
                                     <option value="">--</option>
-                                    <option value="excellent">Excellent</option>
-                                    <option value="tres bien">Très bien</option>
-                                    <option value="bien">Bien</option>
-                                    <option value="mauvais">Mauvais</option>
+                                    <option value="elute">Élute</option>
+                                    <option value="tres bon">Très bon</option>
+                                    <option value="bon">Bon</option>
                                     <option value="mediocre">Médiocre</option>
+                                    <option value="mauvais">Mauvais</option>
                                 </select>
                             </div>
                         ))}
@@ -171,7 +206,7 @@ const EditEleve: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 justify-end pt-4">
-                    <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg border">Annuler</button>
+                    <button type="button" onClick={() => onClose()} className="px-4 py-2 rounded-lg border">Annuler</button>
                     </div>
 
                 <div className="mt-4 border-t pt-4">
@@ -199,7 +234,7 @@ const EditEleve: React.FC = () => {
                     )}
 
                     <div className="flex items-center gap-3 justify-end pt-4">
-                        <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg border">Annuler</button>
+                        <button type="button" onClick={() => onClose()} className="px-4 py-2 rounded-lg border">Annuler</button>
                         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">Enregistrer</button>
                     </div>
                 </div>
@@ -207,5 +242,3 @@ const EditEleve: React.FC = () => {
         </div>
     );
 };
-
-export default EditEleve;

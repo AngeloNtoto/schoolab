@@ -13,13 +13,13 @@ export function startDiscovery(name: string, port: number) {
   console.log(`Publication du service : ${name} sur le port ${port}`);
   service = bonjour.publish({
     name: name,
-    type: 'ecole-sync',
+    type: 'Schoolab-sync',
     port: port,
     txt: { version: '1.0.0' }
   });
 
   // 2. Rechercher d'autres services sur le réseau
-  browser = bonjour.find({ type: 'ecole-sync' });
+  browser = bonjour.find({ type: 'Schoolab-sync' });
   
   browser.on('up', (service: any) => {
     console.log('Pair trouvé :', service.name);

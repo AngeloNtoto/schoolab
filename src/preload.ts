@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('api', {
   db: {
     query: (sql: string, params?: any[]) => ipcRenderer.invoke('db:query', sql, params),
     execute: (sql: string, params?: any[]) => ipcRenderer.invoke('db:execute', sql, params),
+    checkSyncStatus: () => ipcRenderer.invoke('db:check-sync-status'),
     populateTestData: () => ipcRenderer.invoke('db:populateTestData'),
   },
   network: {
@@ -27,6 +28,25 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('db:changed', callback);
       return () => ipcRenderer.removeListener('db:changed', callback);
     },
+  },
+  license: {
+    getHWID: () => ipcRenderer.invoke('license:get-hwid'),
+    getStatus: () => ipcRenderer.invoke('license:get-status'),
+    getInfo: () => ipcRenderer.invoke('license:get-info'),
+    activate: (key: string, password?: string) => ipcRenderer.invoke('license:activate', key, password),
+    refreshRemote: () => ipcRenderer.invoke('license:refresh-remote'),
+  },
+  auth: {
+    check: () => ipcRenderer.invoke('auth:check'),
+    create: (password: string) => ipcRenderer.invoke('auth:create', password),
+    verify: (password: string) => ipcRenderer.invoke('auth:verify', password),
+  },
+  settings: {
+    get: (key: string) => ipcRenderer.invoke('db:query', `SELECT value FROM settings WHERE key = ?`, [key]).then((r: any[]) => r[0]?.value),
+  },
+  sync: {
+    start: () => ipcRenderer.invoke('sync:start'),
+    pull: () => ipcRenderer.invoke('sync:pull'),
   },
 });
 

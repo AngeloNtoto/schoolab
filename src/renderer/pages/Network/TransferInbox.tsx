@@ -253,7 +253,7 @@ export default function TransferInbox() {
 
     let success = false;
     if (action === 'overwrite') {
-      // Delete existing class (cascade deletes students/grades/subjects)
+      // Hard delete existing class (cascades to students, subjects, grades)
       await window.api.db.execute('DELETE FROM classes WHERE id = ?', [conflict.existingClassId]);
       // Import as new
       success = await importClassData(conflict.data);

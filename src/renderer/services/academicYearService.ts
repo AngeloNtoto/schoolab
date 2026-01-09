@@ -53,8 +53,6 @@ export const academicYearService = {
 
   delete: async (id: number): Promise<void> => {
     try {
-        // Prevent deleting active year if it is the only one or currently active?
-        // Ideally we should warn user.
       await window.api.db.execute('DELETE FROM academic_years WHERE id = ?', [id]);
     } catch (error) {
        console.error('Failed to delete academic year:', error);

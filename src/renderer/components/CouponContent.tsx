@@ -10,6 +10,7 @@ import React from 'react';
 import { Student } from '../services/studentService';
 import { ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
+import { StudentRanks } from '../services/bulletinService';
 
 // ============================================================================
 // TYPES
@@ -28,6 +29,8 @@ export interface CouponContentProps {
   grades: Grade[];
   schoolInfo: SchoolInfo;
   academicYear: string;
+  ranks?: StudentRanks;
+  totalStudents?: number;
 }
 
 // ============================================================================
@@ -39,8 +42,8 @@ const getApplication = (percentage: number | null): string => {
   if (percentage >= 80) return 'E';
   if (percentage >= 60) return 'TB';
   if (percentage >= 50) return 'B';
-  if (percentage >= 30) return 'Ma';
-  return 'Mé';
+  if (percentage >= 30) return 'Mé';
+  return 'Ma';
 };
 
 export default function CouponContent({
@@ -49,7 +52,9 @@ export default function CouponContent({
   subjects,
   grades,
   schoolInfo,
-  academicYear
+  academicYear,
+  ranks,
+  totalStudents
 }: CouponContentProps) {
 
   // ============================================================================
@@ -88,17 +93,17 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
       {/* ================================================================ */}
-      <div className="border-2 border-black mb-2">
+      <div className="border-2 border-black mb-0">
         <div className="flex">
           {/* Colonne gauche : Infos école */}
           <div className="w-1/4 border-r border-black p-1 text-[7.5px]">
-            <div className="mb-0.5">
+            <div className="mb-0">
               <span className="font-semibold">ÉCOLE :</span> {schoolInfo.name}
             </div>
-            <div className="mb-0.5">
+            <div className="mb-0">
               <span className="font-semibold">VILLE :</span> {schoolInfo.city}
             </div>
-            <div>
+            <div className="mb-0">
               <span className="font-semibold">B.P. :</span> {schoolInfo.pobox}
             </div>
           </div>
@@ -106,7 +111,7 @@ export default function CouponContent({
           {/* Colonne centrale : Titre du bulletin */}
           <div className="flex-1 p-1 text-center border-r border-black flex items-center justify-center">
             <div className="font-medium text-[8px] uppercase">
-              BULLETIN DE L'ÉLÈVE{' '}
+              COUPON DE L'ÉLÈVE{' '}
               <span className="border-b border-dotted border-black px-2">
                 {student.last_name} {student.post_name} {student.first_name}
               </span>
@@ -118,7 +123,7 @@ export default function CouponContent({
           </div>
 
           {/* Colonne droite : Année scolaire */}
-          <div className="w-1/6 p-1 text-center text-[7px] flex flex-col justify-center">
+          <div className="w-1/6 text-center text-[7px] flex flex-col justify-center">
             <div className="font-medium">ANNÉE SCOLAIRE</div>
             <div className="font-medium text-[8px]">{academicYear}</div>
           </div>
@@ -242,7 +247,7 @@ export default function CouponContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="border border-black text-left px-2 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
+                        <td className="border border-black text-left px-2 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                         <td className="border border-black py-0">{p1 ?? ''}</td>
                         <td className="border border-black py-0">{p2 ?? ''}</td>
                         <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? (ex1 ?? '') : ''}</td>
@@ -263,7 +268,7 @@ export default function CouponContent({
           {/* ============================================================ */}
           {/* LIGNES VIDES POUR REMPLIR L'ESPACE */}
           {/* ============================================================ */}
-          {Array(Math.max(0, 20 - subjects.length)).fill(0).map((_, i) => (
+          {Array(Math.max(0, 18 - subjects.length)).fill(0).map((_, i) => (
             <tr key={`empty-${i}`}>
               <td className="border border-black text-left px-2 py-0.5">&nbsp;</td>
               <td className="border border-black"></td>
@@ -373,7 +378,35 @@ export default function CouponContent({
                   <td className="border border-black py-0.5">{totalTot2 || ''}</td>
                   <td className="border border-black bg-slate-100 py-0.5">{totalTG || ''}</td>
                 </tr>
-                
+            
+                {/* POURCENTAGE */}
+                <tr className="font-bold">
+                  <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP1}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP2}%</td>
+                  <td className={`border border-black py-0.5 text-[9px] bg-black`}></td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctTot1}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP3}%</td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctP4}%</td>
+                  <td className={`border border-black py-0.5 text-[9px] bg-black`}></td>
+                  <td className="border border-black py-0.5 text-[9px]">{pctTot2}%</td>
+                  <td className="border border-black bg-slate-100 py-0.5 text-[9px]">{pctTG}%</td>
+                </tr>
+
+                {/* PLACE */}
+                <tr className="font-bold">
+                  <td className="border border-black text-left px-2 py-0">PLACE</td>
+                  <td className="border border-black py-0.5">{ranks?.p1 || ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p2 || ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black py-0.5 bg-black`}></td>
+                  <td className="border border-black py-0.5">{ranks?.tot1 || ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p3 || ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p4 || ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black py-0.5 bg-black`}></td>
+                  <td className="border border-black py-0.5">{ranks?.tot2 || ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black bg-blue-50 py-0.5">{ranks?.tg || ''}/{totalStudents || '?'}</td>
+                </tr>
+
                 {/* APPLICATION */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 py-0">APPLICATION</td>
@@ -388,41 +421,18 @@ export default function CouponContent({
                   <td className="border border-black bg-black py-0"></td>
                 </tr>
 
-                {/* ECHECS */}
+                {/* CONDUITE */}
                 <tr className="font-bold">
-                  <td className="border border-black text-left px-2 py-0.5">ECHECS</td>
-                  <td className="border border-black text-left px-2 py-0.5 text-[9px]" colSpan={9}>
-                    {(() => {
-                      const failures: string[] = [];
-                      subjects.forEach(subject => {
-                        const tot1 = calculateTotal(subject.id, ['P1', 'P2', 'EXAM1']);
-                        const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
-                        const totalObtained = (tot1 || 0) + (tot2 || 0);
-                        
-                        const maxTotal = subject.max_p1 + subject.max_p2 + subject.max_exam1 + 
-                                       subject.max_p3 + subject.max_p4 + subject.max_exam2;
-                        
-                        if (maxTotal > 0 && totalObtained < maxTotal / 2) {
-                          failures.push(`${subject.code}: ${totalObtained}/${maxTotal}`);
-                        }
-                      });
-                      return failures.length > 0 ? failures.join(', ') : 'Aucune';
-                    })()}
-                  </td>
-                </tr>
-                
-                {/* POURCENTAGE */}
-                <tr className="font-bold">
-                  <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP1}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP2}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctTot1}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP3}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP4}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctTot2}%</td>
-                  <td className="border border-black bg-slate-100 py-0.5 text-[9px]">{pctTG}%</td>
+                  <td className="border border-black text-left px-2 py-0.5">CONDUITE</td>
+                  <td className="border border-black py-0.5">{student.conduite_p1 || ''}</td>
+                  <td className="border border-black py-0.5">{student.conduite_p2 || ''}</td>
+                  <td className="border border-black bg-black py-0.5"></td>
+                  <td className="border border-black bg-black py-0.5"></td>
+                  <td className="border border-black py-0.5">{student.conduite_p3 || ''}</td>
+                  <td className="border border-black py-0.5">{student.conduite_p4 || ''}</td>
+                  <td className="border border-black bg-black py-0.5"></td>
+                  <td className="border border-black bg-black py-0.5"></td>
+                  <td className="border border-black bg-black py-0.5"></td>
                 </tr>
               </>
             );

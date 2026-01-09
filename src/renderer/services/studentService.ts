@@ -115,10 +115,6 @@ class StudentService {
    * @param id L'identifiant de l'élève
    */
   async deleteStudent(id: number): Promise<void> {
-    // Note: Si la BDD a ON DELETE CASCADE, supprimer l'élève suffit.
-    // Sinon, il faudrait supprimer les notes d'abord.
-    // Ici on suppose que SQLite gère ou on force la suppression.
-    await dbService.execute('DELETE FROM grades WHERE student_id = ?', [id]);
     await dbService.execute('DELETE FROM students WHERE id = ?', [id]);
   }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, StickyNote, User, Users, FileText, ChevronDown } from 'lucide-react';
-import { notesService } from '../services/notesService';
+import { X, Save, StickyNote, User, Users, FileText, ChevronDown, Tag } from 'lucide-react';
+import { notesService, Note } from '../services/notesService';
 import { useToast } from '../context/ToastContext';
 
 interface AddNoteModalProps {
@@ -8,6 +8,7 @@ interface AddNoteModalProps {
   onSuccess: () => void;
   initialTargetType?: 'student' | 'class' | 'general';
   initialTargetId?: number;
+  noteToEdit?: Note | null;
 }
 
 interface SelectOption {
@@ -15,11 +16,22 @@ interface SelectOption {
   label: string;
 }
 
-export default function AddNoteModal({ onClose, onSuccess, initialTargetType = 'general', initialTargetId }: AddNoteModalProps) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [targetType, setTargetType] = useState<'student' | 'class' | 'general'>(initialTargetType);
-  const [targetId, setTargetId] = useState<number | undefined>(initialTargetId);
+export default function AddNoteModal({ 
+  onClose, 
+  onSuccess, 
+  initialTargetType = 'general', 
+  initialTargetId,
+  noteToEdit
+}: AddNoteModalProps) {
+  const [title, setTitle] = useState(noteToEdit?.title || '');
+  const [content, setContent] = useState(noteToEdit?.content || '');
+  const [tags, setTags] = useState(noteToEdit?.tags || '');
+  const [targetType, setTargetType] = useState<'student' | 'class' | 'general'>(
+    noteToEdit?.target_type || initialTargetType
+  );
+  const [targetId, setTargetId] = useState<number | undefined>(
+    noteToEdit?.target_id || initialTargetId
+  );
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
@@ -66,18 +78,29 @@ export default function AddNoteModal({ onClose, onSuccess, initialTargetType = '
 
     setLoading(true);
     try {
-      await notesService.create({
-        title,
-        content,
-        target_type: targetType,
-        target_id: targetType === 'general' ? undefined : (targetId || initialTargetId),
-        tags: '',
-      });
-      toast.success('Note créée avec succès');
+      if (noteToEdit) {
+        await notesService.update(noteToEdit.id, {
+          title,
+          content,
+          target_type: targetType,
+          target_id: targetType === 'general' ? undefined : targetId,
+          tags,
+        });
+        toast.success('Note mise à jour');
+      } else {
+        await notesService.create({
+          title,
+          content,
+          target_type: targetType,
+          target_id: targetType === 'general' ? undefined : (targetId || initialTargetId),
+          tags,
+        });
+        toast.success('Note créée avec succès');
+      }
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error('Erreur lors de la création de la note');
+      toast.error(noteToEdit ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
     } finally {
       setLoading(false);
     }
@@ -100,7 +123,7 @@ export default function AddNoteModal({ onClose, onSuccess, initialTargetType = '
             <div className="bg-yellow-100 dark:bg-yellow-900/50 p-2 rounded-lg">
               <StickyNote size={20} className="text-yellow-600 dark:text-yellow-400" />
             </div>
-            Nouvelle Note
+            {noteToEdit ? 'Modifier la Note' : 'Nouvelle Note'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-white/50 dark:hover:bg-slate-700 rounded-full transition-colors">
             <X size={20} className="text-slate-500 dark:text-slate-400" />
@@ -199,6 +222,20 @@ export default function AddNoteModal({ onClose, onSuccess, initialTargetType = '
               className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-[150px] dark:bg-slate-800 dark:text-white resize-none"
               placeholder="Détails de la note..."
               required
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+              <Tag size={14} /> Tags
+            </label>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-800 dark:text-white"
+              placeholder="Ex: comportement, urgent, rappel (séparés par des virgules)"
             />
           </div>
 

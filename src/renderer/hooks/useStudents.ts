@@ -166,6 +166,30 @@ export function useStudents(classId: number) {
     await loadStudents(true);
   };
 
+  /**
+   * Met à jour un élève spécifique dans le state local et le cache
+   * SANS recharger tous les élèves depuis la base de données.
+   * 
+   * OPTIMISATION :
+   * Au lieu de faire un refresh complet (qui recharge tous les élèves),
+   * cette fonction met à jour uniquement l'élève modifié dans le state.
+   * 
+   * @param updatedStudent L'élève mis à jour avec toutes ses données
+   */
+  const updateStudent = useCallback((updatedStudent: Student) => {
+    setStudents(prevStudents => {
+      // Trouver et remplacer l'élève modifié
+      const newStudents = prevStudents.map(student =>
+        student.id === updatedStudent.id ? updatedStudent : student
+      );
+      
+      // Mettre à jour le cache également
+      cache.set(cacheKey, newStudents);
+      
+      return newStudents;
+    });
+  }, [cache, cacheKey]);
+
   // RETOUR DES FONCTIONS EXPOSÉES :
   // Le hook expose uniquement ce dont le composant a besoin
   // TOUTES les fonctions de mutation (add, delete, import) ont maintenant des wrappers
@@ -175,6 +199,7 @@ export function useStudents(classId: number) {
     deleteStudent,      // Fonction wrappée avec gestion du cache
     addStudent,         // Fonction wrappée avec gestion du cache
     importStudents,     // Fonction wrappée avec gestion du cache
+    updateStudent,      // Fonction pour mettre à jour un élève sans tout recharger
     students,           // État : liste des élèves
     loading,            // État : chargement en cours
     error,              // État : erreur éventuelle

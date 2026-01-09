@@ -26,8 +26,8 @@ const getApplication = (percentage: number | null): string => {
   if (percentage >= 80) return 'E';
   if (percentage >= 60) return 'TB';
   if (percentage >= 50) return 'B';
-  if (percentage >= 30) return 'Ma';
-  return 'Mé';
+  if (percentage >= 30) return 'Mé';
+  return 'Ma';
 };
 
 export default function BulletinHumanitesContent({
@@ -65,18 +65,19 @@ export default function BulletinHumanitesContent({
 
   const abregeConduite = (conduite: string) => {
     switch(conduite.toUpperCase()){ 
-      case 'EXCELLENT': return 'E';
-      case 'TRES BIEN': return 'TB';
-      case 'BIEN': return 'B';
+      case 'ELUTE': return 'E';
+      case 'TRES BON': return 'TB';
+      case 'BON': return 'B';
       case 'MAUVAIS': return 'Ma';
       case 'MEDIOCRE': return 'Me';
+      case 'INSUFFISANT': return 'I';
   }}
 
   return (
     <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[10px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
       
       {/* Header */}
-      <div className="border-2 border-black mb-1">
+      <div className="border-2 border-black mb-0 ">
         <div className="flex border-b border-black">
           {/* Flag */}
           <div className="w-24 border-r border-black p-2 flex items-center justify-center">
@@ -127,7 +128,7 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Info Grid */}
-      <div className="border-2 border-black mb-1 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
+      <div className="border-2 border-black mb-0 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold min-w-[60px]">VILLE :</span>
           <span className="border-b border-dotted border-black flex-1 text-center font-semibold">{schoolCity}</span>
@@ -185,7 +186,7 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="border-2 border-black border-b-0 p-1 text-center font-bold bg-slate-100 uppercase text-sm">
+      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6">
         BULLETIN DE LA {classInfo.level} ANNEE HUMANITES / {classInfo.option} &nbsp;&nbsp;&nbsp; ANNEE SCOLAIRE 2024 - 2025
       </div>
 
@@ -280,7 +281,7 @@ export default function BulletinHumanitesContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.code || subject.name}</td>
+                        <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                         <td className="border border-black py-0.5">{p1 ?? ''}</td>
                         <td className="border border-black py-0.5">{p2 ?? ''}</td>
                         {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex1 ?? ''}</td>)}
@@ -509,15 +510,15 @@ export default function BulletinHumanitesContent({
 
       {/* Footer */}
       <div className="border-2 border-black border-t-0 p-2 text-[10px]">
-        <div className="mb-4">
-          - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en ...............................................................................................................................................................................................................................................................(1)
+        <div className="mb-0">
+          - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en ............................................................................................(1)
         </div>
-        <div className="mb-4">
+        <div className="mb-0">
           - L'élève passe dans la classe supérieure (1)<br/>
           - L'élève double la classe (1)
         </div>
         
-        <div className="flex justify-between items-end mt-8 px-8">
+        <div className="flex justify-between items-end mt-0 px-8">
           <div className="text-center">
             <p className="font-bold mb-16">Signature de l'élève</p>
           </div>
@@ -533,7 +534,7 @@ export default function BulletinHumanitesContent({
           </div>
         </div>
 
-        <div className="mt-1 text-[9px]">
+        <div className="mt-0 text-[6px]">
           <p>(1) Biffer la mention inutile.</p>
           <p>Note importante : Le bulletin est sans valeur s'il est raturé ou surchargé.</p>
           <p className="text-right font-bold">IGE / P.S./113</p>

@@ -103,9 +103,19 @@ export async function printElement(element: HTMLElement, options: PrintOptions =
 
   // Réparer les valeurs des inputs/textarea/select en copiant leur état
   // (car cloneNode ne copie pas toujours la valeur actuelle)
-  Array.from(element.querySelectorAll('input, textarea, select')).forEach((orig) => {
-    const selector = (orig as Element).tagName;
-    // Chercher le même élément dans le clone par position relative
+  const originalInputs = Array.from(element.querySelectorAll('input, textarea, select'));
+  const clonedInputs = Array.from(clone.querySelectorAll('input, textarea, select'));
+  
+  originalInputs.forEach((orig, index) => {
+    const val = (orig as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+    const target = clonedInputs[index] as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    if (target) {
+      target.value = val;
+      // Pour les checkboxes/radios
+      if (orig instanceof HTMLInputElement && (orig.type === 'checkbox' || orig.type === 'radio')) {
+        (target as HTMLInputElement).checked = orig.checked;
+      }
+    }
   });
 
   // Insérer le cloné

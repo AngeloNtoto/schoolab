@@ -35,7 +35,7 @@ export const TUTORIAL_DATA: Record<string, PageTutorial> = {
     title: 'Tableau de bord',
     steps: [
       {
-        title: 'Bienvenue sur Ecole !',
+        title: 'Bienvenue sur Schoolab !',
         content: 'Votre nouveau tableau de bord professionnel vous donne le contrôle total sur la gestion de vos classes et de vos élèves.'
       },
       {

@@ -96,10 +96,22 @@ function initializeSchema(db: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       content TEXT NOT NULL,
-      target_type TEXT NOT NULL, -- 'student', 'class', 'general'
+      target_type TEXT NOT NULL DEFAULT 'general', -- 'student', 'class', 'general'
       target_id INTEGER,
+      academic_year_id INTEGER REFERENCES academic_years(id) ON DELETE SET NULL,
       tags TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_modified_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TEXT DEFAULT (datetime('now')),
+      type TEXT NOT NULL, -- 'PUSH', 'PULL', 'FULL_SYNC'
+      status TEXT NOT NULL, -- 'SUCCESS', 'ERROR'
+      records_synced TEXT, -- JSON string detailing counts per table
+      error_message TEXT,
+      duration_ms INTEGER
     );
   `);
 }
@@ -156,6 +168,14 @@ function runMigrations(db: Database.Database) {
     console.log('sub_domain column added to subjects');
   }
 
+  // Check if category column exists in subjects table
+  const hasCategory = subjectsInfo.some((col) => col.name === 'category');
+  if (!hasCategory) {
+    console.log('Adding category column to subjects table...');
+    db.exec(`ALTER TABLE subjects ADD COLUMN category TEXT DEFAULT ''`);
+    console.log('category column added to subjects');
+  }
+
   // Check if conduite column exists in students table and add it if missing
   const studentsInfo = db.pragma('table_info(students)') as Array<{ name: string }>;
   const hasConduite = studentsInfo.some((col) => col.name === 'conduite');
@@ -209,4 +229,116 @@ function runMigrations(db: Database.Database) {
       console.error('Failed to add abandon_reason column:', err);
     }
   }
+  // Check if academic_year_id exists in notes
+  const notesInfo = db.pragma('table_info(notes)') as Array<{ name: string }>;
+  if (!notesInfo.some(col => col.name === 'academic_year_id')) {
+    console.log('Adding academic_year_id to notes table...');
+    db.exec(`ALTER TABLE notes ADD COLUMN academic_year_id INTEGER REFERENCES academic_years(id) ON DELETE SET NULL;`);
+    console.log('academic_year_id added to notes');
+  }
+
+  // Check if target_type exists in notes (for very old versions)
+  if (!notesInfo.some(col => col.name === 'target_type')) {
+    console.log('Adding target_type to notes table...');
+    db.exec(`ALTER TABLE notes ADD COLUMN target_type TEXT DEFAULT 'general';`);
+  }
+
+  // Check if target_id exists in notes
+  if (!notesInfo.some(col => col.name === 'target_id')) {
+    console.log('Adding target_id to notes table...');
+    db.exec(`ALTER TABLE notes ADD COLUMN target_id INTEGER;`);
+  }
+  // --- Tombstone System for Sync Deletions ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sync_deletions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      table_name TEXT NOT NULL,
+      local_id INTEGER NOT NULL,
+      deleted_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  // --- Cloud Sync Migrations ---
+  const syncTables = ['academic_years', 'classes', 'students', 'subjects', 'grades', 'notes', 'domains'];
+  
+  syncTables.forEach(table => {
+    const tableInfo = db.pragma(`table_info(${table})`) as Array<{ name: string }>;
+    
+    // Add updated_at
+    if (!tableInfo.some(col => col.name === 'updated_at')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN updated_at TEXT DEFAULT '1970-01-01 00:00:00'`);
+    }
+
+    // Add created_at
+    if (!tableInfo.some(col => col.name === 'created_at')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN created_at TEXT DEFAULT '1970-01-01 00:00:00'`);
+    }
+    
+    // Add server_id
+    if (!tableInfo.some(col => col.name === 'server_id')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN server_id TEXT`);
+    }
+    
+    // Add is_dirty
+    if (!tableInfo.some(col => col.name === 'is_dirty')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN is_dirty INTEGER DEFAULT 1`);
+    }
+
+    // Add last_modified_at
+    if (!tableInfo.some(col => col.name === 'last_modified_at')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN last_modified_at TEXT DEFAULT '1970-01-01 00:00:00'`);
+    }
+
+    // Create trigger for updated_at and last_modified_at
+    db.exec(`
+      DROP TRIGGER IF EXISTS trg_${table}_updated_at;
+      CREATE TRIGGER trg_${table}_updated_at
+      AFTER UPDATE ON ${table}
+      FOR EACH ROW
+      WHEN (NEW.is_dirty = OLD.is_dirty OR NEW.is_dirty = 1)
+      BEGIN
+        UPDATE ${table} SET 
+          updated_at = (datetime('now')), 
+          last_modified_at = (datetime('now')),
+          is_dirty = 1 
+        WHERE id = OLD.id;
+      END;
+
+      DROP TRIGGER IF EXISTS trg_${table}_inserted;
+    `);
+
+    // Create trigger for deletion tracking (Tombstones)
+    db.exec(`
+      DROP TRIGGER IF EXISTS trg_${table}_deleted;
+      CREATE TRIGGER trg_${table}_deleted
+      AFTER DELETE ON ${table}
+      BEGIN
+        INSERT INTO sync_deletions (table_name, local_id)
+        VALUES ('${table}', OLD.id);
+      END;
+    `);
+  });
+
+  // Special case for settings (license, school_id)
+  const settingsInfo = db.pragma("table_info(settings)") as Array<{ name: string }>;
+  if (!settingsInfo.some(col => col.name === 'updated_at')) {
+    db.exec(`ALTER TABLE settings ADD COLUMN updated_at TEXT DEFAULT '1970-01-01 00:00:00'`);
+  }
+  if (!settingsInfo.some(col => col.name === 'last_modified_at')) {
+    db.exec(`ALTER TABLE settings ADD COLUMN last_modified_at TEXT DEFAULT '1970-01-01 00:00:00'`);
+  }
+
+  // Create trigger for settings
+  db.exec(`
+    DROP TRIGGER IF EXISTS trg_settings_updated_at;
+    CREATE TRIGGER trg_settings_updated_at
+    AFTER UPDATE ON settings
+    FOR EACH ROW
+    BEGIN
+      UPDATE settings SET 
+        updated_at = (datetime('now')), 
+        last_modified_at = (datetime('now'))
+      WHERE id = OLD.id;
+    END;
+  `);
 }

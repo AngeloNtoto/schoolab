@@ -45,7 +45,7 @@ export default function TopNavigation() {
       if(p === '/settings') return 'Paramètres';
       if(p.startsWith('/class/')) return 'Détails de la classe';
       if(p.startsWith('/notes')) return 'Notes';
-      return 'Ecole Admin';
+      return 'Schoolab Admin';
   };
 
   return (

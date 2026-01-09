@@ -9,6 +9,7 @@ import React from 'react';
 import { Student } from '../services/studentService';
 import { ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
+import { StudentRanks } from '../services/bulletinService';
 
 export interface SchoolInfo {
   name: string;
@@ -24,6 +25,8 @@ export interface CouponPeriodeProps {
   schoolInfo: SchoolInfo;
   academicYear: string;
   period: 'P1' | 'P2' | 'P3' | 'P4';
+  ranks?: StudentRanks;
+  totalStudents?: number;
 }
 
 // Mapping des noms de périodes
@@ -42,6 +45,8 @@ export default function CouponPeriode({
   schoolInfo,
   academicYear,
   period,
+  ranks,
+  totalStudents
 }: CouponPeriodeProps) {
 
   // Récupère la note d'une matière pour la période
@@ -117,9 +122,17 @@ export default function CouponPeriode({
             <td className="border border-black text-center">{totalMax}</td>
             <td className="border border-black text-center">{totalObtained}</td>
           </tr>
-          <tr className="font-bold">
-            <td colSpan={2} className="border border-black text-right px-1">Pourcentage</td>
-            <td className="border border-black text-center">{percentage}%</td>
+          <tr className="font-bold italic">
+            <td className="border border-black text-left px-1">POURCENTAGE</td>
+            <td colSpan={2} className="border border-black text-center">{percentage}%</td>
+          </tr>
+          <tr className='font-bold italic'>
+            <td className="border border-black text-left px-1">PLACE</td>
+            <td colSpan={2} className="border border-black text-center">{ranks?.[period.toLowerCase() as keyof StudentRanks] || ''} / {totalStudents || '?'}</td>
+          </tr>
+          <tr className="font-bold italic">
+            <td className="border border-black text-left px-1">CONDUITE</td>
+            <td colSpan={2} className="border border-black text-center">{student[`conduite_${period.toLowerCase()}` as keyof Student] || ''}</td>
           </tr>
         </tfoot>
       </table>

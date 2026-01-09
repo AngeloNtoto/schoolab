@@ -154,9 +154,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
 
   const handleDelete = async (subjectId: number) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette matière ? Toutes les notes associées seront perdues.')) return;
-
+    
     try {
       await window.api.db.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
+      
       onSuccess();
       toast.success('Matière supprimée');
     } catch (error) {

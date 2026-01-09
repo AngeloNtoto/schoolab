@@ -29,6 +29,7 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'general' | 'class' | 'student'>('all');
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [noteToEdit, setNoteToEdit] = useState<Note | null>(null);
   
   // Cache for linked entity names
   const [linkedStudents, setLinkedStudents] = useState<Record<number, LinkedStudent>>({});
@@ -282,6 +283,16 @@ export default function NotesPage() {
                       <ChevronRight size={20} className={`text-slate-300 shrink-0 transition-transform ${isSelected ? 'rotate-90' : ''}`} />
                     </div>
                     
+                    {note.tags && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {note.tags.split(',').map(tag => (
+                          <span key={tag} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-medium">
+                            {tag.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
                       <div className="flex items-center gap-2 text-xs">
                         {target.icon}
@@ -380,10 +391,19 @@ export default function NotesPage() {
               </p>
             </div>
             
-            {/* TODO: Future features */}
-            {/* TODO: Add edit functionality */}
-            {/* TODO: Add tags/categories system */}
-            {/* TODO: Add attachments support */}
+            {/* Tags Display in Detail */}
+            {selectedNote.tags && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {selectedNote.tags.split(',').map(tag => (
+                  <span key={tag} className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-100">
+                    <Tag size={12} /> {tag.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            {/* Future features */}
+            {/* Attachments support could be added here */}
           </div>
           
           {/* Detail Actions */}
@@ -395,17 +415,36 @@ export default function NotesPage() {
               <Trash2 size={18} />
               Supprimer
             </button>
-            {/* TODO: Add Edit button when edit functionality is implemented */}
+            <button 
+              onClick={() => setNoteToEdit(selectedNote)}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Tag size={18} />
+              Modifier
+            </button>
           </div>
         </div>
       )}
 
-      {showAddModal && (
+      {(showAddModal || noteToEdit) && (
         <AddNoteModal 
-          onClose={() => setShowAddModal(false)}
+          noteToEdit={noteToEdit}
+          onClose={() => {
+            setShowAddModal(false);
+            setNoteToEdit(null);
+          }}
           onSuccess={() => {
             setShowAddModal(false);
-            loadNotes();
+            setNoteToEdit(null);
+            loadNotes().then(() => {
+              // Refresh selected note if it was the one edited
+              if (selectedNote) {
+                notesService.getAll().then(allNotes => {
+                  const updated = allNotes.find(n => n.id === selectedNote.id);
+                  if (updated) setSelectedNote(updated);
+                });
+              }
+            });
           }}
         />
       )}

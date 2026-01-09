@@ -20,6 +20,7 @@ import PrintButton from './PrintWrapper';
 import { Student } from '../services/studentService';
 import { classService, ClassData, Subject } from '../services/classService';
 import { Grade } from '../services/gradeService';
+import { bulletinService, StudentRanks } from '../services/bulletinService';
 
 // Types
 interface AcademicYear {
@@ -55,6 +56,8 @@ export default function ClassCoupons() {
   const [allGrades, setAllGrades] = useState<Grade[]>([]);
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo>({ name: '', city: '', pobox: '' });
   const [academicYear, setAcademicYear] = useState<string>('');
+  const [classRanks, setClassRanks] = useState<Record<number, StudentRanks>>({});
+  const [totalStudents, setTotalStudents] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   // États pour la configuration d'impression
@@ -141,6 +144,10 @@ export default function ClassCoupons() {
         'SELECT * FROM academic_years WHERE is_active = 1 LIMIT 1'
       );
       if (yearResult?.[0]) setAcademicYear(yearResult[0].name);
+
+      const { ranks, totalStudents: count } = await bulletinService.calculateClassRanks(Number(classId));
+      setClassRanks(ranks);
+      setTotalStudents(count);
 
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -245,7 +252,9 @@ export default function ClassCoupons() {
             academicYear={academicYear}
             period={printConfig.period}
             couponsPerPage={printConfig.couponsPerPage}
-          />
+            classRanks={classRanks}
+            totalStudents={totalStudents}
+           />
         </div>
       ) : (
         <div className="max-w-[210mm] mx-auto">

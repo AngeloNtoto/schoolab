@@ -65,7 +65,7 @@ export async function ExportExcelForClass(classId: number) {
   // Colonnes finales
   header.push('TOTAL GENERAL');
   header.push('% (total)');
-  header.push('Application'); // Excellent, Très bien...
+  header.push('Application'); // Élute, Très bien...
   header.push('Conduite'); // si tu veux
   header.push('Observation'); // echec / redoublement / abandons etc.
 
@@ -134,7 +134,7 @@ export async function ExportExcelForClass(classId: number) {
 
     const pct = totalMaxGeneral > 0 ? (totalGeneral / totalMaxGeneral) * 100 : 0;
     // Application simple (mêmes seuils que dans ton code)
-    const application = pct >= 80 ? 'Excellent' : pct >= 60 ? 'Très bien' : pct >= 50 ? 'Bien' : pct >= 30 ? 'Mauvaise' : 'Médiocre';
+    const application = pct >= 80 ? 'Élute' : pct >= 70 ? 'Très bon' : pct >= 50 ? 'Bon' : pct >= 40 ? 'Médiocre' : 'Mauvais';
 
     // Conduite : concat selon dispo (simple)
     const conduite = `${student.conduite_p1 || ''} ${student.conduite_p2 || ''} ${student.conduite_p3 || ''} ${student.conduite_p4 || ''}`.trim();

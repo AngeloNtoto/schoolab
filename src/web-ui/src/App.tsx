@@ -189,7 +189,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GraduationCap size={28} />
-            <span className="text-xl font-extrabold tracking-tight">Ecole <span className="text-blue-200 font-medium">Marking Board</span></span>
+            <span className="text-xl font-extrabold tracking-tight">Schoolab <span className="text-blue-200 font-medium">Marking Board</span></span>
           </div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-100">
             <Monitor size={14} className="hidden md:inline" />
@@ -357,7 +357,7 @@ export default function App() {
 
       <footer className="mt-auto border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-slate-400 text-sm font-medium">
-          &copy; 2025 Ecole - Système de gestion scolaire d'excellence.
+          &copy; 2026 Schoolab - Système de gestion scolaire d'excellence.
         </div>
       </footer>
     </div>

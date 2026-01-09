@@ -1,0 +1,219 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           String    @default("ADMIN")
+  schoolId       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastModifiedAt DateTime  @default(now()) @updatedAt
+  school         School?   @relation(fields: [schoolId], references: [id])
+}
+
+model School {
+  id             String         @id @default(cuid())
+  name           String
+  city           String
+  pobox          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  lastModifiedAt DateTime       @default(now()) @updatedAt
+  adminPassword  String?
+  academicYears  AcademicYear[]
+  classes        Class[]
+  domains        Domain[]
+  grades         Grade[]
+  license        License?
+  notes          Note[]
+  students       Student[]
+  subjects       Subject[]
+  syncLogs       SyncLog[]
+  users          User[]
+  deletedRecords DeletedRecord[]
+}
+
+model License {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  hwids          String[] @default([])
+  active         Boolean  @default(false)
+  expiresAt      DateTime
+  schoolId       String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastModifiedAt DateTime @default(now()) @updatedAt
+  school         School   @relation(fields: [schoolId], references: [id])
+}
+
+model AcademicYear {
+  id             String   @id @default(cuid())
+  localId        Int
+  name           String
+  startDate      String
+  endDate        String
+  isCurrent      Boolean  @default(false)
+  schoolId       String
+  updatedAt      DateTime @updatedAt
+  lastModifiedAt DateTime @default(now()) @updatedAt
+  school         School   @relation(fields: [schoolId], references: [id])
+  classes        Class[]
+  notes          Note[]
+
+  @@unique([schoolId, localId])
+}
+
+model Class {
+  id             String       @id @default(cuid())
+  localId        Int
+  name           String
+  level          String
+  option         String       @default("")
+  section        String
+  academicYearId String
+  schoolId       String
+  updatedAt      DateTime     @updatedAt
+  lastModifiedAt DateTime     @default(now()) @updatedAt
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  school         School       @relation(fields: [schoolId], references: [id])
+  students       Student[]
+  subjects       Subject[]
+
+  @@unique([schoolId, localId])
+}
+
+model Domain {
+  id             String    @id @default(cuid())
+  localId        Int
+  name           String
+  displayOrder   Int       @default(0)
+  schoolId       String
+  updatedAt      DateTime  @updatedAt
+  lastModifiedAt DateTime  @default(now()) @updatedAt
+  school         School    @relation(fields: [schoolId], references: [id])
+  subjects       Subject[]
+
+  @@unique([schoolId, localId])
+}
+
+model Student {
+  id             String   @id @default(cuid())
+  localId        Int
+  firstName      String
+  lastName       String
+  postName       String?  @default("")
+  gender         String
+  birthDate      String?
+  birthplace     String?  @default("")
+  conduite       String?  @default("")
+  conduiteP1     String?  @default("")
+  conduiteP2     String?  @default("")
+  conduiteP3     String?  @default("")
+  conduiteP4     String?  @default("")
+  isAbandoned    Boolean  @default(false)
+  abandonReason  String?  @default("")
+  classId        String?
+  schoolId       String
+  updatedAt      DateTime @updatedAt
+  lastModifiedAt DateTime @default(now()) @updatedAt
+  grades         Grade[]
+  class          Class?   @relation(fields: [classId], references: [id])
+  school         School   @relation(fields: [schoolId], references: [id])
+
+  @@unique([schoolId, localId])
+}
+
+model Subject {
+  id             String   @id @default(cuid())
+  localId        Int
+  name           String
+  code           String?
+  maxPoints      Float    @default(20)
+  maxP1          Float    @default(10)
+  maxP2          Float    @default(10)
+  maxExam1       Float    @default(20)
+  maxP3          Float    @default(10)
+  maxP4          Float    @default(10)
+  maxExam2       Float    @default(20)
+  category       String?
+  subDomain      String?  @default("")
+  domainId       String?
+  classId        String
+  schoolId       String
+  updatedAt      DateTime @updatedAt
+  lastModifiedAt DateTime @default(now()) @updatedAt
+  grades         Grade[]
+  class          Class    @relation(fields: [classId], references: [id])
+  domain         Domain?  @relation(fields: [domainId], references: [id])
+  school         School   @relation(fields: [schoolId], references: [id])
+
+  @@unique([schoolId, localId])
+}
+
+model Grade {
+  id             String   @id @default(cuid())
+  localId        Int
+  studentId      String
+  subjectId      String
+  points         Float
+  period         String
+  schoolId       String
+  updatedAt      DateTime @updatedAt
+  lastModifiedAt DateTime @default(now()) @updatedAt
+  school         School   @relation(fields: [schoolId], references: [id])
+  student        Student  @relation(fields: [studentId], references: [id])
+  subject        Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([schoolId, localId])
+}
+
+model Note {
+  id             String       @id @default(cuid())
+  localId        Int
+  title          String
+  content        String
+  academicYearId String
+  schoolId       String
+  lastModifiedAt DateTime     @default(now()) @updatedAt
+  updatedAt      DateTime     @updatedAt
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  school         School       @relation(fields: [schoolId], references: [id])
+
+  @@unique([schoolId, localId])
+}
+
+model SyncLog {
+  id           String   @id @default(cuid())
+  schoolId     String
+  timestamp    DateTime @default(now())
+  type         String
+  status       String
+  details      String?
+  errorMessage String?
+  durationMs   Int?
+  createdAt    DateTime @default(now())
+  school       School   @relation(fields: [schoolId], references: [id])
+}
+
+model DeletedRecord {
+  id        String   @id @default(cuid())
+  tableName String
+  localId   Int
+  schoolId  String
+  deletedAt DateTime @default(now())
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId, deletedAt])
+}

@@ -25,24 +25,24 @@ type SortOption = 'name' | 'level' | 'option';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState([] as Class[]);
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(true);
   const [totalStudents, setTotalStudents] = useState(0);
   
   // Filtering & Sorting State
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('level');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [viewMode, setViewMode] = useState('grid' as ViewMode);
+  const [sortBy, setSortBy] = useState('level' as SortOption);
+  const [sortOrder, setSortOrder] = useState('asc' as 'asc' | 'desc');
   const [showFilters, setShowFilters] = useState(false);
 
   // Modals & Context Menu State
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; classId: number } | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
-  const [editModal, setEditModal] = useState<Class | null>(null);
+  const [contextMenu, setContextMenu] = useState(null as { x: number; y: number; classId: number } | null);
+  const [deleteModal, setDeleteModal] = useState(null as { id: number; name: string } | null);
+  const [editModal, setEditModal] = useState(null as Class | null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [addNoteModal, setAddNoteModal] = useState<{ type: 'class' | 'student' | 'general', id?: number } | null>(null);
+  const [addNoteModal, setAddNoteModal] = useState(null as { type: 'class' | 'student' | 'general', id?: number } | null);
   
   const toast = useToast();
   const tutorial = useTutorial();
@@ -76,7 +76,10 @@ export default function Dashboard() {
       const [classesData, schoolData, studentCountData] = await Promise.all([
         window.api.db.query<Class>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [activeYearId]),
         window.api.db.query<{ value: string }>("SELECT value FROM settings WHERE key = 'school_name'"),
-        window.api.db.query<{ count: number }>(`SELECT COUNT(*) as count FROM students WHERE class_id IN (SELECT id FROM classes WHERE academic_year_id = ?)`, [activeYearId]),
+        window.api.db.query<{ count: number }>(`
+          SELECT COUNT(*) as count FROM students 
+          WHERE class_id IN (SELECT id FROM classes WHERE academic_year_id = ?)
+        `, [activeYearId]),
       ]);
 
       setClasses(classesData);
@@ -165,6 +168,7 @@ export default function Dashboard() {
     
     try {
       await window.api.db.execute('DELETE FROM classes WHERE id = ?', [deleteModal.id]);
+      
       await loadData();
       setDeleteModal(null);
       toast.success('Classe supprimée avec succès');
@@ -348,11 +352,11 @@ export default function Dashboard() {
         {/* Empty State */}
         {filteredAndSortedClasses.length === 0 ? (
            <div className="text-center py-20">
-            <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search size={40} className="text-slate-400" />
+            <div className="bg-slate-100 dark:bg-slate-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search size={40} className="text-slate-400 dark:text-slate-500" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Aucune classe trouvée</h3>
-            <p className="text-slate-500 max-w-md mx-auto mb-8">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Aucune classe trouvée</h3>
+            <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8">
                {classes.length === 0 
                   ? "Commencez par créer votre première classe pour gérer vos élèves." 
                   : "Aucune classe ne correspond à votre recherche. Essayez d'autres termes."}
@@ -386,9 +390,9 @@ export default function Dashboard() {
                 <div className="space-y-10">
                     {Object.entries(groupedClasses).map(([groupName, groupClasses]) => (
                         <div key={groupName}>
-                            <h2 className="text-lg font-bold text-slate-700 mb-4 px-2 border-l-4 border-blue-500 flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-slate-700 dark:text-white mb-4 px-2 border-l-4 border-blue-500 flex items-center gap-2">
                                 {viewMode === 'grouped_level' ? `${groupName}` : groupName}
-                                <span className="bg-slate-200 text-slate-600 text-xs py-0.5 px-2 rounded-full">{groupClasses.length}</span>
+                                <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs py-0.5 px-2 rounded-full">{groupClasses.length}</span>
                             </h2>
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {groupClasses.map(cls => <ClassCard key={cls.id} cls={cls} navigate={navigate} onEdit={setEditModal} onContextMenu={handleContextMenu} />)}

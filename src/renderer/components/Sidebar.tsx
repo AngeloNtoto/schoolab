@@ -67,7 +67,7 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
            <div className="bg-blue-600 p-2 rounded-lg text-white shrink-0">
              <GraduationCap size={20} />
            </div>
-           {!isCollapsed && <span className="font-bold text-white tracking-wide truncate">Ecole Admin</span>}
+           {!isCollapsed && <span className="font-bold text-white tracking-wide truncate">Schoolab Admin</span>}
         </div>
 
         {navItems.map((item) => (

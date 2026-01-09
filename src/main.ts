@@ -1,3 +1,7 @@
+// Charger les variables d'environnement depuis .env
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import os from 'node:os';
@@ -52,9 +56,16 @@ import { getDb } from './db';
 import { startServer, stopServer, getServerPort } from './main/network/server';
 import { startDiscovery, stopDiscovery, getPeers } from './main/network/discovery';
 import { listPendingTransfers, getTransferContent, deleteTransfer } from './main/network/staging';
+import { initializeLicenseService } from './main/licenseService';
+import { syncService } from './main/syncService';
 
 app.on('ready', () => {
+  console.log(`Le cloud url : ${process.env.CLOUD_URL}`)
   const db = getDb();
+
+  // Initialisation des services Cloud et Licence
+  initializeLicenseService();
+  syncService.initialize();
 
   // IPC pour la Base de Données
   ipcMain.handle('db:query', (_event, sql, params) => {
@@ -65,6 +76,26 @@ app.on('ready', () => {
   ipcMain.handle('db:execute', (_event, sql, params) => {
     const stmt = db.prepare(sql);
     return stmt.run(params || []);
+  });
+
+  ipcMain.handle('db:check-sync-status', () => {
+    const tables = ['academic_years', 'classes', 'students', 'subjects', 'grades', 'notes', 'domains'];
+    const overdueLimit = "datetime('now', '-24 hours')";
+    
+    try {
+      for (const table of tables) {
+        const result = db.prepare(`SELECT 1 FROM ${table} WHERE is_dirty = 1 AND last_modified_at < ${overdueLimit} LIMIT 1`).get();
+        if (result) return { overdue: true };
+      }
+      
+      const deletionResult = db.prepare(`SELECT 1 FROM sync_deletions WHERE deleted_at < ${overdueLimit} LIMIT 1`).get();
+      if (deletionResult) return { overdue: true };
+      
+      return { overdue: false };
+    } catch (err) {
+      console.error('Error checking sync status:', err);
+      return { overdue: false };
+    }
   });
 
   // Services RÉSEAU

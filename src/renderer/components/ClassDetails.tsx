@@ -1,12 +1,9 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback, Activity, Suspense } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, Activity } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, User, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 // Services & Hooks
-import { classService, ClassData, Subject } from '../services/classService';
-import { useStudents } from '../hooks/useStudents';
-import { useGrades } from '../hooks/useGrades';
+import { ClassData, Subject } from '../services/classService';
 import { Student } from '../services/studentService';
 import { useTutorial } from '../context/TutorialContext';
 import { useToast } from '../context/ToastContext';
@@ -15,45 +12,59 @@ import { ExportExcelForClass } from './ExportExcel';
 // Composants
 import AddStudentModal from './AddStudentModal';
 import AddSubjectModal from './AddSubjectModal';
-import ProfessionalLoader from './ProfessionalLoader';
 
-export default function ClassDetails() {
+// Interface pour les props
+interface ClassDetailsProps {
+  // Données pré-chargées
+  classInfo: ClassData;
+  subjects: Subject[];
+  students: Student[];
+  gradesMap: Map<string, number>;
+  editingSubject: Subject | null;
+  
+  // Actions
+  onEditStudent: (studentId: number) => void;
+  onOpenBulletin: (studentId: number) => void;
+  onOpenBulkPrint: () => void; // Nouvelle callback
+  onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  onAddStudent: (student: Partial<Student>) => Promise<void>;
+  onDeleteStudent: (studentId: number) => Promise<void>;
+  onImportStudents: (students: Partial<Student>[]) => Promise<void>;
+  onRefreshSubjects: () => Promise<void>;
+  onSetEditingSubject: (subject: Subject | null) => void;
+}
+
+export default function ClassDetails({
+  classInfo,
+  subjects,
+  students,
+  gradesMap,
+  editingSubject,
+  onEditStudent,
+  onOpenBulletin,
+  onOpenBulkPrint, // Prop reçue
+  onUpdateGrade,
+  onAddStudent,
+  onDeleteStudent,
+  onImportStudents,
+  onRefreshSubjects,
+  onSetEditingSubject
+}: ClassDetailsProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const tutorial = useTutorial();
-  
-  const [classInfo, setClassInfo] = useState<ClassData | null>(null);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [classLoading, setClassLoading] = useState(true);
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
   // Search & Sort State
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
 
-
   const toast = useToast();
 
   useEffect(() => {
-    const loadClassData = async () => {
-      if (!id) return;
-      try {
-        const cData = await classService.getClassById(Number(id));
-        if (cData) setClassInfo(cData);
-        
-        const sData = await classService.getSubjectsByClass(Number(id));
-        setSubjects(sData);
-      } catch (error) {
-        console.error('Failed to load class data:', error);
-      } finally {
-        setClassLoading(false);
-      }
-    };
-    loadClassData();
     // Show tutorial on first visit
     tutorial.showTutorial('classDetails');
-  }, [id]);
+  }, []);
 
   // When subjects are loaded (table of notes available), show the grades tutorial
   useEffect(() => {
@@ -62,18 +73,9 @@ export default function ClassDetails() {
     }
   }, [subjects.length]);
 
-  const { gradesMap, loading: gradesLoading, updateGrade } = useGrades(Number(id));
-  
-  // Utilisation du hook useStudents pour gérer les élèves
-  const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents } = useStudents(Number(id));
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
-  
-  
-  //TODO:Implemnter la logique pour lors du chargement des données
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const loading = classLoading || gradesLoading || studentsLoading;
 
   // Filter & Sort Logic
   const filteredAndSortedStudents = useMemo(() => {
@@ -128,14 +130,14 @@ export default function ClassDetails() {
     }
   };
 
-  const onUpdateGrade = useCallback(async (studentId: number, subjectId: number, period: string, value: number | null) => {
+  const onGradeUpdate = useCallback(async (studentId: number, subjectId: number, period: string, value: number | null) => {
     try {
-      await updateGrade(studentId, subjectId, period, value);
+      await onUpdateGrade(studentId, subjectId, period, value);
     } catch (error) {
       console.error('Failed to update grade:', error);
       toast.error('Erreur lors de la mise à jour de la note');
     }
-  }, [updateGrade, toast]);
+  }, [onUpdateGrade, toast]);
 
   const handleExportExcel = async (id: string) => {
     if (!id) return;
@@ -159,13 +161,10 @@ export default function ClassDetails() {
   const handleDeleteStudent = async () => {
     if (contextMenu) {
       if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${contextMenu.student.last_name} ?`)) {
-        await deleteStudent(contextMenu.student.id);
+        await onDeleteStudent(contextMenu.student.id);
       }
     }
   };
-
-  if (classLoading) return <ProfessionalLoader message="Chargement des détails de la classe..." />;
-  if (!classInfo) return <div className="p-8 text-center text-slate-500">Aucune classe trouvée.</div>;
 
   return (
     <div className="flex flex-col h-screen bg-slate-50">
@@ -379,7 +378,7 @@ export default function ClassDetails() {
                 subjects={subjects}
                 gradesMap={gradesMap}
                 onContextMenu={onContextMenu}
-                onUpdateGrade={onUpdateGrade}
+                onUpdateGrade={onGradeUpdate}
               />
             ))}
           </tbody>
@@ -391,8 +390,8 @@ export default function ClassDetails() {
         <AddStudentModal 
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          onAdd={addStudent}
-          onImport={importStudents}
+          onAdd={onAddStudent}
+          onImport={onImportStudents}
           classId={Number(id)}
           existingStudents={students}
         />
@@ -405,16 +404,16 @@ export default function ClassDetails() {
           subjects={subjects}
           editingSubject={editingSubject}
           onSelectSubject={(subject) => {
-            setEditingSubject(subject);
+            onSetEditingSubject(subject);
             setShowAddSubjectModal(true);
           }}
           onClose={() => {
-            setEditingSubject(null); // reset → retour à l’état neutre
+            onSetEditingSubject(null); // reset → retour à l'état neutre
             setShowAddSubjectModal(false);
           }}
           onSuccess={() => {
-            classService.getSubjectsByClass(Number(id)).then(setSubjects);
-            setEditingSubject(null);
+            onRefreshSubjects();
+            onSetEditingSubject(null);
           }}
         />
       </Activity>
@@ -437,7 +436,7 @@ export default function ClassDetails() {
           </button>
           <button 
             onClick={() => {
-              window.location.hash = `#/student/edit/${contextMenu.student.id}`;
+              onEditStudent(contextMenu.student.id);
               closeContextMenu();
             }}
             className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
@@ -447,7 +446,7 @@ export default function ClassDetails() {
           </button>
           <button 
             onClick={() => {
-              window.location.hash = `#/bulletin/${contextMenu.student.id}`;
+              onOpenBulletin(contextMenu.student.id);
               closeContextMenu();
             }}
             className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
