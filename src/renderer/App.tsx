@@ -14,27 +14,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import SetupWizard from './components/SetupWizard';
-import Dashboard from './components/Dashboard';
-import Class from './components/Class';
-import CouponEleve from './components/CouponEleve';
-import Bulletin from './components/Bulletin';
-import Palmares from './components/Palmares';
-import ClassCoupons from './components/ClassCoupons';
-import ClassBulletins from './components/ClassBulletins';
+import SetupWizard from './components/setup/SetupWizard';
+import Dashboard from './components/dashboard/Dashboard';
+import Class from './components/class/Class';
 import NetworkDashboard from './pages/Network/NetworkDashboard';
-import Layout from './components/Layout';
-import AcademicYearsManager from './components/AcademicYearsManager';
+import Layout from './components/layout/Layout';
+import AcademicYearsManager from './components/setup/AcademicYearsManager';
 import SettingsPage from './pages/SettingsPage';
 import NotesPage from './pages/NotesPage';
-import TutorialModal from './components/TutorialModal';
-import AuthScreen from './components/AuthScreen';
+import TutorialModal from './components/shared/TutorialModal';
+import AuthScreen from './components/setup/AuthScreen';
 import { CacheProvider } from './context/CacheContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TutorialProvider } from './context/TutorialContext';
-import LicenseGuard from './components/LicenseGuard';
+import LicenseGuard from './components/setup/LicenseGuard';
 import { LicenseProvider } from './context/LicenseContext';
+import PopulateTestData from './components/shared/PopulateTestData';
+
 
 // Authentication states
 type AuthState = 'loading' | 'create-password' | 'login' | 'authenticated';
@@ -153,11 +150,9 @@ export default function App() {
             <Routes>
             <Route path="/setup" element={<SetupWizard />} />
             <Route element={<LicenseGuard><Layout /></LicenseGuard>}>
+              <Route path="/populate" element={<PopulateTestData />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/class/:id" element={<Class/>} />
-              <Route path="/student/:id" element={<CouponEleve />} />
-              <Route path="/palmares/:classId" element={<Palmares />} />
-              <Route path="/print-coupons/:classId" element={<ClassCoupons />} />
               <Route path="/network" element={<NetworkDashboard />} />
               <Route path="/academic-years" element={<AcademicYearsManager />} />
               <Route path="/settings" element={<SettingsPage />} />

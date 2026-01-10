@@ -121,6 +121,9 @@ export class SyncService {
       const fetch = (await import('node-fetch')).default;
       const hwid = getHWID();
       console.log(`Pushing to cloud for school ${schoolId} (HWID: ${hwid})`);
+      if (dirtyData.notes.length > 0) {
+        console.log("DEBUG: Pushing notes:", JSON.stringify(dirtyData.notes, null, 2));
+      }
       const response = await fetch(`${getCloudUrl()}/api/sync/push`, {
         method: 'POST',
         headers: { 
@@ -514,6 +517,15 @@ export class SyncService {
           } else {
              console.warn(`Could not resolve local ID for subject server_id: ${g.subject_id}`);
           }
+        }
+      }
+      
+      // 3. Repair Note Academic Year IDs
+      const activeYear = this.db.prepare("SELECT id FROM academic_years WHERE is_active = 1").get() as { id: number } | undefined;
+      if (activeYear) {
+        const result = this.db.prepare("UPDATE notes SET academic_year_id = ?, is_dirty = 1 WHERE academic_year_id IS NULL").run(activeYear.id);
+        if (result.changes > 0) {
+          console.log(`Repaired ${result.changes} notes with missing academic_year_id.`);
         }
       }
       

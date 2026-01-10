@@ -149,10 +149,10 @@ export function startServer(db: Database.Database): Promise<number> {
         transaction(updates);
         console.log('[RÉSEAU] Mise à jour par lot réussie');
 
-        // Notification au processus renderer d'Electron
+        // Notification au processus renderer d'Electron avec les données granulaires
         BrowserWindow.getAllWindows().forEach(win => {
           if (!win.isDestroyed() && win.webContents) {
-            win.webContents.send('db:changed', { type: 'grades_batch', senderId });
+            win.webContents.send('db:changed', { type: 'grades_batch', senderId, updates });
           }
         });
 

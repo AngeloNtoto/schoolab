@@ -314,7 +314,7 @@ export async function POST(request: Request) {
             localId: n.localId,
             title: n.title,
             content: n.content,
-            academicYear: { connect: { schoolId_localId: { schoolId, localId: n.academicYearLocalId } } },
+            academicYear: n.academicYearLocalId ? { connect: { schoolId_localId: { schoolId, localId: n.academicYearLocalId } } } : undefined,
             school: { connect: { id: schoolId } }
           },
           update: {

@@ -8,7 +8,7 @@ import ServerPanel from './ServerPanel';
 
 export default function NetworkDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'send' | 'receive' | 'sync' | 'server'>('receive');
+  const [activeTab, setActiveTab] = useState<'send' | 'receive' | 'sync' | 'server'>('server');
   const [identity, setIdentity] = useState<string>('Loading...');
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState('');
@@ -32,8 +32,7 @@ export default function NetworkDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 relative">
-      {/* Watermark Background */}
+    <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 relative transition-colors duration-500">
       <div 
         className="fixed inset-0 opacity-5 pointer-events-none"
         style={{
@@ -45,23 +44,24 @@ export default function NetworkDashboard() {
       />
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg relative">
-        <div className="max-w-[95%] mx-auto px-8 py-6">
+      <header className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 relative shadow-lg transition-colors duration-500 backdrop-blur-xl">
+        <div className="max-w-[95%] mx-auto px-8 py-10">
           <div className="flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <button 
                 onClick={() => navigate(-1)} 
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg backdrop-blur-sm transition-colors"
+                className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-2xl backdrop-blur-md transition-all shadow-xl"
                 title="Retour"
               >
                 <ArrowLeft size={24} />
               </button>
-              <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                <Monitor className="text-white" size={32} />
+              <div className="bg-white/20 dark:bg-blue-600/30 p-4 rounded-[2rem] backdrop-blur-md shadow-2xl rotate-3">
+                <Monitor className="text-white dark:text-blue-400" size={36} />
               </div>
-              <div className="text-white">
-                <h1 className="text-2xl font-bold">Gestion Réseau</h1>
-                <div className="flex items-center gap-2 text-blue-100 text-sm mt-1">
+              <div>
+                <h1 className="text-3xl font-black text-white dark:text-slate-100 tracking-tight">Gestion Réseau</h1>
+                <div className="flex items-center gap-3 text-blue-100 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1.5">
+                  <Globe size={12} className="text-blue-200 dark:text-blue-400" />
                   <span>Nom de cet appareil:</span>
                   {isEditing ? (
                     <div className="flex items-center gap-2 bg-white/10 rounded px-2 py-0.5">
@@ -88,17 +88,20 @@ export default function NetworkDashboard() {
             </div>
 
             {/* Tab Switcher */}
-            <div className="flex bg-black/20 p-1.5 rounded-xl backdrop-blur-sm flex-wrap">
+            <div className="flex bg-white/10 dark:bg-black/40 p-1.5 rounded-2xl backdrop-blur-md border border-white/10 dark:border-white/5 shadow-2xl overflow-x-auto no-scrollbar">
               {[
+                { id: 'receive', label: 'Recevoir', icon: Download },
+                { id: 'send', label: 'Envoyer', icon: Send },
+                { id: 'sync', label: 'Synchronisation', icon: RefreshCw },
                 { id: 'server', label: 'Serveur Web', icon: Globe },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg transition-all font-bold text-sm ${
+                  className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest whitespace-nowrap ${
                     activeTab === tab.id 
-                      ? 'bg-white text-blue-600 shadow-md' 
-                      : 'text-blue-100 hover:text-white hover:bg-white/10'
+                      ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-2xl shadow-blue-500/20 ring-1 ring-white/20' 
+                      : 'text-white/60 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   <tab.icon size={16} />
@@ -112,8 +115,11 @@ export default function NetworkDashboard() {
 
       {/* Main Content */}
       <main className="max-w-[95%] mx-auto px-8 py-8 relative">
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
-           <ServerPanel />
+        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+           {activeTab === 'send' && <SendPanel />}
+           {activeTab === 'receive' && <TransferInbox />}
+           {activeTab === 'sync' && <SyncPanel />}
+           {activeTab === 'server' && <ServerPanel />}
         </div>
       </main>
     </div>

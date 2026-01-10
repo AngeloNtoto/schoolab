@@ -24,7 +24,7 @@ const config: ForgeConfig = {
     asar: {
       unpack: "*.{node,dll}",
     },
-    executableName:"ecole",
+    executableName:"Schoolab",
     ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
   },
   makers: [

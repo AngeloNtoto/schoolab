@@ -23,7 +23,7 @@
   "author": {
     "name": "Angelo",
     "email": "Angelontoto7@gmail.com",
-    "phone":"+243810396812"
+    "phone": "+243810396812"
   },
   "license": "MIT",
   "pnpm": {
@@ -69,6 +69,7 @@
     "dotenv": "^17.2.3",
     "electron-squirrel-startup": "^1.0.1",
     "express": "^5.2.1",
+    "framer-motion": "^12.25.0",
     "ip": "^2.0.1",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.555.0",

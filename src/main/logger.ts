@@ -22,7 +22,7 @@ class Logger {
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    return path.join(this.logsDir, `ecole_log_${day}_${month}_${year}.txt`);
+    return path.join(this.logsDir, `schoolab_log_${day}_${month}_${year}.txt`);
   }
 
   private formatMessage(level: 'INFO' | 'ERROR' | 'WARN', message: string): string {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Wifi, Send, CheckCircle, AlertCircle, Loader2, Monitor, ChevronDown } from 'lucide-react';
 
 export default function SendPanel() {
   const [peers, setPeers] = useState<any[]>([]);
@@ -75,98 +75,114 @@ export default function SendPanel() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-slate-700 mb-2">1. Sélectionnez les données à envoyer</label>
-        <select
-          value={selectedClass}
-          onChange={(e) => setSelectedClass(e.target.value)}
-          className="w-full p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">-- Choisir une classe --</option>
-          {classes.map(cls => (
-            <option key={cls.id} value={cls.id}>
-              {cls.name} {cls.level} {cls.option}
-            </option>
-          ))}
-        </select>
+      <div className="mb-10 group">
+        <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-1">1. Sélectionnez les données à envoyer</label>
+        <div className="relative group/select">
+          <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="w-full p-5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-black text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all shadow-inner cursor-pointer"
+          >
+            <option value="" className="dark:bg-slate-900">-- Choisir une classe --</option>
+            {classes.map(cls => (
+              <option key={cls.id} value={cls.id} className="dark:bg-slate-900">
+                {cls.name} • {cls.level} • {cls.option}
+              </option>
+            ))}
+          </select>
+          <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within/select:text-blue-500 transition-colors">
+            <ChevronDown size={20} />
+          </div>
+        </div>
       </div>
 
-      <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <Send size={20} className="text-blue-600" />
+      <h2 className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 px-1">
+        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
         2. Sélectionnez le destinataire
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         {peers.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <Wifi size={48} className="mx-auto mb-2 opacity-50" />
-            <p>Aucune autre machine détectée sur le réseau.</p>
-            <p className="text-sm">Assurez-vous que les autres ordinateurs sont connectés au même WiFi.</p>
+          <div className="col-span-full text-center py-20 text-slate-400 bg-slate-50/50 dark:bg-black/20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/5 animate-pulse">
+            <Wifi size={64} className="mx-auto mb-4 opacity-20 text-blue-500" />
+            <p className="font-black uppercase tracking-widest text-xs mb-2">Recherche de machines...</p>
+            <p className="text-[10px] font-bold opacity-60 max-w-xs mx-auto">Assurez-vous que les autres ordinateurs sont connectés au même WiFi et ont l'application ouverte.</p>
           </div>
         ) : (
           peers.map((peer, idx) => (
             <button
               key={idx}
               onClick={() => setSelectedPeer(peer)}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`p-6 rounded-[2rem] border-2 text-left transition-all relative overflow-hidden group ${
                 selectedPeer === peer
-                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                  : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-600/10 shadow-2xl shadow-blue-500/20 ring-4 ring-blue-500/5'
+                  : 'border-white dark:border-white/5 bg-white dark:bg-white/5 hover:border-slate-200 dark:hover:border-blue-500/30 shadow-lg shadow-slate-200/40 dark:shadow-black/40'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-slate-100 shadow-sm">
-                  <Wifi size={20} className={selectedPeer === peer ? 'text-blue-600' : 'text-slate-400'} />
+              <div className="flex items-center gap-5 relative z-10">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+                  selectedPeer === peer 
+                    ? 'bg-blue-600 text-white rotate-12' 
+                    : 'bg-slate-100 dark:bg-black/20 text-slate-400 dark:text-slate-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 group-hover:text-blue-500'
+                }`}>
+                  <Monitor size={28} />
                 </div>
                 <div>
-                  <div className="font-bold text-slate-800">{peer.name}</div>
-                  <div className="text-xs text-slate-500 font-mono">{peer.ip}</div>
+                  <div className="font-black text-slate-800 dark:text-white tracking-tight text-lg">{peer.name}</div>
+                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 font-mono uppercase tracking-widest mt-1 bg-slate-100 dark:bg-black/20 px-2 py-0.5 rounded-lg inline-block">{peer.ip}</div>
                 </div>
               </div>
+              {selectedPeer === peer && (
+                <div className="absolute -right-4 -bottom-4 bg-blue-500/10 w-24 h-24 rounded-full blur-3xl" />
+              )}
             </button>
           ))
         )}
       </div>
 
       {/* Action Area */}
-      <div className="border-t pt-6">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-500">
+      <div className="border-t border-slate-100 dark:border-white/5 pt-10">
+        <div className="flex items-center justify-between bg-slate-50 dark:bg-black/20 p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-inner">
+          <div className="flex flex-col gap-1">
+             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Prêt pour l'envoi</span>
             {selectedPeer ? (
-              <span>Destinataire : <strong className="text-slate-900">{selectedPeer.name}</strong></span>
+              <span className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" />
+                Transfert vers <span className="text-blue-600 dark:text-blue-400 underline decoration-2 underline-offset-4">{selectedPeer.name}</span>
+              </span>
             ) : (
-              <span>Sélectionnez un destinataire ci-dessus</span>
+              <span className="text-sm font-black text-slate-400 dark:text-slate-600 italic">Veuillez sélectionner un destinataire</span>
             )}
           </div>
 
           <button
             onClick={handleSend}
             disabled={!selectedPeer || !selectedClass || sending}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white transition-all ${
+            className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-2xl active:scale-95 ${
               !selectedPeer || !selectedClass || sending
-                ? 'bg-slate-300 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg'
+                ? 'bg-slate-200 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20'
             }`}
           >
             {sending ? (
               <>
-                <Loader2 size={18} className="animate-spin" />
-                Envoi en cours...
+                <Loader2 size={20} className="animate-spin text-white" />
+                Transfert en cours...
               </>
             ) : status === 'success' ? (
               <>
-                <CheckCircle size={18} />
-                Envoyé !
+                <div className="bg-white/20 p-1 rounded-lg"><CheckCircle size={20} /></div>
+                Données Envoyées !
               </>
             ) : status === 'error' ? (
               <>
-                <AlertCircle size={18} />
-                Erreur
+                <div className="bg-red-500/20 p-1 rounded-lg"><AlertCircle size={20} /></div>
+                Erreur d'envoi
               </>
             ) : (
               <>
-                <Send size={18} />
-                Envoyer les données
+                <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                Lancer le transfert
               </>
             )}
           </button>

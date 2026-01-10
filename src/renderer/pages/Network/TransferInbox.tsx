@@ -280,52 +280,56 @@ export default function TransferInbox() {
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <Inbox size={20} className="text-blue-600" />
-        Transferts en attente
+      <h2 className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-[0.2em] mb-8 flex items-center gap-3 px-1">
+        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+        Transferts en attente de validation
       </h2>
 
       {transfers.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-          <Inbox size={48} className="mx-auto mb-2 opacity-50" />
-          <p>Aucun transfert en attente.</p>
-          <p className="text-sm">Les données reçues apparaîtront ici.</p>
+        <div className="text-center py-24 text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-black/20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/5">
+          <div className="bg-white dark:bg-white/5 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl dark:shadow-none border border-slate-100 dark:border-white/5">
+            <Inbox size={48} className="opacity-20 text-blue-500" />
+          </div>
+          <p className="font-black uppercase tracking-widest text-xs mb-2">Boîte de réception vide</p>
+          <p className="text-[10px] font-bold max-w-xs mx-auto opacity-60 leading-relaxed">Les données envoyées par d'autres machines apparaîtront ici pour validation.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4">
           {transfers.map((item) => (
-            <div key={item.filename} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                  <FileJson size={24} />
+            <div key={item.filename} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex items-center justify-between hover:shadow-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group overflow-hidden relative">
+              {/* Subtle hover background effect */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
+              
+              <div className="flex items-center gap-6 relative z-10">
+                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center shadow-inner border border-blue-100 dark:border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                  <FileJson size={32} />
                 </div>
                 <div>
-                  <div className="font-bold text-slate-800">{item.payload.description || 'Données sans titre'}</div>
-                  <div className="text-sm text-slate-500 flex items-center gap-2">
-                    <span>De: <strong className="text-slate-700">{item.payload.sender}</strong></span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} />
+                  <div className="font-black text-slate-900 dark:text-white tracking-tight text-xl mb-1">{item.payload.description || 'Données sans titre'}</div>
+                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-6">
+                    <span className="flex items-center gap-2"><div className="w-1 h-1 bg-blue-500 rounded-full" /> De: <strong className="text-blue-600 dark:text-blue-400 underline underline-offset-4 decoration-2">{item.payload.sender}</strong></span>
+                    <span className="flex items-center gap-2 bg-slate-100 dark:bg-black/20 px-3 py-1.5 rounded-lg">
+                      <Clock size={14} className="text-slate-400" />
                       {new Date(item.payload.timestamp).toLocaleString()}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 relative z-10">
                 <button
                   onClick={() => handleReject(item.filename)}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-4 text-slate-400 hover:text-white hover:bg-red-500 dark:hover:bg-red-600 rounded-2xl transition-all border border-transparent active:scale-95"
                   title="Refuser / Supprimer"
                 >
-                  <X size={20} />
+                  <Trash2 size={24} />
                 </button>
                 <button
                   onClick={() => handleAccept(item.filename)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                  className="flex items-center gap-4 px-8 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all active:scale-95 border border-white/10"
                 >
-                  <Check size={18} />
-                  Importer
+                  <Merge size={20} />
+                  Valider l'importation
                 </button>
               </div>
             </div>
@@ -333,54 +337,50 @@ export default function TransferInbox() {
         </div>
       )}
       {conflict && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center gap-3 text-amber-600 mb-4">
-              <AlertTriangle size={32} />
-              <h3 className="text-xl font-bold">Conflit détecté</h3>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] max-w-xl w-full p-10 animate-in fade-in zoom-in slide-in-from-bottom-10 duration-500 border border-white/5">
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="bg-amber-500/10 p-6 rounded-[2rem] text-amber-500 mb-6 border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+                <AlertTriangle size={48} />
+              </div>
+              <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">Conflit de Données</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                La classe <span className="text-blue-600 dark:text-blue-400 font-black decoration-blue-500/30 underline underline-offset-4 decoration-2">{conflict.className}</span> existe déjà dans votre base de données locale.
+              </p>
             </div>
             
-            <p className="text-slate-600 mb-6">
-              La classe <strong>{conflict.className}</strong> existe déjà dans votre base de données.
-              Que souhaitez-vous faire ?
-            </p>
-
-            <div className="space-y-3">
+            <div className="grid gap-4">
               <button
                 onClick={() => resolveConflict('merge')}
-                className="w-full flex items-center justify-between p-4 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors group"
+                className="w-full flex items-center gap-6 p-6 border-2 border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-600/10 hover:border-blue-500/30 rounded-[2rem] transition-all group/btn active:scale-[0.98]"
               >
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-200 p-2 rounded-lg text-blue-700">
-                    <Merge size={20} />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-blue-900">Fusionner</div>
-                    <div className="text-sm text-blue-700">Mettre à jour les données existantes et ajouter les nouvelles</div>
-                  </div>
+                <div className="bg-blue-600 text-white p-4 rounded-2xl shadow-xl shadow-blue-500/20 group-hover/btn:scale-110 transition-transform">
+                  <Merge size={24} />
+                </div>
+                <div className="text-left">
+                  <div className="font-black text-slate-900 dark:text-white text-lg leading-tight mb-1">Fusionner</div>
+                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Compléter les données manquantes</div>
                 </div>
               </button>
 
               <button
                 onClick={() => resolveConflict('overwrite')}
-                className="w-full flex items-center justify-between p-4 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors group"
+                className="w-full flex items-center gap-6 p-6 border-2 border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-600/10 hover:border-red-500/30 rounded-[2rem] transition-all group/btn active:scale-[0.98]"
               >
-                <div className="flex items-center gap-3">
-                  <div className="bg-red-200 p-2 rounded-lg text-red-700">
-                    <Trash2 size={20} />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-red-900">Écraser</div>
-                    <div className="text-sm text-red-700">Supprimer la classe existante et la remplacer</div>
-                  </div>
+                <div className="bg-red-600 text-white p-4 rounded-2xl shadow-xl shadow-red-500/20 group-hover/btn:scale-110 transition-transform">
+                  <Trash2 size={24} />
+                </div>
+                <div className="text-left">
+                  <div className="font-black text-slate-900 dark:text-white text-lg leading-tight mb-1">Écraser</div>
+                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Remplacer totalement la classe</div>
                 </div>
               </button>
 
               <button
                 onClick={() => resolveConflict('cancel')}
-                className="w-full p-3 text-slate-500 hover:text-slate-700 font-medium mt-2"
+                className="w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mt-2"
               >
-                Annuler
+                Ignorer ce transfert
               </button>
             </div>
           </div>

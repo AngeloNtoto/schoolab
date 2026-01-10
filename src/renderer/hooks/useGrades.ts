@@ -54,7 +54,35 @@ export function useGrades(classId: number) {
       const unsubscribe = window.api.network.onDbChanged((_event: any, payload: any) => {
         console.log('[SYNC] Database changed event received:', payload);
         if (payload.type === 'grades_batch' || payload.type === 'grade_update') {
-          loadGrades(true); // Force refresh
+          // Granular update: if we have the updated grades, merge them directly
+          if (payload.updates && Array.isArray(payload.updates) && payload.updates.length > 0) {
+            console.log('[SYNC] Applying granular merge for', payload.updates.length, 'grades');
+            setGrades(prev => {
+              const newGrades = [...prev];
+              for (const update of payload.updates) {
+                const idx = newGrades.findIndex(
+                  g => g.student_id === update.student_id && g.subject_id === update.subject_id && g.period === update.period
+                );
+                if (update.value === null) {
+                  if (idx !== -1) newGrades.splice(idx, 1);
+                } else {
+                  if (idx !== -1) {
+                    newGrades[idx] = { ...newGrades[idx], value: update.value };
+                  } else {
+                    newGrades.push({ student_id: update.student_id, subject_id: update.subject_id, period: update.period, value: update.value });
+                  }
+                }
+              }
+              // Update cache
+              cache.set(cacheKey, newGrades);
+              // Update map
+              setGradesMap(buildMap(newGrades));
+              return newGrades;
+            });
+          } else {
+            // Fallback: full reload if no granular data provided
+            loadGrades(true);
+          }
         }
       });
 
