@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('db:changed', callback);
       return () => ipcRenderer.removeListener('db:changed', callback);
     },
+    broadcastGradeUpdate: (updates: any[]) => ipcRenderer.invoke('network:broadcast-grade-update', updates),
   },
   license: {
     getHWID: () => ipcRenderer.invoke('license:get-hwid'),

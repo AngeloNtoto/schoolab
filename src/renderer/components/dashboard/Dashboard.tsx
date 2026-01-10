@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
@@ -11,6 +12,7 @@ import { useToast } from '../../context/ToastContext';
 import { getClassDisplayName } from '../../lib/classUtils';
 import ProfessionalLoader from '../ui/ProfessionalLoader';
 import Activity from '../shared/Activity';
+import LogoFull from '../ui/Logo';
 
 interface Class {
   id: number;
@@ -20,6 +22,7 @@ interface Class {
   section: string;
   academic_year_id?: number;
 }
+
 
 type ViewMode = 'grid' | 'list' | 'grouped_level' | 'grouped_option';
 type SortOption = 'name' | 'level' | 'option';
@@ -201,13 +204,7 @@ export default function Dashboard() {
             {/* Top Bar: Title & Primary Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-5">
-                <div className="bg-white/20 dark:bg-blue-600/20 p-3.5 rounded-2xl shadow-xl backdrop-blur-md rotate-3 transition-transform duration-500 hover:rotate-0">
-                  <GraduationCap size={32} className="text-white dark:text-blue-400" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black text-white dark:text-slate-100 tracking-tight leading-none mb-1">{schoolName}</h1>
-                  <p className="text-blue-100 dark:text-blue-500/60 font-black uppercase tracking-[0.2em] text-[10px]">Portail Dashboard</p>
-                </div>
+                <LogoFull size={48} variant="light" className="drop-shadow-lg" />
               </div>
               <div className="flex gap-3">
                 <button 

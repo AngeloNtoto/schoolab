@@ -10,6 +10,24 @@ import fs from 'node:fs';
 let server: Server | null = null;
 let currentPort = 0;
 
+// Module-level SSE clients array for external broadcast access
+let sseClients: any[] = [];
+
+/**
+ * Broadcast an event to all connected SSE clients (web UI).
+ * This can be called from outside to notify web clients of changes made on desktop.
+ */
+export function broadcastToWebClients(event: string, data: any, senderId?: string) {
+  const payload = `data: ${JSON.stringify({ event, data, senderId })}\n\n`;
+  sseClients.forEach(c => {
+    try {
+      c.res.write(payload);
+    } catch (e) {
+      console.error('[RÉSEAU] Échec de l\'écriture vers le client SSE', e);
+    }
+  });
+}
+
 /**
  * Démarre le serveur Express pour l'API et l'interface Web
  */
@@ -27,8 +45,7 @@ export function startServer(db: Database.Database): Promise<number> {
     const { app: electronApp } = require('electron');
     const isDev = !electronApp.isPackaged;
 
-    // Clients SSE (Server-Sent Events) pour les mises à jour en temps réel
-    const clients: any[] = [];
+    // Clients SSE (Server-Sent Events) - utiliser la référence au niveau module
     app.get('/api/events', (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -36,24 +53,16 @@ export function startServer(db: Database.Database): Promise<number> {
       res.flushHeaders();
 
       const client = { res };
-      clients.push(client);
+      sseClients.push(client);
 
       req.on('close', () => {
-        const index = clients.indexOf(client);
-        if (index > -1) clients.splice(index, 1);
+        const index = sseClients.indexOf(client);
+        if (index > -1) sseClients.splice(index, 1);
       });
     });
 
-    const broadcast = (event: string, data: any, senderId?: string) => {
-      const payload = `data: ${JSON.stringify({ event, data, senderId })}\n\n`;
-      clients.forEach(c => {
-        try {
-          c.res.write(payload);
-        } catch (e) {
-          console.error('[RÉSEAU] Échec de l\'écriture vers le client SSE', e);
-        }
-      });
-    };
+    // Local reference to module-level broadcast for internal use
+    const broadcast = broadcastToWebClients;
     
     // Intégration Vite pour le développement (HMR)
     if (isDev) {

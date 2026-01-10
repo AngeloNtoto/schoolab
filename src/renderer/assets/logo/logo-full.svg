@@ -1,0 +1,37 @@
+<svg width="800" height="200" viewBox="0 0 800 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="schoolab-gradient" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#2563eb" />
+      <stop offset="100%" stopColor="#6366f1" />
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(0, 0)">
+      <rect width="200" height="200" rx="60" fill="url(#schoolab-gradient)" />
+      
+      <!-- Icon scaled down to fit in 200x200 box -->
+      <g transform="scale(0.39) translate(0,0)">
+        <path 
+            d="M256 96C167.6 96 96 167.6 96 256C96 344.4 167.6 416 256 416C344.4 416 416 344.4 416 256" 
+            stroke="white" 
+            stroke-width="48" 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+        />
+        <path 
+            d="M256 160V352" 
+            stroke="white" 
+            stroke-width="48" 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+        />
+        <circle cx="256" cy="256" r="48" fill="white" />
+        <path 
+            d="M400 112L410 134L432 144L410 154L400 176L390 154L368 144L390 134L400 112Z" 
+            fill="#f59e0b" 
+        />
+      </g>
+  </g>
+  
+  <text x="240" y="140" font-family="Arial, sans-serif" font-weight="900" font-size="120" fill="#1e293b">Schoolab</text>
+</svg>

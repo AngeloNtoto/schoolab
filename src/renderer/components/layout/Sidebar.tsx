@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote } from 'lucide-react';
+import { SchoolabSymbol, LogoFull } from '../ui/Logo';
 
 interface SidebarProps {
   width: number;
@@ -63,15 +64,11 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
       />
 
       <div className="flex flex-col gap-2 p-4">
-        <div className={`flex items-center gap-3 p-3 mb-6 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm ${isCollapsed ? 'justify-center p-2' : ''}`}>
-           <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/20 shrink-0">
-             <GraduationCap size={22} />
-           </div>
-           {!isCollapsed && (
-             <div className="min-w-0">
-               <span className="font-black text-slate-900 dark:text-white tracking-tight truncate block">Schoolab</span>
-               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-500">Management</span>
-             </div>
+        <div className={`flex items-center gap-3 p-3 mb-6 rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm transition-all ${isCollapsed ? 'justify-center p-2 bg-transparent border-transparent shadow-none' : ''}`}>
+           {isCollapsed ? (
+             <SchoolabSymbol size={32} />
+           ) : (
+             <LogoFull size={24} variant="color" />
            )}
         </div>
 

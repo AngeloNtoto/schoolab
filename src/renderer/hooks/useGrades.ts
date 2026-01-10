@@ -134,6 +134,13 @@ export function useGrades(classId: number) {
 
         return newGrades;
       });
+      
+      // Broadcast to web clients via SSE so they can update in real-time
+      try {
+        await window.api.network.broadcastGradeUpdate([{ student_id: studentId, subject_id: subjectId, period, value }]);
+      } catch (broadcastErr) {
+        console.warn('[SYNC] Failed to broadcast grade update to web clients:', broadcastErr);
+      }
     } catch (err) {
       console.error('Failed to update grade:', err);
       throw err;

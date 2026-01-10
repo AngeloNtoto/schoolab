@@ -53,7 +53,7 @@ const createWindow = () => {
 
 // Cette méthode sera appelée quand Electron aura fini l'initialisation.
 import { getDb } from './db';
-import { startServer, stopServer, getServerPort } from './main/network/server';
+import { startServer, stopServer, getServerPort, broadcastToWebClients } from './main/network/server';
 import { startDiscovery, stopDiscovery, getPeers } from './main/network/discovery';
 import { listPendingTransfers, getTransferContent, deleteTransfer } from './main/network/staging';
 import { initializeLicenseService } from './main/licenseService';
@@ -137,6 +137,13 @@ app.on('ready', () => {
   ipcMain.handle('network:accept-transfer', (_event, filename) => getTransferContent(filename));
   ipcMain.handle('network:reject-transfer', (_event, filename) => {
     deleteTransfer(filename);
+    return true;
+  });
+
+  // Broadcast grade updates to web clients (SSE) - called from renderer when grades change on desktop
+  ipcMain.handle('network:broadcast-grade-update', (_event, updates: any[]) => {
+    console.log('[NETWORK] Broadcasting grade updates to web clients:', updates?.length || 0);
+    broadcastToWebClients('db:changed', { type: 'grade_update', updates }, 'desktop');
     return true;
   });
 
