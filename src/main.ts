@@ -24,9 +24,13 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
-    icon: path.join(__dirname, '../renderer/main_window/icon-256.png'),
+    icon: process.platform === 'linux' 
+      ? path.join(__dirname, '../../src/renderer/assets/icon.png')
+      : path.join(__dirname, '../../src/renderer/assets/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      backgroundThrottling:true,
+      spellcheck:false,
     },
   });
 

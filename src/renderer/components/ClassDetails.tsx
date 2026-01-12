@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, Activity } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit ,User} from 'lucide-react';
 
 // Services & Hooks
 import { ClassData, Subject } from '../services/classService';
 import { Student } from '../services/studentService';
 import { useTutorial } from '../context/TutorialContext';
 import { useToast } from '../context/ToastContext';
-import { ExportExcelForClass } from './ExportExcel';
+import { ExportExcelForClass } from './class/ExportExcel';
 
 // Composants
-import AddStudentModal from './AddStudentModal';
-import AddSubjectModal from './AddSubjectModal';
+import AddStudentModal from './class/AddStudentModal';
+import AddSubjectModal from './class/AddSubjectModal';
 
 // Interface pour les props
 interface ClassDetailsProps {

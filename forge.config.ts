@@ -24,14 +24,31 @@ const config: ForgeConfig = {
     asar: {
       unpack: "*.{node,dll}",
     },
-    executableName:"Schoolab",
-    ignore: [/node_modules\/(?!(better-sqlite3|bindings|file-uri-to-path)\/)/],
+    executableName:"schoolab",
+    icon: './src/renderer/assets/icon', // Electron Forge infers extension based on platform
   },
   makers: [
     new MakerSquirrel({
-    setupExe: pkg.productName+'-setup-'+APP_VERSION+'.exe',
+      setupExe: pkg.productName+'-setup-'+APP_VERSION+'.exe',
+      iconUrl: "file://" + __dirname + "/src/renderer/assets/icon.ico",
+      setupIcon: './src/renderer/assets/icon.ico',
+      authors: 'Angelo',
+      description: 'La solution complète de gestion scolaire.',
+      copyright: 'Copyright © 2026 Angelo',
     }),
-    new MakerDeb({}),
+    new MakerDeb({
+      options: {
+        icon: './src/renderer/assets/icon.png',
+        maintainer: 'Angelo <Angelontoto7@gmail.com>',
+        homepage: 'https://schoolab.com',
+        description: 'La solution complète de gestion scolaire.',
+        productDescription: 'Schoolab est la première application qui vous permet de gérer votre école de manière efficace. Elle automatise le calcul des notes, la génération des bulletins et la gestion des élèves, éliminant les erreurs manuelles et simplifiant l\'administration scolaire.',
+        categories: ['Education', 'Office'],
+        section: 'education',
+        priority: 'optional',
+        genericName: 'Schoolab Gestion Scolaire',
+      },
+    }),
     new MakerZIP({}),
   ],
 

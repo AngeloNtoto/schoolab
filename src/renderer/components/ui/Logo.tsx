@@ -1,6 +1,6 @@
 import React from 'react';
-import IconBgBlue from '../../assets/icons/icon_background_blue.png';
-import IconBgWhite from '../../assets/icons/icon_background_white.png';
+import IconBgBlue from '../../assets/icons/icon_bg_bleu.png';
+import IconBgWhite from '../../assets/icons/icon_bg_blanc.png';
 import IconSansBg from '../../assets/icons/icon_sans_background.png';
 
 interface LogoProps {

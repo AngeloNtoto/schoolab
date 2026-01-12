@@ -38,7 +38,7 @@ export const AppIcon: React.FC<AppIconProps> = ({ className = '', size = 32, bg 
     return (
         <div className={`relative ${className} rounded-xl shadow-sm overflow-hidden`} style={{ width: size, height: size }}>
             <Image 
-                src={bg === 'white' ? "/icons/icon_square_white.png" : "/icons/icon_square_blue.png"} 
+                src={bg === 'white' ? "/icons/icon_bg_blanc.png" : "/icons/icon_bg_bleu.png"} 
                 alt="Schoolab App Icon" 
                 fill
                 className="object-contain"

@@ -1,0 +1,13 @@
+# Fichiers/dossiers à exclure du paquet Electron
+cloud-ecole
+dist-web
+scripts
+server
+out
+*.md
+*.db
+.git
+.vscode
+.eslintrc.json
+tsconfig.json
+vite.*.config.ts
