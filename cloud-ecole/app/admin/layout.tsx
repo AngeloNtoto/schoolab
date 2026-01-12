@@ -1,6 +1,7 @@
 "use client";
 
-import { ShieldCheck, School as SchoolIcon, Users, Key, LayoutDashboard } from "lucide-react";
+import { School as SchoolIcon, Users, Key, LayoutDashboard } from "lucide-react";
+import LogoFull from "@/components/ui/Logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,11 +16,8 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-slate-50">
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col sticky top-0 h-screen">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-          <div className="p-2 bg-blue-600 rounded-lg text-white">
-            <ShieldCheck size={20} />
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">Admin<span className="text-blue-500">Panel</span></span>
+        <div className="p-6 border-b border-slate-800 flex justify-center">
+           <LogoFull variant="light" size={28} />
         </div>
 
         <nav className="flex-1 p-4 space-y-2">

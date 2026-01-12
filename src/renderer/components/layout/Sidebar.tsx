@@ -68,7 +68,7 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
            {isCollapsed ? (
              <SchoolabSymbol size={32} />
            ) : (
-             <LogoFull size={24} variant="color" />
+             <LogoFull size={30} variant="color" />
            )}
         </div>
 

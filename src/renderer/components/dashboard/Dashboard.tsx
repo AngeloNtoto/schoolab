@@ -6,13 +6,12 @@ import { useTutorial } from '../../context/TutorialContext';
 import ContextMenu from '../ui/ContextMenu';
 import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import AddNoteModal from '../class/AddNoteModal';
-import { classService, ClassData } from '../../services/classService';
 import EditClassModal from '../class/EditClassModal';
 import { useToast } from '../../context/ToastContext';
 import { getClassDisplayName } from '../../lib/classUtils';
 import ProfessionalLoader from '../ui/ProfessionalLoader';
 import Activity from '../shared/Activity';
-import LogoFull from '../ui/Logo';
+import { AppIcon } from '../ui/Logo';
 
 interface Class {
   id: number;
@@ -199,12 +198,18 @@ export default function Dashboard() {
       />
 
       <header className="bg-blue-600 dark:bg-[#020617] border-b border-transparent dark:border-white/5 text-white sticky top-0 z-30 shadow-lg transition-colors duration-500">
-        <div className="max-w-7xl mx-auto px-6 py-5">
+        <div className="max-w-7xl mx-auto px-2 py-5">
           <div className="flex flex-col gap-6">
             {/* Top Bar: Title & Primary Actions */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                <LogoFull size={48} variant="light" className="drop-shadow-lg" />
+              <div className="flex items-center gap-2">
+                 <AppIcon size={70} bg="blue" className="shadow-lg shadow-blue-900/20" />
+                <div className="flex flex-col">
+                    <h1 className="text-2xl font-black tracking-tighter text-white leading-none drop-shadow-md uppercase truncate max-w-[400px]">
+                      {schoolName || 'Mon École'}
+                    </h1>
+                     <span className="text-[10px] uppercase tracking-[0.3em] text-blue-200 font-bold drop-shadow-sm ml-0.5">Espace Administration</span>
+                </div>
               </div>
               <div className="flex gap-3">
                 <button 

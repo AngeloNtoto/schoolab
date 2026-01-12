@@ -1,5 +1,6 @@
-import { School, Users, Key, Database, ArrowRight, ShieldCheck, Cloud } from "lucide-react";
+import { Users, Key, Database, ArrowRight, ShieldCheck, Cloud } from "lucide-react";
 import Link from "next/link";
+import LogoFull from "@/components/ui/Logo";
 
 
 export const dynamic='force-dynamic';
@@ -10,10 +11,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-600 rounded-lg text-white">
-            <School size={20} />
-          </div>
-          <span className="text-xl font-bold tracking-tight">Schoolab <span className="text-blue-600">Cloud</span></span>
+           <LogoFull size={32} />
         </div>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm font-semibold text-slate-600 hover:text-slate-900">Se connecter</Link>
@@ -88,10 +86,7 @@ export default function Home() {
       <footer className="max-w-7xl mx-auto px-8 py-12 border-t border-slate-200 mt-20">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-slate-200 rounded text-slate-700">
-                <School size={16} />
-              </div>
-              <span className="font-bold text-slate-800">School Lab</span>
+              <LogoFull size={24} />
            </div>
            <p className="text-slate-500 text-sm">© 2026 School lab. Développé pour une éducation moderne.</p>
            <div className="flex gap-4 text-sm text-slate-500 font-medium">

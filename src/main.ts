@@ -23,7 +23,7 @@ const createWindow = () => {
   // Création de la fenêtre du navigateur.
   const mainWindow = new BrowserWindow({
     width: 1280,
-    height: 800,
+    height: 720,
     icon: path.join(__dirname, '../renderer/main_window/icon-256.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
