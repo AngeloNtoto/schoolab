@@ -18,9 +18,18 @@ class DatabaseServiceImpl implements DatabaseService {
     const api = await getTauriAPI();
     if (api) {
       // Dans Tauri, on ouvre la base de données. 
-      // sqlite:ecole.db créera le fichier dans le dossier app data
-      this.tauriDb = await api.Database.load('sqlite:ecole.db');
-      return this.tauriDb;
+      // En développement on utilise dev.db, en production ecole.db
+      const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+      const dbName = isDev ? 'dev.db' : 'ecole.db';
+      console.log(`[DatabaseService] Mode: ${isDev ? 'DEV' : 'PROD'} | Ouverture de: ${dbName}`);
+      
+      try {
+        this.tauriDb = await api.Database.load(`sqlite:${dbName}`);
+        return this.tauriDb;
+      } catch (err) {
+        console.error(`[DatabaseService] Impossible de charger la base ${dbName}:`, err);
+        throw err;
+      }
     }
     throw new Error("Tauri API non disponible");
   }
