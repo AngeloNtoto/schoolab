@@ -1,4 +1,5 @@
 mod db;
+mod server;
 mod sync;
 
 use chrono::{DateTime, Duration, Utc};
@@ -546,6 +547,18 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
     }
 }
 
+#[tauri::command]
+async fn start_web_server(app_handle: tauri::AppHandle) -> Result<server::ServerInfo, String> {
+    let db_path = get_db_path(&app_handle);
+    let web_dist = std::env::current_dir().unwrap_or_default().join("dist-web");
+    server::start_server(db_path, web_dist, 7000).await
+}
+
+#[tauri::command]
+fn get_web_server_info() -> Option<server::ServerInfo> {
+    server::get_server_info()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -585,7 +598,9 @@ pub fn run() {
             auth_check,
             auth_create,
             auth_verify,
-            check_sync_status
+            check_sync_status,
+            start_web_server,
+            get_web_server_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
