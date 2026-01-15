@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@variant dark (&:is(.dark, .dark *));
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+:root {
+  --bg-primary: #f8fafc; /* slate-50 */
+  --bg-secondary: #ffffff; /* white */
+  --text-primary: #1e293b; /* slate-800 */
+  --text-secondary: #64748b; /* slate-500 */
+  --border-color: #e2e8f0; /* slate-200 */
+}
+
+/* Dark Mode Variables */
+.dark {
+  --bg-primary: #0f172a; /* softened slate-navy */
+  --bg-secondary: #1e293b; /* slate-800 */
+  --text-primary: #ffffff; /* pure white */
+  --text-secondary: #cbd5e1; /* bright slate-300 */
+  --border-color: rgba(255, 255, 255, 0.1); /* subtle white border */
+}
+
+.dark body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Scrollbar styling for dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
