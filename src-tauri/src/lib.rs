@@ -2,7 +2,8 @@ mod db;
 mod sync;
 
 use chrono::{DateTime, Duration, Utc};
-use machine_id_lib::get_id;
+use log::{error, info};
+use machine_uid;
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -43,19 +44,114 @@ pub struct SchoolInfo {
 
 // Global utilities for internal use
 pub fn get_db_path(app_handle: &tauri::AppHandle) -> PathBuf {
+    let db_name = if cfg!(debug_assertions) {
+        "dev.db"
+    } else {
+        "ecole.db"
+    };
     let mut path = app_handle.path().app_data_dir().unwrap();
     std::fs::create_dir_all(&path).ok();
-    path.push("ecole.db");
+    path.push(db_name);
     path
 }
 
 pub fn get_hwid_internal() -> String {
-    get_id().unwrap_or_else(|_| "UNKNOWN-DEVICE".to_string())
+    machine_uid::get().unwrap_or_else(|_| "UNKNOWN-DEVICE".to_string())
 }
 
 pub fn get_cloud_url() -> String {
     dotenvy::dotenv().ok();
     std::env::var("CLOUD_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
+}
+
+/// Migrates the database from the old Electron userData directory to the new Tauri appData directory.
+fn migrate_from_electron(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    info!("Migration: Checking for Electron database to migrate...");
+    let new_db_path = get_db_path(app_handle);
+
+    // If the new database already exists, we only migrate if it's "fresh" (no school name set)
+    if new_db_path.exists() {
+        if let Ok(conn) = Connection::open(&new_db_path) {
+            let school_name: Option<String> = conn
+                .query_row(
+                    "SELECT value FROM settings WHERE key = 'school_name'",
+                    [],
+                    |row| row.get(0),
+                )
+                .ok();
+
+            if school_name.is_some() {
+                info!("Migration: New database already has data, skipping migration.");
+                return Ok(());
+            }
+            info!("Migration: New database exists but is empty, proceeding with migration check.");
+        }
+    }
+
+    // Determine the old Electron userData directory based on the OS.
+    let old_user_data_dir = if cfg!(target_os = "linux") {
+        dirs::config_dir().map(|p| p.join("Schoolab"))
+    } else if cfg!(target_os = "macos") {
+        dirs::audio_dir().and_then(|p| {
+            p.parent()
+                .map(|parent| parent.join("Application Support").join("Schoolab"))
+        })
+    } else if cfg!(target_os = "windows") {
+        dirs::config_dir().map(|p| p.join("Schoolab"))
+    } else {
+        None
+    };
+
+    if let Some(old_dir) = old_user_data_dir {
+        if !old_dir.exists() {
+            info!(
+                "Migration: Old Electron directory not found at {:?}",
+                old_dir
+            );
+            return Ok(());
+        }
+
+        // Check for ecole.db (production) or dev.db (development)
+        let db_names = ["ecole.db", "dev.db"];
+        let mut found_db = None;
+
+        for name in db_names {
+            let path = old_dir.join(name);
+            if path.exists() {
+                found_db = Some(path);
+                break;
+            }
+        }
+
+        if let Some(old_path) = found_db {
+            info!("Migration: Old Electron database found at {:?}", old_path);
+            info!("Migration: Copying to {:?}", new_db_path);
+
+            // Ensure parent directory exists for the new path
+            if let Some(parent) = new_db_path.parent() {
+                std::fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create new app data dir: {}", e))?;
+            }
+
+            // In Tauri, we use dev.db in debug and ecole.db in release.
+            // But if we are migrating, we might want to respect the source name?
+            // Actually, the user wants dev.db in dev and ecole.db in prod.
+            // So we copy WHATEVER we found to the CURRENT new_db_path.
+            std::fs::copy(&old_path, &new_db_path)
+                .map_err(|e| format!("Failed to copy database: {}", e))?;
+
+            info!("Migration: Database migrated successfully.");
+        } else {
+            info!(
+                "Migration: No old Electron database (ecole.db or dev.db) found in {:?}",
+                old_dir
+            );
+        }
+    } else {
+        info!("Migration: Could not determine old Electron directory for this OS.");
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -137,6 +233,150 @@ async fn get_license_info(app_handle: tauri::AppHandle) -> Result<LicenseInfo, S
     })
 }
 
+// Local authentication utilities
+fn simple_hash(s: &str) -> String {
+    let mut hash: i32 = 0;
+    for c in s.chars() {
+        let char_code = c as i32;
+        hash = hash
+            .wrapping_shl(5)
+            .wrapping_sub(hash)
+            .wrapping_add(char_code);
+    }
+    format!("{:x}", hash)
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize)]
+pub struct AuthCheckResult {
+    pub hasPassword: bool,
+}
+
+#[derive(Serialize)]
+pub struct AuthResult {
+    pub success: bool,
+    pub valid: bool,
+}
+
+#[tauri::command]
+async fn auth_check(app_handle: tauri::AppHandle) -> Result<AuthCheckResult, String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let hash: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'local_password_hash'",
+            [],
+            |r| r.get(0),
+        )
+        .ok();
+
+    Ok(AuthCheckResult {
+        hasPassword: hash.is_some(),
+    })
+}
+
+#[tauri::command]
+async fn auth_create(app_handle: tauri::AppHandle, password: String) -> Result<AuthResult, String> {
+    info!("Creating local password...");
+    let db_path = get_db_path(&app_handle);
+    info!("Database path: {:?}", db_path);
+    let conn = Connection::open(db_path).map_err(|e| {
+        error!("Failed to open DB for auth_create: {}", e);
+        e.to_string()
+    })?;
+
+    let hash = simple_hash(&password);
+    info!("Hashing password and saving to settings...");
+    conn.execute(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('local_password_hash', ?)",
+        params![hash],
+    )
+    .map_err(|e| {
+        error!("SQL error in auth_create: {}", e);
+        e.to_string()
+    })?;
+
+    info!("Local password created successfully.");
+    Ok(AuthResult {
+        success: true,
+        valid: true,
+    })
+}
+
+#[tauri::command]
+async fn auth_verify(app_handle: tauri::AppHandle, password: String) -> Result<AuthResult, String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let stored_hash: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'local_password_hash'",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|_| "NO_PASSWORD_SET".to_string())?;
+
+    let input_hash = simple_hash(&password);
+
+    Ok(AuthResult {
+        success: true,
+        valid: stored_hash == input_hash,
+    })
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize)]
+pub struct SyncStatusResult {
+    pub overdue: bool,
+    pub dirtyCount: i32,
+}
+
+#[tauri::command]
+async fn check_sync_status(app_handle: tauri::AppHandle) -> Result<SyncStatusResult, String> {
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let tables = vec![
+        "academic_years",
+        "classes",
+        "students",
+        "subjects",
+        "grades",
+        "notes",
+        "domains",
+    ];
+    let mut dirty_count: i32 = 0;
+    let mut overdue = false;
+
+    for table in tables {
+        let count: i32 = conn
+            .query_row(
+                &format!("SELECT COUNT(*) FROM {} WHERE is_dirty = 1", table),
+                [],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
+        dirty_count += count;
+
+        if !overdue {
+            let is_overdue: bool = conn.query_row(
+                &format!("SELECT EXISTS(SELECT 1 FROM {} WHERE is_dirty = 1 AND (julianday('now') - julianday(last_modified_at)) * 24 > 24)", table),
+                [],
+                |r| r.get(0),
+            ).unwrap_or(false);
+            if is_overdue {
+                overdue = true;
+            }
+        }
+    }
+
+    Ok(SyncStatusResult {
+        overdue,
+        dirtyCount: dirty_count,
+    })
+}
+
 #[tauri::command]
 async fn activate_license(
     app_handle: tauri::AppHandle,
@@ -144,6 +384,10 @@ async fn activate_license(
     password: Option<String>,
 ) -> Result<ActivationResult, String> {
     let hwid = get_hwid_internal();
+    info!(
+        "Attempting to activate license. Key: {}, HWID: {}",
+        key, hwid
+    );
     let client = reqwest::Client::new();
     let url = format!("{}/api/license/activate", get_cloud_url());
 
@@ -159,11 +403,18 @@ async fn activate_license(
         .json(&payload)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            error!("Network error during activation: {}", e);
+            e.to_string()
+        })?;
 
-    let result: ActivationResult = res.json().await.map_err(|e| e.to_string())?;
+    let result: ActivationResult = res.json().await.map_err(|e| {
+        error!("Failed to parse activation response: {}", e);
+        e.to_string()
+    })?;
 
     if result.success {
+        info!("License activated successfully!");
         let db_path = get_db_path(&app_handle);
         let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
@@ -225,19 +476,25 @@ async fn activate_license(
 #[tauri::command]
 async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     let db_path = get_db_path(&app_handle);
-    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
-    let get_setting = |key: &str| -> Option<String> {
-        conn.query_row(
-            "SELECT value FROM settings WHERE key = ?",
-            params![key],
-            |row| row.get(0),
-        )
-        .ok()
+    let (school_id, token) = {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+        let sid = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'school_id'",
+                [],
+                |row| row.get::<_, String>(0),
+            )
+            .map_err(|_| "NOT_LINKED")?;
+        let tok = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'license_token'",
+                [],
+                |row| row.get::<_, String>(0),
+            )
+            .map_err(|_| "NOT_LINKED")?;
+        (sid, tok)
     };
-
-    let school_id = get_setting("school_id").ok_or("NOT_LINKED")?;
-    let token = get_setting("license_token").ok_or("NOT_LINKED")?;
 
     let client = reqwest::Client::new();
     let url = format!(
@@ -257,6 +514,7 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
     let result: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
 
     if result["success"].as_bool().unwrap_or(false) {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         if result["license"]["active"].as_bool().unwrap_or(false) {
             if let Some(exp) = result["license"]["expiresAt"].as_str() {
                 conn.execute(
@@ -293,16 +551,29 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|app| {
+            #[cfg(debug_assertions)]
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .build(),
+            )?;
+            #[cfg(not(debug_assertions))]
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Warn)
+                    .build(),
+            )?;
+
+            // Migrate from Electron if necessary
+            if let Err(e) = migrate_from_electron(app.handle()) {
+                error!("Migration error: {}", e);
+            }
+
             let db_path = get_db_path(app.handle());
+            info!("Initializing application...");
+            info!("Database path: {:?}", db_path);
             db::initialize_db(&db_path).expect("Failed to initialize database");
 
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -310,7 +581,11 @@ pub fn run() {
             get_license_info,
             activate_license,
             refresh_remote_license,
-            sync::sync_start
+            sync::sync_start,
+            auth_check,
+            auth_create,
+            auth_verify,
+            check_sync_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
