@@ -100,12 +100,37 @@ async fn get_classes(
 ) -> Result<Json<Vec<ClassResponse>>, StatusCode> {
     let conn = Connection::open(&state.db_path).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    // 1. Récupérer d'abord l'année académique active
+    let active_year_id: Option<i64> = conn
+        .query_row(
+            "SELECT id FROM academic_years WHERE is_active = 1",
+            [],
+            |row| row.get(0),
+        )
+        .ok();
+
+    // 2. Préparer la requête filtrée par année active (ou toutes si aucune année active)
+    let (query, params): (&str, Vec<i64>) = if let Some(year_id) = active_year_id {
+        (
+            "SELECT id, name, level, option, section FROM classes WHERE academic_year_id = ?",
+            vec![year_id],
+        )
+    } else {
+        (
+            "SELECT id, name, level, option, section FROM classes",
+            vec![],
+        )
+    };
+
     let mut stmt = conn
-        .prepare("SELECT id, name, level, option, section FROM classes")
+        .prepare(query)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    let params_refs: Vec<&dyn rusqlite::ToSql> =
+        params.iter().map(|p| p as &dyn rusqlite::ToSql).collect();
+
     let classes: Vec<ClassResponse> = stmt
-        .query_map([], |row| {
+        .query_map(params_refs.as_slice(), |row| {
             Ok(ClassResponse {
                 id: row.get(0)?,
                 name: row.get(1)?,

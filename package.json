@@ -7,7 +7,7 @@
   "displayName": "Schoolab",
   "icon": "./assets/icon.ico",
   "scripts": {
-    "start":"tauri dev",
+    "start": "tauri dev",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint --ext .ts,.tsx .",
@@ -26,13 +26,14 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "@tauri-apps/cli": "^2.9.6",
+    "@types/node": "^25.0.9",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-react": "^5.1.1",
     "clsx": "^2.1.1",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
@@ -42,13 +43,14 @@
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
     "@tauri-apps/plugin-sql": "^2.3.1",
+    "core": "link:@tauri-apps/api/core",
     "framer-motion": "^12.25.0",
-    "fuse.js": "^7.1.0",
     "lucide-react": "^0.555.0",
+    "mammoth": "^1.11.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
     "react-to-print": "^3.2.0",
     "xlsx": "^0.18.5"
   }
-} 
+}
