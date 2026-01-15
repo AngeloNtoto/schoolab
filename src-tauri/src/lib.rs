@@ -550,7 +550,15 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
 #[tauri::command]
 async fn start_web_server(app_handle: tauri::AppHandle) -> Result<server::ServerInfo, String> {
     let db_path = get_db_path(&app_handle);
-    let web_dist = std::env::current_dir().unwrap_or_default().join("dist-web");
+    // En mode dev, on remonte d'un niveau depuis src-tauri pour atteindre dist-web
+    // En production, dist-web sera dans le bundle Tauri
+    let web_dist = std::env::current_dir()
+        .unwrap_or_default()
+        .parent()
+        .map(|p| p.join("dist-web"))
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("dist-web"));
+
+    log::info!("Chemin dist-web: {:?}", web_dist);
     server::start_server(db_path, web_dist, 7000).await
 }
 
