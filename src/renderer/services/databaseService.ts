@@ -21,13 +21,18 @@ class DatabaseServiceImpl implements DatabaseService {
       // En développement on utilise dev.db, en production ecole.db
       const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
       const dbName = isDev ? 'dev.db' : 'ecole.db';
-      console.log(`[DatabaseService] Mode: ${isDev ? 'DEV' : 'PROD'} | Ouverture de: ${dbName}`);
+      
+      // On récupère le chemin absolu pour être sûr d'ouvrir la même base que le backend
+      const appDataDir = await api.path.appDataDir();
+      const dbPath = await api.path.join(appDataDir, dbName);
+      
+      console.log(`[DatabaseService] Mode: ${isDev ? 'DEV' : 'PROD'} | Ouverture de: ${dbPath}`);
       
       try {
-        this.tauriDb = await api.Database.load(`sqlite:${dbName}`);
+        this.tauriDb = await api.Database.load(`sqlite:${dbPath}`);
         return this.tauriDb;
       } catch (err) {
-        console.error(`[DatabaseService] Impossible de charger la base ${dbName}:`, err);
+        console.error(`[DatabaseService] Impossible de charger la base ${dbPath}:`, err);
         throw err;
       }
     }
