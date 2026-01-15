@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -11,7 +12,8 @@
     "outDir": "dist",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
   },
   "exclude": ["cloud-ecole"]
 }
