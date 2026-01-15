@@ -1,4 +1,4 @@
-import { isTauri, getTauriAPI } from './tauriBridge';
+import { getTauriAPI } from './tauriBridge';
 
 export interface SyncResult {
   success: boolean;
@@ -8,29 +8,19 @@ export interface SyncResult {
 
 export const syncService = {
   start: async (): Promise<SyncResult> => {
-    if (isTauri()) {
-      const api = await getTauriAPI();
-      return await api?.invoke('sync_start');
-    } else {
-      return await window.api.sync.start();
-    }
+   const api = await getTauriAPI();
+    return await api?.invoke('sync_start');
   },
 
   getStatus: async (): Promise<any> => {
-    if (isTauri()) {
-      const api = await getTauriAPI();
-      return await api?.invoke('sync_get_status');
-    } else {
-      return await window.api.sync.getStatus();
-    }
+    const api = await getTauriAPI();
+    return await api?.invoke('check_sync_status');
   },
 
   pull: async (): Promise<SyncResult> => {
-    if (isTauri()) {
-      const api = await getTauriAPI();
-      return await api?.invoke('sync_pull');
-    } else {
-      return await window.api.sync.pull();
-    }
+    const api = await getTauriAPI();
+    // sync_pull n'est pas encore implémenté en Rust ou a un autre nom.
+    // Pour l'instant, on utilise sync_start qui fait le push.
+    return await api?.invoke('sync_start');
   }
 };

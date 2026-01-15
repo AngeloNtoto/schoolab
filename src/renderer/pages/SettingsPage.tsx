@@ -6,6 +6,8 @@ import { Calendar,Clock,Moon, Sun, School, Info, Building2,Key,ShieldCheck, User
 import { useToast } from '../context/ToastContext';
 import { useTutorial } from '../context/TutorialContext';
 import { seedingService } from '../services/seedingService';
+import { licenseService } from '../services/licenseService';
+import { syncService } from '../services/syncService';
 import pkg from "../../../package.json"
 
 export default function SettingsPage() {
@@ -52,7 +54,7 @@ export default function SettingsPage() {
 
     // Load HWID
     try {
-      const id = await (window as any).api.license.getHWID();
+      const id = await licenseService.getHWID();
       setHwid(id);
     } catch (e) {
       console.error("Failed to load HWID", e);
@@ -71,7 +73,7 @@ export default function SettingsPage() {
     setLoading(true);
     setActivationError('');
     try {
-      const result = await (window as any).api.license.activate(licenseKey, password);
+      const result = await licenseService.activate(licenseKey, password);
       if (result.success) {
         await refreshLicense();
         toast.success('Licence activée avec succès !');
@@ -587,7 +589,7 @@ export default function SettingsPage() {
                           onClick={async () => {
                             setLoading(true);
                             try {
-                              const res = await (window as any).api.sync.start();
+                              const res = await syncService.start();
                               if (res.success) {
                                 toast.success('Upload Cloud réussi');
                                 loadSettings();
