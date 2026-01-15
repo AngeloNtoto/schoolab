@@ -1,6 +1,8 @@
 import React from 'react';
-import { ShieldAlert, Key, Heart, ArrowRight, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import { ShieldAlert, RefreshCw, Heart } from 'lucide-react';
 import { useLicense } from '../../context/LicenseContext';
 
 export default function LicenseGuard({ children }: { children: React.ReactNode }) {
@@ -12,7 +14,7 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
   React.useEffect(() => {
     const checkStatus = async () => {
       try {
-        const result = await window.api.db.checkSyncStatus();
+        const result = await invoke<any>('check_sync_status');
         setSyncOverdue(result.overdue);
       } catch (err) {
         console.error('Failed to check sync status:', err);
@@ -22,14 +24,18 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
     checkStatus();
     const interval = setInterval(checkStatus, 1000 * 60 * 5); // Every 5 minutes
 
-    // Listen for database changes to re-check
-    const removeListener = window.api.network.onDbChanged(() => {
-       checkStatus();
-    });
+    // Listen for database changes to re-check (Tauri version)
+    let unlisten: any;
+    const setupListener = async () => {
+       unlisten = await listen('db-changed', () => {
+         checkStatus();
+       });
+    };
+    setupListener();
 
     return () => {
       clearInterval(interval);
-      removeListener();
+      if (unlisten) unlisten();
     };
   }, []);
 
@@ -151,10 +157,10 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
               <button 
                 onClick={async () => {
                    try {
-                     const res = await window.api.sync.start();
+                     const res = await invoke<any>('sync_start');
                      if (res.success) {
                         // Re-check status immediately to hide the alert
-                        const status = await window.api.db.checkSyncStatus();
+                        const status = await invoke<any>('check_sync_status');
                         setSyncOverdue(status.overdue);
                      }
                    } catch(e) {
