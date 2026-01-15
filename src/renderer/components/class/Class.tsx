@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback,Activity } from "react";
+import { useState, useEffect, useCallback, Activity } from "react";
+import { dbService } from "../../services/databaseService";
 import { useParams } from "react-router-dom";
 import ClassDetails from "./ClassDetails";
 import { classService, ClassData, Subject } from "../../services/classService";
@@ -94,9 +95,9 @@ export default function Class() {
                 setDomains(dData);
 
                 // Charger les paramètres de l'école une seule fois
-                const sName = await window.api.db.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_name']);
-                const sCity = await window.api.db.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_city']);
-                const sPoBox = await window.api.db.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_pobox']);
+                const sName = await dbService.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_name']);
+                const sCity = await dbService.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_city']);
+                const sPoBox = await dbService.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', ['school_pobox']);
                 
                 setSchoolSettings({
                     name: sName?.[0]?.value || '',
@@ -105,7 +106,7 @@ export default function Class() {
                 });
 
                 // Charger l'année scolaire active
-                const yearResult = await window.api.db.query<{ name: string }>('SELECT name FROM academic_years WHERE is_active = 1 LIMIT 1');
+                const yearResult = await dbService.query<{ name: string }>('SELECT name FROM academic_years WHERE is_active = 1 LIMIT 1');
                 if (yearResult?.[0]) setAcademicYear(yearResult[0].name);
 
             } catch (error) {
@@ -320,7 +321,29 @@ export default function Class() {
                 </AnimatePresence>
             </Activity>
 
-            <Activity mode={editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal ? "hidden" : "visible"}>
+            {/* Modal de repêchage */}
+            <Activity mode={repechageModal ? "visible" : "hidden"}>
+                <AnimatePresence>
+                    {repechageModal && (
+                        <motion.div
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+                        >
+                            <RepechageModal
+                                isOpen={repechageModal}
+                                student={students.find(s => s.id === selectedStudentId) || null}
+                                subjects={subjects}
+                                onClose={handleCloseRepechage}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </Activity>
+
+            <Activity mode={editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal ? "hidden" : "visible"}>
                 <motion.div 
                     animate={{ 
                         opacity: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.3 : 1,

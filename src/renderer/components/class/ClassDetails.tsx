@@ -39,6 +39,7 @@ interface ClassDetailsProps {
   onImportStudents: (students: Partial<Student>[]) => Promise<void>;
   onRefreshSubjects: () => Promise<void>;
   onSetEditingSubject: (subject: Subject | null) => void;
+  onOpenRepechage: (studentId: number) => void;
 }
 
 export default function ClassDetails({
@@ -58,7 +59,8 @@ export default function ClassDetails({
   onDeleteStudent,
   onImportStudents,
   onRefreshSubjects,
-  onSetEditingSubject
+  onSetEditingSubject,
+  onOpenRepechage
 }: ClassDetailsProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -85,8 +87,6 @@ export default function ClassDetails({
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
-  const [showRepechageModal, setShowRepechageModal] = useState(false); // State for RepechageModal
-  const [studentForRepechage, setStudentForRepechage] = useState<Student | null>(null); // Selected student
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
 
   // Filter & Sort Logic
@@ -410,14 +410,6 @@ export default function ClassDetails({
         />
       </Activity>
 
-      <Activity mode={showRepechageModal ? 'visible' : 'hidden'}>
-        <RepechageModal
-          isOpen={showRepechageModal}
-          onClose={() => setShowRepechageModal(false)}
-          student={studentForRepechage}
-          subjects={subjects}
-        />
-      </Activity>
 
       {/* Context Menu */}
       {contextMenu && (
@@ -447,8 +439,7 @@ export default function ClassDetails({
           </button>
           <button 
             onClick={() => {
-              setStudentForRepechage(contextMenu.student);
-              setShowRepechageModal(true);
+              onOpenRepechage(contextMenu.student.id);
               closeContextMenu();
             }}
             className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-2"
