@@ -46,14 +46,23 @@ export default function ClassCoupons({
   // Réf pour capturer la zone d'impression
   const printAreaRef = useRef<HTMLDivElement>(null);
 
+  // État pour différer le rendu lourd
+  const [isReady, setIsReady] = useState(false);
+
   // États pour la configuration d'impression
   const [showModal, setShowModal] = useState(false);
   const [printConfig, setPrintConfig] = useState<PrintConfig | null>(null);
 
+  // Attendre que l'animation du modal se termine
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 350);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Calcul synchrone des rangs pour tous les élèves
   const { classRanks, totalStudents } = useMemo(() => {
     const ranksMap: Record<number, StudentRanks> = {};
-    if (!students.length) return { classRanks: ranksMap, totalStudents: 0 };
+    if (!students.length || !isReady) return { classRanks: ranksMap, totalStudents: 0 };
 
     students.forEach(student => {
       const { ranks } = bulletinService.computeStudentRanks(students, allGrades, student.id);
@@ -61,7 +70,7 @@ export default function ClassCoupons({
     });
 
     return { classRanks: ranksMap, totalStudents: students.length };
-  }, [students, allGrades]);
+  }, [students, allGrades, isReady]);
 
   // Configuration CSS pour l'impression
   const printCss = `
@@ -174,7 +183,12 @@ export default function ClassCoupons({
 
       {/* Zone d'impression réelle */}
       <div className="flex justify-center">
-        {printConfig ? (
+        {!isReady ? (
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-bold text-xs uppercase tracking-widest">Préparation des données...</p>
+          </div>
+        ) : printConfig ? (
           <div ref={printAreaRef} className="print-container-reset bg-white shadow-xl">
             <PrintLayout
               students={selectedStudents}

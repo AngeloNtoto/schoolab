@@ -38,13 +38,22 @@ export default function ClassBulletins({
   // Ref pour capturer TOUS les bulletins
   const allBulletinsRef = useRef<HTMLDivElement>(null);
 
+  // État pour différer le rendu lourd et laisser l'animation du modal se terminer
+  const [isReady, setIsReady] = useState(false);
+  
   // État local pour le filtres
   const [onlyAbandons, setOnlyAbandons] = useState(false);
+
+  // Attendre 300ms avant de lancer les calculs lourds
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 350);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Calcul synchrone des rangs pour tous les élèves
   const { allRanks, totalStudents } = useMemo(() => {
     const ranksMap: Record<number, StudentRanks> = {};
-    if (!students.length) return { allRanks: ranksMap, totalStudents: 0 };
+    if (!students.length || !isReady) return { allRanks: ranksMap, totalStudents: 0 };
 
     students.forEach(student => {
       const { ranks } = bulletinService.computeStudentRanks(students, allGrades, student.id);
@@ -52,7 +61,7 @@ export default function ClassBulletins({
     });
 
     return { allRanks: ranksMap, totalStudents: students.length };
-  }, [students, allGrades]);
+  }, [students, allGrades, isReady]);
 
   // CSS D'IMPRESSION
   const printCss = `
@@ -114,9 +123,11 @@ export default function ClassBulletins({
             <ArrowLeft size={20} />
             Retour à la classe
           </button>
-          <span className="text-slate-500 text-sm font-medium bg-white px-3 py-2 rounded-lg border">
-            {studentsToPrint.length} Bulletins
-          </span>
+          {isReady && (
+            <span className="text-slate-500 text-sm font-medium bg-white px-3 py-2 rounded-lg border">
+              {studentsToPrint.length} Bulletins
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -135,7 +146,8 @@ export default function ClassBulletins({
             targetRef={allBulletinsRef}
             title={`Bulletins - ${classInfo.name}`}
             extraCss={printCss}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all font-medium"
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all font-medium disabled:opacity-50"
+            disabled={!isReady}
           >
             <Printer size={20} />
             Imprimer Tout
@@ -143,50 +155,57 @@ export default function ClassBulletins({
         </div>
       </div>
 
-      {/* --- Conteneur des Bulletins (Cible de l'impression) --- */}
-      <div ref={allBulletinsRef} className="print-reset w-full flex flex-col items-center bg-slate-100 print:bg-white">
-        
-        {studentsToPrint.map((student) => {
-          const studentGrades = allGrades.filter(g => g.student_id === student.id);
-          const ranks = allRanks[student.id] || { p1: 0, p2: 0, ex1: 0, tot1: 0, p3: 0, p4: 0, ex2: 0, tot2: 0, tg: 0 };
+      {!isReady ? (
+        <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-4">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-bold text-xs uppercase tracking-widest">Préparation des bulletins...</p>
+        </div>
+      ) : (
+        /* --- Conteneur des Bulletins (Cible de l'impression) --- */
+        <div ref={allBulletinsRef} className="print-reset w-full flex flex-col items-center bg-slate-100 print:bg-white">
           
-          // Détection automatique Primaire vs Humanités
-          // Pour l'instant basé sur 7ème/8ème, à adapter selon vos règles métier exactes
-          const isPrimary = classInfo.level === '7ème' || classInfo.level === '8ème';
+          {studentsToPrint.map((student) => {
+            const studentGrades = allGrades.filter(g => g.student_id === student.id);
+            const ranks = allRanks[student.id] || { p1: 0, p2: 0, ex1: 0, tot1: 0, p3: 0, p4: 0, ex2: 0, tot2: 0, tg: 0 };
+            
+            // Détection automatique Primaire vs Humanités
+            // Pour l'instant basé sur 7ème/8ème, à adapter selon vos règles métier exactes
+            const isPrimary = classInfo.level === '7ème' || classInfo.level === '8ème';
 
-          return (
-            /* WRAPPER INDIVIDUEL : C'est lui qui force le saut de page */
-            <div key={student.id} className="bulletin-page-wrapper mb-8 print:mb-0 shadow-lg print:shadow-none">
-              
-              {/* Le contenu du bulletin */}
-              {isPrimary ? (
-                <BulletinPrimaireContent
-                  student={student}
-                  classInfo={classInfo}
-                  subjects={subjects}
-                  grades={studentGrades}
-                  domains={domains}
-                  schoolName={schoolName}
-                  schoolCity={schoolCity}
-                  studentRanks={ranks}
-                  totalStudents={totalStudents}
-                />
-              ) : (
-                <BulletinHumanitesContent
-                  student={student}
-                  classInfo={classInfo}
-                  subjects={subjects}
-                  grades={studentGrades}
-                  schoolName={schoolName}
-                  schoolCity={schoolCity}
-                  studentRanks={ranks}
-                  totalStudents={totalStudents}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+            return (
+              /* WRAPPER INDIVIDUEL : C'est lui qui force le saut de page */
+              <div key={student.id} className="bulletin-page-wrapper mb-8 print:mb-0 shadow-lg print:shadow-none">
+                
+                {/* Le contenu du bulletin */}
+                {isPrimary ? (
+                  <BulletinPrimaireContent
+                    student={student}
+                    classInfo={classInfo}
+                    subjects={subjects}
+                    grades={studentGrades}
+                    domains={domains}
+                    schoolName={schoolName}
+                    schoolCity={schoolCity}
+                    studentRanks={ranks}
+                    totalStudents={totalStudents}
+                  />
+                ) : (
+                  <BulletinHumanitesContent
+                    student={student}
+                    classInfo={classInfo}
+                    subjects={subjects}
+                    grades={studentGrades}
+                    schoolName={schoolName}
+                    schoolCity={schoolCity}
+                    studentRanks={ranks}
+                    totalStudents={totalStudents}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

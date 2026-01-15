@@ -21,14 +21,12 @@ const modalVariants = {
     hidden: { 
         opacity: 0, 
         scale: 0.98,
-        y: 10,
-        filter: "blur(4px)"
+        y: 10
     },
     visible: { 
         opacity: 1, 
         scale: 1,
         y: 0,
-        filter: "blur(0px)",
         transition: { 
             type: "spring" as const,
             damping: 25,
@@ -40,7 +38,6 @@ const modalVariants = {
         opacity: 0, 
         scale: 0.98,
         y: 10,
-        filter: "blur(4px)",
         transition: { duration: 0.2 }
     }
 } as const;
@@ -347,8 +344,7 @@ export default function Class() {
                 <motion.div 
                     animate={{ 
                         opacity: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.3 : 1,
-                        scale: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.98 : 1,
-                        filter: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? "blur(4px)" : "blur(0px)"
+                        scale: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.98 : 1
                     }}
                     transition={{ duration: 0.4 }}
                     className="h-full"
