@@ -68,32 +68,58 @@ export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
     let offset = 0;
     let xmlContent = '';
 
-    // Simple ZIP parser (Local File Header scan)
+    // Precise ZIP parser
     while (offset < buffer.byteLength - 30) {
       if (view.getUint32(offset, true) === 0x04034b50) {
+        const flags = view.getUint16(offset + 6, true);
+        const method = view.getUint16(offset + 8, true);
         const fileNameLen = view.getUint16(offset + 26, true);
         const extraLen = view.getUint16(offset + 28, true);
-        const fileName = new TextDecoder().decode(buffer.slice(offset + 30, offset + 30 + fileNameLen));
-        const compressedSize = view.getUint32(offset + 18, true);
-        const method = view.getUint16(offset + 8, true);
+        const fileName = new TextDecoder().decode(new Uint8Array(buffer, offset + 30, fileNameLen));
+        
+        const hasDataDescriptor = (flags & 0x08) !== 0;
+        let compressedSize = view.getUint32(offset + 18, true);
+        const dataStart = offset + 30 + fileNameLen + extraLen;
 
         if (fileName === 'word/document.xml') {
-          const dataStart = offset + 30 + fileNameLen + extraLen;
-          const compressedData = buffer.slice(dataStart, dataStart + compressedSize);
+          // Find next PK signature if size is missing (Data Descriptor case)
+          if (hasDataDescriptor && compressedSize === 0) {
+            let scan = dataStart;
+            while (scan < buffer.byteLength - 4) {
+              if (view.getUint32(scan, true) === 0x04034b50 || view.getUint32(scan, true) === 0x02014b50) {
+                compressedSize = scan - dataStart;
+                // If there's a Data Descriptor (12 or 16 bytes), back up
+                if (view.getUint32(scan - 12, true) === 0x08074b50) compressedSize -= 12;
+                else if (view.getUint32(scan - 16, true) === 0x08074b50) compressedSize -= 16;
+                break;
+              }
+              scan++;
+            }
+          }
 
-          if (method === 8) {
-            const ds = new DecompressionStream('deflate-raw' as any);
-            const writer = ds.writable.getWriter();
-            writer.write(compressedData);
-            writer.close();
-            const response = new Response(ds.readable);
-            xmlContent = await response.text();
-          } else if (method === 0) {
-            xmlContent = new TextDecoder().decode(compressedData);
+          if (compressedSize > 0) {
+            const compressedData = new Uint8Array(buffer, dataStart, compressedSize);
+
+            if (method === 8) { // DEFLATE
+              const ds = new DecompressionStream('deflate-raw' as any);
+              const writer = ds.writable.getWriter();
+              await writer.write(compressedData);
+              await writer.close();
+              const response = new Response(ds.readable);
+              xmlContent = await response.text();
+            } else if (method === 0) { // STORE
+              xmlContent = new TextDecoder().decode(compressedData);
+            }
           }
           break;
         }
-        offset += 30 + fileNameLen + extraLen + compressedSize;
+        
+        // Skip correctly
+        if (compressedSize > 0) {
+          offset = dataStart + compressedSize + (hasDataDescriptor ? 12 : 0);
+        } else {
+          offset += 30 + fileNameLen + extraLen + 1; // Scan next
+        }
       } else {
         offset++;
       }
@@ -130,7 +156,7 @@ export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
     });
   } catch (error) {
     console.error("Error parsing DOCX natively:", error);
-    return [];
+    throw error; // Re-throw to show user the failure
   }
 }
 
