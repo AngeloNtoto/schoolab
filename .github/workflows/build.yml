@@ -90,15 +90,20 @@ jobs:
 
       - name: Find bundles
         id: find_bundles
+        shell: bash
         run: |
           set -e
           echo "Looking for bundles..."
           # collect bundle files (msi, exe, deb, AppImage, rpm, nsis, zip...)
+          # IMPORTANT: We need to bundle AFTER optimization to include the optimized binary
+          pnpm tauri build --bundle ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
+
           find src-tauri/target -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' -o -name '*.zip' -o -name '*.nsis' \) -print > bundles.txt || true
-          echo "::set-output name=list::$(cat bundles.txt | tr '\n' '|' )"
+          echo "list=$(cat bundles.txt | tr '\n' '|' )" >> "$GITHUB_OUTPUT"
 
       - name: Show found bundles
         if: steps.find_bundles.outputs.list != ''
+        shell: bash
         run: |
           echo "Bundles found:"
           cat bundles.txt || true
@@ -117,14 +122,15 @@ jobs:
 
       - name: Upload bundles to release
         if: steps.find_bundles.outputs.list != ''
+        shell: bash
         run: |
           set -e
+          # Convert pipe-separated list back to iteration
           while read -r f; do
-            echo "Uploading $f"
-            gh release upload --clobber "${{ steps.create_release.outputs.id }}" "$f" || {
-              # fallback to curl + API if gh not installed
-              echo "gh upload failed for $f"
-            }
+            if [ -n "$f" ]; then
+              echo "Uploading $f"
+              gh release upload --clobber "${{ github.ref_name || format('v{0}', github.sha) }}" "$f" || echo "gh upload failed for $f"
+            fi
           done < bundles.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
