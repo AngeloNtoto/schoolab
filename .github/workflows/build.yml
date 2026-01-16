@@ -56,6 +56,6 @@ jobs:
           tagName: v__VERSION__
           releaseName: "Schoolab v__VERSION__"
           releaseBody: "Build automatique via GitHub Actions."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
