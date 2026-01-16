@@ -216,9 +216,16 @@ export default function TransferInbox() {
 
 
   const handleAccept = async (filename: string) => {
-    const content = await networkService.acceptFile(filename);
+    // Dans l'implémentation actuelle, acceptFile peut retourner void ou null (stub)
+    // On essaie de récupérer les données depuis notre état local 'transfers' si nécessaire
+    let content = await networkService.acceptFile(filename);
     
-    if (content.type === 'CLASS_DATA') {
+    if (!content) {
+      const item = transfers.find(t => t.filename === filename);
+      content = item?.payload;
+    }
+
+    if (content && content.type === 'CLASS_DATA') {
       const existingId = await checkClassExists(content.data.classInfo);
       
       if (existingId) {

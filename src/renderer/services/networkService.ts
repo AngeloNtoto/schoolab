@@ -42,8 +42,9 @@ export const networkService = {
     return [];
   },
 
-  acceptFile: async (id: string): Promise<void> => {
+  acceptFile: async (id: string): Promise<any> => {
     console.warn("acceptFile not yet implemented in Tauri", id);
+    return null;
   },
 
   rejectFile: async (id: string): Promise<void> => {
