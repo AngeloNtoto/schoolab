@@ -53,7 +53,7 @@ jobs:
         run: pnpm build:mobile
 
       - name: install UPX
-        uses: svenstaro/upx-action@v2
+        uses: crazy-max/ghaction-upx@v2
         with:
           install-only: true
 
