@@ -5,7 +5,7 @@ import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Setti
 import { LEVELS } from '../../../constants/school';
 import { getClassDisplayName } from '../../lib/classUtils';
 import { useToast } from '../../context/ToastContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../../context/ToastContext';
 
 interface Class {
   id: number;
@@ -263,12 +263,9 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   if (!academicYearId) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-[#020617] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-2xl flex flex-col h-auto max-h-[85vh]"
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300">
+      <div 
+        className="bg-white dark:bg-[#020617] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-2xl flex flex-col h-auto max-h-[85vh] animate-in zoom-in-95 duration-300"
       >
         {/* Header */}
         <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden shrink-0 transition-colors duration-500">
@@ -315,13 +312,9 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8 pt-6 custom-scrollbar">
-          <AnimatePresence mode="wait">
             {activeTab === 'identity' ? (
-              <motion.div 
-                key="identity"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+              <div 
+                className="animate-in slide-in-from-left-4 duration-300"
               >
                 <form action={formAction} className="space-y-6">
                     {/* Level & Section Row */}
@@ -423,14 +416,10 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                        <SubmitButton />
                     </div>
                 </form>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div 
-                key="config"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6 h-full flex flex-col"
+              <div 
+                className="space-y-6 h-full flex flex-col animate-in slide-in-from-right-4 duration-300"
               >
                   {/* Segmented Control for Sub-tabs */}
                   <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0">
@@ -559,11 +548,10 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                             </div>
                        </div>
                   )}
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

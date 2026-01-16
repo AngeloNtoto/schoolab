@@ -1,10 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { X, UserPlus, Upload, FileText, Clipboard, Check, AlertCircle, ArrowRight, Table, Sparkles } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { useToast } from '../../context/ToastContext';
 import { Student } from '../../services/studentService';
 import { parseDocx, parsePastedText, mapHeaders, parseDate, parseGender, RawStudent } from '../../lib/importUtils';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface StudentSmartImportModalProps {
   isOpen: boolean;
@@ -73,16 +71,25 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
       let rows: RawStudent[] = [];
       const fileName = file.name.toLowerCase();
 
-      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data);
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as RawStudent[];
+      if (fileName.endsWith('.csv')) {
+        const text = await file.text();
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length > 0) {
+          const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+          rows = lines.slice(1).map(line => {
+            const values = line.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+            const obj: RawStudent = {};
+            rawHeaders.forEach((h, i) => {
+              obj[h] = values[i] || '';
+            });
+            return obj;
+          });
+        }
       } else if (fileName.endsWith('.docx')) {
         const buffer = await file.arrayBuffer();
         rows = await parseDocx(buffer);
       } else {
-        toast.error('Format de fichier non supporté. Utilisez .xlsx, .xls ou .docx');
+        toast.error('Format de fichier non supporté. Utilisez .csv ou .docx');
         setLoading(false);
         return;
       }
@@ -162,12 +169,9 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center z-[200] p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white dark:bg-[#020617] rounded-[3rem] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/5 w-full max-w-4xl h-[85vh] flex flex-col relative"
+    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl flex items-center justify-center z-[200] p-4 animate-in fade-in duration-300">
+      <div 
+        className="bg-white dark:bg-[#020617] rounded-[3rem] overflow-hidden shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/5 w-full max-w-4xl h-[85vh] flex flex-col relative animate-in zoom-in-95 duration-300"
       >
         {/* Close Button */}
         <button 
@@ -475,9 +479,8 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
                         </div>
                     </motion.div>
                 )}
-            </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

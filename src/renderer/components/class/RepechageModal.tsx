@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 import { repechageService, Repechage } from '../../services/repechageService';
 import { Student } from '../../services/studentService';
@@ -96,12 +95,9 @@ export default function RepechageModal({ isOpen, onClose, student, subjects }: R
   if (!isOpen || !student) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-4xl flex flex-col max-h-[90vh]"
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+      <div 
+        className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-4xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300"
       >
         {/* Header */}
         <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 flex items-center justify-between shrink-0">
@@ -185,7 +181,8 @@ export default function RepechageModal({ isOpen, onClose, student, subjects }: R
             </table>
           )}
         </div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -7,8 +7,6 @@ import { useStudents } from "../../hooks/useStudents";
 import { useGrades } from "../../hooks/useGrades";
 import { Student } from "../../services/studentService";
 import { domainService, Domain } from "../../services/domainService";
-import { motion, AnimatePresence } from "framer-motion";
-
 import EditEleve from "./EditEleve";
 import Bulletin from "../print/Bulletin";
 import ClassBulletins from "../print/ClassBulletins";
@@ -16,31 +14,7 @@ import ClassCoupons from "../print/ClassCoupons";
 import Palmares from "../print/Palmares";
 import RepechageModal from "./RepechageModal";
 
-// Variantes d'animation partagées pour un look premium et fluide
-const modalVariants = {
-    hidden: { 
-        opacity: 0, 
-        scale: 0.98,
-        y: 10
-    },
-    visible: { 
-        opacity: 1, 
-        scale: 1,
-        y: 0,
-        transition: { 
-            type: "spring" as const,
-            damping: 25,
-            stiffness: 300,
-            duration: 0.3
-        }
-    },
-    exit: { 
-        opacity: 0, 
-        scale: 0.98,
-        y: 10,
-        transition: { duration: 0.2 }
-    }
-} as const;
+// Animations CSS gérées par classes animate-in
 
 /**
  * Composant principal Class - Centralise tous les fetches de données
@@ -194,171 +168,97 @@ export default function Class() {
     return (
         <div className="h-full flex flex-col">
             {/* Modal d'édition d'élève */}
-            <Activity mode={editModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {editModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[70] overflow-y-auto bg-slate-900/40 backdrop-blur-sm p-4 sm:p-8"
-                        >
-                                <EditEleve 
-                                    studentId={selectedStudentId} 
-                                    initialData={students.find(s => s.id === selectedStudentId)}
-                                    onClose={handleCloseEditModal} 
-                                />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {editModal && (
+                <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-900/40 backdrop-blur-sm p-4 sm:p-8 animate-in fade-in duration-300">
+                    <div className="animate-in zoom-in-95 duration-300">
+                        <EditEleve 
+                            studentId={selectedStudentId} 
+                            initialData={students.find(s => s.id === selectedStudentId)}
+                            onClose={handleCloseEditModal} 
+                        />
+                    </div>
+                </div>
+            )}
 
-            {/* Modal de bulletin */}
-            <Activity mode={bulletinModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {bulletinModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100"
-                        >
-                            <Bulletin 
-                                studentId={selectedStudentId}
-                                classInfo={classInfo}
-                                students={students}
-                                subjects={subjects}
-                                domains={domains}
-                                grades={grades}
-                                schoolName={schoolSettings.name}
-                                schoolCity={schoolSettings.city}
-                                onClose={handleCloseBulletin}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {bulletinModal && (
+                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
+                    <Bulletin 
+                        studentId={selectedStudentId}
+                        classInfo={classInfo}
+                        students={students}
+                        subjects={subjects}
+                        domains={domains}
+                        grades={grades}
+                        schoolName={schoolSettings.name}
+                        schoolCity={schoolSettings.city}
+                        onClose={handleCloseBulletin}
+                    />
+                </div>
+            )}
 
-            {/* Vue d'impression en masse (ClassBulletins) - INSTANTANÉ */}
-            <Activity mode={bulkPrintModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {bulkPrintModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100"
-                        >
-                            <ClassBulletins
-                                classInfo={classInfo}
-                                students={students}
-                                subjects={subjects}
-                                domains={domains}
-                                grades={grades}
-                                schoolName={schoolSettings.name}
-                                schoolCity={schoolSettings.city}
-                                onClose={handleCloseBulkPrint}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {bulkPrintModal && (
+                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
+                    <ClassBulletins
+                        classInfo={classInfo}
+                        students={students}
+                        subjects={subjects}
+                        domains={domains}
+                        grades={grades}
+                        schoolName={schoolSettings.name}
+                        schoolCity={schoolSettings.city}
+                        onClose={handleCloseBulkPrint}
+                    />
+                </div>
+            )}
 
-            {/* Vue d'impression des coupons (ClassCoupons) - INSTANTANÉ */}
-            <Activity mode={couponsModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {couponsModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100"
-                        >
-                            <ClassCoupons
-                                classInfo={classInfo}
-                                students={students}
-                                subjects={subjects}
-                                allGrades={grades}
-                                schoolInfo={schoolSettings}
-                                academicYear={academicYear}
-                                onClose={handleCloseCoupons}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {couponsModal && (
+                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
+                    <ClassCoupons
+                        classInfo={classInfo}
+                        students={students}
+                        subjects={subjects}
+                        allGrades={grades}
+                        schoolInfo={schoolSettings}
+                        academicYear={academicYear}
+                        onClose={handleCloseCoupons}
+                    />
+                </div>
+            )}
 
-            {/* Vue du Palmarès (Palmares) - INSTANTANÉ */}
-            <Activity mode={palmaresModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {palmaresModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100"
-                        >
-                            <Palmares
-                                classInfo={classInfo}
-                                students={students}
-                                subjects={subjects}
-                                grades={grades}
-                                schoolName={schoolSettings.name}
-                                schoolCity={schoolSettings.city}
-                                schoolPoBox={schoolSettings.pobox}
-                                onClose={handleClosePalmares}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {palmaresModal && (
+                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
+                    <Palmares
+                        classInfo={classInfo}
+                        students={students}
+                        subjects={subjects}
+                        grades={grades}
+                        schoolName={schoolSettings.name}
+                        schoolCity={schoolSettings.city}
+                        schoolPoBox={schoolSettings.pobox}
+                        onClose={handleClosePalmares}
+                    />
+                </div>
+            )}
 
-            {/* Modal de repêchage */}
-            <Activity mode={repechageModal ? "visible" : "hidden"}>
-                <AnimatePresence>
-                    {repechageModal && (
-                        <motion.div
-                            variants={modalVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-                        >
-                            <RepechageModal
-                                isOpen={repechageModal}
-                                student={students.find(s => s.id === selectedStudentId) || null}
-                                subjects={subjects}
-                                onClose={handleCloseRepechage}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </Activity>
+            {repechageModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <RepechageModal
+                        isOpen={repechageModal}
+                        student={students.find(s => s.id === selectedStudentId) || null}
+                        subjects={subjects}
+                        onClose={handleCloseRepechage}
+                    />
+                </div>
+            )}
 
-            <Activity mode={editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal ? "hidden" : "visible"}>
-                <motion.div 
-                    animate={{ 
-                        opacity: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.3 : 1,
-                        scale: (editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 0.98 : 1
-                    }}
-                    transition={{ duration: 0.4 }}
-                    className="h-full"
-                >
-                    <ClassDetails 
-                        // Données pré-chargées
+            <div className={`h-full ${(editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 'opacity-30 scale-98 pointer-events-none' : ''} transition-all duration-500`}>
+                <ClassDetails 
                     classInfo={classInfo}
                     subjects={subjects}
                     students={students}
                     gradesMap={gradesMap}
                     editingSubject={editingSubject}
                     loading={loading}
-                    
-                    // Actions
                     onEditStudent={handleEditStudent}
                     onOpenBulletin={handleOpenBulletin}
                     onOpenRepechage={handleOpenRepechage}
@@ -372,8 +272,7 @@ export default function Class() {
                     onRefreshSubjects={refreshSubjects}
                     onSetEditingSubject={setEditingSubject}
                 />
-                </motion.div>
-            </Activity>
+            </div>
         </div>
     );
 }

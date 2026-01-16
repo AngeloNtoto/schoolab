@@ -1,5 +1,3 @@
-import * as mammoth from 'mammoth';
-
 export interface RawStudent {
   [key: string]: any;
 }
@@ -126,34 +124,11 @@ export function mapHeaders(headers: string[]): Record<string, string> {
 }
 
 /**
- * Parse a DOCX file and extract table data
+ * Parse a DOCX file - CURRENTLY DISABLED TO SAVE SPACE
  */
 export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
-  const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
-  const html = result.value;
-  
-  // Use DOMParser to extract table rows
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const tables = doc.querySelectorAll('table');
-  
-  if (tables.length === 0) return [];
-  
-  // Assuming the first table is the one we want
-  const table = tables[0];
-  const rows = Array.from(table.querySelectorAll('tr'));
-  if (rows.length < 2) return [];
-  
-  const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.textContent?.trim() || '');
-  
-  return rows.slice(1).map(row => {
-    const cells = Array.from(row.querySelectorAll('td'));
-    const student: RawStudent = {};
-    headers.forEach((h, i) => {
-      if (h) student[h] = cells[i]?.textContent?.trim() || '';
-    });
-    return student;
-  });
+  console.warn('DOCX support is disabled to reduce binary size. Please use CSV.');
+  throw new Error('Support DOCX désactivé pour réduire la taille de l\'application. Veuillez utiliser un fichier CSV.');
 }
 
 /**
@@ -184,9 +159,6 @@ export function parseDate(dateStr: string): string | undefined {
     return clean;
   }
 
-  // Handle Month names (fr/en) - very basic
-  // ... omitting complex natural language parsing for now to keep it robust
-
   return undefined;
 }
 
@@ -202,17 +174,10 @@ export function parseGender(genderStr: string): string {
 
 /**
  * Smart parse pasted text
- * Often Word tables pasted as text result in one cell per line
- * OR tab-separated values.
  */
 export function parsePastedText(text: string): RawStudent[] {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
   
-  // Try to detect if it's "one cell per line" (the user's example)
-  // Example: N, NOM, POSTNOM, PRENOM... 1, Ntoto, Biongo, Ange...
-  // We look for a pattern where every N lines looks like a header/row
-  
-  // 1. Check if it's tab-separated (standard Excel paste)
   if (text.includes('\t')) {
     const tableLines = text.split(/\r?\n/).filter(l => l.trim() !== '');
     const headers = tableLines[0].split('\t');
@@ -226,18 +191,6 @@ export function parsePastedText(text: string): RawStudent[] {
     });
   }
 
-  // 2. Try the "field per line" detection
-  // If we have a lot of lines and it looks repeated
-  // Let's assume the first few lines are headers until we hit a number or a repeated pattern.
-  // Actually, we can ask the user to verify the mapping.
-  
-  // For the specific case of the user's snippet:
-  // N, NOM, POSTNOM, PRENOM, SEXE, LIEU, DATE (7 fields)
-  // 1., Ntoto, Biongo, Ange, M, Biponga, 30/07/2008 (7 fields)
-  
-  // We can try to guess the number of columns.
-  // Usually headers are unique and strings.
-  // Let's try to find where the first "data row" starts (often starts with 1 or 1.)
   const firstDataIndex = lines.findIndex((l, i) => i > 0 && /^\d+\.?$/.test(l));
   
   if (firstDataIndex > 0) {
