@@ -1,4 +1,4 @@
-use crate::{get_cloud_url, get_db_path, get_hwid_internal};
+use crate::{get_cloud_url, get_db_path, get_hwid_internal, SchoolInfo};
 use log::info;
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
@@ -22,12 +22,8 @@ pub struct SyncData {
     pub deletions: Vec<DeletionPush>,
 }
 
-#[derive(Serialize, Debug)]
-pub struct SchoolInfo {
-    pub name: String,
-    pub city: String,
-    pub pobox: String,
-}
+// La struct SchoolInfo est désormais importée depuis crate::SchoolInfo (définie dans lib.rs)
+// pour éviter la duplication et les avertissements de code mort.
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
@@ -213,9 +209,14 @@ async fn send_push_data(
     school_id: &str,
     token: &str,
     sync_data: SyncData,
+    school_info: SchoolInfo,
 ) -> Result<PushResponse, String> {
     info!("Sending push data to cloud...");
-    let payload = serde_json::json!({ "schoolId": school_id, "data": sync_data, "schoolInfo": { "name": "SchoolName", "city": "City", "pobox": "" } });
+    let payload = serde_json::json!({
+        "schoolId": school_id,
+        "data": sync_data,
+        "schoolInfo": school_info
+    });
     let client = reqwest::Client::new();
     let res = client
         .post(format!("{}/api/sync/push", get_cloud_url()))
@@ -295,29 +296,61 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
     info!("Starting sync process...");
     let db_path = get_db_path(&app_handle);
 
-    // 1. Collect Data (Sync)
-    let (sync_data, school_id, token) = {
+    // 2. Send Data (Async, no db lock held)
+    let (sync_data, school_info, school_id, token) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-        let school_id: String = conn
+
+        let s_id: String = conn
             .query_row(
                 "SELECT value FROM settings WHERE key = 'school_id'",
                 [],
                 |r| r.get(0),
             )
             .map_err(|_| "NOT_LINKED")?;
-        let token: String = conn
+
+        let tok: String = conn
             .query_row(
                 "SELECT value FROM settings WHERE key = 'license_token'",
                 [],
                 |r| r.get(0),
             )
             .map_err(|_| "NOT_LINKED")?;
+
+        let s_name = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'school_name'",
+                [],
+                |r| r.get::<_, String>(0),
+            )
+            .unwrap_or_else(|_| "Unknown School".to_string());
+        let s_city = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'school_city'",
+                [],
+                |r| r.get::<_, String>(0),
+            )
+            .unwrap_or_else(|_| "Unknown City".to_string());
+        let s_pobox = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'school_pobox'",
+                [],
+                |r| r.get::<_, String>(0),
+            )
+            .ok();
+
+        let s_info = SchoolInfo {
+            id: s_id.clone(),
+            name: s_name,
+            city: s_city,
+            pobox: s_pobox,
+        };
+
         let data = collect_push_data(&conn)?;
-        (data, school_id, token)
+
+        (data, s_info, s_id, tok)
     };
 
-    // 2. Send Data (Async, no db lock held)
-    let response = send_push_data(&school_id, &token, sync_data).await?;
+    let response = send_push_data(&school_id, &token, sync_data, school_info).await?;
 
     // 3. Process Response (Sync)
     {
