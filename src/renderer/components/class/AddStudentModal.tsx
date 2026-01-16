@@ -38,7 +38,7 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
 
-  const [error, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+  const [error, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
     const student = {
       last_name: formData.get('last_name') as string,
       post_name: formData.get('post_name') as string,

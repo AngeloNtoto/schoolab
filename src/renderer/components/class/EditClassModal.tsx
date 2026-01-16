@@ -205,7 +205,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   };
 
   // React 19 Action for class saving
-  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
     if (!academicYearId) return { success: false };
 
     try {

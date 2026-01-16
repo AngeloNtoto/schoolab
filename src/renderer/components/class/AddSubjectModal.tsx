@@ -118,7 +118,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
    * Un seul maxima d'examen est utilisé pour les deux semestres
    */
   // React 19 Action for subject saving
-  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
     try {
       const sName = formData.get('name') as string;
       const sCode = formData.get('code') as string;
