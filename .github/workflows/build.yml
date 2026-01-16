@@ -64,85 +64,29 @@ jobs:
           # Build release without bundling to get the raw binary
           pnpm tauri build --no-bundle ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
 
-          # set binary path per platform
+          # set binary path per platform (Tauri often uses target subfolders)
           if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            BINARY="src-tauri/target/x86_64-pc-windows-msvc/release/${{ github.event.repository.name }}.exe"
+            BINARY="src-tauri/target/x86_64-pc-windows-msvc/release/schoolab.exe"
           else
-            BINARY="src-tauri/target/release/${{ github.event.repository.name }}"
+            # On linux, it might be in release/ or x86_64-unknown-linux-gnu/release/
+            BINARY=$(find src-tauri/target -type f -name "schoolab" -not -path "*/deps/*" -not -path "*/examples/*" -print -quit)
           fi
 
           if [[ ! -f "$BINARY" ]]; then
-            echo "Error: Binary $BINARY not found"
-            ls -R src-tauri/target || true
+            echo "Error: Binary not found"
+            find src-tauri/target -maxdepth 4
             exit 1
           fi
 
-          # keep a copy of the original for debug/signing
+          echo "Found binary at $BINARY"
           cp "$BINARY" "${BINARY}.orig"
 
-          # Linux: split debug symbols (keep .debug file), then strip
-          if [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
-            echo "Splitting debug symbols and stripping (linux)..."
-            # ensure objcopy is available (binutils)
-            sudo apt-get update -y
-            sudo apt-get install -y binutils
-            # separate debug symbols
-            objcopy --only-keep-debug "$BINARY" "${BINARY}.debug" || true
-            objcopy --strip-debug "$BINARY" || true
-            objcopy --add-gnu-debuglink="${BINARY}.debug" "$BINARY" || true
-          fi
-
-          # Windows: try to use llvm-strip (if available). If not present, skip strip and keep original.
-          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            echo "Attempting to strip on Windows (llvm-strip)..."
-            # Try common paths for llvm-strip installed by rustup component or preinstalled toolchain
-            if command -v llvm-strip >/dev/null 2>&1; then
-              llvm-strip "$BINARY" || echo "llvm-strip failed"
-            elif command -v strip >/dev/null 2>&1; then
-              strip "$BINARY" || echo "strip failed"
-            else
-              echo "No strip tool found on runner; skipping strip on Windows"
-            fi
-          fi
-
-          # UPX compression (optional). Use --best or --ultra-brute depending on tolerance for time
+          # Linux: Strip only if we don't plan to let Tauri bundle it later (but here we do)
+          # So we ONLY UPX. Stripping too early removes __TAURI_BUNDLE_TYPE.
           if command -v upx >/dev/null 2>&1; then
             echo "Applying UPX --best --lzma to $BINARY"
-            upx --best --lzma "$BINARY" || { echo "UPX failed — continuing with non-upx binary"; }
-          else
-            echo "UPX not installed (skipping)."
+            upx --best --lzma "$BINARY" || echo "UPX failed, proceeding..."
           fi
-
-          # If on linux, rebuild .deb from tauri bundle and then replace binary inside .deb for best results
-          if [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
-            # run full tauri build to produce bundles
-            pnpm tauri build --target x86_64-unknown-linux-gnu || pnpm tauri build || true
-
-            # find deb (if tauri produced one)
-            DEB=$(find src-tauri/target/release/bundle -type f -name '*.deb' -print -quit || true)
-            if [[ -n "$DEB" ]]; then
-              echo "Found deb: $DEB. Repacking to inject optimized binary..."
-              mkdir -p deb-work
-              dpkg-deb -R "$DEB" deb-work
-              # replace binary in deb-work (path under usr/bin or opt depending on package)
-              # try common locations
-              TARGET_IN_DEB=$(find deb-work -type f -name "${{ github.event.repository.name }}" -print -quit || true)
-              if [[ -n "$TARGET_IN_DEB" ]]; then
-                cp "$BINARY" "$TARGET_IN_DEB"
-                # rebuild .deb with xz compression
-                dpkg-deb --build -Zxz deb-work "${DEB%.deb}-min.deb"
-                echo "Repacked deb: ${DEB%.deb}-min.deb"
-              else
-                echo "Could not locate binary inside deb; skipping repack."
-              fi
-            else
-              echo "No .deb bundle found."
-            fi
-          fi
-
-          # show sizes
-          echo "Sizes after optimization:"
-          ls -lh "${BINARY}" "${BINARY}.orig" || true
 
       - uses: tauri-apps/tauri-action@v0
         env:

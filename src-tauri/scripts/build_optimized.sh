@@ -1,57 +1,59 @@
-#!/usr/bin/env bash
-set -euo pipefail
+APP_NAME="${1:-schoolab}"
+PLATFORM="${2:-linux}"
 
-APP_NAME="${1:-schoolab}"   # ou extract depuis package.json
-PLATFORM="${2:-linux}"      # linux | windows
+cd "$(dirname "$0")/.." || exit 1
 
-cd "$(dirname "$0")/.." || exit 1  # go to src-tauri
-
-# Build no bundle
-pnpm tauri build --no-bundle ${PLATFORM == "windows" && "--target x86_64-pc-windows-msvc" || ""}
-
+# Build release without bundling
 if [[ "$PLATFORM" == "windows" ]]; then
-  BIN="target/x86_64-pc-windows-msvc/release/${APP_NAME}.exe"
+  pnpm tauri build --no-bundle --target x86_64-pc-windows-msvc
 else
-  BIN="target/release/${APP_NAME}"
+  pnpm tauri build --no-bundle
 fi
 
+# Find the binary robustly
+if [[ "$PLATFORM" == "windows" ]]; then
+  BIN=$(find target/x86_64-pc-windows-msvc/release -type f -name "${APP_NAME}.exe" -print -quit)
+else
+  BIN=$(find target -type f -name "${APP_NAME}" -not -path "*/deps/*" -not -path "*/examples/*" -print -quit)
+fi
+
+if [[ -z "$BIN" || ! -f "$BIN" ]]; then
+  echo "Error: Binary not found"
+  exit 1
+fi
+
+echo "Found binary at $BIN"
 cp "$BIN" "${BIN}.orig"
 
-if [[ "$PLATFORM" == "linux" ]]; then
-  sudo apt-get update -y
-  sudo apt-get install -y binutils
-  objcopy --only-keep-debug "$BIN" "${BIN}.debug" || true
-  objcopy --strip-debug "$BIN" || true
-  objcopy --add-gnu-debuglink="${BIN}.debug" "$BIN" || true
-fi
-
-# Windows: attempt llvm-strip if available (install via rustup component if needed)
-if [[ "$PLATFORM" == "windows" ]]; then
-  if command -v llvm-strip >/dev/null 2>&1; then
-    llvm-strip "$BIN" || true
-  else
-    echo "llvm-strip not found; skipping strip on Windows"
-  fi
-fi
-
-# UPX compress
+# UPX compress (without stripping to keep Tauri metadata)
 if command -v upx >/dev/null 2>&1; then
+  echo "Compressing $BIN with UPX..."
   upx --best --lzma "$BIN" || true
 fi
 
-# Optional: produce final bundles and repack deb
-pnpm tauri build || true
-DEB=$(find target/release/bundle -type f -name '*.deb' -print -quit || true)
-if [[ -n "$DEB" && "$PLATFORM" == "linux" ]]; then
-  mkdir -p deb-work
-  dpkg-deb -R "$DEB" deb-work
-  BIN_IN_DEB=$(find deb-work -type f -name "$APP_NAME" -print -quit || true)
-  if [[ -n "$BIN_IN_DEB" ]]; then
-    cp "$BIN" "$BIN_IN_DEB"
-    dpkg-deb --build -Zxz deb-work "${DEB%.deb}-min.deb"
-    echo "Built ${DEB%.deb}-min.deb"
+# Run bundle (Tauri will see the binary is already built and use it)
+echo "Bundling..."
+if [[ "$PLATFORM" == "windows" ]]; then
+  pnpm tauri build --target x86_64-pc-windows-msvc
+else
+  pnpm tauri build
+fi
+
+# Optional: Repack deb on linux to use the compressed binary (Tauri might overwrite it during bundle)
+if [[ "$PLATFORM" == "linux" ]]; then
+  DEB=$(find target -type f -name '*.deb' -not -path "*/deb-work/*" -print -quit || true)
+  if [[ -n "$DEB" ]]; then
+    echo "Repacking $DEB..."
+    mkdir -p deb-work
+    dpkg-deb -R "$DEB" deb-work
+    BIN_IN_DEB=$(find deb-work -type f -name "$APP_NAME" -print -quit || true)
+    if [[ -n "$BIN_IN_DEB" ]]; then
+      cp "$BIN" "$BIN_IN_DEB"
+      dpkg-deb --build -Zxz deb-work "${DEB%.deb}-min.deb"
+      echo "Final optimized deb produced: ${DEB%.deb}-min.deb"
+    fi
   fi
 fi
 
 # report
-du -h "$BIN" "${BIN}.orig" || true
+ls -lh "$BIN" "${BIN}.orig" || true
