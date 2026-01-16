@@ -249,7 +249,7 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
                                 type="file" 
                                 ref={fileInputRef} 
                                 className="hidden" 
-                                accept=".csv,.docx" 
+                                accept=".csv,.docx,.xlsx,.xls" 
                                 onChange={handleFileUpload}
                             />
                             <div className="relative z-10 space-y-4">
