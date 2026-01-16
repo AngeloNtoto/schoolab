@@ -4,7 +4,6 @@ import { notesService, Note } from '../services/notesService';
 import { Plus, Search, StickyNote, Trash2, Calendar, Tag, X, User, Users, Eye, ChevronRight, ArrowLeft } from 'lucide-react';
 import AddNoteModal from '../components/class/AddNoteModal';
 import { useToast } from '../context/ToastContext';
-import { useTutorial } from '../context/TutorialContext';
 import { useNavigate } from 'react-router-dom';
 import ProfessionalLoader from '../components/ui/ProfessionalLoader';
 
@@ -42,12 +41,9 @@ export default function NotesPage() {
   
   const toast = useToast();
   const navigate = useNavigate();
-  const tutorial = useTutorial();
 
   useEffect(() => {
     loadNotes();
-    // Show tutorial on first visit
-    tutorial.showTutorial('notes');
   }, []);
 
   const loadNotes = async () => {
@@ -239,7 +235,7 @@ export default function NotesPage() {
         {/* Notes List Area */}
         <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50 dark:bg-transparent transition-colors">
             {loading ? (
-                <ProfessionalLoader message="Chargement des mémos..." subMessage="Veuillez patienter" fullScreen={false} />
+                <ProfessionalLoader message="Chargement des mémos..." fullScreen={false} />
             ) : sortedNotes.length === 0 ? (
               <div className="text-center py-24 bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden relative">
                 <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
