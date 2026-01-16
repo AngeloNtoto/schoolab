@@ -8,8 +8,8 @@ import { parseDocx, parsePastedText, mapHeaders, parseDate as smartParseDate, pa
 interface AddStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddStudent: (student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
-  onImportStudents: (students: Omit<Student, 'id' | 'created_at' | 'updated_at'>[]) => Promise<boolean>;
+  onAddStudent: (student: Partial<Student>) => Promise<void>;
+  onImportStudents: (students: Partial<Student>[]) => Promise<void>;
   classId: number;
 }
 
@@ -49,11 +49,9 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
       class_id: classId,
     } as Omit<Student, 'id' | 'created_at' | 'updated_at'>;
 
-    const success = await onAddStudent(student);
-    if (success) {
-      toast.success('Élève ajouté avec succès');
-      onClose();
-    }
+    await onAddStudent(student);
+    toast.success('Élève ajouté avec succès');
+    onClose();
     return null;
   }, null);
 
@@ -136,11 +134,9 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
 
   const performImport = async () => {
     setLoading(true);
-    const success = await onImportStudents(parsedStudents);
-    if (success) {
-      toast.success(`${parsedStudents.length} élèves importés`);
-      onClose();
-    }
+    await onImportStudents(parsedStudents);
+    toast.success(`${parsedStudents.length} élèves importés`);
+    onClose();
     setLoading(false);
   };
 
