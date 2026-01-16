@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { dbService } from '../../services/databaseService';
 
 /**
  * Export complet des notes d'une classe vers Excel.
@@ -13,16 +14,16 @@ export async function ExportExcelForClass(classId: number) {
   if (!classId) return;
 
   // 1) Charger tout depuis la BDD
-  const [cls] = await window.api.db.query('SELECT * FROM classes WHERE id = ?', [classId]);
-  const students = await window.api.db.query(
+  const [cls] = await dbService.query<any>('SELECT * FROM classes WHERE id = ?', [classId]);
+  const students = await dbService.query<any>(
     'SELECT * FROM students WHERE class_id = ? ORDER BY last_name, first_name',
     [classId]
   );
-  const subjects = await window.api.db.query(
+  const subjects = await dbService.query<any>(
     `SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at ASC, name ASC`,
     [classId]
   );
-  const grades = await window.api.db.query(
+  const grades = await dbService.query<any>(
     `SELECT * FROM grades g INNER JOIN students s ON g.student_id = s.id WHERE s.class_id = ?`,
     [classId]
   );

@@ -1,9 +1,10 @@
-use rusqlite::{params, Connection};
+use log::info;
+use rusqlite::Connection;
 use std::path::Path;
 
 pub fn initialize_db(db_path: &Path) -> Result<(), String> {
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
-
+    println!("Database path: {}", db_path.display());
     conn.execute("PRAGMA foreign_keys = ON", [])
         .map_err(|e| e.to_string())?;
 
@@ -253,6 +254,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
-
+    info!("Database path: {}", db_path.display());
+    info!("Database initialized and schema verified.");
     Ok(())
 }

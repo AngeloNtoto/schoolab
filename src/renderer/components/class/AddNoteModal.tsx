@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, StickyNote, User, Users, FileText, ChevronDown, Tag } from 'lucide-react';
+import { dbService } from '../../services/databaseService';
 import { notesService, Note } from '../../services/notesService';
 import { useToast } from '../../context/ToastContext';
 
@@ -53,12 +54,12 @@ export default function AddNoteModal({
     setLoadingOptions(true);
     try {
       if (type === 'student') {
-        const result = await window.api.db.query<{id: number; first_name: string; last_name: string}>(
+        const result = await dbService.query<{id: number; first_name: string; last_name: string}>(
           'SELECT id, first_name, last_name FROM students ORDER BY last_name, first_name LIMIT 100'
         );
         setStudents(result.map(s => ({ id: s.id, label: `${s.first_name} ${s.last_name}` })));
       } else if (type === 'class') {
-        const result = await window.api.db.query<{id: number; level: string; option: string; section: string}>(
+        const result = await dbService.query<{id: number; level: string; option: string; section: string}>(
           'SELECT id, level, option, section FROM classes ORDER BY level, section LIMIT 100'
         );
         setClasses(result.map(c => ({ id: c.id, label: `${c.level} ${c.option} ${c.section}` })));
@@ -74,7 +75,7 @@ export default function AddNoteModal({
   useEffect(() => {
     const fetchYear = async () => {
       try {
-        const result = await window.api.db.query<{id: number}>('SELECT id FROM academic_years WHERE is_active = 1');
+        const result = await dbService.query<{id: number}>('SELECT id FROM academic_years WHERE is_active = 1');
         if (result.length > 0) {
           setAcademicYearId(result[0].id);
         }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Inbox, FileJson, Check, X, Clock, AlertTriangle, Copy, Trash2, Merge } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { networkService } from '../../services/networkService';
+import { dbService } from '../../services/databaseService';
 
 export default function TransferInbox() {
   const [transfers, setTransfers] = useState<any[]>([]);
@@ -15,7 +17,7 @@ export default function TransferInbox() {
   useEffect(() => {
     loadTransfers();
     
-    const removeListener = window.api.network.onTransferReceived(() => {
+    const removeListener = networkService.onFileReceived(() => {
       loadTransfers();
     });
 
@@ -23,7 +25,7 @@ export default function TransferInbox() {
   }, []);
 
   const loadTransfers = async () => {
-    const list = await window.api.network.getPendingTransfers();
+    const list = await networkService.getInboundFiles();
     setTransfers(list || []);
   };
 
@@ -32,11 +34,11 @@ export default function TransferInbox() {
 
     try {
       // Get active academic year
-      const activeYear = (await window.api.db.query('SELECT id FROM academic_years WHERE is_active = 1'))[0];
+      const activeYear = (await dbService.query<any>('SELECT id FROM academic_years WHERE is_active = 1'))[0];
       const academicYearId = activeYear ? activeYear.id : classInfo.academic_year_id;
 
       // 1. Insert Class
-      const resultClass = await window.api.db.query(
+      const resultClass = await dbService.query<any>(
         'INSERT INTO classes (name, level, option, section, academic_year_id) VALUES (?, ?, ?, ?, ?) RETURNING id',
         [classInfo.name, classInfo.level, classInfo.option, classInfo.section, academicYearId]
       );
@@ -46,7 +48,7 @@ export default function TransferInbox() {
       const subjectIdMap = new Map();
       if (subjects && subjects.length > 0) {
         for (const sub of subjects) {
-          const resultSub = await window.api.db.query(
+          const resultSub = await dbService.query<any>(
             'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
             [sub.name, sub.code, sub.max_p1, sub.max_p2, sub.max_exam1, sub.max_p3, sub.max_p4, sub.max_exam2, newClassId, sub.domain_id]
           );
@@ -58,7 +60,7 @@ export default function TransferInbox() {
       const studentIdMap = new Map();
       if (students && students.length > 0) {
         for (const stu of students) {
-          const resultStu = await window.api.db.query(
+          const resultStu = await dbService.query<any>(
             'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, class_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
             [stu.first_name, stu.last_name, stu.post_name, stu.gender, stu.birth_date, stu.birthplace, newClassId]
           );
@@ -73,7 +75,7 @@ export default function TransferInbox() {
           const newSubId = subjectIdMap.get(grade.subject_id);
           
           if (newStuId && newSubId) {
-               await window.api.db.execute(
+               await dbService.execute(
                   'INSERT INTO grades (student_id, subject_id, period, value) VALUES (?, ?, ?, ?)',
                   [newStuId, newSubId, grade.period, grade.value]
               );
@@ -95,10 +97,10 @@ export default function TransferInbox() {
   };
 
   const checkClassExists = async (classInfo: any) => {
-    const activeYear = (await window.api.db.query('SELECT id FROM academic_years WHERE is_active = 1'))[0];
+    const activeYear = (await dbService.query<any>('SELECT id FROM academic_years WHERE is_active = 1'))[0];
     const academicYearId = activeYear ? activeYear.id : classInfo.academic_year_id;
 
-    const existing = await window.api.db.query(
+    const existing = await dbService.query<any>(
       'SELECT id FROM classes WHERE name = ? AND level = ? AND option = ? AND section = ? AND academic_year_id = ?',
       [classInfo.name, classInfo.level, classInfo.option, classInfo.section, academicYearId]
     );
@@ -110,28 +112,28 @@ export default function TransferInbox() {
     const { classInfo, students, grades, subjects } = data;
     try {
       // 1. Update Class Info
-      await window.api.db.execute(
+      await dbService.execute(
         'UPDATE classes SET name = ?, level = ?, option = ?, section = ? WHERE id = ?',
         [classInfo.name, classInfo.level, classInfo.option, classInfo.section, existingClassId]
       );
 
       // 2. Merge Subjects
       const subjectIdMap = new Map();
-      const existingSubjects = await window.api.db.query('SELECT * FROM subjects WHERE class_id = ?', [existingClassId]);
+      const existingSubjects = await dbService.query<any>('SELECT * FROM subjects WHERE class_id = ?', [existingClassId]);
       
       if (subjects && subjects.length > 0) {
         for (const sub of subjects) {
           const match = existingSubjects.find((es: any) => es.name === sub.name && es.code === sub.code);
           if (match) {
             // Update existing
-            await window.api.db.execute(
+            await dbService.execute(
               'UPDATE subjects SET max_p1=?, max_p2=?, max_exam1=?, max_p3=?, max_p4=?, max_exam2=?, domain_id=? WHERE id=?',
               [sub.max_p1, sub.max_p2, sub.max_exam1, sub.max_p3, sub.max_p4, sub.max_exam2, sub.domain_id, match.id]
             );
             subjectIdMap.set(sub.id, match.id);
           } else {
             // Insert new
-            const resultSub = await window.api.db.query(
+            const resultSub = await dbService.query<any>(
               'INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
               [sub.name, sub.code, sub.max_p1, sub.max_p2, sub.max_exam1, sub.max_p3, sub.max_p4, sub.max_exam2, existingClassId, sub.domain_id]
             );
@@ -142,7 +144,7 @@ export default function TransferInbox() {
 
       // 3. Merge Students
       const studentIdMap = new Map();
-      const existingStudents = await window.api.db.query('SELECT * FROM students WHERE class_id = ?', [existingClassId]);
+      const existingStudents = await dbService.query<any>('SELECT * FROM students WHERE class_id = ?', [existingClassId]);
 
       if (students && students.length > 0) {
         for (const stu of students) {
@@ -154,14 +156,14 @@ export default function TransferInbox() {
 
           if (match) {
             // Update existing (optional, but good for syncing details)
-            await window.api.db.execute(
+            await dbService.execute(
               'UPDATE students SET gender=?, birth_date=?, birthplace=? WHERE id=?',
               [stu.gender, stu.birth_date, stu.birthplace, match.id]
             );
             studentIdMap.set(stu.id, match.id);
           } else {
             // Insert new
-            const resultStu = await window.api.db.query(
+            const resultStu = await dbService.query<any>(
               'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, class_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
               [stu.first_name, stu.last_name, stu.post_name, stu.gender, stu.birth_date, stu.birthplace, existingClassId]
             );
@@ -178,18 +180,18 @@ export default function TransferInbox() {
           
           if (newStuId && newSubId) {
             // Check if grade exists
-            const existingGrade = await window.api.db.query(
+            const existingGrade = await dbService.query<any>(
               'SELECT id FROM grades WHERE student_id = ? AND subject_id = ? AND period = ?',
               [newStuId, newSubId, grade.period]
             );
 
             if (existingGrade.length > 0) {
-              await window.api.db.execute(
+              await dbService.execute(
                 'UPDATE grades SET value = ? WHERE id = ?',
                 [grade.value, existingGrade[0].id]
               );
             } else {
-              await window.api.db.execute(
+              await dbService.execute(
                 'INSERT INTO grades (student_id, subject_id, period, value) VALUES (?, ?, ?, ?)',
                 [newStuId, newSubId, grade.period, grade.value]
               );
@@ -214,7 +216,7 @@ export default function TransferInbox() {
 
 
   const handleAccept = async (filename: string) => {
-    const content = await window.api.network.acceptTransfer(filename);
+    const content = await networkService.acceptFile(filename);
     
     if (content.type === 'CLASS_DATA') {
       const existingId = await checkClassExists(content.data.classInfo);
@@ -231,7 +233,7 @@ export default function TransferInbox() {
           const success = await importClassData(content.data);
           if (success) {
             toast.success('Données importées avec succès !');
-            await window.api.network.rejectTransfer(filename);
+            await networkService.rejectFile(filename);
             loadTransfers();
           } else {
             toast.error('Erreur lors de l\'importation.');
@@ -254,7 +256,7 @@ export default function TransferInbox() {
     let success = false;
     if (action === 'overwrite') {
       // Hard delete existing class (cascades to students, subjects, grades)
-      await window.api.db.execute('DELETE FROM classes WHERE id = ?', [conflict.existingClassId]);
+      await dbService.execute('DELETE FROM classes WHERE id = ?', [conflict.existingClassId]);
       // Import as new
       success = await importClassData(conflict.data);
     } else if (action === 'merge') {
@@ -263,7 +265,7 @@ export default function TransferInbox() {
 
     if (success) {
       toast.success(action === 'merge' ? 'Fusion terminée avec succès !' : 'Données écrasées et importées avec succès !');
-      await window.api.network.rejectTransfer(conflict.filename);
+      await networkService.rejectFile(conflict.filename);
       loadTransfers();
       setConflict(null);
     } else {
@@ -273,7 +275,7 @@ export default function TransferInbox() {
 
   const handleReject = async (filename: string) => {
     if (confirm('Supprimer ce transfert ?')) {
-      await window.api.network.rejectTransfer(filename);
+      await networkService.rejectFile(filename);
       loadTransfers();
     }
   };

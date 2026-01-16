@@ -1,23 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { Monitor, Smartphone, Globe, Copy, Check, Info } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { networkService, ServerInfo } from '../../services/networkService';
 
 export default function ServerPanel() {
-  const [serverInfo, setServerInfo] = useState<{ ip: string; port: number } | null>(null);
+  const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
   const [copied, setCopied] = useState(false);
+  const [starting, setStarting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    loadServerInfo();
-    const interval = setInterval(() => {
-      loadServerInfo();
-    }, 1000);
+    // Démarrer automatiquement le serveur au montage du composant
+    startServerIfNeeded();
+    
+    // Polling pour vérifier l'état du serveur
+    const interval = setInterval(loadServerInfo, 2000);
     return () => clearInterval(interval);
   }, []);
 
+  const startServerIfNeeded = async () => {
+    setStarting(true);
+    try {
+      // Essayer de récupérer les infos existantes
+      const info = await networkService.getServerInfo();
+      if (info?.running) {
+        setServerInfo(info);
+      } else {
+        // Démarrer le serveur s'il n'est pas actif
+        const newInfo = await networkService.startServer();
+        setServerInfo(newInfo);
+        toast.success('Serveur Marking Board démarré !');
+      }
+    } catch (e) {
+      console.error('Erreur au démarrage du serveur:', e);
+      toast.error('Impossible de démarrer le serveur');
+    } finally {
+      setStarting(false);
+    }
+  };
+
   const loadServerInfo = async () => {
-    const info = await window.api.network.getServerInfo();
-    setServerInfo(info);
+    try {
+      const info = await networkService.getServerInfo();
+      if (info) {
+        setServerInfo(info);
+      }
+    } catch (e) {
+      console.error('Erreur lors de la récupération des infos serveur:', e);
+    }
   };
 
   const serverUrl = serverInfo ? `http://${serverInfo.ip}:${serverInfo.port}` : 'Chargement...';

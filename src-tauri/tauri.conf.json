@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Schoolab",
   "version": "1.1.0",
-  "identifier": "com.schoolab.app",
+  "identifier": "com.schoolab.desktop",
   "build": {
     "frontendDist": "../dist-web",
     "devUrl": "http://localhost:5173",

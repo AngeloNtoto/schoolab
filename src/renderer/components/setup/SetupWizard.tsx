@@ -119,8 +119,8 @@ export default function SetupWizard() {
           if (syncResult.success) {
             toast.success('Données récupérées avec succès !');
             // Skip steps 2 and 3 if we got data
-            const academicYearCount = await dbService.query("SELECT COUNT(*) as count FROM academic_years");
-            if ((academicYearCount[0] as any).count > 0) {
+            const academicYearCount = await dbService.query<{count: number}>("SELECT COUNT(*) as count FROM academic_years");
+            if (academicYearCount[0].count > 0) {
                navigate('/dashboard');
                try { window.dispatchEvent(new CustomEvent('db:changed', { detail: {} })); } catch (e) {}
                return;

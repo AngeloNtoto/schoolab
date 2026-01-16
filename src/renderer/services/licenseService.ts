@@ -1,4 +1,4 @@
-import { isTauri, getTauriAPI } from './tauriBridge';
+import { getTauriAPI } from './tauriBridge';
 
 export interface LicenseInfo {
   active: boolean;
@@ -18,38 +18,22 @@ export interface ActivationResult {
 
 export const licenseService = {
   getInfo: async (): Promise<LicenseInfo> => {
-    if (isTauri()) {
-      const api = await getTauriAPI();
-      return await api?.invoke('get_license_info');
-    } else {
-      return await window.api.license.getInfo();
-    }
+    const api = await getTauriAPI();
+    return await api?.invoke('get_license_info');
   },
 
   activate: async (key: string, password?: string): Promise<ActivationResult> => {
-    if (isTauri()) {
       const api = await getTauriAPI();
       return await api?.invoke('activate_license', { key, password });
-    } else {
-      return await window.api.license.activate(key, password);
-    }
   },
 
   refreshRemote: async (): Promise<{ success: boolean; info: any }> => {
-    if (isTauri()) {
       const api = await getTauriAPI();
       return await api?.invoke('refresh_remote_license');
-    } else {
-      return await window.api.license.refreshRemote();
-    }
   },
 
   getHWID: async (): Promise<string> => {
-    if (isTauri()) {
       const api = await getTauriAPI();
       return await api?.invoke('get_hwid');
-    } else {
-      return await window.api.license.getMachineId();
-    }
   }
 };

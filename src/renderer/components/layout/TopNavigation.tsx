@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { dbService } from 'src/renderer/services/databaseService';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, User, ChevronDown } from 'lucide-react';
-import { classService, ClassData } from 'src/renderer/services/classService';
+import { useEffect, useState } from 'react';
 import { getClassDisplayName } from 'src/renderer/lib/classUtils';
+import { Search,User,Bell } from 'lucide-react';
+
 
 export default function TopNavigation() {
   const navigate = useNavigate();
@@ -21,11 +22,11 @@ export default function TopNavigation() {
   const loadData = async () => {
     try {
        // Get active year
-       const yearRes = await window.api.db.query<{name: string, id: number}>('SELECT id, name FROM academic_years WHERE is_active = 1');
+       const yearRes = await dbService.query<{name: string, id: number}>('SELECT id, name FROM academic_years WHERE is_active = 1');
        if(yearRes.length > 0) {
            setActiveYear(yearRes[0].name);
            // Get classes for active year
-           const clsRes = await window.api.db.query<any>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [yearRes[0].id]);
+           const clsRes = await dbService.query<any>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [yearRes[0].id]);
            setClasses(clsRes);
        }
     } catch(e) {

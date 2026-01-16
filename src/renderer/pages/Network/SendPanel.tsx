@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
 import { Wifi, Send, CheckCircle, AlertCircle, Loader2, Monitor, ChevronDown } from 'lucide-react';
+import { networkService } from '../../services/networkService';
+import { dbService } from '../../services/databaseService';
+import React,{useState,useEffect} from 'react';
 
 export default function SendPanel() {
   const [peers, setPeers] = useState<any[]>([]);
@@ -15,7 +17,7 @@ export default function SendPanel() {
     loadClasses();
     
     // Listen for peer updates
-    const removeListener = window.api.network.onPeersUpdated((_event, updatedPeers) => {
+    const removeListener = networkService.onPeersUpdated((_event, updatedPeers) => {
       setPeers(updatedPeers);
     });
 
@@ -23,12 +25,12 @@ export default function SendPanel() {
   }, []);
 
   const loadClasses = async () => {
-    const cls = await window.api.db.query('SELECT * FROM classes ORDER BY name');
+    const cls = await dbService.query<any>('SELECT * FROM classes ORDER BY name');
     setClasses(cls);
   };
 
   const loadPeers = async () => {
-    const p = await window.api.network.getPeers();
+    const p = await networkService.getPeers();
     setPeers(p || []);
   };
 
@@ -42,15 +44,15 @@ export default function SendPanel() {
       // Fetch class data
       const classId = parseInt(selectedClass);
       const classInfo = classes.find(c => c.id === classId);
-      const students = await window.api.db.query('SELECT * FROM students WHERE class_id = ?', [classId]);
-      const grades = await window.api.db.query(
+      const students = await dbService.query<any>('SELECT * FROM students WHERE class_id = ?', [classId]);
+      const grades = await dbService.query<any>(
         'SELECT g.* FROM grades g JOIN students s ON g.student_id = s.id WHERE s.class_id = ?', 
         [classId]
       );
-      const subjects = await window.api.db.query('SELECT * FROM subjects WHERE class_id = ?', [classId]);
+      const subjects = await dbService.query<any>('SELECT * FROM subjects WHERE class_id = ?', [classId]);
 
       const payload = {
-        sender: await window.api.network.getIdentity(),
+        sender: await networkService.getIdentity(),
         type: 'CLASS_DATA',
         timestamp: Date.now(),
         data: {
@@ -62,7 +64,7 @@ export default function SendPanel() {
         description: `Données de la classe ${classInfo.name}`
       };
 
-      await window.api.network.sendFile(selectedPeer, payload);
+      await networkService.sendFile(selectedPeer, payload);
       setStatus('success');
       setTimeout(() => setStatus('idle'), 3000);
     } catch (err) {

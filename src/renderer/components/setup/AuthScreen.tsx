@@ -75,8 +75,8 @@ export default function AuthScreen({
           setError('Mot de passe incorrect.');
         }
       }
-    } catch (err) {
-      setError('Une erreur est survenue.');
+    } catch (err: any) {
+      setError(typeof err === 'string' ? err : 'Une erreur est survenue.');
       console.error('Auth error:', err);
     } finally {
       setLoading(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useActionState } from 'react';
+import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
 import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Settings2, GraduationCap } from 'lucide-react';
 import { LEVELS } from '../../../constants/school';
@@ -91,7 +92,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   useEffect(() => {
     const init = async () => {
       try {
-        const ayResult = await window.api.db.query<{ id: number }>('SELECT id FROM academic_years WHERE is_active = 1');
+        const ayResult = await dbService.query<{ id: number }>('SELECT id FROM academic_years WHERE is_active = 1');
         if (ayResult.length > 0) {
           setAcademicYearId(ayResult[0].id);
         } else {
@@ -131,13 +132,13 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     setLoadingConfig(true);
     try {
       // Load Domains
-      const doms = await window.api.db.query<Domain>('SELECT * FROM domains ORDER BY display_order ASC, name ASC');
+      const doms = await dbService.query<Domain>('SELECT * FROM domains ORDER BY display_order ASC, name ASC');
       setDomains(doms);
 
       // Load Options
       // Fallback: If table doesn't exist yet (rare race condition if db.ts hasn't run), this might fail.
       // But assuming db.ts ran.
-      const opts = await window.api.db.query<SchoolOption>('SELECT * FROM options ORDER BY display_order ASC, label ASC');
+      const opts = await dbService.query<SchoolOption>('SELECT * FROM options ORDER BY display_order ASC, label ASC');
       setOptionList(opts);
     } catch (e) {
       console.error("Error fetching config", e);
@@ -149,7 +150,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   const handleAddDomain = async () => {
     if (!newDomainName.trim()) return;
     try {
-      await window.api.db.execute('INSERT INTO domains (name, display_order, is_dirty) VALUES (?, ?, 1)', [newDomainName.trim(), domains.length + 1]);
+      await dbService.execute('INSERT INTO domains (name, display_order, is_dirty) VALUES (?, ?, 1)', [newDomainName.trim(), domains.length + 1]);
       setNewDomainName('');
       toast.success("Domaine ajouté");
       fetchConfig();
@@ -161,8 +162,8 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   const handleDeleteDomain = async (id: number) => {
     if(!confirm("Supprimer ce domaine ?")) return;
     try {
-      await window.api.db.execute('DELETE FROM domains WHERE id = ?', [id]);
-      await window.api.db.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['domains', id]);
+      await dbService.execute('DELETE FROM domains WHERE id = ?', [id]);
+      await dbService.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['domains', id]);
       toast.success("Domaine supprimé");
       fetchConfig();
     } catch (e) {
@@ -177,7 +178,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       const code = newOptionName.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
       const short = newOptionShort.trim().toUpperCase() || code.substring(0, 4);
 
-      await window.api.db.execute(
+      await dbService.execute(
         'INSERT INTO options (label, value, short, display_order, is_dirty) VALUES (?, ?, ?, ?, 1)', 
         [newOptionName.trim(), code, short, optionList.length + 1]
       );
@@ -194,8 +195,8 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   const handleDeleteOption = async (id: number) => {
     if(!confirm("Supprimer cette option de la liste ? \n\nNOTE: Les classes existantes utilisant cette option conserveront leur nom, mais l'option ne sera plus proposée pour les nouvelles classes.")) return;
     try {
-      await window.api.db.execute('DELETE FROM options WHERE id = ?', [id]);
-      await window.api.db.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['options', id]);
+      await dbService.execute('DELETE FROM options WHERE id = ?', [id]);
+      await dbService.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['options', id]);
       toast.success("Option retirée de la liste");
       fetchConfig();
     } catch (e) {
@@ -229,7 +230,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       const params = [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId];
       if (classData) params.push(classData.id);
 
-      const dupResult = await window.api.db.query<{ id: number }>(query, params);
+      const dupResult = await dbService.query<{ id: number }>(query, params);
       if (dupResult.length > 0) {
         toast.warning("Une classe identique existe déjà.");
         return { success: false, error: 'duplicate' };
@@ -237,12 +238,12 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
 
       // Save
       if (classData) {
-        await window.api.db.execute(
+        await dbService.execute(
           'UPDATE classes SET name = ?, level = ?, option = ?, section = ?, is_dirty = 1 WHERE id = ?',
           [submitData.name, submitData.level, submitData.option, submitData.section, classData.id]
         );
       } else {
-        await window.api.db.execute(
+        await dbService.execute(
           'INSERT INTO classes (name, level, option, section, academic_year_id, is_dirty) VALUES (?, ?, ?, ?, ?, 1)',
           [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId]
         );

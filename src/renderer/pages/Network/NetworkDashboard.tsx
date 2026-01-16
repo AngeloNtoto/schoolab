@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Monitor, Send, Download, RefreshCw, Settings, ArrowLeft, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { networkService } from '../../services/networkService';
 import SendPanel from './SendPanel';
 import TransferInbox from './TransferInbox';
 import SyncPanel from './SyncPanel';
@@ -18,14 +19,14 @@ export default function NetworkDashboard() {
   }, []);
 
   const loadIdentity = async () => {
-    const name = await window.api.network.getIdentity();
+    const name = await networkService.getIdentity();
     setIdentity(name);
     setNewName(name);
   };
 
   const handleSaveIdentity = async () => {
     if (newName && newName !== identity) {
-      await window.api.network.setIdentity(newName);
+      await networkService.setIdentity(newName);
       setIdentity(newName);
     }
     setIsEditing(false);

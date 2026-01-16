@@ -1,5 +1,6 @@
 
-import React, { useEffect, useState, useMemo, Suspense,Activity } from 'react';
+import React, { useEffect, useState, useMemo, Suspense, Activity } from 'react';
+import { dbService } from '../../services/databaseService';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
 import { useTutorial } from '../../context/TutorialContext';
@@ -66,7 +67,7 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       // 1. Get active academic year
-      const activeYear = await window.api.db.query<{ id: number, name: string }>('SELECT id, name FROM academic_years WHERE is_active = 1 LIMIT 1');
+      const activeYear = await dbService.query<{ id: number, name: string }>('SELECT id, name FROM academic_years WHERE is_active = 1 LIMIT 1');
       const activeYearId = activeYear[0]?.id;
 
       if (!activeYearId) {
@@ -77,9 +78,9 @@ export default function Dashboard() {
       }
 
       const [classesData, schoolData, studentCountData] = await Promise.all([
-        window.api.db.query<Class>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [activeYearId]),
-        window.api.db.query<{ value: string }>("SELECT value FROM settings WHERE key = 'school_name'"),
-        window.api.db.query<{ count: number }>(`
+        dbService.query<Class>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [activeYearId]),
+        dbService.query<{ value: string }>("SELECT value FROM settings WHERE key = 'school_name'"),
+        dbService.query<{ count: number }>(`
           SELECT COUNT(*) as count FROM students 
           WHERE class_id IN (SELECT id FROM classes WHERE academic_year_id = ?)
         `, [activeYearId]),
@@ -170,7 +171,7 @@ export default function Dashboard() {
     if (!deleteModal) return;
     
     try {
-      await window.api.db.execute('DELETE FROM classes WHERE id = ?', [deleteModal.id]);
+      await dbService.execute('DELETE FROM classes WHERE id = ?', [deleteModal.id]);
       
       await loadData();
       setDeleteModal(null);

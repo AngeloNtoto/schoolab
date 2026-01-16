@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { dbService } from '../services/databaseService';
 import { notesService, Note } from '../services/notesService';
 import { Plus, Search, StickyNote, Trash2, Calendar, Tag, X, User, Users, Eye, ChevronRight, ArrowLeft } from 'lucide-react';
 import AddNoteModal from '../components/class/AddNoteModal';
@@ -72,7 +73,7 @@ export default function NotesPage() {
     // Fetch students
     if (studentIds.length > 0) {
       try {
-        const students = await window.api.db.query<LinkedStudent>(
+        const students = await dbService.query<LinkedStudent>(
           `SELECT id, first_name, last_name, class_id FROM students WHERE id IN (${studentIds.join(',')})`
         );
         const studentMap: Record<number, LinkedStudent> = {};
@@ -86,7 +87,7 @@ export default function NotesPage() {
     // Fetch classes
     if (classIds.length > 0) {
       try {
-        const classes = await window.api.db.query<LinkedClass>(
+        const classes = await dbService.query<LinkedClass>(
           `SELECT id, level, option, section FROM classes WHERE id IN (${classIds.join(',')})`
         );
         const classMap: Record<number, LinkedClass> = {};

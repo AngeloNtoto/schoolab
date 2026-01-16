@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useActionState } from 'react';
+import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
 import { X, BookOpen, Plus, Trash2 } from 'lucide-react';
 import { domainService, Domain } from '../../services/domainService';
@@ -128,12 +129,12 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       const examMax = pMax === 100 ? 0 : Number(formData.get('max_exam'));
 
       if (editingSubject) {
-        await window.api.db.execute(
+        await dbService.execute(
           'UPDATE subjects SET name = ?, code = ?, sub_domain = ?, max_p1 = ?, max_p2 = ?, max_exam1 = ?, max_p3 = ?, max_p4 = ?, max_exam2 = ?, domain_id = ? WHERE id = ?',
           [sName, sCode, sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
         );
       } else {
-        await window.api.db.execute(
+        await dbService.execute(
           'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [sName, sCode, sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
         );
@@ -161,7 +162,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette matière ? Toutes les notes associées seront perdues.')) return;
     
     try {
-      await window.api.db.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
+      await dbService.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
       
       onSuccess();
       toast.success('Matière supprimée');

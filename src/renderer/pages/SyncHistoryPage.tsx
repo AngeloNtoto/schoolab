@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { historyService, ChangeRecord, SyncLog } from '../services/historyService';
+import { syncService } from '../services/syncService';
 import { useLicense } from '../context/LicenseContext';
 import { Clock, RefreshCw, CheckCircle, AlertCircle, Plus, Edit, Trash2, ArrowRight, GitCommit, GitBranch, ChevronDown, ChevronUp, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
@@ -118,7 +119,7 @@ export default function SyncHistoryPage() {
   const handleSyncAll = async () => {
     setLoading(true);
     try {
-      await window.api.sync.start();
+      await syncService.start();
       toast.success("Synchronisation forcée lancée");
       loadData();
     } catch (e: any) {

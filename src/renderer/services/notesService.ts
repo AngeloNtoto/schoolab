@@ -1,3 +1,5 @@
+import { dbService } from './databaseService';
+
 export interface Note {
   id: number;
   title: string;
@@ -12,7 +14,7 @@ export interface Note {
 export const notesService = {
   getAll: async (): Promise<Note[]> => {
     try {
-      return await window.api.db.query<Note>('SELECT * FROM notes ORDER BY created_at DESC');
+      return await dbService.query<Note>('SELECT * FROM notes ORDER BY created_at DESC');
     } catch (error) {
       console.error('Failed to get notes:', error);
       return [];
@@ -21,7 +23,7 @@ export const notesService = {
 
   getByTarget: async (type: string, id: number): Promise<Note[]> => {
     try {
-      return await window.api.db.query<Note>(
+      return await dbService.query<Note>(
         'SELECT * FROM notes WHERE target_type = ? AND target_id = ? ORDER BY created_at DESC',
         [type, id]
       );
@@ -33,7 +35,7 @@ export const notesService = {
 
   create: async (note: Omit<Note, 'id' | 'created_at'>): Promise<void> => {
     try {
-      await window.api.db.execute(
+      await dbService.execute(
         'INSERT INTO notes (title, content, target_type, target_id, academic_year_id, tags) VALUES (?, ?, ?, ?, ?, ?)',
         [note.title, note.content, note.target_type, note.target_id || null, note.academic_year_id || null, note.tags || '']
       );
@@ -45,7 +47,7 @@ export const notesService = {
 
   delete: async (id: number): Promise<void> => {
     try {
-      await window.api.db.execute('DELETE FROM notes WHERE id = ?', [id]);
+      await dbService.execute('DELETE FROM notes WHERE id = ?', [id]);
     } catch (error) {
       console.error('Failed to delete note:', error);
       throw error;
@@ -67,7 +69,7 @@ export const notesService = {
       if (updates.length === 0) return;
       
       values.push(id);
-      await window.api.db.execute(
+      await dbService.execute(
         `UPDATE notes SET ${updates.join(', ')} WHERE id = ?`,
         values
       );

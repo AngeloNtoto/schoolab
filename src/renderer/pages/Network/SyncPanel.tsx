@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wifi, Download, Loader2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { networkService } from '../../services/networkService';
 
 export default function SyncPanel() {
   const [peers, setPeers] = useState<any[]>([]);
@@ -11,7 +12,7 @@ export default function SyncPanel() {
 
   useEffect(() => {
     loadPeers();
-    const removeListener = window.api.network.onPeersUpdated((_event, updatedPeers) => {
+    const removeListener = networkService.onPeersUpdated((_event, updatedPeers) => {
       setPeers(updatedPeers);
     });
     return () => removeListener();
@@ -19,7 +20,7 @@ export default function SyncPanel() {
 
   const loadPeers = async () => {
     try {
-      const p = await window.api.network.getPeers();
+      const p = await networkService.getPeers();
       setPeers(p || []);
     } catch (e) {
       console.error('Failed to load peers:', e);
@@ -33,8 +34,8 @@ export default function SyncPanel() {
     setSyncStatus('Demande de synchronisation en cours...');
     
     try {
-      const identity = await window.api.network.getIdentity();
-      await window.api.network.sendFile(selectedPeer, {
+      const identity = await networkService.getIdentity();
+      await networkService.sendFile(selectedPeer, {
         sender: identity,
         type: 'SYNC_REQUEST',
         timestamp: Date.now(),
