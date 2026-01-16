@@ -8,9 +8,8 @@
   "icon": "./assets/icon.ico",
   "scripts": {
     "start": "tauri dev",
-    "dev": "vite",
+    "dev": "vite && vite build src/web-ui",
     "build": "vite build",
-    "build:mobile": "cd web-ui && pnpm build",
     "lint": "eslint --ext .ts,.tsx .",
     "preview": "vite preview"
   },

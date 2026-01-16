@@ -5,9 +5,6 @@ import { useLicense } from '../context/LicenseContext';
 import { Clock, RefreshCw, CheckCircle, AlertCircle, Plus, Edit, Trash2, ArrowRight, GitCommit, GitBranch, ChevronDown, ChevronUp, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
-
-
-
 export default function SyncHistoryPage() {
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
   const [pendingChanges, setPendingChanges] = useState<ChangeRecord[]>([]);

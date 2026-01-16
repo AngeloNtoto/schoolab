@@ -12,6 +12,8 @@
     "sql:allow-select",
     "sql:allow-load",
     "log:default",
-    "core:path:default"
+    "core:path:default",
+    "sql:allow-close",
+    "core:app:default"
   ]
 }

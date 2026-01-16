@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { settingsService } from '../services/settingsService';
 import { useLicense } from '../context/LicenseContext';
-import { Calendar,Clock,Moon, Sun, School, Info, Building2,Key,ShieldCheck, User, Heart, Sparkles, Settings, ShieldAlert, RefreshCw, Download } from 'lucide-react';
+import { Clock,Moon, Sun, School, Info, Building2,Key,ShieldCheck, User, Heart, Sparkles, Settings, ShieldAlert, RefreshCw, Download } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { useTutorial } from '../context/TutorialContext';
 import { seedingService } from '../services/seedingService';
 import { licenseService } from '../services/licenseService';
 import { syncService } from '../services/syncService';
@@ -27,16 +26,10 @@ export default function SettingsPage() {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [cloudSchoolId, setCloudSchoolId] = useState<string | null>(null);
   const toast = useToast();
-  const tutorial = useTutorial();
 
   useEffect(() => {
     loadSettings();
-    tutorial.showTutorial(`settings.${activeTab}`);
   }, []);
-
-  useEffect(() => {
-    tutorial.showTutorial(`settings.${activeTab}`);
-  }, [activeTab]);
 
   const loadSettings = async () => {
     const name = await settingsService.get('school_name');

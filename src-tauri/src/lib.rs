@@ -567,12 +567,8 @@ async fn start_web_server(
     let web_dist = std::env::current_dir()
         .unwrap_or_default()
         .parent()
-        .map(|p| p.join("dist-mobile"))
-        .unwrap_or_else(|| {
-            std::env::current_dir()
-                .unwrap_or_default()
-                .join("dist-mobile")
-        });
+        .map(|p| p.join("dist-web"))
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("dist-web"));
 
     log::info!("Chemin dist-mobile: {:?}", web_dist);
     server::start_server(state.inner().clone(), web_dist, 3030).await

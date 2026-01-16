@@ -10,7 +10,7 @@ export default defineConfig(async () => {
     plugins: [react(), tailwindcss()],
     build: {
       // Build vers dist-mobile à la racine de schoolab
-      outDir: path.resolve(__dirname, '../dist-mobile'),
+      outDir: path.resolve(__dirname, '../dist-web'),
       emptyOutDir: true,
     },
     server: {

@@ -5,17 +5,12 @@ import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookO
 // Services & Hooks
 import { ClassData, Subject } from '../../services/classService';
 import { Student } from '../../services/studentService';
-import { useTutorial } from '../../context/TutorialContext';
 import { useToast } from '../../context/ToastContext';
 import { ExportExcelForClass } from './ExportExcel';
 
 // Composants
 import AddStudentModal from './AddStudentModal';
 import AddSubjectModal from './AddSubjectModal';
-import RepechageModal from './RepechageModal'; // Import RepechageModal
-import LogoFull from '../ui/Logo';
-import ProfessionalLoader from '../ui/ProfessionalLoader';
-
 
 // Interface pour les props
 interface ClassDetailsProps {
@@ -64,7 +59,6 @@ export default function ClassDetails({
 }: ClassDetailsProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const tutorial = useTutorial();
 
   // Search & Sort State
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,18 +66,6 @@ export default function ClassDetails({
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
 
   const toast = useToast();
-
-  useEffect(() => {
-    // Show tutorial on first visit
-    tutorial.showTutorial('classDetails');
-  }, []);
-
-  // When subjects are loaded (table of notes available), show the grades tutorial
-  useEffect(() => {
-    if (subjects.length > 0) {
-      tutorial.showTutorial('classDetails.grades');
-    }
-  }, [subjects.length]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
@@ -270,7 +252,12 @@ export default function ClassDetails({
       <div className="flex-1 overflow-auto relative">
         {/* Loader non-intrusif si on a déjà des données, sinon loader plein écran */}
         {loading && students.length === 0 ? (
-          <ProfessionalLoader message="Chargement des élèves et notes..." fullScreen={false} />
+          <><div className="absolute top-0 left-0 right-0 z-40">
+                <div className="h-0.5 w-full bg-blue-500/20 overflow-hidden">
+                  <div className="h-full bg-blue-500 animate-loading" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+            </>
         ) : !classInfo ? (
           <div className="p-8 text-center text-slate-500">Aucune donnée trouvée pour cette classe.</div>
         ) : (

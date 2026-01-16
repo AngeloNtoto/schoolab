@@ -374,7 +374,11 @@ export default function Dashboard() {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-8 relative">
         {loading ? (
-          <ProfessionalLoader fullScreen={false} message="Chargement des classes..." />
+          <><div className="absolute top-0 left-0 right-0 z-40">
+                <div className="h-0.5 w-full bg-blue-500/20 overflow-hidden">
+                  <div className="h-full bg-blue-500 animate-loading" style={{ width: '30%' }}></div>
+                </div>
+              </div></>
         ) : (
           <Suspense fallback={<ProfessionalLoader message="Chargement des classes..." />}>
           

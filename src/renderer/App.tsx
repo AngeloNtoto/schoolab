@@ -23,12 +23,10 @@ import AcademicYearsManager from './components/setup/AcademicYearsManager';
 import SettingsPage from './pages/SettingsPage';
 import SyncHistoryPage from './pages/SyncHistoryPage';
 import NotesPage from './pages/NotesPage';
-import TutorialModal from './components/shared/TutorialModal';
 import AuthScreen from './components/setup/AuthScreen';
 import { CacheProvider } from './context/CacheContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { TutorialProvider } from './context/TutorialContext';
 import LicenseGuard from './components/setup/LicenseGuard';
 import { LicenseProvider } from './context/LicenseContext';
 
@@ -157,7 +155,6 @@ export default function App() {
       <ThemeProvider>
       <LicenseProvider>
       <CacheProvider>
-        <TutorialProvider>
         <ToastProvider>
           {/* Wait until we know if setup is complete before rendering routes/redirects */}
           {isSetupComplete === null ? (
@@ -177,10 +174,7 @@ export default function App() {
             <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
             </Routes>
           )}
-          {/* Global Tutorial Modal */}
-          <TutorialModal />
         </ToastProvider>
-        </TutorialProvider>
       </CacheProvider>
       </LicenseProvider>
       </ThemeProvider>

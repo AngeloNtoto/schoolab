@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist-web',
+    outDir: '.vite/build',
     emptyOutDir: true,
   }
 });

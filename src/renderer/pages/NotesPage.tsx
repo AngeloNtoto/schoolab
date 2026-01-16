@@ -235,7 +235,7 @@ export default function NotesPage() {
         {/* Notes List Area */}
         <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50 dark:bg-transparent transition-colors">
             {loading ? (
-                <ProfessionalLoader message="Chargement des mémos..." fullScreen={false} />
+                <ProfessionalLoader message="Chargement des mémos..." subMessage="Veuillez patienter" fullScreen={false} />
             ) : sortedNotes.length === 0 ? (
               <div className="text-center py-24 bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden relative">
                 <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
