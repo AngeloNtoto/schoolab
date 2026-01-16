@@ -165,6 +165,25 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         .and_then(|mut stmt| stmt.query_map([], |row| Ok(StudentPush { localId: row.get(0)?, firstName: row.get(1)?, lastName: row.get(2)?, postName: row.get(3)?, gender: row.get(4)?, birthDate: row.get(5)?, birthplace: row.get(6)?, conduite: row.get(7)?, conduiteP1: row.get(8)?, conduiteP2: row.get(9)?, conduiteP3: row.get(10)?, conduiteP4: row.get(11)?, isAbandoned: row.get::<_, i32>(12)? != 0, abandonReason: row.get(13)?, classLocalId: row.get(14)?, last_modified_at: row.get(15)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
+    let domains_dirty: Vec<DomainPush> = conn
+        .prepare("SELECT id, name, display_order, last_modified_at FROM domains WHERE is_dirty = 1")
+        .and_then(|mut stmt| {
+            stmt.query_map([], |row| {
+                Ok(DomainPush {
+                    localId: row.get(0)?,
+                    name: row.get(1)?,
+                    displayOrder: row.get(2)?,
+                    last_modified_at: row.get(3)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()
+        })
+        .map_err(|e| e.to_string())?;
+
+    let subjects_dirty: Vec<SubjectPush> = conn.prepare("SELECT id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, last_modified_at FROM subjects WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(SubjectPush { localId: row.get(0)?, name: row.get(1)?, code: row.get(2)?, maxP1: row.get(3)?, maxP2: row.get(4)?, maxExam1: row.get(5)?, maxP3: row.get(6)?, maxP4: row.get(7)?, maxExam2: row.get(8)?, category: row.get(9)?, subDomain: row.get(10)?, domainLocalId: row.get(11)?, classLocalId: row.get(12)?, last_modified_at: row.get(13)? }))?.collect::<Result<Vec<_>, _>>())
+        .map_err(|e| e.to_string())?;
+
     let deletions: Vec<DeletionPush> = conn
         .prepare("SELECT table_name, local_id FROM sync_deletions")
         .and_then(|mut stmt| {
@@ -181,9 +200,9 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
     Ok(SyncData {
         academic_years: ay_dirty,
         classes: classes_dirty,
-        domains: vec![],
+        domains: domains_dirty,
         students: students_dirty,
-        subjects: vec![],
+        subjects: subjects_dirty,
         grades: vec![],
         notes: vec![],
         deletions,
@@ -229,6 +248,30 @@ fn process_push_response(conn: &Connection, response: PushResponse) -> Result<()
             for item in cl_res {
                 let _ = conn.execute(
                     "UPDATE classes SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
+        if let Some(st_res) = response.results.students {
+            for item in st_res {
+                let _ = conn.execute(
+                    "UPDATE students SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
+        if let Some(dom_res) = response.results.domains {
+            for item in dom_res {
+                let _ = conn.execute(
+                    "UPDATE domains SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
+        if let Some(sub_res) = response.results.subjects {
+            for item in sub_res {
+                let _ = conn.execute(
+                    "UPDATE subjects SET server_id = ?, is_dirty = 0 WHERE id = ?",
                     params![item.serverId, item.localId],
                 );
             }
