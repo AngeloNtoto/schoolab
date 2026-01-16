@@ -56,11 +56,11 @@ jobs:
         uses: crazy-max/ghaction-upx@v2
         with:
           install-only: true
-      - uses: tauri-apps/tauri-action@v0
+
       - name: build and optimize binary
         shell: bash
         run: |
-          # Build without bundling first to expose the binary
+          # Build without bundling first to expose the binary for optimization
           pnpm tauri build --no-bundle ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
 
           # Locate and optimize binary with UPX
@@ -71,11 +71,18 @@ jobs:
           fi
 
           if [[ -f "$BINARY" ]]; then
-            echo "Optimizing $BINARY with UPX..."
+            echo "Stripping and optimizing $BINARY with UPX..."
+            # Strip debug symbols on linux
+            if [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
+              strip "$BINARY"
+            fi
             upx --ultra-brute "$BINARY"
           else
-            echo "Warning: Binary $BINARY not found for optimization"
+            echo "Error: Binary $BINARY not found for optimization"
+            exit 1
           fi
+
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
