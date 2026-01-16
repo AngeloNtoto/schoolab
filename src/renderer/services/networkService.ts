@@ -77,5 +77,11 @@ export const networkService = {
 
   stopServer: async (): Promise<void> => {
     console.warn("stopServer not yet implemented - server runs until app close");
+  },
+
+  // Diffuse un changement aux clients connectés (Marking Board)
+  broadcastDbChange: async (payload: any): Promise<void> => {
+    const api = await getTauriAPI();
+    await api?.invoke('broadcast_db_change', { payload });
   }
 };

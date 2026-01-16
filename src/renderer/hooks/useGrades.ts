@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { gradeService, Grade } from '../services/gradeService';
 import { useCache } from '../context/CacheContext';
+import { networkService } from '../services/networkService';
+
+import { listen } from '@tauri-apps/api/event';
 
 /**
  * Hook personnalisé pour gérer les notes d'une classe.
@@ -50,44 +53,44 @@ export function useGrades(classId: number) {
     if (classId) {
       loadGrades();
 
-      // Listen for database changes from other clients/processes
-      const unsubscribe = window.api.network.onDbChanged((_event: any, payload: any) => {
-        console.log('[SYNC] Database changed event received:', payload);
-        if (payload.type === 'grades_batch' || payload.type === 'grade_update') {
-          // Granular update: if we have the updated grades, merge them directly
-          if (payload.updates && Array.isArray(payload.updates) && payload.updates.length > 0) {
-            console.log('[SYNC] Applying granular merge for', payload.updates.length, 'grades');
-            setGrades(prev => {
-              const newGrades = [...prev];
-              for (const update of payload.updates) {
-                const idx = newGrades.findIndex(
-                  g => g.student_id === update.student_id && g.subject_id === update.subject_id && g.period === update.period
-                );
-                if (update.value === null) {
-                  if (idx !== -1) newGrades.splice(idx, 1);
-                } else {
-                  if (idx !== -1) {
-                    newGrades[idx] = { ...newGrades[idx], value: update.value };
-                  } else {
-                    newGrades.push({ student_id: update.student_id, subject_id: update.subject_id, period: update.period, value: update.value });
-                  }
-                }
+      // Listen for database changes (global DOM event triggered by App.tsx)
+      const handleDbChange = (e: any) => {
+        const payload = e.detail;
+        console.log('[useGrades] Database changed event received:', payload);
+        
+        // Granular update if possible
+        if (payload?.type === 'grade_update' && Array.isArray(payload.updates)) {
+          setGrades(prev => {
+            const newGrades = [...prev];
+            for (const update of payload.updates) {
+              const idx = newGrades.findIndex(
+                g => g.student_id === update.student_id && g.subject_id === update.subject_id && g.period === update.period
+              );
+              if (idx !== -1) {
+                newGrades[idx] = { ...newGrades[idx], value: update.value };
+              } else {
+                newGrades.push({ 
+                  student_id: update.student_id, 
+                  subject_id: update.subject_id, 
+                  period: update.period, 
+                  value: update.value 
+                });
               }
-              // Update cache
-              cache.set(cacheKey, newGrades);
-              // Update map
-              setGradesMap(buildMap(newGrades));
-              return newGrades;
-            });
-          } else {
-            // Fallback: full reload if no granular data provided
-            loadGrades(true);
-          }
+            }
+            cache.set(cacheKey, newGrades);
+            setGradesMap(buildMap(newGrades));
+            return newGrades;
+          });
+        } else {
+          // Fallback to full refresh
+          loadGrades(true);
         }
-      });
+      };
 
+      window.addEventListener('db:changed', handleDbChange);
+      
       return () => {
-        if (unsubscribe) unsubscribe();
+        window.removeEventListener('db:changed', handleDbChange);
       };
     }
   }, [classId, loadGrades]);
@@ -117,10 +120,8 @@ export function useGrades(classId: number) {
           }
         }
         
-        // Mettre à jour le cache
         cache.set(cacheKey, newGrades);
         
-        // Mettre à jour la map
         setGradesMap(prevMap => {
           const newMap = new Map(prevMap);
           const key = `${studentId}-${subjectId}-${period}`;
@@ -135,11 +136,15 @@ export function useGrades(classId: number) {
         return newGrades;
       });
       
-      // Broadcast to web clients via SSE so they can update in real-time
+      // Notifier le serveur web (mobile) du changement effectué sur l'ordinateur
       try {
-        await window.api.network.broadcastGradeUpdate([{ student_id: studentId, subject_id: subjectId, period, value }]);
-      } catch (broadcastErr) {
-        console.warn('[SYNC] Failed to broadcast grade update to web clients:', broadcastErr);
+        await networkService.broadcastDbChange({
+          type: 'grade_update',
+          updates: [{ student_id: studentId, subject_id: subjectId, period, value }],
+          senderId: 'desktop'
+        });
+      } catch (e) {
+        console.warn('[useGrades] Failed to broadcast update to mobile:', e);
       }
     } catch (err) {
       console.error('Failed to update grade:', err);

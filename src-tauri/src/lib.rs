@@ -9,6 +9,7 @@ use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::sync::Arc;
 use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -548,8 +549,9 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
 }
 
 #[tauri::command]
-async fn start_web_server(app_handle: tauri::AppHandle) -> Result<server::ServerInfo, String> {
-    let db_path = get_db_path(&app_handle);
+async fn start_web_server(
+    state: tauri::State<'_, Arc<server::AppState>>,
+) -> Result<server::ServerInfo, String> {
     // En mode dev, on remonte d'un niveau depuis src-tauri pour atteindre dist-web
     // En production, dist-web sera dans le bundle Tauri
     let web_dist = std::env::current_dir()
@@ -559,7 +561,7 @@ async fn start_web_server(app_handle: tauri::AppHandle) -> Result<server::Server
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("dist-web"));
 
     log::info!("Chemin dist-web: {:?}", web_dist);
-    server::start_server(db_path, web_dist, 7000).await
+    server::start_server(state.inner().clone(), web_dist, 3030).await
 }
 
 #[tauri::command]
@@ -595,6 +597,16 @@ pub fn run() {
             info!("Database path: {:?}", db_path);
             db::initialize_db(&db_path).expect("Failed to initialize database");
 
+            // Initialiser l'état partagé pour le serveur Marking Board
+            let (tx, _) = tokio::sync::broadcast::channel(100);
+            let state = Arc::new(server::AppState {
+                db_path: db_path.clone(),
+                tx,
+                app_handle: app.handle().clone(),
+            });
+
+            app.manage(state);
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -608,7 +620,8 @@ pub fn run() {
             auth_verify,
             check_sync_status,
             start_web_server,
-            get_web_server_info
+            get_web_server_info,
+            server::broadcast_db_change
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -268,12 +268,23 @@ export default function ClassDetails({
 
       {/* Contenu Principal - Grille scrollable */}
       <div className="flex-1 overflow-auto relative">
-        {loading ? (
+        {/* Loader non-intrusif si on a déjà des données, sinon loader plein écran */}
+        {loading && students.length === 0 ? (
           <ProfessionalLoader message="Chargement des élèves et notes..." fullScreen={false} />
         ) : !classInfo ? (
           <div className="p-8 text-center text-slate-500">Aucune donnée trouvée pour cette classe.</div>
         ) : (
-        <table className="w-full border-collapse min-w-max">
+          <>
+            {/* Indicateur de chargement discret pour les mises à jour en arrière-plan */}
+            {loading && (
+              <div className="absolute top-0 left-0 right-0 z-40">
+                <div className="h-0.5 w-full bg-blue-500/20 overflow-hidden">
+                  <div className="h-full bg-blue-500 animate-loading" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+            )}
+            
+            <table className="w-full border-collapse min-w-max">
           <thead className="sticky top-0 z-20 shadow-sm">
             {/* Ligne d'en-tête principale */}
             <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700">
@@ -374,7 +385,8 @@ export default function ClassDetails({
               />
             ))}
           </tbody>
-        </table>
+          </table>
+        </>
         )}
       </div>
 

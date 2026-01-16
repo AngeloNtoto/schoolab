@@ -31,7 +31,11 @@ import { ThemeProvider } from './context/ThemeContext';
 import { TutorialProvider } from './context/TutorialContext';
 import LicenseGuard from './components/setup/LicenseGuard';
 import { LicenseProvider } from './context/LicenseContext';
-import PopulateTestData from './components/shared/PopulateTestData';
+
+
+import { invoke } from '@tauri-apps/api/core';
+import { dbService } from './services/databaseService';
+import { listen } from '@tauri-apps/api/event';
 
 
 // Authentication states
@@ -46,6 +50,17 @@ export default function App() {
 
   useEffect(() => {
     checkAuthState();
+
+    // Listen for database changes from the web server (mobile)
+    const unlisten = listen('db:changed', (event) => {
+      console.log('[Tauri] Database changed event received:', event.payload);
+      // Dispatch local CustomEvent to trigger refreshes in hooks (useStudents, etc.)
+      window.dispatchEvent(new CustomEvent('db:changed', { detail: event.payload }));
+    });
+
+    return () => {
+      unlisten.then(f => f());
+    };
   }, []);
 
   /**
@@ -53,7 +68,7 @@ export default function App() {
    */
   const checkAuthState = async () => {
     try {
-      const result = await (window as any).api.auth.check();
+      const result = await invoke<any>('auth_check');
       if (result.hasPassword) {
         setAuthState('login');
       } else {
@@ -70,7 +85,7 @@ export default function App() {
    */
   const checkSetup = async () => {
     try {
-      const result = await window.api.db.query<{ value: string }>(
+      const result = await dbService.query<{ value: string }>(
         "SELECT value FROM settings WHERE key = 'school_name' LIMIT 1"
       );
       console.debug('[App] checkSetup result length=', result.length, result?.[0]);
@@ -93,7 +108,7 @@ export default function App() {
    * Verify password against stored hash
    */
   const handleVerifyPassword = async (password: string): Promise<boolean> => {
-    const result = await (window as any).api.auth.verify(password);
+    const result = await invoke<any>('auth_verify', { password });
     return result.valid;
   };
 
@@ -101,7 +116,7 @@ export default function App() {
    * Create new local password
    */
   const handleCreatePassword = async (password: string): Promise<boolean> => {
-    const result = await (window as any).api.auth.create(password);
+    const result = await invoke<any>('auth_create', { password });
     return result.success;
   };
 
@@ -151,7 +166,6 @@ export default function App() {
             <Routes>
             <Route path="/setup" element={<SetupWizard />} />
             <Route element={<LicenseGuard><Layout /></LicenseGuard>}>
-              <Route path="/populate" element={<PopulateTestData />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/class/:id" element={<Class/>} />
               <Route path="/network" element={<NetworkDashboard />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { studentService, Student } from '../services/studentService';
 import { useCache } from '../context/CacheContext';
+import { networkService } from '../services/networkService';
 /**
  * Hook personnalisé pour gérer les élèves d'une classe.
  * Utilise le cache pour optimiser les performances.
@@ -43,6 +44,18 @@ export function useStudents(classId: number) {
     if (classId) {
       loadStudents();
     }
+
+    const handleDbChange = (e: any) => {
+      const payload = e.detail;
+      // Ne recharger les élèves que si c'est un changement d'élève ou un changement générique
+      if (!payload?.type || payload.type === 'student_update') {
+        console.log('[useStudents] Database changed, refreshing students...');
+        loadStudents(true);
+      }
+    };
+
+    window.addEventListener('db:changed', handleDbChange);
+    return () => window.removeEventListener('db:changed', handleDbChange);
   }, [classId, loadStudents]);
 
   /**
@@ -106,8 +119,17 @@ export function useStudents(classId: number) {
     // RAFRAÎCHISSEMENT DE LA LISTE :
     // On recharge immédiatement la liste pour montrer les nouveaux élèves
     // Cela améliore l'expérience utilisateur (feedback immédiat)
-    // Notify other components that students changed
-    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
+    // Notify other components and mobile devices that students changed
+    try { 
+      window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId, type: 'student_update' } })); 
+      await networkService.broadcastDbChange({
+        type: 'student_update',
+        classId: classId,
+        senderId: 'desktop'
+      });
+    } catch (e) { 
+      console.error('dispatch student_update failed', e); 
+    }
 
     await loadStudents(true);
   };
@@ -141,7 +163,17 @@ export function useStudents(classId: number) {
     // RAFRAÎCHISSEMENT IMMÉDIAT :
     // On recharge la liste pour montrer le nouvel élève
     // Cela donne un feedback visuel immédiat à l'utilisateur
-    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
+    // Notify other components and mobile devices
+    try { 
+      window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId, type: 'student_update' } })); 
+      await networkService.broadcastDbChange({
+        type: 'student_update',
+        classId: classId,
+        senderId: 'desktop'
+      });
+    } catch (e) { 
+      console.error('dispatch student_update failed', e); 
+    }
     await loadStudents(true);
   };
 
@@ -162,7 +194,16 @@ export function useStudents(classId: number) {
     cache.invalidate(cacheKey);
 
     // RAFRAÎCHISSEMENT IMMÉDIAT :
-    try { window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId } })); } catch (e) { console.error('dispatch db:changed failed', e); }
+    try { 
+      window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId, type: 'student_update' } })); 
+      await networkService.broadcastDbChange({
+        type: 'student_update',
+        classId: classId,
+        senderId: 'desktop'
+      });
+    } catch (e) { 
+      console.error('dispatch student_update failed', e); 
+    }
     await loadStudents(true);
   };
 

@@ -1,6 +1,7 @@
 // Module serveur web pour le Marking Board
 // Ce serveur Axum permet aux appareils mobiles de saisir les notes
 
+use axum::response::sse::{Event, Sse};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -8,12 +9,19 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use futures::stream::Stream;
 use local_ip_address::local_ip;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
+use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tauri::Emitter;
+use tokio::sync::broadcast;
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::StreamExt;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
@@ -30,7 +38,9 @@ pub static SERVER_INFO: Mutex<Option<ServerInfo>> = Mutex::new(None);
 
 // État partagé entre les routes
 pub struct AppState {
-    db_path: PathBuf,
+    pub db_path: PathBuf,
+    pub tx: broadcast::Sender<serde_json::Value>,
+    pub app_handle: tauri::AppHandle,
 }
 
 // Types de données pour l'API
@@ -79,7 +89,7 @@ struct ClassFullResponse {
     grades: Vec<GradeResponse>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct GradeUpdate {
     student_id: i64,
     subject_id: i64,
@@ -251,6 +261,35 @@ async fn get_class_full(
     }))
 }
 
+// Handler: Événements temps réel (SSE)
+async fn sse_handler(
+    State(state): State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let rx = state.tx.subscribe();
+
+    let stream = BroadcastStream::new(rx).map(|msg| {
+        match msg {
+            Ok(data) => {
+                // Ensure we return Result<Event, Infallible>
+                match Event::default().json_data(data) {
+                    Ok(ev) => Ok(ev),
+                    Err(_) => Ok(Event::default().comment("json-error")),
+                }
+            }
+            Err(_) => {
+                // Return a keep-alive comment on broadcast error
+                Ok(Event::default().comment("keep-alive"))
+            }
+        }
+    });
+
+    Sse::new(stream).keep_alive(
+        axum::response::sse::KeepAlive::new()
+            .interval(Duration::from_secs(15))
+            .text("keep-alive"),
+    )
+}
+
 // Handler: Enregistrer les notes
 async fn save_grades(
     State(state): State<Arc<AppState>>,
@@ -258,7 +297,7 @@ async fn save_grades(
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     let conn = Connection::open(&state.db_path).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    for update in payload.updates {
+    for update in &payload.updates {
         // Upsert: insérer ou mettre à jour
         conn.execute(
             "INSERT INTO grades (student_id, subject_id, period, value, is_dirty, last_modified_at)
@@ -275,6 +314,24 @@ async fn save_grades(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     }
 
+    // Notifier tous les clients connectés via SSE (Web/Mobile)
+    let _ = state.tx.send(serde_json::json!({
+        "event": "db:changed",
+        "senderId": payload.sender_id,
+        "type": "grade_update",
+        "updates": &payload.updates
+    }));
+
+    // Notifier l'application Desktop (Tauri)
+    let _ = state.app_handle.emit(
+        "db:changed",
+        serde_json::json!({
+            "senderId": payload.sender_id,
+            "type": "grade_update",
+            "updates": &payload.updates
+        }),
+    );
+
     Ok(Json(serde_json::json!({ "success": true })))
 }
 
@@ -282,21 +339,21 @@ async fn save_grades(
 // Le paramètre port est utilisé comme port préféré, mais si non disponible,
 // le système tentera de trouver un port libre automatiquement
 pub async fn start_server(
-    db_path: PathBuf,
+    state: Arc<AppState>,
     web_dist_path: PathBuf,
     preferred_port: u16,
 ) -> Result<ServerInfo, String> {
     // Récupérer l'IP locale
     let ip = local_ip().map_err(|e| format!("Impossible de récupérer l'IP locale: {}", e))?;
 
-    // État partagé
-    let state = Arc::new(AppState { db_path });
+    // L'IP et le canal broadcast sont déjà gérés ou injectés via l'état state
 
     // Création du routeur
     let app = Router::new()
         .route("/api/classes", get(get_classes))
-        .route("/api/classes/{id}/full", get(get_class_full))
+        .route("/api/classes/:id/full", get(get_class_full))
         .route("/api/grades/batch", post(save_grades))
+        .route("/api/events", get(sse_handler))
         .nest_service("/", ServeDir::new(&web_dist_path))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -344,6 +401,23 @@ pub async fn start_server(
     *SERVER_INFO.lock().unwrap() = Some(info.clone());
 
     Ok(info)
+}
+
+// Diffuse un changement de base de données aux clients web (appelé par le renderer desktop)
+#[tauri::command]
+pub async fn broadcast_db_change(
+    state: tauri::State<'_, Arc<AppState>>,
+    payload: serde_json::Value,
+) -> Result<(), String> {
+    let mut msg = payload.clone();
+    if msg.get("event").is_none() {
+        if let Some(obj) = msg.as_object_mut() {
+            obj.insert("event".to_string(), serde_json::json!("db:changed"));
+        }
+    }
+
+    let _ = state.tx.send(msg);
+    Ok(())
 }
 
 // Récupère les informations du serveur

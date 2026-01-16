@@ -71,16 +71,42 @@ export default function App() {
     const eventSource = new EventSource('/api/events');
     eventSource.onmessage = (event) => {
       try {
-        const { event: eventName, senderId } = JSON.parse(event.data);
-        if (eventName === 'db:changed') {
+        const payload = JSON.parse(event.data);
+        if (payload.event === 'db:changed') {
           // Optimisation : ignorer si nous sommes l'émetteur
-          if (senderId === clientId) return;
+          if (payload.senderId === clientId) return;
 
-          console.log('[SYNC] Base de données modifiée, rafraîchissement...');
-          if (selectedClass) {
-            loadClassData(selectedClass.id);
-          } else {
-            fetchClasses();
+          console.log('[SYNC] Database changed event received:', payload);
+          
+          // Granular update if possible
+          if (payload.type === 'grade_update' && Array.isArray(payload.updates)) {
+            setGrades(prev => {
+              const newGrades = [...prev];
+              for (const update of payload.updates) {
+                const idx = newGrades.findIndex(
+                  g => g.student_id === update.student_id && g.subject_id === update.subject_id && g.period === update.period
+                );
+                if (idx !== -1) {
+                  newGrades[idx] = { ...newGrades[idx], value: update.value };
+                } else {
+                  newGrades.push({ 
+                    student_id: update.student_id, 
+                    subject_id: update.subject_id, 
+                    period: update.period, 
+                    value: update.value 
+                  });
+                }
+              }
+              return newGrades;
+            });
+          } else if (payload.type === 'student_update' || payload.event === 'db:changed') {
+            // Full refresh for student updates or generic changes
+            console.log('[SYNC] Structural change detected, full refresh...');
+            if (selectedClass) {
+              loadClassData(selectedClass.id);
+            } else {
+              fetchClasses();
+            }
           }
         }
       } catch (e) {

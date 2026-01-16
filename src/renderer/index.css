@@ -6,17 +6,20 @@
 
 @variant dark (&:is(.dark, .dark *));
 
-@keyframes shimmer {
+@keyframes loading {
   0% {
     transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
   }
   100% {
     transform: translateX(100%);
   }
 }
 
-.animate-shimmer {
-  animation: shimmer 2s infinite;
+.animate-loading {
+  animation: loading 2s infinite linear;
 }
 
 :root {
