@@ -96,7 +96,7 @@ jobs:
           echo "Looking for bundles..."
           # collect bundle files (msi, exe, deb, AppImage, rpm, nsis, zip...)
           # IMPORTANT: We need to bundle AFTER optimization to include the optimized binary
-          pnpm tauri build --bundle ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
+          pnpm tauri build ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
 
           find src-tauri/target -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' -o -name '*.zip' -o -name '*.nsis' \) -print > bundles.txt || true
           echo "list=$(cat bundles.txt | tr '\n' '|' )" >> "$GITHUB_OUTPUT"
