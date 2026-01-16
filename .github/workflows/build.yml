@@ -56,7 +56,7 @@ jobs:
         uses: crazy-max/ghaction-upx@v2
         with:
           install-only: true
-
+      - uses: tauri-apps/tauri-action@v0
       - name: build and optimize binary
         shell: bash
         run: |
@@ -76,8 +76,6 @@ jobs:
           else
             echo "Warning: Binary $BINARY not found for optimization"
           fi
-
-      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

@@ -8,7 +8,7 @@
   "icon": "./assets/icon.ico",
   "scripts": {
     "start": "tauri dev",
-    "dev": "vite && build:mobile src/web-ui",
+    "dev": "vite && pnpm build:mobile",
     "build": "vite build",
     "build:mobile":"vite build src/web-ui",
     "lint": "eslint --ext .ts,.tsx .",
