@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, TrendingUp } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { repechageService, Repechage } from '../../services/repechageService';

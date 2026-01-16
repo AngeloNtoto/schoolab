@@ -5,7 +5,7 @@ import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Setti
 import { LEVELS } from '../../../constants/school';
 import { getClassDisplayName } from '../../lib/classUtils';
 import { useToast } from '../../context/ToastContext';
-import { useToast } from '../../context/ToastContext';
+
 
 interface Class {
   id: number;

@@ -17,6 +17,7 @@ interface Subject {
   max_exam2: number;
   domain_id?: number;
   sub_domain?: string;
+  category?: string;
 }
 
 interface AddSubjectModalProps {

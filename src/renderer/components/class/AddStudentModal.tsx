@@ -10,6 +10,7 @@ interface AddStudentModalProps {
   onClose: () => void;
   onAddStudent: (student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
   onImportStudents: (students: Omit<Student, 'id' | 'created_at' | 'updated_at'>[]) => Promise<boolean>;
+  classId: number;
 }
 
 function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: string }) {
@@ -25,7 +26,7 @@ function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: st
   );
 }
 
-export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImportStudents }: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImportStudents, classId }: AddStudentModalProps) {
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
   const [importStep, setImportStep] = useState<'initial' | 'mapping' | 'preview'>('initial');
   const [pastedText, setPastedText] = useState('');
@@ -45,7 +46,8 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
       gender: formData.get('gender') as string,
       birth_date: formData.get('birth_date') as string || undefined,
       birthplace: formData.get('birthplace') as string || undefined,
-    };
+      class_id: classId,
+    } as Omit<Student, 'id' | 'created_at' | 'updated_at'>;
 
     const success = await onAddStudent(student);
     if (success) {
@@ -126,6 +128,7 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
       gender: parseGender(row[mapping['gender']]),
       birth_date: smartParseDate(row[mapping['birth_date']]),
       birthplace: row[mapping['birthplace']] || '',
+      class_id: classId,
     }));
     setParsedStudents(students);
     setImportStep('preview');

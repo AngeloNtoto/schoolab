@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback,Activity } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp } from 'lucide-react';
 
@@ -377,18 +377,17 @@ export default function ClassDetails({
         )}
       </div>
 
-      <Activity mode={showAddModal ? 'visible' : 'hidden'}>
+      {showAddModal && (
         <AddStudentModal 
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          onAdd={onAddStudent}
-          onImport={onImportStudents}
+          onAddStudent={onAddStudent}
+          onImportStudents={onImportStudents}
           classId={Number(id)}
-          existingStudents={students}
         />
-      </Activity>
+      )}
 
-      <Activity mode={showAddSubjectModal ? 'visible' : 'hidden'}>
+      {showAddSubjectModal && (
         <AddSubjectModal
           classId={Number(id)}
           classLevel={classInfo?.level || ''}
@@ -407,7 +406,7 @@ export default function ClassDetails({
             onSetEditingSubject(null);
           }}
         />
-      </Activity>
+      )}
 
 
       {/* Context Menu */}

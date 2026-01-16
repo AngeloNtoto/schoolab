@@ -20,6 +20,7 @@ export interface Subject {
   max_exam2: number;
   class_id?: number;
   domain_id?: number;
+  category?: string;
 }
 
 /**

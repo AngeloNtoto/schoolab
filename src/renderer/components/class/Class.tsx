@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Activity } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { dbService } from "../../services/databaseService";
 import { useParams } from "react-router-dom";
 import ClassDetails from "./ClassDetails";
