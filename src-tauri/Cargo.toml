@@ -21,14 +21,11 @@ tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 rusqlite = { version = "0.31", features = ["bundled"] }
-machine-uid = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.12", features = ["json"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "net", "time"] }
-dotenvy = "0.15"
-axum = { version = "0.7", features = ["macros"] }
-tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
-local-ip-address = "0.6"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+axum = { version = "0.7" }
+tower-http = { version = "0.5", features = ["fs", "cors"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 futures = "0.3"
 

@@ -4,7 +4,6 @@ mod sync;
 
 use chrono::{DateTime, Duration, Utc};
 use log::{error, info};
-use machine_uid;
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -58,11 +57,36 @@ pub fn get_db_path(app_handle: &tauri::AppHandle) -> PathBuf {
 }
 
 pub fn get_hwid_internal() -> String {
-    machine_uid::get().unwrap_or_else(|_| "UNKNOWN-DEVICE".to_string())
+    // Sur Linux, on lit /etc/machine-id
+    // Pour les autres OS, on pourrait utiliser des commandes système ou d'autres fichiers
+    if cfg!(target_os = "linux") {
+        std::fs::read_to_string("/etc/machine-id")
+            .map(|s| s.trim().to_string())
+            .unwrap_or_else(|_| {
+                // Fallback si machine-id n'est pas lisible
+                std::fs::read_to_string("/var/lib/dbus/machine-id")
+                    .map(|s| s.trim().to_string())
+                    .unwrap_or_else(|_| "UNKNOWN-LINUX-DEVICE".to_string())
+            })
+    } else if cfg!(target_os = "windows") {
+        // Sur Windows, on peut utiliser une commande via PowerShell ou lire le registre
+        // Pour rester simple et éviter des dépendances lourdes:
+        "WINDOWS-DEVICE".to_string() // À améliorer si nécessaire
+    } else {
+        "UNKNOWN-DEVICE".to_string()
+    }
 }
 
 pub fn get_cloud_url() -> String {
-    dotenvy::dotenv().ok();
+    // Chargement manuel ultra-simple du fichier .env
+    if let Ok(content) = std::fs::read_to_string(".env") {
+        for line in content.lines() {
+            if line.starts_with("CLOUD_URL=") {
+                return line.replace("CLOUD_URL=", "").trim().to_string();
+            }
+        }
+    }
+    // Fallback si pas de .env ou pas de CLOUD_URL
     std::env::var("CLOUD_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
 }
 

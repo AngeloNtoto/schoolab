@@ -10,7 +10,12 @@ use axum::{
     Router,
 };
 use futures::stream::Stream;
-use local_ip_address::local_ip;
+// Function to get local IP without local-ip-address crate
+fn get_local_ip() -> Option<std::net::IpAddr> {
+    let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("8.8.8.8:80").ok()?;
+    socket.local_addr().ok().map(|addr| addr.ip())
+}
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
@@ -343,8 +348,8 @@ pub async fn start_server(
     web_dist_path: PathBuf,
     preferred_port: u16,
 ) -> Result<ServerInfo, String> {
-    // Récupérer l'IP locale
-    let ip = local_ip().map_err(|e| format!("Impossible de récupérer l'IP locale: {}", e))?;
+    // Récupérer l'IP locale via notre implémentation manuelle
+    let ip = get_local_ip().ok_or_else(|| "Impossible de récupérer l'IP locale".to_string())?;
 
     // L'IP et le canal broadcast sont déjà gérés ou injectés via l'état state
 
