@@ -49,6 +49,9 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
+      - name: build mobile UI
+        run: pnpm build:mobile
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -562,15 +562,19 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
 async fn start_web_server(
     state: tauri::State<'_, Arc<server::AppState>>,
 ) -> Result<server::ServerInfo, String> {
-    // En mode dev, on remonte d'un niveau depuis src-tauri pour atteindre dist-web
-    // En production, dist-web sera dans le bundle Tauri
+    // En mode dev, on remonte d'un niveau depuis src-tauri pour atteindre dist-mobile
+    // En production, dist-mobile sera dans le bundle Tauri
     let web_dist = std::env::current_dir()
         .unwrap_or_default()
         .parent()
-        .map(|p| p.join("dist-web"))
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("dist-web"));
+        .map(|p| p.join("dist-mobile"))
+        .unwrap_or_else(|| {
+            std::env::current_dir()
+                .unwrap_or_default()
+                .join("dist-mobile")
+        });
 
-    log::info!("Chemin dist-web: {:?}", web_dist);
+    log::info!("Chemin dist-mobile: {:?}", web_dist);
     server::start_server(state.inner().clone(), web_dist, 3030).await
 }
 

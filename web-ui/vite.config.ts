@@ -9,8 +9,8 @@ export default defineConfig(async () => {
     root: __dirname,
     plugins: [react(), tailwindcss()],
     build: {
-      // Build vers dist-web à la racine de schoolab
-      outDir: path.resolve(__dirname, '../dist-web'),
+      // Build vers dist-mobile à la racine de schoolab
+      outDir: path.resolve(__dirname, '../dist-mobile'),
       emptyOutDir: true,
     },
     server: {

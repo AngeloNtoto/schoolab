@@ -1,9 +1,8 @@
 
-import React, { useEffect, useState, useMemo, Suspense, Activity } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
-import { useTutorial } from '../../context/TutorialContext';
 import ContextMenu from '../ui/ContextMenu';
 import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import AddNoteModal from '../class/AddNoteModal';
@@ -49,20 +48,10 @@ export default function Dashboard() {
   const [addNoteModal, setAddNoteModal] = useState(null as { type: 'class' | 'student' | 'general', id?: number } | null);
   
   const toast = useToast();
-  const tutorial = useTutorial();
 
   useEffect(() => {
     loadData();
-    // Show tutorial on first visit
-    tutorial.showTutorial('dashboard');
   }, []);
-
-  // Show tutorial for view-mode the first time user switches view modes
-  useEffect(() => {
-    if (viewMode) {
-      tutorial.showTutorial('dashboard.viewModes');
-    }
-  }, [viewMode]);
 
   const loadData = async () => {
     try {
@@ -258,7 +247,7 @@ export default function Dashboard() {
           </button>
 
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${headerExpanded ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'}`}>
-            <Activity mode={headerExpanded ? 'visible' : 'hidden'}>
+            {headerExpanded && (
               <div className="flex flex-col gap-4 pb-2">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -377,7 +366,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-            </Activity>
+            )}
           </div>
         </div>
       </header>
@@ -497,33 +486,29 @@ export default function Dashboard() {
         />
       )}
 
-      <Activity mode={!!deleteModal ? 'visible' : 'hidden'}>
-        {deleteModal && (
-          <DeleteConfirmModal
-            isOpen={!!deleteModal}
-            title="Supprimer la classe"
-            message={`Êtes-vous sûr de vouloir supprimer la classe ${deleteModal.name} ? Cette action est irréversible.`}
-            onConfirm={handleDeleteClass}
-            onCancel={() => setDeleteModal(null)}
-          />
-        )}
-      </Activity>
+      {deleteModal && (
+        <DeleteConfirmModal
+          isOpen={!!deleteModal}
+          title="Supprimer la classe"
+          message={`Êtes-vous sûr de vouloir supprimer la classe ${deleteModal.name} ? Cette action est irréversible.`}
+          onConfirm={handleDeleteClass}
+          onCancel={() => setDeleteModal(null)}
+        />
+      )}
 
-      <Activity mode={!!editModal ? 'visible' : 'hidden'}>
-        {editModal && (
-          <EditClassModal
-            classData={editModal}
-            onClose={() => setEditModal(null)}
-            onSuccess={() => {
-              loadData();
-              setEditModal(null);
-              toast.success('Classe modifiée avec succès');
-            }}
-          />
-        )}
-      </Activity>
+      {editModal && (
+        <EditClassModal
+          classData={editModal}
+          onClose={() => setEditModal(null)}
+          onSuccess={() => {
+            loadData();
+            setEditModal(null);
+            toast.success('Classe modifiée avec succès');
+          }}
+        />
+      )}
 
-      <Activity mode={showCreateModal ? 'visible' : 'hidden'}>
+      {showCreateModal && (
         <EditClassModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
@@ -532,21 +517,19 @@ export default function Dashboard() {
             toast.success('Classe créée avec succès');
           }}
         />
-      </Activity>
+      )}
 
-      <Activity mode={!!addNoteModal ? 'visible' : 'hidden'}>
-        {addNoteModal && (
-          <AddNoteModal
-            onClose={() => setAddNoteModal(null)}
-            onSuccess={() => {
-               setAddNoteModal(null);
-               toast.success("Note ajoutée !");
-            }}
-            initialTargetType={addNoteModal.type}
-            initialTargetId={addNoteModal.id}
-          />
-        )}
-      </Activity>
+      {addNoteModal && (
+        <AddNoteModal
+          onClose={() => setAddNoteModal(null)}
+          onSuccess={() => {
+             setAddNoteModal(null);
+             toast.success("Note ajoutée !");
+          }}
+          initialTargetType={addNoteModal.type}
+          initialTargetId={addNoteModal.id}
+        />
+      )}
     </div>
   );
 }
