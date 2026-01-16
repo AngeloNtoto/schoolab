@@ -24,11 +24,17 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 machine-uid = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "net", "time"] }
 dotenvy = "0.15"
-dirs = "6.0"
 axum = { version = "0.7", features = ["macros"] }
 tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
 local-ip-address = "0.6"
 tokio-stream = { version = "0.1", features = ["sync"] }
 futures = "0.3"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = "z" # Optimiser pour la taille

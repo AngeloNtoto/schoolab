@@ -92,14 +92,24 @@ fn migrate_from_electron(app_handle: &tauri::AppHandle) -> Result<(), String> {
 
     // Determine the old Electron userData directory based on the OS.
     let old_user_data_dir = if cfg!(target_os = "linux") {
-        dirs::config_dir().map(|p| p.join("Schoolab"))
+        app_handle
+            .path()
+            .config_dir()
+            .ok()
+            .map(|p| p.join("Schoolab"))
     } else if cfg!(target_os = "macos") {
-        dirs::audio_dir().and_then(|p| {
-            p.parent()
-                .map(|parent| parent.join("Application Support").join("Schoolab"))
-        })
+        // Electron on macOS: ~/Library/Application Support/Schoolab
+        app_handle
+            .path()
+            .data_dir()
+            .ok()
+            .map(|p| p.join("Application Support").join("Schoolab"))
     } else if cfg!(target_os = "windows") {
-        dirs::config_dir().map(|p| p.join("Schoolab"))
+        app_handle
+            .path()
+            .config_dir()
+            .ok()
+            .map(|p| p.join("Schoolab"))
     } else {
         None
     };
