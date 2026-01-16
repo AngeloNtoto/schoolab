@@ -1,3 +1,6 @@
+import * as mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
+
 export interface RawStudent {
   [key: string]: any;
 }
@@ -124,11 +127,34 @@ export function mapHeaders(headers: string[]): Record<string, string> {
 }
 
 /**
- * Parse a DOCX file - CURRENTLY DISABLED TO SAVE SPACE
+ * Parse a DOCX file using mammoth
  */
 export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
-  console.warn('DOCX support is disabled to reduce binary size. Please use CSV.');
-  throw new Error('Support DOCX désactivé pour réduire la taille de l\'application. Veuillez utiliser un fichier CSV.');
+  try {
+    const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+    const text = result.value;
+    return parsePastedText(text);
+  } catch (error) {
+    console.error('Error parsing DOCX:', error);
+    throw new Error('Erreur lors de la lecture du fichier Word. Assurez-vous qu\'il contient des données tabulaires.');
+  }
+}
+
+/**
+ * Parse an Excel file (.xlsx, .xls) using sheetjs
+ */
+export async function parseXlsx(buffer: ArrayBuffer): Promise<RawStudent[]> {
+  try {
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    // Convert to JSON
+    const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    return data as RawStudent[];
+  } catch (error) {
+    console.error('Error parsing Excel:', error);
+    throw new Error('Erreur lors de la lecture du fichier Excel.');
+  }
 }
 
 /**

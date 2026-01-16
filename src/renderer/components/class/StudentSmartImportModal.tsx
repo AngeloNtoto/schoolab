@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Upload, FileText, Clipboard, Check, AlertCircle, ArrowRight, Table, Sparkles } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { Student } from '../../services/studentService';
-import { parseDocx, parsePastedText, mapHeaders, parseDate, parseGender, RawStudent } from '../../lib/importUtils';
+import { parseDocx, parseXlsx, parsePastedText, mapHeaders, parseDate, parseGender, RawStudent } from '../../lib/importUtils';
 
 interface StudentSmartImportModalProps {
   isOpen: boolean;
@@ -88,8 +88,11 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
       } else if (fileName.endsWith('.docx')) {
         const buffer = await file.arrayBuffer();
         rows = await parseDocx(buffer);
+      } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        const buffer = await file.arrayBuffer();
+        rows = await parseXlsx(buffer);
       } else {
-        toast.error('Format de fichier non supporté. Utilisez .csv ou .docx');
+        toast.error('Format de fichier non supporté. Utilisez .csv, .docx ou .xlsx');
         setLoading(false);
         return;
       }
@@ -254,13 +257,13 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
                                     <FileText size={32} className="text-blue-600" />
                                 </div>
                                 <div>
-                                    <p className="font-black text-lg text-slate-800 dark:text-slate-200">CSV or Word</p>
+                                    <p className="font-black text-lg text-slate-800 dark:text-slate-200">CSV, Word or Excel</p>
                                     <p className="text-xs text-slate-400 font-medium">Déposez votre fichier ici</p>
                                 </div>
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {['.docx', '.csv'].map(ext => (
+                            {['.docx', '.csv', '.xlsx'].map(ext => (
                                 <span key={ext} className="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{ext}</span>
                             ))}
                         </div>
