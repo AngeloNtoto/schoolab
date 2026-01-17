@@ -6,7 +6,6 @@ import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookO
 import { ClassData, Subject } from '../../services/classService';
 import { Student } from '../../services/studentService';
 import { useToast } from '../../context/ToastContext';
-import { ExportExcelForClass } from './ExportExcel';
 
 // Composants
 import AddStudentModal from './AddStudentModal';
@@ -114,11 +113,6 @@ export default function ClassDetails({
     }
   }, [onUpdateGrade, toast]);
 
-  const handleExportExcel = async (id: string) => {
-    if (!id) return;
-    await ExportExcelForClass(Number(id));
-    toast.success('Notes exportées avec succès');
-  };
 
   const onContextMenu = useCallback((e: React.MouseEvent, student: Student) => {
     e.preventDefault();
@@ -180,14 +174,6 @@ export default function ClassDetails({
                   <Award size={14} />
                   <span>Palmarès</span>
                 </button>
-                <button 
-                  onClick={() => handleExportExcel(id)}
-                  className="flex items-center gap-1.5 hover:bg-white hover:text-green-600 px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all text-white border border-transparent"
-                >
-                  <FileSpreadsheet size={14} />
-                  <span>Excel</span>
-                </button>
-                
                 <div className="flex items-center gap-1 px-1 border-l border-white/10 ml-0.5">
                   <button onClick={onOpenCouponsPrint} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all" title="Coupons">
                     <Printer size={16} />

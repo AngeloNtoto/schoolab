@@ -1,5 +1,4 @@
 import * as mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
 
 export interface RawStudent {
   [key: string]: any;
@@ -140,22 +139,6 @@ export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
   }
 }
 
-/**
- * Parse an Excel file (.xlsx, .xls) using sheetjs
- */
-export async function parseXlsx(buffer: ArrayBuffer): Promise<RawStudent[]> {
-  try {
-    const workbook = XLSX.read(buffer, { type: 'array' });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    // Convert to JSON
-    const data = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-    return data as RawStudent[];
-  } catch (error) {
-    console.error('Error parsing Excel:', error);
-    throw new Error('Erreur lors de la lecture du fichier Excel.');
-  }
-}
 
 /**
  * Parse a date string into ISO format (YYYY-MM-DD)

@@ -3,7 +3,7 @@ import { useFormStatus } from 'react-dom';
 import { X, UserPlus, Upload, FileText, Clipboard, Sparkles, Check, ArrowRight, AlertCircle, Table } from 'lucide-react';
 import { Student } from '../../services/studentService';
 import { useToast } from '../../context/ToastContext';
-import { parseDocx, parseXlsx, parsePastedText, mapHeaders, parseDate as smartParseDate, parseGender, RawStudent } from '../../lib/importUtils';
+import { parseDocx, parsePastedText, mapHeaders, parseDate as smartParseDate, parseGender, RawStudent } from '../../lib/importUtils';
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -64,28 +64,11 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
       let rows: RawStudent[] = [];
       const fileName = file.name.toLowerCase();
 
-      if (fileName.endsWith('.csv')) {
-        const text = await file.text();
-        const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length > 0) {
-          const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
-          rows = lines.slice(1).map(line => {
-            const values = line.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
-            const obj: RawStudent = {};
-            rawHeaders.forEach((h, i) => {
-              obj[h] = values[i] || '';
-            });
-            return obj;
-          });
-        }
-      } else if (fileName.endsWith('.docx')) {
+      if (fileName.endsWith('.docx')) {
         const buffer = await file.arrayBuffer();
         rows = await parseDocx(buffer);
-      } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        const buffer = await file.arrayBuffer();
-        rows = await parseXlsx(buffer);
       } else {
-        toast.error('Format non supporté (.csv, .docx, .xlsx)');
+        toast.error('Format non supporté (.docx uniquement)');
         setLoading(false);
         return;
       }
@@ -238,10 +221,10 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                             onClick={() => fileInputRef.current?.click()}
                             className="border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[2rem] p-10 text-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-50/30 transition-all group"
                         >
-                            <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.docx,.xlsx,.xls" onChange={handleFileUpload} />
+                            <input type="file" ref={fileInputRef} className="hidden" accept=".docx" onChange={handleFileUpload} />
                             <Upload className="mx-auto text-slate-300 group-hover:text-blue-500 transition-colors mb-4" size={48} />
-                            <p className="font-black text-slate-800 dark:text-white">Déposer un fichier CSV, Word ou Excel</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">.csv, .docx, .xlsx</p>
+                            <p className="font-black text-slate-800 dark:text-white">Déposer un fichier Word (.docx)</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">.docx uniquement</p>
                         </div>
                         <div className="relative">
                             <textarea 
