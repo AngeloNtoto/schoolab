@@ -37,6 +37,7 @@ import { listen } from '@tauri-apps/api/event';
 
 
 import { updateService } from './services/updateService';
+import { initLogger } from './services/logger';
 
 // Authentication states
 type AuthState = 'loading' | 'create-password' | 'login' | 'authenticated';
@@ -49,6 +50,9 @@ export default function App() {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Initialiser le système de log (capture la console)
+    initLogger();
+    
     checkAuthState();
     
     // Vérifier les mises à jour au démarrage

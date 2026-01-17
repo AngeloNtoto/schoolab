@@ -1,7 +1,7 @@
 {
   "name": "schoolab",
   "productName": "Schoolab",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "Schoolab est la première application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
   "displayName": "Schoolab",
@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-log": "^2.8.0",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-sql": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.9.0",
