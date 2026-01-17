@@ -213,7 +213,6 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-12 custom-scrollbar">
 
             {step === 'mapping' && (
                 <div 
@@ -386,6 +385,5 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
             )}
         </div>
       </div>
-    </div>
   );
 }
