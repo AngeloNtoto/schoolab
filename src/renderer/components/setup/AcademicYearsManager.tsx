@@ -34,6 +34,10 @@ export default function AcademicYearsManager() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (new Date(startDate) >= new Date(endDate)) {
+        toast.error("La date de début doit être antérieure à la date de fin.");
+        return;
+      }
       await academicYearService.create(name, startDate, endDate);
       toast.success("Année académique créée");
       setShowForm(false);
@@ -132,6 +136,7 @@ export default function AcademicYearsManager() {
                                 value={endDate} 
                                 onChange={e => setEndDate(e.target.value)} 
                                 required
+                                min={startDate}
                                 className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
                               />
                            </div>

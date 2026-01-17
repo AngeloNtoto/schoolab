@@ -202,6 +202,13 @@ export default function SetupWizard() {
       setStep(2);
     } else if (step === 2) {
       if (!yearName || !startDate || !endDate) return;
+      
+      // Date validation
+      if (new Date(startDate) >= new Date(endDate)) {
+        toast.error('La date de début doit être antérieure à la date de fin.');
+        return;
+      }
+      
       setStep(3);
     } else if (step === 3) {
       await finishSetup();
@@ -491,11 +498,12 @@ export default function SetupWizard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Date de fin</label>
-                  <input
+                   <input
                     type="date"
                     className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
                   />
                 </div>
               </div>
