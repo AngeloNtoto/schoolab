@@ -14,6 +14,9 @@
     "log:default",
     "core:path:default",
     "sql:allow-close",
-    "core:app:default"
+    "core:app:default",
+    "updater:allow-check",
+    "updater:allow-download-and-install",
+    "updater:default"
   ]
 }
