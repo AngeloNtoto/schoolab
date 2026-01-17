@@ -1,4 +1,4 @@
-import * as mammoth from 'mammoth';
+import { unzipSync, strFromU8 } from 'fflate';
 
 export interface RawStudent {
   [key: string]: any;
@@ -126,19 +126,103 @@ export function mapHeaders(headers: string[]): Record<string, string> {
 }
 
 /**
- * Parse a DOCX file using mammoth
+ * Parse a DOCX file using fflate and manual XML parsing for tables
  */
 export async function parseDocx(buffer: ArrayBuffer): Promise<RawStudent[]> {
   try {
-    const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-    const text = result.value;
-    return parsePastedText(text);
+    const uint8Array = new Uint8Array(buffer);
+    
+    // 1. Unzip the docx file
+    const unzipped = unzipSync(uint8Array);
+    
+    // 2. Extract word/document.xml
+    const documentXmlBytes = unzipped['word/document.xml'];
+    if (!documentXmlBytes) {
+      throw new Error('Format DOCX invalide (fichier interne word/document.xml manquant)');
+    }
+    
+    const documentXml = strFromU8(documentXmlBytes);
+
+    // 3. Parse XML using DOMParser (available in browser/renderer)
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(documentXml, "text/xml");
+    
+    const tables = xmlDoc.getElementsByTagName("w:tbl");
+    if (tables.length === 0) {
+      // Fallback: extract text if no tables found (naive)
+       return parsePastedText(xmlDoc.documentElement.textContent || "");
+    }
+
+    // We take the first table that looks like data
+    // Or merge all tables? Usually only one main table for student list.
+    // Let's iterate tables and find the one with most rows/columns.
+    let bestRows: RawStudent[] = [];
+
+    for (let i = 0; i < tables.length; i++) {
+        const rows = parseTableFromXml(tables[i]);
+        if (rows.length > bestRows.length) {
+            bestRows = rows;
+        }
+    }
+
+    if (bestRows.length === 0 && xmlDoc.textContent) {
+        // Fallback to text parsing if table extraction failed but text exists
+         return parsePastedText(xmlDoc.textContent);
+    }
+
+    return bestRows;
+
   } catch (error) {
     console.error('Error parsing DOCX:', error);
-    throw new Error('Erreur lors de la lecture du fichier Word. Assurez-vous qu\'il contient des données tabulaires.');
+    throw new Error('Erreur lors de la lecture du fichier Word. Assurez-vous qu\'il contient un tableau valide.');
   }
 }
 
+function parseTableFromXml(tableNode: Element): RawStudent[] {
+    const rows: RawStudent[] = [];
+    const trs = tableNode.getElementsByTagName("w:tr");
+    
+    if (trs.length < 2) return []; // Need at least header + 1 row
+
+    // Extract headers from first row
+    const headerCells = trs[0].getElementsByTagName("w:tc");
+    const headers: string[] = [];
+    
+    for (let j=0; j < headerCells.length; j++) {
+        headers.push(extractTextFromNode(headerCells[j]));
+    }
+
+    // Extract data rows
+    for (let i = 1; i < trs.length; i++) {
+        const cells = trs[i].getElementsByTagName("w:tc");
+        // Skip rows with vastly different cell count (merged cells logic simplistic)
+        // basic alignment check
+        
+        const rowData: RawStudent = {};
+        let hasData = false;
+
+        for (let j = 0; j < headers.length && j < cells.length; j++) {
+            const val = extractTextFromNode(cells[j]);
+            if (val.trim()) hasData = true;
+            rowData[headers[j]] = val;
+        }
+
+        if (hasData) {
+            rows.push(rowData);
+        }
+    }
+
+    return rows;
+}
+
+function extractTextFromNode(node: Element): string {
+    const textNodes = node.getElementsByTagName("w:t");
+    let text = "";
+    for (let i = 0; i < textNodes.length; i++) {
+        text += textNodes[i].textContent;
+    }
+    return text.trim();
+}
 
 /**
  * Parse a date string into ISO format (YYYY-MM-DD)
