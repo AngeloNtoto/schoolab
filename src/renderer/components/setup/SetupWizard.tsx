@@ -68,11 +68,27 @@ export default function SetupWizard() {
     section: string;
   };
 
-  const [newClass, setNewClass] = useState({
+  const [newClass, setNewClass] = useState<NewClassType>({
     level: LEVELS[0],
     option: OPTIONS[0].value,
     section: 'A'
-  } as NewClassType);
+  });
+
+  // Effect to automatically switch option based on level
+  React.useEffect(() => {
+    if (newClass.level === '7ème' || newClass.level === '8ème') {
+      if (newClass.option !== 'EB') {
+        setNewClass(prev => ({ ...prev, option: 'EB' }));
+      }
+    } else {
+      if (newClass.option === 'EB') {
+        const firstNonEB = OPTIONS.find(o => o.value !== 'EB');
+        if (firstNonEB) {
+          setNewClass(prev => ({ ...prev, option: firstNonEB.value }));
+        }
+      }
+    }
+  }, [newClass.level]);
 
   /**
    * Activate the license key with the server
@@ -196,16 +212,22 @@ export default function SetupWizard() {
    * Add a new class to the list
    */
   const addClass = () => {
-    setClasses([...classes, { ...newClass }]);
+    console.log('[SetupWizard] Adding class:', newClass);
+    const updatedClasses = [...classes, { ...newClass }];
+    setClasses(updatedClasses);
+    
+    // Auto-increment section for next class
     const nextSection = String.fromCharCode(newClass.section.charCodeAt(0) + 1);
-    setNewClass({ ...newClass, section: nextSection });
+    setNewClass(prev => ({ ...prev, section: nextSection }));
+    toast.success(`${getClassDisplayName(newClass.level, newClass.option, newClass.section)} ajoutée.`);
   };
 
   /**
    * Remove a class from the list
    */
   const removeClass = (index: number) => {
-    setClasses(classes.filter((_, i) => i !== index));
+    const updatedClasses = classes.filter((_, i) => i !== index);
+    setClasses(updatedClasses);
   };
 
   /**
