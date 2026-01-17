@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { studentService, Student } from '../../services/studentService';
 import { useToast } from '../../context/ToastContext';
-import { User, Calendar, MapPin, Award, ShieldAlert, X, Save, GraduationCap, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { User, Calendar, MapPin, Award, ShieldAlert, X, Save, GraduationCap, Info, AlertTriangle, CheckCircle2 } from '../iconsSvg';
 
 interface EditEleveProps {
     studentId: number | null;

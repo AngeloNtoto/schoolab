@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { X, Printer, Users, Calendar, LayoutGrid, CheckSquare, Square, Search } from 'lucide-react';
+import { X, Printer, Users, Calendar, LayoutGrid, CheckSquare, Square, Search } from '../iconsSvg';
 import { Student } from '../../services/studentService';
 
 // Types de périodes disponibles

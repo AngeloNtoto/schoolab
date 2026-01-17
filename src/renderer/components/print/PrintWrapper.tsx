@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from '../iconsSvg';
 
 /**
  * PrintWrapper.tsx

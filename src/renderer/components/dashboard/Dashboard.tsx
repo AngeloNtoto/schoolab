@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from 'lucide-react';
+import { GraduationCap, Users, Trash2, Edit, Wifi, Search, Filter, LayoutGrid, List, Layers, ArrowUpDown, ChevronDown, StickyNote } from '../iconsSvg';
 import ContextMenu from '../ui/ContextMenu';
 import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import AddNoteModal from '../class/AddNoteModal';

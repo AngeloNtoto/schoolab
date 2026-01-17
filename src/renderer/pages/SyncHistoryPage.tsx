@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { historyService, ChangeRecord, SyncLog } from '../services/historyService';
 import { syncService } from '../services/syncService';
 import { useLicense } from '../context/LicenseContext';
-import { Clock, RefreshCw, CheckCircle, AlertCircle, Plus, Edit, Trash2, ArrowRight, GitCommit, GitBranch, ChevronDown, ChevronUp, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
+import { Clock, RefreshCw, CheckCircle, AlertCircle, Plus, Edit, Trash2, ArrowRight, GitCommit, GitBranch, ChevronDown, ChevronUp, ArrowUp, ArrowDown, RotateCcw } from '../components/iconsSvg';
 import { useToast } from '../context/ToastContext';
 
 export default function SyncHistoryPage() {

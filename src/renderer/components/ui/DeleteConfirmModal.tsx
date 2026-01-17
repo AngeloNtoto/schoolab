@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X } from '../iconsSvg';
 
 interface DeleteConfirmModalProps {
   title: string;

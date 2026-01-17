@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp } from '../iconsSvg';
 
 // Services & Hooks
 import { ClassData, Subject } from '../../services/classService';

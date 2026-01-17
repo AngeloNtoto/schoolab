@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { ShieldAlert, RefreshCw, Heart } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Heart } from '../iconsSvg';
 import { useLicense } from '../../context/LicenseContext';
 
 export default function LicenseGuard({ children }: { children: React.ReactNode }) {

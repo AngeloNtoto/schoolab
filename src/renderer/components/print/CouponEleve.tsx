@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Printer, StickyNote } from 'lucide-react';
+import { ArrowLeft, Printer, StickyNote } from '../iconsSvg';
 import CouponContent, { SchoolInfo } from './CouponContent';
 import ContextMenu from '../ui/ContextMenu';
 import AddNoteModal from '../class/AddNoteModal';

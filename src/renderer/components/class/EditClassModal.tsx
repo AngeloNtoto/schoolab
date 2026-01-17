@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Settings2, GraduationCap } from 'lucide-react';
+import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Settings2, GraduationCap } from '../iconsSvg';
 import { LEVELS } from '../../../constants/school';
 import { getClassDisplayName } from '../../lib/classUtils';
 import { useToast } from '../../context/ToastContext';

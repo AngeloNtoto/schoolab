@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { ArrowLeft, Printer, Settings2 } from 'lucide-react';
+import { ArrowLeft, Printer, Settings2 } from '../iconsSvg';
 import { SchoolInfo } from './CouponContent';
 import BatchPrintModal, { PrintConfig, PeriodType } from './BatchPrintModal';
 import PrintLayout from './PrintLayout';

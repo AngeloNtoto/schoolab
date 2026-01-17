@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Smartphone, Globe, Copy, Check, Info } from 'lucide-react';
+import { Monitor, Smartphone, Globe, Copy, Check, Info } from '../../components/iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import { networkService, ServerInfo } from '../../services/networkService';
 

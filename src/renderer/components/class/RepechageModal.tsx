@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Save, TrendingUp } from 'lucide-react';
+import { X, Save, TrendingUp } from '../iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import { repechageService, Repechage } from '../../services/repechageService';
 import { Student } from '../../services/studentService';

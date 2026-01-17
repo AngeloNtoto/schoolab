@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LEVELS, OPTIONS, SUBJECT_TEMPLATES } from '../../../constants/school';
-import { ChevronRight, Calendar, Users, Check, GraduationCap, Key, Loader2, AlertCircle, Clock } from 'lucide-react';
+import { ChevronRight, Calendar, Users, Check, GraduationCap, Key, Loader2, AlertCircle, Clock } from '../iconsSvg';
 import { getClassDisplayName } from '../../lib/classUtils';
 import { useToast } from '../../context/ToastContext';
 import { useLicense } from '../../context/LicenseContext';

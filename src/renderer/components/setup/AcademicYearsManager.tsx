@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { academicYearService, AcademicYear } from '../../services/academicYearService';
-import { CalendarRange, Plus, Check, Trash2, Calendar } from 'lucide-react';
+import { CalendarRange, Plus, Check, Trash2, Calendar } from '../iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import ProfessionalLoader from '../ui/ProfessionalLoader';
 

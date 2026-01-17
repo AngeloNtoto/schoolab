@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Send, Download, RefreshCw, Settings, ArrowLeft, Globe } from 'lucide-react';
+import { Monitor, Send, Download, RefreshCw, Settings, ArrowLeft, Globe } from '../../components/iconsSvg';
 import { useNavigate } from 'react-router-dom';
 import { networkService } from '../../services/networkService';
 import SendPanel from './SendPanel';

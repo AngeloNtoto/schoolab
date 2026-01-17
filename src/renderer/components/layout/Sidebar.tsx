@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote, History as HistoryIcon } from 'lucide-react';
+import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote, History as HistoryIcon } from '../iconsSvg';
 import { SchoolabSymbol, LogoFull } from '../ui/Logo';
 
 interface SidebarProps {

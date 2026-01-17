@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { dbService } from '../services/databaseService';
 import { notesService, Note } from '../services/notesService';
-import { Plus, Search, StickyNote, Trash2, Calendar, Tag, X, User, Users, Eye, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Plus, Search, StickyNote, Trash2, Calendar, Tag, X, User, Users, Eye, ChevronRight, ArrowLeft } from '../components/iconsSvg';
 import AddNoteModal from '../components/class/AddNoteModal';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';

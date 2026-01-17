@@ -1,4 +1,4 @@
-import { Wifi, Send, CheckCircle, AlertCircle, Loader2, Monitor, ChevronDown } from 'lucide-react';
+import { Wifi, Send, CheckCircle, AlertCircle, Loader2, Monitor, ChevronDown } from '../../components/iconsSvg';
 import { networkService } from '../../services/networkService';
 import { dbService } from '../../services/databaseService';
 import React,{useState,useEffect} from 'react';

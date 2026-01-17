@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, Download, Loader2 } from 'lucide-react';
+import { Wifi, Download, Loader2 } from '../../components/iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import { networkService } from '../../services/networkService';
 

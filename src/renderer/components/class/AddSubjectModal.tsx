@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2 } from 'lucide-react';
+import { X, BookOpen, Plus, Trash2 } from '../iconsSvg';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, Info, AlertCircle } from '../iconsSvg';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 

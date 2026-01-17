@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer } from '../iconsSvg';
 import BulletinHumanitesContent from './BulletinHumanitesContent';
 import BulletinPrimaireContent from './BulletinPrimaireContent';
 

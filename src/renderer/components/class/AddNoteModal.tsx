@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, StickyNote, User, Users, FileText, ChevronDown, Tag } from 'lucide-react';
+import { X, Save, StickyNote, User, Users, FileText, ChevronDown, Tag } from '../iconsSvg';
 import { dbService } from '../../services/databaseService';
 import { notesService, Note } from '../../services/notesService';
 import { useToast } from '../../context/ToastContext';

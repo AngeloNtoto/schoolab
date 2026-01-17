@@ -11,7 +11,7 @@
  */
 
 import React, { useState } from 'react';
-import { Lock, KeyRound, Eye, EyeOff, GraduationCap, ShieldCheck } from 'lucide-react';
+import { Lock, KeyRound, Eye, EyeOff, GraduationCap, ShieldCheck } from '../iconsSvg';
 
 interface AuthScreenProps {
   /** Whether this is the first run (create password) or login */

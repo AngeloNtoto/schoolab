@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { settingsService } from '../services/settingsService';
 import { useLicense } from '../context/LicenseContext';
-import { Clock,Moon, Sun, School, Info, Building2,Key,ShieldCheck, User, Heart, Sparkles, Settings, ShieldAlert, RefreshCw, Download } from 'lucide-react';
+import { Clock,Moon, Sun, School, Info, Building2,Key,ShieldCheck, User, Heart, Sparkles, Settings, ShieldAlert, RefreshCw, Download } from '../components/iconsSvg';
 import { useToast } from '../context/ToastContext';
 import { seedingService } from '../services/seedingService';
 import { licenseService } from '../services/licenseService';

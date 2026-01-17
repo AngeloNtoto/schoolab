@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox, FileJson, Check, X, Clock, AlertTriangle, Copy, Trash2, Merge } from 'lucide-react';
+import { Inbox, FileJson, Check, X, Clock, AlertTriangle, Copy, Trash2, Merge } from '../../components/iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import { networkService } from '../../services/networkService';
 import { dbService } from '../../services/databaseService';

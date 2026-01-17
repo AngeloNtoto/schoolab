@@ -2,7 +2,7 @@ import { dbService } from 'src/renderer/services/databaseService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getClassDisplayName } from 'src/renderer/lib/classUtils';
-import { Search,User,Bell } from 'lucide-react';
+import { Search,User,Bell } from '../iconsSvg';
 
 
 export default function TopNavigation() {

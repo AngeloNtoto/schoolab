@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, FileText, Clipboard, Check, AlertCircle, ArrowRight, Table, Sparkles } from 'lucide-react';
+import { X, Upload, FileText, Clipboard, Check, AlertCircle, ArrowRight, Table, Sparkles } from '../iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import { Student } from '../../services/studentService';
 import { parseDocx, parsePastedText, mapHeaders, parseDate, parseGender, RawStudent } from '../../lib/importUtils';
