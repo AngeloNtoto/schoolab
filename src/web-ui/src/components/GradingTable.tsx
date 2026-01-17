@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2 } from './iconsSvg';
 import { Class, Subject, Student, Grade } from '../types';
 
 interface GradingTableProps {

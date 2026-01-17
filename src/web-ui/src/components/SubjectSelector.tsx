@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2 } from './iconsSvg';
 import { Class, Subject } from '../types';
 
 interface SubjectSelectorProps {
