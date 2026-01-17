@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Schoolab",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "identifier": "com.schoolab.desktop",
   
   "build": {
@@ -44,7 +44,7 @@
       "endpoints": [
         "https://github.com/AngeloNtoto/schoolab/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENBMjE0RTRCMzNCQzk4NkYKUldSdm1Md3pTMDRoeW90WTUvVzVmNkZqMXVYWmgydzlpTEpEY3lVelFta1B1bi9UbEdEZi9lbUwK"
+      "pubkey": "RWRvmLwzS04hyotY5/W5f6Fj1uXZh2w9iLJDcyUzQmkPun/TlGDf/emL"
     }
   }
 }
