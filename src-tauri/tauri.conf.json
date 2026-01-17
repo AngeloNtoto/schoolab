@@ -27,6 +27,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "resources": [
       "../dist-web"
     ],
@@ -38,12 +39,13 @@
     ]
   },
   "plugins": {
-    "updater": {
-      "active": true,
-      "endpoints": [
-        "https://raw.githubusercontent.com/AngeloNtoto/schoolab/master/updater.json"
-      ],
-      "pubkey": "RWRvmLwzS04hyotY5/W5f6Fj1uXZh2w9iLJDcyUzQmkPun/TlGDf/emL" 
-    }
+  "updater": {
+    "active": true,
+    "endpoints": [
+      "https://github.com/AngeloNtoto/schoolab/releases/latest/download/latest.json"
+    ],
+    "pubkey": "RWRvmLwzS04hyotY5/W5f6Fj1uXZh2w9iLJDcyUzQmkPun/TlGDf/emL"
   }
+}
+
 }

@@ -36,6 +36,6 @@ tiny_http = "0.12"
 lto = "fat"
 codegen-units = 1
 panic = "abort"
-strip = true
+strip = false
 opt-level = "z" # Optimiser pour la taille
 
