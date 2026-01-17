@@ -511,7 +511,7 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            let app_handle = app.handle().clone();
+            let _app_handle = app.handle().clone();
 
             let db_path = get_db_path(app.handle());
             info!("Initializing application...");
