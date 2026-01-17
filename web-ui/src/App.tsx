@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useTransition } from 'react';
-import { GraduationCap, Users, BookOpen, ChevronLeft, Loader2, Smartphone, Monitor, CheckCircle2 } from './components/iconsSvg';
+import { GraduationCap, Users, BookOpen, ChevronLeft, Loader2, Smartphone, Monitor, CheckCircle2 } from "../src/components/iconsSvg"
 
 // Types
 interface Class {

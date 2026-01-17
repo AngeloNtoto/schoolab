@@ -1,6 +1,6 @@
 [package]
 name = "schoolab"
-version = "1.1.1"
+version = "1.1.2"
 description = "Schoolab - Système de gestion scolaire"
 authors = ["Angelo"]
 edition = "2021"
@@ -36,7 +36,7 @@ tokio-stream = { version = "0.1", features = ["sync"] }
 futures = "0.3"
 
 [profile.release]
-lto = true
+lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
