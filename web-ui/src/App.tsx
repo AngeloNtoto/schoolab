@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useTransition } from 'react';
-import { GraduationCap, Users, BookOpen, ChevronLeft, Loader2, Smartphone, Monitor, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, Users, BookOpen, ChevronLeft, Loader2, Smartphone, Monitor, CheckCircle2 } from './components/iconsSvg';
 
 // Types
 interface Class {
