@@ -40,9 +40,6 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
     onClose();
   };
 
-  /**
-   * Process raw rows with current mapping
-   */
   const processRows = (rows: RawStudent[], currentMapping: Record<string, string>) => {
     const students = rows.map(row => {
       const student: Partial<Student> = {
@@ -59,9 +56,6 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
     setParsedStudents(students);
   };
 
-  /**
-   * Handle File Upload (Excel or Word)
-   */
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -101,9 +95,6 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
     }
   };
 
-  /**
-   * Handle Paste Text
-   */
   const handlePaste = () => {
     if (!pastedText.trim()) {
       toast.error('Veuillez coller du texte d\'abord.');
@@ -213,6 +204,72 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
         </div>
 
         {/* Content */}
+        <div className="flex-1 overflow-auto p-12 custom-scrollbar">
+            {step === 'initial' && (
+                <div 
+                    className="grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in duration-300"
+                >
+                    {/* File Upload */}
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-200 flex items-center gap-3">
+                            <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                            Fichiers Supportés
+                        </h3>
+                        <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="group cursor-pointer border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem] p-12 text-center transition-all hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-600/5 relative overflow-hidden"
+                        >
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                accept=".docx" 
+                                onChange={handleFileUpload}
+                            />
+                            <div className="relative z-10 space-y-4">
+                                <div className="bg-white dark:bg-slate-900 w-24 h-24 mx-auto rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                                    <FileText size={32} className="text-blue-600" />
+                                </div>
+                                <div>
+                                    <p className="font-black text-lg text-slate-800 dark:text-slate-200">Word Document Only</p>
+                                    <p className="text-xs text-slate-400 font-medium">Déposez votre fichier .docx ici</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {['.docx'].map(ext => (
+                                <span key={ext} className="px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{ext} uniquement</span>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Paste Logic */}
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-200 flex items-center gap-3">
+                            <div className="w-2 h-8 bg-indigo-600 rounded-full"></div>
+                            Copier-Coller Direct
+                        </h3>
+                        <div className="relative group">
+                            <div className="absolute top-4 right-4 text-slate-300 group-hover:text-indigo-500 transition-colors">
+                                <Clipboard size={24} />
+                            </div>
+                            <textarea 
+                                value={pastedText}
+                                onChange={(e) => setPastedText(e.target.value)}
+                                placeholder="Collez ici les données copiées de votre tableau Word..."
+                                className="w-full h-64 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 text-sm font-medium outline-none focus:border-indigo-500 focus:ring-8 focus:ring-indigo-500/10 transition-all shadow-inner"
+                            />
+                        </div>
+                        <button 
+                            onClick={handlePaste}
+                            disabled={!pastedText.trim()}
+                            className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            Analyser le texte
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {step === 'mapping' && (
                 <div 
@@ -385,5 +442,6 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
             )}
         </div>
       </div>
+    </div>
   );
 }
