@@ -17,6 +17,7 @@
     "core:app:default",
     "updater:allow-check",
     "updater:allow-download-and-install",
-    "updater:default"
+    "updater:default",
+    "process:allow-restart"
   ]
 }
