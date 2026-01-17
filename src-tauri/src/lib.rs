@@ -8,7 +8,6 @@ use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
 use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -483,19 +482,15 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
 }
 
 #[tauri::command]
-async fn start_web_server(
-    state: tauri::State<'_, Arc<server::AppState>>,
-) -> Result<server::ServerInfo, String> {
+async fn start_web_server(app_handle: tauri::AppHandle) -> Result<server::ServerInfo, String> {
     // En mode dev, on remonte d'un niveau depuis src-tauri pour atteindre dist-mobile
     // En production, dist-mobile sera dans le bundle Tauri
-    let web_dist = std::env::current_dir()
-        .unwrap_or_default()
-        .parent()
-        .map(|p| p.join("dist-web"))
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default().join("dist-web"));
+    // NB: tiny-server resolve logic is in server.rs, we just passed db_path
 
-    log::info!("Chemin dist-mobile: {:?}", web_dist);
-    server::start_server(state.inner().clone(), web_dist, 3030).await
+    // We need db_path here.
+    let db_path = get_db_path(&app_handle);
+
+    server::start_web_server(app_handle.clone(), db_path)
 }
 
 #[tauri::command]
@@ -526,15 +521,7 @@ pub fn run() {
             info!("Database path: {:?}", db_path);
             db::initialize_db(&db_path).expect("Failed to initialize database");
 
-            // Initialiser l'état partagé pour le serveur Marking Board
-            let (tx, _) = tokio::sync::broadcast::channel(100);
-            let state = Arc::new(server::AppState {
-                db_path: db_path.clone(),
-                tx,
-                app_handle: app.handle().clone(),
-            });
-
-            app.manage(state);
+            // Pas besoin d'initialiser AppState serveur ici, tiny-http gère le sien
 
             Ok(())
         })

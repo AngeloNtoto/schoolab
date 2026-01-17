@@ -137,12 +137,14 @@ export function useGrades(classId: number) {
       });
       
       // Notifier le serveur web (mobile) du changement effectué sur l'ordinateur
+      console.log('[useGrades] Broadcasting grade update to mobile...');
       try {
         await networkService.broadcastDbChange({
           type: 'grade_update',
           updates: [{ student_id: studentId, subject_id: subjectId, period, value }],
           senderId: 'desktop'
         });
+        console.log('[useGrades] Broadcast successful!');
       } catch (e) {
         console.warn('[useGrades] Failed to broadcast update to mobile:', e);
       }

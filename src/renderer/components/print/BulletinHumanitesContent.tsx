@@ -10,11 +10,14 @@ import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { StudentRanks } from '../../services/bulletinService';
 
+import { Repechage } from '../../services/repechageService';
+
 export interface BulletinHumanitesContentProps {
   student: Student;
   classInfo: ClassData;
   subjects: Subject[];
   grades: Grade[];
+  repechages: Repechage[];
   schoolName: string;
   schoolCity: string;
   studentRanks: StudentRanks;
@@ -35,6 +38,7 @@ export default function BulletinHumanitesContent({
   classInfo,
   subjects,
   grades,
+  repechages = [],
   schoolName,
   schoolCity,
   studentRanks,
@@ -279,6 +283,8 @@ export default function BulletinHumanitesContent({
 
                     const tg = (tot1 || 0) + (tot2 || 0);
 
+                    const repechage = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
+
                     return (
                       <tr key={subject.id}>
                         <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
@@ -291,7 +297,7 @@ export default function BulletinHumanitesContent({
                         {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex2 ?? ''}</td>)}
                         <td className="border border-black font-bold py-0.5">{tot2 ?? ''}</td>
                         <td className="border border-black font-bold bg-slate-50 py-0.5">{tg || ''}</td>
-                        <td className="border border-black py-0.5"></td>
+                        <td className="border border-black py-0.5">{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
                         <td className="border border-black py-0.5"></td>
                       </tr>
                     );

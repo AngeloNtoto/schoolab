@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, Printer } from '../iconsSvg';
 import BulletinHumanitesContent from './BulletinHumanitesContent';
 
@@ -10,6 +10,7 @@ import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { bulletinService } from '../../services/bulletinService';
+import { repechageService, Repechage } from '../../services/repechageService';
 
 interface BulletinHumanitesProps {
   studentId: number | null;
@@ -35,6 +36,13 @@ export default function BulletinHumanites({
 
   // Ref pour isoler la zone d'impression
   const bulletinRef = useRef<HTMLDivElement>(null);
+  const [repechages, setRepechages] = useState<Repechage[]>([]);
+
+  useEffect(() => {
+    if (studentId) {
+      repechageService.getRepechagesByStudent(studentId).then(setRepechages).catch(console.error);
+    }
+  }, [studentId]);
 
   // Données dérivées (calculées à la volée ou memoïsées)
   // 1. Trouver l'élève
@@ -107,6 +115,7 @@ export default function BulletinHumanites({
           classInfo={classInfo}
           subjects={subjects}
           grades={studentGrades}
+          repechages={repechages}
           schoolName={schoolName}
           schoolCity={schoolCity}
           studentRanks={studentRanks}

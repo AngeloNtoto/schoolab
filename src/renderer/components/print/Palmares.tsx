@@ -4,6 +4,8 @@ import { ArrowLeft, Printer } from '../iconsSvg';
 // Système d'impression
 import PrintButton from './PrintWrapper';
 
+import { repechageService, Repechage } from '../../services/repechageService';
+
 interface Student {
   id: number;
   first_name: string;
@@ -51,6 +53,7 @@ interface RankedStudent {
   application: string;
   isUnranked: boolean;
   failedSubjects: string[];
+  repechageSubjects: string[]; // Added for repêchage mode
   subjectDetails: {
     subjectName: string;
     points: number;
@@ -59,11 +62,12 @@ interface RankedStudent {
 }
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
+type PalmaresMode = 'BEFORE_REPECHAGE' | 'AFTER_REPECHAGE';
 
 /**
  * Composant pour l'affichage propre de l'observation d'un élève
  */
-const StudentObservation = ({ rankedStudent, selectedPeriod }: { rankedStudent: RankedStudent, selectedPeriod: Period }) => {
+const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStudent: RankedStudent, selectedPeriod: Period, mode: PalmaresMode }) => {
   const student = rankedStudent.student;
   
   if (student.is_abandoned) {
@@ -78,6 +82,27 @@ const StudentObservation = ({ rankedStudent, selectedPeriod }: { rankedStudent: 
     return <span className="text-slate-500 italic text-[7.5px]">Non classé</span>;
   }
 
+  // Logic for AFTER_REPECHAGE mode
+  if (mode === 'AFTER_REPECHAGE') {
+    if (rankedStudent.repechageSubjects.length > 0) {
+       return (
+        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
+          <span className="text-blue-600 font-semibold whitespace-nowrap">
+            Repêché ({rankedStudent.repechageSubjects.length} cours) :
+          </span>
+          <span className="text-slate-700">{rankedStudent.repechageSubjects.join(', ')}</span>
+        </div>
+      );
+    } else {
+        // If no repêchage, show existing logic or "Néant"
+         if (rankedStudent.percentage < 50) {
+            return <span className="text-red-600 font-bold text-[7.5px] uppercase">A échoué</span>;
+         }
+         return <span className="text-green-600 font-medium text-[7.5px]">Passé</span>;
+    }
+  }
+
+  // Default BEFORE_REPECHAGE logic
   if (rankedStudent.percentage < 50) {
     return <span className="text-red-600 font-bold text-[7.5px] uppercase">Redouble la classe</span>;
   }
@@ -127,6 +152,12 @@ export default function Palmares({
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('SEM1');
   const [onlyAbandons, setOnlyAbandons] = useState(false);
   const [sortByAbandon] = useState(false);
+  const [palmaresMode, setPalmaresMode] = useState<PalmaresMode>('BEFORE_REPECHAGE');
+  const [repechages, setRepechages] = useState<Repechage[]>([]);
+
+  React.useEffect(() => {
+    repechageService.getRepechagesByClass(classInfo.id).then(setRepechages).catch(console.error);
+  }, [classInfo.id]);
 
   const printCss = `
     @page { 
@@ -210,6 +241,7 @@ export default function Palmares({
       let totalMaxPoints = 0;
       let hasAllGrades = true;
       const failedSubjects: string[] = [];
+      const repechageSubjects: string[] = [];
       const subjectDetails: RankedStudent['subjectDetails'] = [];
 
       for (const subject of subjects) {
@@ -239,6 +271,13 @@ export default function Palmares({
             failedSubjects.push(subject.code || subject.name);
           }
         }
+        
+        // Check for Repechage in this subject (> 1%)
+        const rep = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
+        if (rep && rep.percentage > 1) {
+            repechageSubjects.push(subject.code || subject.name);
+        }
+
         subjectDetails.push({
           subjectName: subject.code || subject.name,
           points: subjectPoints,
@@ -257,6 +296,7 @@ export default function Palmares({
         application: hasAllGrades ? getApplication(percentage) : '-',
         isUnranked: !hasAllGrades,
         failedSubjects,
+        repechageSubjects,
         subjectDetails,
       });
     }
@@ -278,7 +318,7 @@ export default function Palmares({
     }
 
     return [...ranked, ...unranked];
-  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon]);
+  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages]);
 
   const formatConduite = (stu: Student) => {
     switch (selectedPeriod) {
@@ -338,9 +378,18 @@ export default function Palmares({
             <span>Exclure les abandons</span>
           </label>
 
+          <select
+            value={palmaresMode}
+            onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+          >
+            <option value="BEFORE_REPECHAGE">Avant Repêchage</option>
+            <option value="AFTER_REPECHAGE">Après Repêchage</option>
+          </select>
+
           <PrintButton
             targetRef={palmaresRef}
-            title={`Palmarès - ${classInfo.name} - ${selectedPeriod}`}
+            title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Rep.' : 'Avant Rep.'}) - ${classInfo.name} - ${selectedPeriod}`}
             extraCss={printCss}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
           >
@@ -373,7 +422,7 @@ export default function Palmares({
         </div>
 
         <h1 className="text-center text-[15px] font-bold mb-2 uppercase text-slate-800">
-          Palmarès - {classInfo.name} - {selectedPeriod}
+          Palmarès {palmaresMode === 'AFTER_REPECHAGE' ? '(Après Repêchage)' : ''} - {classInfo.name} - {selectedPeriod}
         </h1>
 
         <table className="w-full border-collapse border-2 border-black text-[10px]">
@@ -406,7 +455,7 @@ export default function Palmares({
                   {formatConduite(rankedStudent.student)}
                 </td>
                 <td className="border border-black px-1.5 py-0.5">
-                  <StudentObservation rankedStudent={rankedStudent} selectedPeriod={selectedPeriod} />
+                  <StudentObservation rankedStudent={rankedStudent} selectedPeriod={selectedPeriod} mode={palmaresMode} />
                 </td>
               </tr>
             ))}

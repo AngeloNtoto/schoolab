@@ -12,6 +12,7 @@ import { Domain } from '../../services/domainService';
 
 // Import du composant d'impression isolé
 import PrintButton from './PrintWrapper';
+import { repechageService, Repechage } from '../../services/repechageService';
 
 interface ClassBulletinsProps {
   classInfo: ClassData;
@@ -44,11 +45,24 @@ export default function ClassBulletins({
   // État local pour le filtres
   const [onlyAbandons, setOnlyAbandons] = useState(false);
 
+  // État pour les repêchages
+  const [repechages, setRepechages] = useState<Repechage[]>([]);
+
   // Attendre 300ms avant de lancer les calculs lourds
   React.useEffect(() => {
-    const timer = setTimeout(() => setIsReady(true), 350);
+    const loadData = async () => {
+        try {
+            const reps = await repechageService.getRepechagesByClass(classInfo.id);
+            setRepechages(reps);
+        } catch (e) {
+            console.error("Failed to load repechages", e);
+        }
+        setIsReady(true);
+    };
+
+    const timer = setTimeout(loadData, 350);
     return () => clearTimeout(timer);
-  }, []);
+  }, [classInfo.id]);
 
   // Calcul synchrone des rangs pour tous les élèves
   const { allRanks, totalStudents } = useMemo(() => {
@@ -195,6 +209,7 @@ export default function ClassBulletins({
                     classInfo={classInfo}
                     subjects={subjects}
                     grades={studentGrades}
+                    repechages={repechages}
                     schoolName={schoolName}
                     schoolCity={schoolCity}
                     studentRanks={ranks}

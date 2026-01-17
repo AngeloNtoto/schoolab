@@ -49,10 +49,17 @@ export default function App() {
 
     const eventSource = api.getEventSource();
     eventSource.onmessage = (event) => {
+      console.log('[SSE] Raw message received:', event.data);
       try {
-        const { event: eventName, senderId } = JSON.parse(event.data);
+        const parsed = JSON.parse(event.data);
+        console.log('[SSE] Parsed:', parsed);
+        const { event: eventName, senderId } = parsed;
+        console.log('[SSE] eventName:', eventName, 'senderId:', senderId, 'clientId:', clientId);
         if (eventName === 'db:changed') {
-          if (senderId === clientId) return;
+          if (senderId === clientId) {
+            console.log('[SSE] Ignoring own message');
+            return;
+          }
 
           console.log('[SYNC] Base de données modifiée, rafraîchissement...');
           if (selectedClass) {
