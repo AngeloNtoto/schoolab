@@ -501,6 +501,7 @@ fn get_web_server_info() -> Option<server::ServerInfo> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|app| {
             #[cfg(debug_assertions)]

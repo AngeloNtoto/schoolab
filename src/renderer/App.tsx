@@ -36,6 +36,8 @@ import { dbService } from './services/databaseService';
 import { listen } from '@tauri-apps/api/event';
 
 
+import { updateService } from './services/updateService';
+
 // Authentication states
 type AuthState = 'loading' | 'create-password' | 'login' | 'authenticated';
 
@@ -48,6 +50,9 @@ export default function App() {
 
   useEffect(() => {
     checkAuthState();
+    
+    // Vérifier les mises à jour au démarrage
+    updateService.checkForUpdates(true);
 
     // Listen for database changes from the web server (mobile)
     const unlisten = listen('db:changed', (event) => {

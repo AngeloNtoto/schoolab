@@ -43,8 +43,9 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-sql": "^2.3.1",
-    "core": "link:@tauri-apps/api/core",
+    "@tauri-apps/plugin-updater": "^2.9.0",
     "fflate": "^0.8.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

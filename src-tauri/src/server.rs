@@ -3,7 +3,7 @@
 
 use std::fs::File;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -54,47 +54,6 @@ fn get_local_ip() -> Option<std::net::IpAddr> {
     let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
     socket.connect("8.8.8.8:80").ok()?;
     socket.local_addr().ok().map(|addr| addr.ip())
-}
-
-// Structure pour le flux SSE
-struct SseReader {
-    rx: std::sync::mpsc::Receiver<serde_json::Value>,
-}
-
-impl io::Read for SseReader {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        // Bloquant avec timeout pour keep-alive (simulé)
-        match self.rx.recv_timeout(Duration::from_secs(10)) {
-            Ok(msg) => {
-                let data = format!("data: {}\n\n", msg);
-                let bytes = data.as_bytes();
-                let len = bytes.len();
-                if len > buf.len() {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "Buffer too small for SSE",
-                    ));
-                }
-                buf[0..len].copy_from_slice(bytes);
-                Ok(len)
-            }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                // Keep-alive
-                let data = ": keep-alive\n\n";
-                let bytes = data.as_bytes();
-                let len = bytes.len();
-                if len > buf.len() {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "Buffer too small for KA",
-                    ));
-                }
-                buf[0..len].copy_from_slice(bytes);
-                Ok(len)
-            }
-            Err(_) => Ok(0), // Disconnected
-        }
-    }
 }
 
 fn cors_headers() -> Vec<Header> {
@@ -677,6 +636,4 @@ struct GradeUpdate {
 #[derive(Deserialize, Debug)]
 struct BatchGradeRequest {
     updates: Vec<GradeUpdate>,
-    #[serde(rename = "senderId")]
-    sender_id: Option<String>,
 }
