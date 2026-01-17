@@ -45,6 +45,8 @@
     "@tauri-apps/api": "^2.1.1",
     "@tauri-apps/plugin-sql": "^2.3.1",
     "core": "link:@tauri-apps/api/core",
+    "mammoth": "^1.4.17",
+    "xlsx": "^0.18.5",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

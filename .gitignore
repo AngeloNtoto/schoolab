@@ -1,3 +1,7 @@
 node_modules
 .vite
 dist-web
+vite
+dist
+.agent
+/dist-web
