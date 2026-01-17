@@ -90,106 +90,6 @@ pub fn get_cloud_url() -> String {
     std::env::var("CLOUD_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
 }
 
-/// Migrates the database from the old Electron userData directory to the new Tauri appData directory.
-fn migrate_from_electron(app_handle: &tauri::AppHandle) -> Result<(), String> {
-    info!("Migration: Checking for Electron database to migrate...");
-    let new_db_path = get_db_path(app_handle);
-
-    // If the new database already exists, we only migrate if it's "fresh" (no school name set)
-    if new_db_path.exists() {
-        if let Ok(conn) = Connection::open(&new_db_path) {
-            let school_name: Option<String> = conn
-                .query_row(
-                    "SELECT value FROM settings WHERE key = 'school_name'",
-                    [],
-                    |row| row.get(0),
-                )
-                .ok();
-
-            if school_name.is_some() {
-                info!("Migration: New database already has data, skipping migration.");
-                return Ok(());
-            }
-            info!("Migration: New database exists but is empty, proceeding with migration check.");
-        }
-    }
-
-    // Determine the old Electron userData directory based on the OS.
-    let old_user_data_dir = if cfg!(target_os = "linux") {
-        app_handle
-            .path()
-            .config_dir()
-            .ok()
-            .map(|p| p.join("Schoolab"))
-    } else if cfg!(target_os = "macos") {
-        // Electron on macOS: ~/Library/Application Support/Schoolab
-        app_handle
-            .path()
-            .data_dir()
-            .ok()
-            .map(|p| p.join("Application Support").join("Schoolab"))
-    } else if cfg!(target_os = "windows") {
-        app_handle
-            .path()
-            .config_dir()
-            .ok()
-            .map(|p| p.join("Schoolab"))
-    } else {
-        None
-    };
-
-    if let Some(old_dir) = old_user_data_dir {
-        if !old_dir.exists() {
-            info!(
-                "Migration: Old Electron directory not found at {:?}",
-                old_dir
-            );
-            return Ok(());
-        }
-
-        // Check for ecole.db (production) or dev.db (development)
-        let db_names = ["ecole.db", "dev.db"];
-        let mut found_db = None;
-
-        for name in db_names {
-            let path = old_dir.join(name);
-            if path.exists() {
-                found_db = Some(path);
-                break;
-            }
-        }
-
-        if let Some(old_path) = found_db {
-            info!("Migration: Old Electron database found at {:?}", old_path);
-            info!("Migration: Copying to {:?}", new_db_path);
-
-            // Ensure parent directory exists for the new path
-            if let Some(parent) = new_db_path.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("Failed to create new app data dir: {}", e))?;
-            }
-
-            // In Tauri, we use dev.db in debug and ecole.db in release.
-            // But if we are migrating, we might want to respect the source name?
-            // Actually, the user wants dev.db in dev and ecole.db in prod.
-            // So we copy WHATEVER we found to the CURRENT new_db_path.
-            std::fs::copy(&old_path, &new_db_path)
-                .map_err(|e| format!("Failed to copy database: {}", e))?;
-
-            info!("Migration: Database migrated successfully.");
-        } else {
-            info!(
-                "Migration: No old Electron database (ecole.db or dev.db) found in {:?}",
-                old_dir
-            );
-        }
-    } else {
-        info!("Migration: Could not determine old Electron directory for this OS.");
-    }
-
-    Ok(())
-}
-
 #[tauri::command]
 fn get_hwid() -> String {
     get_hwid_internal()
@@ -620,11 +520,6 @@ pub fn run() {
                     .level(log::LevelFilter::Warn)
                     .build(),
             )?;
-
-            // Migrate from Electron if necessary
-            if let Err(e) = migrate_from_electron(app.handle()) {
-                error!("Migration error: {}", e);
-            }
 
             let db_path = get_db_path(app.handle());
             info!("Initializing application...");
