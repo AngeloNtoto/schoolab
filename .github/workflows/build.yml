@@ -74,13 +74,15 @@ jobs:
           SIG_FILE=$(find src-tauri/target/release/bundle/appimage -name "*.AppImage.sig" | head -n 1)
           SIGNATURE=$(cat "$SIG_FILE")
 
+          export VERSION SIGNATURE
+
           node -e "
             const fs = require('fs');
             const manifest = JSON.parse(fs.readFileSync('updater.json', 'utf8'));
-            manifest.version = '$VERSION';
+            manifest.version = process.env.VERSION;
             manifest.pub_date = new Date().toISOString();
-            manifest.platforms['linux-x86_64'].signature = '$SIGNATURE';
-            manifest.platforms['linux-x86_64'].url = 'https://github.com/AngeloNtoto/schoolab/releases/download/v$VERSION/Schoolab_' + '$VERSION' + '_amd64.AppImage';
+            manifest.platforms['linux-x86_64'].signature = process.env.SIGNATURE;
+            manifest.platforms['linux-x86_64'].url = 'https://github.com/AngeloNtoto/schoolab/releases/download/v' + process.env.VERSION + '/Schoolab_' + process.env.VERSION + '_amd64.AppImage';
             fs.writeFileSync('updater.json', JSON.stringify(manifest, null, 2));
           "
 
