@@ -183,6 +183,5 @@ export default function RepechageModal({ isOpen, onClose, student, subjects }: R
         </div>
         </div>
       </div>
-    </div>
   );
 }

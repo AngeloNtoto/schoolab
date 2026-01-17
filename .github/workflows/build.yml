@@ -49,34 +49,6 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      - name: build mobile UI
-        run: pnpm build:mobile
-
-      - name: install UPX
-        uses: svenstaro/upx-action@v2
-        with:
-          install-only: true
-
-      - name: build and optimize binary
-        shell: bash
-        run: |
-          # Build without bundling first to expose the binary
-          pnpm tauri build --no-bundle ${{ matrix.platform == 'windows-latest' && '--target x86_64-pc-windows-msvc' || '' }}
-
-          # Locate and optimize binary with UPX
-          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            BINARY="src-tauri/target/x86_64-pc-windows-msvc/release/schoolab.exe"
-          else
-            BINARY="src-tauri/target/release/schoolab"
-          fi
-
-          if [[ -f "$BINARY" ]]; then
-            echo "Optimizing $BINARY with UPX..."
-            upx --ultra-brute "$BINARY"
-          else
-            echo "Warning: Binary $BINARY not found for optimization"
-          fi
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
