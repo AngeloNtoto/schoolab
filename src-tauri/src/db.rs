@@ -19,6 +19,14 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             last_modified_at TEXT DEFAULT '1970-01-01 00:00:00'
         );
 
+        CREATE TABLE IF NOT EXISTS options (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT NOT NULL UNIQUE,
+            display_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT '1970-01-01 00:00:00',
+            updated_at TEXT DEFAULT '1970-01-01 00:00:00'
+        );
+
         CREATE TABLE IF NOT EXISTS academic_years (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -86,7 +94,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         CREATE TABLE IF NOT EXISTS subjects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            code TEXT NOT NULL,
+            code TEXT NOT NULL DEFAULT '',
             max_p1 INTEGER NOT NULL DEFAULT 10,
             max_p2 INTEGER NOT NULL DEFAULT 10,
             max_exam1 INTEGER NOT NULL DEFAULT 20,
@@ -125,6 +133,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             content TEXT NOT NULL,
+            tags TEXT DEFAULT '',
             target_type TEXT NOT NULL DEFAULT 'general',
             target_id INTEGER,
             academic_year_id INTEGER REFERENCES academic_years(id) ON DELETE SET NULL,
@@ -179,6 +188,9 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
     ",
     )
     .map_err(|e| e.to_string())?;
+
+    // Migration logic for existing databases
+    let _ = conn.execute("ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT ''", []);
 
     // Setup triggers for all sync tables
     let sync_tables = vec![

@@ -132,12 +132,12 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       if (editingSubject) {
         await dbService.execute(
           'UPDATE subjects SET name = ?, code = ?, sub_domain = ?, max_p1 = ?, max_p2 = ?, max_exam1 = ?, max_p3 = ?, max_p4 = ?, max_exam2 = ?, domain_id = ? WHERE id = ?',
-          [sName, sCode, sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
+          [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
         );
       } else {
         await dbService.execute(
           'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [sName, sCode, sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
+          [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
         );
       }
       
