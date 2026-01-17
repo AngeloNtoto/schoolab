@@ -136,9 +136,13 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300">
+    <div 
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300"
+      onClick={handleClose}
+    >
       <div 
         className="bg-white dark:bg-[#020617] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden shrink-0">
@@ -201,7 +205,14 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Date de naissance</label>
-                        <input name="birth_date" type="date" className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
+                        <input 
+                          name="birth_date" 
+                          type="date" 
+                          className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" 
+                          onChange={(e) => {
+                            if (e.target.value) e.target.blur();
+                          }}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Lieu de naissance</label>

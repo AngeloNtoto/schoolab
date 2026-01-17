@@ -489,11 +489,14 @@ export default function SetupWizard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Date de début</label>
-                  <input
+                   <input
                     type="date"
                     className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      if (e.target.value) e.target.blur();
+                    }}
                   />
                 </div>
                 <div>
@@ -502,7 +505,10 @@ export default function SetupWizard() {
                     type="date"
                     className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      if (e.target.value) e.target.blur();
+                    }}
                     min={startDate}
                   />
                 </div>

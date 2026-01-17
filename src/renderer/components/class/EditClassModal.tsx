@@ -263,9 +263,13 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   if (!academicYearId) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300">
+    <div 
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300"
+      onClick={onClose}
+    >
       <div 
         className="bg-white dark:bg-[#020617] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-2xl flex flex-col h-auto max-h-[85vh] animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden shrink-0 transition-colors duration-500">

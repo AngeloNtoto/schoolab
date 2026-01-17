@@ -104,48 +104,70 @@ export default function AcademicYearsManager() {
         ) : (
           <div className="space-y-10">
             {showForm && (
-              <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl p-8 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <h3 className="text-xl font-black text-slate-800 dark:text-white mb-6 uppercase tracking-widest text-[10px]">Nouvelle Période</h3>
-                  <form onSubmit={handleCreate} className="space-y-4">
-                      <div>
-                          <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Nom (ex: 2025-2026)</label>
-                          <input 
-                            type="text" 
-                            value={name} 
-                            onChange={e => setName(e.target.value)} 
-                            required
-                            placeholder="2025-2026"
-                            className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
-                          />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                           <div>
-                              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Début</label>
-                              <input 
-                                type="date"
-                                value={startDate} 
-                                onChange={e => setStartDate(e.target.value)} 
-                                required
-                                className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
-                              />
-                           </div>
-                           <div>
-                              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Fin</label>
-                               <input 
-                                type="date"
-                                value={endDate} 
-                                onChange={e => setEndDate(e.target.value)} 
-                                required
-                                min={startDate}
-                                className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
-                              />
-                           </div>
-                      </div>
-                      <div className="flex justify-end gap-3 pt-6">
-                          <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">Annuler</button>
-                          <button type="submit" className="px-8 py-3 bg-blue-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95">Créer la période</button>
-                      </div>
-                  </form>
+              <div 
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300"
+                onClick={() => setShowForm(false)}
+              >
+                <div 
+                  className="bg-white dark:bg-slate-900/50 backdrop-blur-xl p-8 rounded-[2.3rem] shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-lg animate-in zoom-in-95 duration-300"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="bg-blue-600/10 p-2.5 rounded-xl">
+                            <Plus size={20} className="text-blue-600" />
+                        </div>
+                        <button onClick={() => setShowForm(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                            <X size={18} className="text-slate-400" />
+                        </button>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 dark:text-white mb-6 uppercase tracking-widest text-[10px]">Nouvelle Période</h3>
+                    <form onSubmit={handleCreate} className="space-y-4">
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Nom (ex: 2025-2026)</label>
+                            <input 
+                              type="text" 
+                              value={name} 
+                              onChange={e => setName(e.target.value)} 
+                              required
+                              placeholder="2025-2026"
+                              className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Début</label>
+                                <input 
+                                  type="date"
+                                  value={startDate} 
+                                  onChange={e => {
+                                    setStartDate(e.target.value);
+                                    if (e.target.value) e.target.blur();
+                                  }} 
+                                  required
+                                  className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
+                                />
+                             </div>
+                             <div>
+                                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">Fin</label>
+                                 <input 
+                                  type="date"
+                                  value={endDate} 
+                                  onChange={e => {
+                                    setEndDate(e.target.value);
+                                    if (e.target.value) e.target.blur();
+                                  }} 
+                                  required
+                                  min={startDate}
+                                  className="w-full px-5 py-3 bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
+                                />
+                             </div>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-6">
+                            <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-6 py-3 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">Annuler</button>
+                            <button type="submit" className="flex-[2] px-8 py-3 bg-blue-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 shadow-xl shadow-blue-500/20 transition-all active:scale-95">Créer la période</button>
+                        </div>
+                    </form>
+                </div>
               </div>
             )}
 
