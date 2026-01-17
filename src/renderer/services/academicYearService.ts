@@ -30,12 +30,13 @@ export const academicYearService = {
     }
   },
 
-  create: async (name: string, startDate: string, endDate: string): Promise<void> => {
+  create: async (name: string, startDate: string, endDate: string): Promise<number> => {
     try {
-      await dbService.execute(
+      const result = await dbService.execute(
         'INSERT INTO academic_years (name, start_date, end_date, is_active) VALUES (?, ?, ?, 0)',
         [name, startDate, endDate]
       );
+      return result.lastInsertId;
     } catch (error) {
       console.error('Failed to create academic year:', error);
       throw error;

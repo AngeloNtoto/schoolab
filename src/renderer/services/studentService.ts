@@ -73,7 +73,7 @@ class StudentService {
         student.class_id
       ]
     );
-    return result.lastInsertRowid;
+    return result.lastInsertId;
   }
 
   /**

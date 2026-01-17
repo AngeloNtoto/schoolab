@@ -225,7 +225,7 @@ export default function SetupWizard() {
         'INSERT INTO academic_years (name, start_date, end_date, is_active) VALUES (?, ?, ?, 1)',
         [yearName, startDate, endDate]
       );
-      const yearId = yearResult.lastInsertRowid;
+      const yearId = yearResult.lastInsertId;
 
       // Create Classes and Subjects
       for (const cls of classes) {
@@ -239,7 +239,7 @@ export default function SetupWizard() {
             yearId
           ]
         );
-        const classId = classResult.lastInsertRowid;
+        const classId = classResult.lastInsertId;
 
         // Generate Subjects based on option
         const subjects = SUBJECT_TEMPLATES[cls.option] || SUBJECT_TEMPLATES['EB'];

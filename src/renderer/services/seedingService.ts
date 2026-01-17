@@ -35,7 +35,7 @@ export const seedingService = {
       const classId = await dbService.execute(
         'INSERT INTO classes (name, level, option, section, academic_year_id) VALUES (?, ?, ?, ?, ?)',
         [`Classe ${c}`, `${levelNum}ème`, option, section, activeYear.id]
-      ).then(res => res.lastInsertRowid);
+      ).then(res => res.lastInsertId);
 
       // 3. Add 5-8 Subjects per class
       const subjects = [

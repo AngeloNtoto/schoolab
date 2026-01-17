@@ -71,7 +71,7 @@ class ClassService {
         subject.domain_id || null
       ]
     );
-    return result.lastInsertRowid;
+    return result.lastInsertId;
   }
 }
 

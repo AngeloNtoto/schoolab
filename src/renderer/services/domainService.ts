@@ -40,7 +40,7 @@ class DomainService {
       'INSERT INTO domains (name, display_order) VALUES (?, ?)',
       [name, order]
     );
-    return result.lastInsertRowid;
+    return result.lastInsertId;
   }
 
   /**
