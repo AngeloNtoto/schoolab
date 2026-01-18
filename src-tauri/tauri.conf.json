@@ -26,7 +26,11 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "deb",
+      "msi",
+      "nsis"
+    ],
     "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
@@ -41,7 +45,7 @@
       "endpoints": [
         "https://github.com/AngeloNtoto/schoolab/releases/latest/download/latest.json"
       ],
-      "pubkey": "RWRvmLwzS04hyotY5/W5f6Fj1uXZh2w9iLJDcyUzQmkPun/TlGDf/emL"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENBMjE0RTRCMzNCQzk4NkYKUldSdm1Md3pTMDRoeW90WTUvVzVmNkZqMXVYWmgydzlpTEpEY3lVelFta1B1bi9UbEdEZi9lbUwK"
     }
   }
 }
