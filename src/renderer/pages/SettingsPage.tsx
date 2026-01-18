@@ -114,9 +114,9 @@ export default function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 transition-colors duration-500">
-      {/* Header - Scaled Down */}
+      {/* Header */}
       <div className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 px-6 py-6 shadow-lg transition-all duration-500 sticky top-0 z-30 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-4">
             <div className="p-2.5 bg-white/20 dark:bg-blue-600/30 rounded-2xl shadow-xl backdrop-blur-md rotate-3 hover:rotate-0 transition-transform duration-500">
               <Settings size={20} className="text-white dark:text-blue-400" />
@@ -129,7 +129,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation - Plus Grand */}
           <div className="lg:w-72 flex-shrink-0">
