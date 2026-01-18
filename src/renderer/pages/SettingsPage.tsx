@@ -105,53 +105,51 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    { id: 'general' as const, label: 'École', icon: Building2, description: 'Informations de l\'établissement' },
+    { id: 'general' as const, label: 'École', icon: Building2, description: 'Identité de l\'établissement' },
     { id: 'appearance' as const, label: 'Apparence', icon: Sparkles, description: 'Thème et affichage' },
     { id: 'licence' as const, label: 'Licence', icon: Heart, description: 'Activation et statut' },
-    { id: 'cloud' as const, label: 'Cloud', icon: RefreshCw, description: 'Synchronisation Cloud' },
-    { id: 'about' as const, label: 'À propos', icon: Info, description: 'Informations sur l\'application' },
+    { id: 'cloud' as const, label: 'Cloud', icon: RefreshCw, description: 'Synchronisation' },
+    { id: 'about' as const, label: 'À propos', icon: Info, description: 'Informations' },
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 transition-colors duration-500">
-      {/* Header - Scaled Down */}
-      <div className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 px-6 py-6 shadow-lg transition-all duration-500 sticky top-0 z-30 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-white/20 dark:bg-blue-600/30 rounded-2xl shadow-xl backdrop-blur-md rotate-3 hover:rotate-0 transition-transform duration-500">
-              <Settings size={20} className="text-white dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-white dark:text-slate-100 tracking-tight">Paramètres</h1>
-              <p className="text-blue-100 dark:text-slate-500 font-bold uppercase tracking-widest text-[8px]">Gestion globale de Schoolab</p>
-            </div>
+    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-slate-900 dark:to-slate-900 border-b border-white/10 px-8 py-5 sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          <div className="p-3 bg-white/20 rounded-xl">
+            <Settings size={24} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-white">Paramètres</h1>
+            <p className="text-blue-200 dark:text-slate-400 text-sm">Configuration de Schoolab</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Navigation - Compact */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white dark:bg-slate-900/50 dark:backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/5 p-2 shadow-2xl shadow-slate-200/40 dark:shadow-black/40 sticky top-24 transition-all duration-500">
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar Navigation */}
+          <div className="lg:w-56 flex-shrink-0">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 sticky top-20 shadow-sm">
               {tabs.map((tab) => (
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-left transition-all mb-1 last:mb-0 group ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all mb-1 last:mb-0 ${
                     activeTab === tab.id 
-                      ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30 dark:shadow-blue-600/20 ring-2 ring-blue-500/10' 
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-blue-400'
+                      ? 'bg-blue-600 text-white shadow-md' 
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === tab.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20'}`}>
-                    <tab.icon size={16} className={activeTab === tab.id ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-blue-600'} />
+                  <div className={`p-1.5 rounded-lg ${activeTab === tab.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                    <tab.icon size={18} className={activeTab === tab.id ? 'text-white' : 'text-slate-500 dark:text-slate-400'} />
                   </div>
                   <div className="min-w-0">
-                    <div className={`font-black text-xs tracking-tight truncate ${activeTab === tab.id ? 'text-white' : 'text-slate-900 dark:text-slate-200'}`}>
+                    <div className={`font-semibold text-sm ${activeTab === tab.id ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                       {tab.label}
                     </div>
-                    <div className={`text-[8px] uppercase tracking-widest font-black transition-opacity truncate ${activeTab === tab.id ? 'text-blue-100/70' : 'text-slate-500 dark:text-slate-500'}`}>
+                    <div className={`text-xs ${activeTab === tab.id ? 'text-blue-100' : 'text-slate-400'}`}>
                       {tab.description}
                     </div>
                   </div>
@@ -161,75 +159,58 @@ export default function SettingsPage() {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1">
-            <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-xl rounded-[3rem] border border-slate-200 dark:border-white/5 shadow-2xl shadow-slate-300/40 dark:shadow-black/60 overflow-hidden transition-all duration-500 min-h-[600px]">
+          <div className="flex-1 min-w-0">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden min-h-[500px]">
               
               {/* Général - Informations École */}
               {activeTab === 'general' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-800 via-blue-900 to-slate-950 transition-all duration-700">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <Building2 size={24} />
+                <div className="animate-in fade-in duration-300">
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                        <Building2 size={20} />
                       </div>
                       <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Identité Numérique</h2>
-                        <p className="text-[9px] text-blue-100/70 dark:text-blue-400/60 font-black uppercase tracking-[0.2em]">Profil de l'établissement</p>
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-white">Identité de l'établissement</h2>
+                        <p className="text-xs text-slate-500">Informations liées à votre licence</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="p-8 space-y-8">
-                    {/* Industrial/Premium Identity Card */}
-                    <div className="relative group">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[3rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                    <div className="relative bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden">
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 p-8 text-slate-50 dark:text-white/5 pointer-events-none -rotate-12 translate-x-10 -translate-y-10">
-                          <School size={180} />
+                  <div className="p-6 space-y-6">
+                    {/* Identity Card */}
+                    <div className="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-lg p-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Nom de l'école</label>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                            {schoolName || <span className="text-slate-300 italic">Non défini</span>}
+                          </div>
                         </div>
-                        
-                        <div className="relative z-10 space-y-8">
-                          <div className="space-y-3">
-                            <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] pl-1">Nom Officiel</label>
-                            <div className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none py-1">
-                              {schoolName || <span className="opacity-20 italic">École non identifiée</span>}
+
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                          <div>
+                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Ville</label>
+                            <div className="text-lg font-semibold text-slate-700 dark:text-slate-300 mt-1">
+                              {schoolCity || "--"}
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-100 dark:border-white/5">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                                <Building2 size={14} className="text-blue-500" /> VILLE / COMMUNE
-                              </div>
-                              <div className="text-xl font-black text-slate-700 dark:text-slate-300">
-                                {schoolCity || "--"}
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                                <Key size={12} className="text-indigo-500" /> BOÎTE POSTALE
-                              </div>
-                              <div className="text-xl font-black text-slate-700 dark:text-slate-300">
-                                {schoolPoBox || "Aucune"}
-                              </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Boîte Postale</label>
+                            <div className="text-lg font-semibold text-slate-700 dark:text-slate-300 mt-1">
+                              {schoolPoBox || "--"}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Information Note with Glassmorphism */}
-                    <div className="p-8 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[2.5rem] flex items-start gap-6 relative overflow-hidden group">
-                      <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg text-blue-600 dark:text-blue-400">
-                        <Info size={24} />
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-black text-slate-900 dark:text-white text-lg tracking-tight">Synchronisation Automatique</h4>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                          L'identité de votre école est liée à votre clé de licence. Ces données sont mises à jour lors de l'activation pour garantir l'intégrité de vos bulletins.
-                        </p>
-                      </div>
+                    {/* Info Note */}
+                    <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg">
+                      <Info size={18} className="text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        Ces informations sont synchronisées avec votre licence et apparaissent sur les bulletins.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -237,84 +218,62 @@ export default function SettingsPage() {
 
               {/* Apparence */}
               {activeTab === 'appearance' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-800 via-blue-900 to-slate-950 transition-all duration-700">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <Sparkles size={24} />
+                <div className="animate-in fade-in duration-300">
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+                        <Sparkles size={20} />
                       </div>
                       <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Expérience Visuelle</h2>
-                        <p className="text-[9px] text-blue-100/70 dark:text-blue-400/60 font-black uppercase tracking-[0.2em]">Personnalisation de l'interface</p>
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-white">Apparence</h2>
+                        <p className="text-xs text-slate-500">Personnalisez l'interface</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                      {/* Premium Theme Selector: Light */}
-                      <div className="space-y-6">
-                        <button 
-                          onClick={() => setTheme('light')}
-                          className={`group relative w-full aspect-[4/3] rounded-[3rem] p-1 transition-all duration-500 hover:scale-[1.02] ${
-                            theme === 'light' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-500/30 ring-8 ring-blue-500/10' : 'bg-slate-200 dark:bg-white/5 grayscale hovr:grayscale-0'
-                          }`}
-                        >
-                          <div className="w-full h-full bg-slate-50 rounded-[2.8rem] overflow-hidden relative shadow-inner">
-                            <div className="absolute inset-0 bg-white p-6 flex flex-col gap-4">
-                              <div className="h-4 w-1/3 bg-slate-100 rounded-full"></div>
-                              <div className="flex-1 bg-white border border-slate-100 rounded-[1.5rem] p-4 flex gap-3">
-                                <div className="w-12 h-full bg-blue-50 rounded-xl"></div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-3 bg-slate-100 rounded-full w-full"></div>
-                                  <div className="h-3 bg-slate-50 rounded-full w-2/3"></div>
-                                </div>
-                              </div>
-                            </div>
-                            {theme === 'light' && (
-                              <div className="absolute top-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg animate-in zoom-in-50 duration-500">
-                                <Sun size={20} />
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                        <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>Mode Éclatant</h4>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Optimisé pour le travail de jour</p>
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Light Theme */}
+                      <button 
+                        onClick={() => setTheme('light')}
+                        className={`group relative p-4 rounded-xl border-2 transition-all ${
+                          theme === 'light' 
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="aspect-video bg-white rounded-lg border border-slate-200 mb-3 p-3">
+                          <div className="h-2 w-1/3 bg-slate-200 rounded mb-2"></div>
+                          <div className="h-8 bg-slate-100 rounded"></div>
                         </div>
-                      </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-semibold ${
+                            theme === 'light' ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'
+                          }`}>Mode Clair</span>
+                          {theme === 'light' && <Sun size={18} className="text-blue-600" />}
+                        </div>
+                      </button>
 
-                      {/* Premium Theme Selector: Dark */}
-                      <div className="space-y-6">
-                        <button 
-                          onClick={() => setTheme('dark')}
-                          className={`group relative w-full aspect-[4/3] rounded-[3rem] p-1 transition-all duration-500 hover:scale-[1.02] ${
-                            theme === 'dark' ? 'bg-gradient-to-br from-indigo-500 to-slate-900 shadow-2xl shadow-indigo-600/30 ring-8 ring-indigo-500/10' : 'bg-slate-200 dark:bg-white/5 grayscale hover:grayscale-0'
-                          }`}
-                        >
-                          <div className="w-full h-full bg-slate-950 rounded-[2.8rem] overflow-hidden relative shadow-inner">
-                            <div className="absolute inset-0 bg-slate-900 p-6 flex flex-col gap-4">
-                              <div className="h-4 w-1/3 bg-slate-800 rounded-full"></div>
-                              <div className="flex-1 bg-slate-950 border border-white/5 rounded-[1.5rem] p-4 flex gap-3">
-                                <div className="w-12 h-full bg-indigo-900/20 rounded-xl border border-white/5"></div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-3 bg-slate-800 rounded-full w-full"></div>
-                                  <div className="h-3 bg-slate-900 rounded-full w-2/3"></div>
-                                </div>
-                              </div>
-                            </div>
-                            {theme === 'dark' && (
-                              <div className="absolute top-6 right-6 p-3 bg-indigo-600 text-white rounded-full shadow-lg animate-in zoom-in-50 duration-500">
-                                <Moon size={20} />
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                        <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>Mode Nocturne</h4>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Élégant et reposant pour les yeux</p>
+                      {/* Dark Theme */}
+                      <button 
+                        onClick={() => setTheme('dark')}
+                        className={`group relative p-4 rounded-xl border-2 transition-all ${
+                          theme === 'dark' 
+                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="aspect-video bg-slate-900 rounded-lg border border-slate-700 mb-3 p-3">
+                          <div className="h-2 w-1/3 bg-slate-700 rounded mb-2"></div>
+                          <div className="h-8 bg-slate-800 rounded"></div>
                         </div>
-                      </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-semibold ${
+                            theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'
+                          }`}>Mode Sombre</span>
+                          {theme === 'dark' && <Moon size={18} className="text-indigo-500" />}
+                        </div>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -322,15 +281,15 @@ export default function SettingsPage() {
 
               {/* Licence */}
               {activeTab === 'licence' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-600 via-blue-700 to-indigo-900 dark:from-indigo-900/40 dark:via-slate-900/40 dark:to-blue-900/40 transition-all duration-500">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <ShieldCheck size={24} />
+                <div className="animate-in fade-in duration-300">
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg text-green-600 dark:text-green-400">
+                        <ShieldCheck size={20} />
                       </div>
                       <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Licence & Sécurité</h2>
-                        <p className="text-[9px] text-indigo-100/70 dark:text-indigo-400/60 font-black uppercase tracking-[0.2em]">Authentification du produit</p>
+                        <h2 className="text-base font-semibold text-slate-800 dark:text-white">Licence</h2>
+                        <p className="text-xs text-slate-500">Statut et activation</p>
                       </div>
                     </div>
                   </div>
