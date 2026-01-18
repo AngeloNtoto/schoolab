@@ -180,54 +180,86 @@ export default function SettingsPage() {
                   </div>
                   
                   <div className="p-6 space-y-6">
-                    {/* Industrial/Premium Identity Card */}
+                    {/* Identity Card */}
                     <div className="relative group">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[3rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                    <div className="relative bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden">
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 p-8 text-slate-50 dark:text-white/5 pointer-events-none -rotate-12 translate-x-10 -translate-y-10">
-                          <School size={180} />
+                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                      <div className="relative bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-6 shadow-xl overflow-hidden">
+                        {/* Decorative background */}
+                        <div className="absolute top-0 right-0 p-6 text-slate-50 dark:text-white/5 pointer-events-none -rotate-12 translate-x-8 -translate-y-8">
+                          <School size={140} />
                         </div>
                         
-                        <div className="relative z-10 space-y-8">
-                          <div className="space-y-3">
-                            <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.3em] pl-1">Nom Officiel</label>
-                            <div className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none py-1">
-                              {schoolName || <span className="opacity-20 italic">École non identifiée</span>}
+                        <div className="relative z-10 space-y-6">
+                          {/* Nom de l'école */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Nom Officiel</label>
+                            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                              {schoolName || <span className="opacity-30 italic">École non identifiée</span>}
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-100 dark:border-white/5">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                                <Building2 size={14} className="text-blue-500" /> VILLE / COMMUNE
+                          {/* Grille d'informations - 4 colonnes */}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5 border-t border-slate-100 dark:border-white/5">
+                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                                <Building2 size={12} className="text-blue-500" /> Ville
                               </div>
-                              <div className="text-xl font-black text-slate-700 dark:text-slate-300">
+                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
                                 {schoolCity || "--"}
                               </div>
                             </div>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-3 text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                                <Key size={12} className="text-indigo-500" /> BOÎTE POSTALE
+                            
+                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                                <Key size={12} className="text-indigo-500" /> Boîte Postale
                               </div>
-                              <div className="text-xl font-black text-slate-700 dark:text-slate-300">
-                                {schoolPoBox || "Aucune"}
+                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
+                                {schoolPoBox || "--"}
+                              </div>
+                            </div>
+
+                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                                <Sparkles size={12} className="text-emerald-500" /> Plan
+                              </div>
+                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
+                                {licenseStatus?.plan || "Gratuit"}
+                              </div>
+                            </div>
+
+                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                                <ShieldCheck size={12} className="text-amber-500" /> Licence
+                              </div>
+                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
+                                {licenseStatus?.active ? `${licenseStatus.daysRemaining}j` : "Inactive"}
                               </div>
                             </div>
                           </div>
+
+                          {/* ID Cloud */}
+                          {cloudSchoolId && (
+                            <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                              <RefreshCw size={16} className="text-blue-500" />
+                              <div className="text-xs">
+                                <span className="text-slate-500">ID Cloud: </span>
+                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{cloudSchoolId}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Information Note with Glassmorphism */}
-                    <div className="p-8 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[2.5rem] flex items-start gap-6 relative overflow-hidden group">
-                      <div className="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg text-blue-600 dark:text-blue-400">
-                        <Info size={24} />
+                    {/* Note d'information */}
+                    <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl flex items-start gap-4">
+                      <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow text-blue-600 dark:text-blue-400">
+                        <Info size={18} />
                       </div>
-                      <div className="space-y-2">
-                        <h4 className="font-black text-slate-900 dark:text-white text-lg tracking-tight">Synchronisation Automatique</h4>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                          L'identité de votre école est liée à votre clé de licence. Ces données sont mises à jour lors de l'activation pour garantir l'intégrité de vos bulletins.
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">Synchronisation Automatique</h4>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                          L'identité de votre école est liée à votre clé de licence et apparaît sur les bulletins.
                         </p>
                       </div>
                     </div>
@@ -641,106 +673,125 @@ export default function SettingsPage() {
 
               {/* À propos de l'App */}
               {activeTab === 'about' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-6 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-blue-600 via-indigo-700 to-blue-800 dark:from-blue-900/40 dark:via-slate-900/40 dark:to-indigo-900/40 transition-all duration-500">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-white/10 dark:bg-blue-600/30 rounded-xl text-white shadow-2xl backdrop-blur-md transition-all">
+                <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
+                  <div className="px-6 py-5 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-blue-600 via-indigo-700 to-blue-800">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-white/10 rounded-xl text-white shadow-lg">
                         <Info size={20} />
                       </div>
                       <div>
-                        <h2 className="text-lg font-black text-white dark:text-slate-100 tracking-tight">À propos</h2>
-                        <p className="text-[8px] text-blue-100/70 dark:text-blue-400/60 font-black uppercase tracking-[0.2em]">Informations sur Schoolab</p>
+                        <h2 className="text-lg font-bold text-white">À propos de Schoolab</h2>
+                        <p className="text-[10px] text-blue-100/70 font-semibold uppercase tracking-widest">Version {pkg.version}</p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="px-10 py-16 bg-white dark:bg-transparent transition-all duration-500">
-                    <div className="max-w-3xl mx-auto space-y-12">
-                      {/* Logo & Version Centered Header */}
-                      <div className="flex flex-col items-center text-center space-y-6">
-                        <div className="relative group">
-                          <div className="absolute -inset-4 bg-blue-600/20 dark:bg-blue-600/10 rounded-[3rem] blur-2xl group-hover:bg-blue-600/30 dark:group-hover:bg-blue-600/20 transition-all duration-700"></div>
-                          <div className="relative w-32 h-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl flex items-center justify-center transform group-hover:scale-105 group-hover:-rotate-2 transition-all duration-500">
-                            <School size={64} className="text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-2xl shadow-xl shadow-blue-500/30 border-4 border-white dark:border-slate-900 transform rotate-12">
-                            <Sparkles size={16} />
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Schoolab <span className="text-blue-600">Pro</span></h3>
-                          <div className="inline-flex items-center gap-2 mt-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100 dark:border-blue-800/50">
-                            Version {pkg.version}
-                          </div>
+                  <div className="p-6 space-y-6">
+                    {/* Logo & Version */}
+                    <div className="flex items-center gap-6 p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
+                      <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
+                        <School size={40} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-slate-900 dark:text-white">Schoolab <span className="text-blue-600">Pro</span></h3>
+                        <p className="text-slate-500 text-sm mt-1">Logiciel de gestion scolaire moderne</p>
+                        <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold">
+                          v{pkg.version}
                         </div>
                       </div>
+                    </div>
 
-                      {/* Info Cards Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-[1.02] hover:bg-white dark:hover:bg-white/5 group shadow-sm hover:shadow-xl">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg transition-all group-hover:scale-110">
-                              <User size={20} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Conception</span>
-                          </div>
-                          <p className="text-lg font-black text-slate-800 dark:text-white tracking-tight">{pkg.author?.name || 'Angelo'}</p>
-                          <p className="text-[10px] text-slate-500 mt-1">Lead Developer</p>
-                        </div>
+                    {/* Description de l'application */}
+                    <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
+                      <h4 className="font-bold text-slate-900 dark:text-white mb-3">À propos de l'application</h4>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                        <strong>Schoolab</strong> est une solution complète de gestion académique conçue pour les établissements scolaires. 
+                        Elle permet de gérer efficacement les classes, les élèves, les notes, les bulletins et la synchronisation cloud 
+                        pour un suivi pédagogique optimal.
+                      </p>
+                      <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>Gestion des classes, élèves et matières</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>Saisie et calcul automatique des notes et moyennes</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>Génération de bulletins personnalisés</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>Synchronisation cloud multi-postes (Plan Plus)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>Interface mobile pour saisie distante des notes</span>
+                        </li>
+                      </ul>
+                    </div>
 
-                        <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-[1.02] hover:bg-white dark:hover:bg-white/5 group shadow-sm hover:shadow-xl">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg transition-all group-hover:scale-110">
-                              <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Propriété</span>
+                    {/* Infos développeur & contact */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <User size={18} className="text-blue-600 dark:text-blue-400" />
                           </div>
-                          <p className="text-lg font-black text-slate-800 dark:text-white tracking-tight">TechLab © 2026</p>
-                          <p className="text-[10px] text-slate-500 mt-1">All Rights Reserved</p>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Développeur</span>
                         </div>
-
-                        <div className="bg-slate-50 dark:bg-slate-800/20 p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 transition-all hover:scale-[1.02] hover:bg-white dark:hover:bg-white/5 group shadow-sm hover:shadow-xl">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg transition-all group-hover:scale-110">
-                              <Settings size={20} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Système</span>
-                          </div>
-                          <p className="text-lg font-black text-slate-800 dark:text-white tracking-tight truncate">{hwid?.substring(0, 12)}...</p>
-                          <p className="text-[10px] text-slate-500 mt-1">Device Identity</p>
-                        </div>
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">Angelo Ntoto</p>
+                        <p className="text-xs text-slate-500 mt-1">Lead Developer & Designer</p>
                       </div>
 
-                      <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-[2rem] border border-blue-100 dark:border-blue-900/20 text-center space-y-4">
-                        <p className="text-xs text-blue-700/60 dark:text-blue-300/40 font-medium leading-relaxed">
-                          Schoolab est conçu pour offrir une gestion académique fluide et moderne. <br />
-                          Pour tout support, contactez votre administrateur système.
-                        </p>
-                        
-                        {/* Seeding Trigger Button - Developer Tool */}
-                        <div className="pt-2 border-t border-blue-100/50 dark:border-blue-900/20">
-                          <button 
-                            onClick={async () => {
-                              if (window.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?")) {
-                                setLoading(true);
-                                try {
-                                  await seedingService.seedDatabase();
-                                  toast.success("Base de données peuplée avec succès !");
-                                } catch (e) {
-                                  toast.error("Échec du peuplement");
-                                  console.error(e);
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }
-                            }}
-                            disabled={loading}
-                            className="text-[9px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                          >
-                            {loading ? "Génération en cours..." : "Peupler avec des données de test"}
-                          </button>
+                      <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <Heart size={18} className="text-green-600 dark:text-green-400" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Contact & Support</span>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <p className="text-slate-600 dark:text-slate-400">
+                            <span className="font-semibold">Email:</span> <a href="mailto:Angelontoto7@gmail.com" className="text-blue-600 hover:underline">Angelontoto7@gmail.com</a>
+                          </p>
+                          <p className="text-slate-600 dark:text-slate-400">
+                            <span className="font-semibold">WhatsApp:</span> <a href="https://wa.me/243810396812" className="text-green-600 hover:underline">+243 810 396 812</a>
+                          </p>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Copyright & System */}
+                    <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-white/5 rounded-xl text-xs text-slate-500">
+                      <span>© 2026 Angelo Ntoto - Tous droits réservés</span>
+                      <span className="font-mono text-[10px]">ID: {hwid?.substring(0, 16)}...</span>
+                    </div>
+
+                    {/* Developer Tool */}
+                    <div className="text-center pt-4 border-t border-slate-100 dark:border-white/5">
+                      <button 
+                        onClick={async () => {
+                          if (window.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?")) {
+                            setLoading(true);
+                            try {
+                              await seedingService.seedDatabase();
+                              toast.success("Base de données peuplée avec succès !");
+                            } catch (e) {
+                              toast.error("Échec du peuplement");
+                              console.error(e);
+                            } finally {
+                              setLoading(false);
+                            }
+                          }
+                        }}
+                        disabled={loading}
+                        className="text-[10px] font-bold uppercase tracking-wide text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        {loading ? "Génération en cours..." : "Données de test (Dev)"}
+                      </button>
                     </div>
                   </div>
                 </div>
