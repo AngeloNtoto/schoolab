@@ -8,6 +8,7 @@ import { seedingService } from '../services/seedingService';
 import { licenseService } from '../services/licenseService';
 import { syncService } from '../services/syncService';
 import pkg from "../../../package.json"
+import UpgradeModal from '../components/common/UpgradeModal';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -26,6 +27,7 @@ export default function SettingsPage() {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [cloudSchoolId, setCloudSchoolId] = useState<string | null>(null);
   const toast = useToast();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -566,10 +568,10 @@ export default function SettingsPage() {
                             Passez au niveau supérieur : travaillez simultanément sur plusieurs ordinateurs avec une synchronisation bidirectionnelle instantanée.
                           </p>
                           <button 
-                            onClick={() => window.open('https://schoolab.app/pricing', '_blank')}
+                            onClick={() => setShowUpgradeModal(true)}
                             className="bg-white text-blue-900 px-8 py-4 rounded-[1.5rem] font-black text-base uppercase tracking-widest shadow-2xl hover:bg-blue-50 transition-all active:scale-95"
                           >
-                            Passer à Plus
+                            Synchroniser maintenant
                           </button>
                         </div>
                       </div>

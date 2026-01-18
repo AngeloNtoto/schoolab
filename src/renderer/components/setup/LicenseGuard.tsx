@@ -4,10 +4,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ShieldAlert, RefreshCw, Heart } from '../iconsSvg';
 import { useLicense } from '../../context/LicenseContext';
+import UpgradeModal from '../common/UpgradeModal';
 
 export default function LicenseGuard({ children }: { children: React.ReactNode }) {
   const { license, loading, refreshRemoteLicense } = useLicense();
   const [syncOverdue, setSyncOverdue] = React.useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const navigate = useNavigate();
 
   // Effect to check sync status periodically
@@ -123,8 +125,35 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
     );
   }
 
+  // Handler for the sync button that checks license
+  const handleSyncClick = async () => {
+    // If user doesn't have PLUS plan, show upgrade modal
+    if (license?.plan !== 'PLUS') {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    // User has PLUS plan, proceed with sync
+    try {
+      const res = await invoke<any>('sync_start');
+      if (res.success) {
+        const status = await invoke<any>('check_sync_status');
+        setSyncOverdue(status.overdue);
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
   return (
     <>
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        featureName="La synchronisation cloud"
+      />
+
       <div className="fixed top-0 left-0 right-0 z-[100] pointer-events-none flex flex-col items-center p-4 gap-3">
         {license && !license.isBlocked && license.daysRemaining <= 3 && (
           <div className="pointer-events-auto bg-amber-500 text-white px-5 py-2 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-top duration-500 border border-amber-400/50 backdrop-blur-md">
@@ -155,18 +184,7 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
             </div>
             <div className="flex items-center gap-2">
               <button 
-                onClick={async () => {
-                   try {
-                     const res = await invoke<any>('sync_start');
-                     if (res.success) {
-                        // Re-check status immediately to hide the alert
-                        const status = await invoke<any>('check_sync_status');
-                        setSyncOverdue(status.overdue);
-                     }
-                   } catch(e) {
-                      console.error(e);
-                   }
-                }}
+                onClick={handleSyncClick}
                 className="bg-white text-orange-600 dark:bg-blue-600 dark:text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:shadow-xl transition-all active:scale-95 whitespace-nowrap"
               >
                 Synchroniser
@@ -179,3 +197,4 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
     </>
   );
 }
+
