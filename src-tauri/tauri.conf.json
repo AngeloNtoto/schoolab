@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Schoolab",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "identifier": "com.schoolab.desktop",
   
   "build": {
@@ -28,9 +28,6 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
-    "resources": [
-      "../dist-web"
-    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
