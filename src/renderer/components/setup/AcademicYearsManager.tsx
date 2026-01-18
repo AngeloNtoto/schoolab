@@ -4,6 +4,7 @@ import { CalendarRange, Plus, Check, Trash2, Calendar,X } from '../iconsSvg';
 import { useToast } from '../../context/ToastContext';
 import ProfessionalLoader from '../ui/ProfessionalLoader';
 
+
 export default function AcademicYearsManager() {
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState(true);
