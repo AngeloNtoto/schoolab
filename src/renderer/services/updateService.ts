@@ -19,15 +19,10 @@ export const updateService = {
 
         if (confirm) {
           console.log('[Updater] Téléchargement et installation...');
-    // Ajout d'un callback pour voir la progression si besoin
-    await update.downloadAndInstall((event) => {
-        console.log(`Téléchargement : ${event.contentLength}`);
-    });
-    console.log('[Updater] Installation terminée, redémarrage...');
-    await relaunch();
-        }else{
-          console.log('[Updater] Téléchargement et installation...');
-          await update.downloadAndInstall();
+          // Ajout d'un callback pour voir la progression si besoin
+          await update.downloadAndInstall((event) => {
+              console.log(`Téléchargement : ${event.contentLength}`);
+          });
           console.log('[Updater] Installation terminée, redémarrage...');
           await relaunch();
         }
