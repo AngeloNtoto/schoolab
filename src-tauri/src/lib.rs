@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct LicenseInfo {
     pub active: bool,
     pub is_trial: bool,
@@ -86,7 +87,7 @@ pub fn get_cloud_url() -> String {
         }
     }
     // Fallback si pas de .env ou pas de CLOUD_URL
-    std::env::var("CLOUD_URL").unwrap_or_else(|_| "http://localhost:3000".to_string())
+    std::env::var("CLOUD_URL").unwrap_or_else(|_| "https://schoolab.vercel.app".to_string())
 }
 
 #[tauri::command]
