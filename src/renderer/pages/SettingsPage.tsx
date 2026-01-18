@@ -740,10 +740,10 @@ export default function SettingsPage() {
                           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                             <User size={18} className="text-blue-600 dark:text-blue-400" />
                           </div>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Développeur</span>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Développement</span>
                         </div>
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">Angelo Ntoto</p>
-                        <p className="text-xs text-slate-500 mt-1">Lead Developer & Designer</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">Equipe Schoolab</p>
+                        <p className="text-xs text-slate-500 mt-1">NartrixSoft Engineering</p>
                       </div>
 
                       <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
@@ -755,10 +755,10 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2 text-sm">
                           <p className="text-slate-600 dark:text-slate-400">
-                            <span className="font-semibold">Email:</span> <a href="mailto:Angelontoto7@gmail.com" className="text-blue-600 hover:underline">Angelontoto7@gmail.com</a>
+                            <span className="font-semibold">Email:</span> <a href="mailto:NartrixSoft@gmail.com" className="text-blue-600 hover:underline">NartrixSoft@gmail.com</a>
                           </p>
                           <p className="text-slate-600 dark:text-slate-400">
-                            <span className="font-semibold">WhatsApp:</span> <a href="https://wa.me/243810396812" className="text-green-600 hover:underline">+243 810 396 812</a>
+                            <span className="font-semibold">WhatsApp:</span> <a href="https://wa.me/243903582030" className="text-green-600 hover:underline">+243 903 582 030</a>
                           </p>
                         </div>
                       </div>
@@ -766,7 +766,7 @@ export default function SettingsPage() {
 
                     {/* Copyright & System */}
                     <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-white/5 rounded-xl text-xs text-slate-500">
-                      <span>© 2026 Angelo Ntoto - Tous droits réservés</span>
+                      <span>© 2026 NartrixSoft - Tous droits réservés</span>
                       <span className="font-mono text-[10px]">ID: {hwid?.substring(0, 16)}...</span>
                     </div>
 

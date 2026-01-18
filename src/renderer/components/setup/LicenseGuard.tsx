@@ -173,7 +173,7 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
           </div>
         )}
         
-        {!license?.isBlocked && syncOverdue && (
+        {!license?.isBlocked && syncOverdue && false && (
           <div className="pointer-events-auto bg-orange-600/95 dark:bg-slate-900 border border-orange-500/30 dark:border-white/10 text-white px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-top duration-700 backdrop-blur-xl transition-all">
             <div className="p-2 bg-orange-500 dark:bg-blue-600 rounded-xl shadow-lg">
               <RefreshCw size={18} className="animate-spin-slow" />
