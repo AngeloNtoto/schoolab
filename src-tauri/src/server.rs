@@ -96,16 +96,15 @@ fn serve_static_file(
     path_str: &str,
     app_handle: &tauri::AppHandle,
 ) -> Response<Box<dyn io::Read + Send>> {
-    let resource_path = app_handle
+    // En production, les ressources sont copiées dans le resource_dir avec la structure dist-web/
+    // En développement, on utilise le chemin relatif ../dist-web
+    let root_path = app_handle
         .path()
-        .resolve("dist-web", tauri::path::BaseDirectory::Resource)
-        .unwrap_or_else(|_| PathBuf::from("dist-web"));
+        .resource_dir()
+        .map(|p| p.join("dist-web"))
+        .unwrap_or_else(|_| PathBuf::from("../dist-web"));
 
-    let root_path = if resource_path.exists() {
-        resource_path
-    } else {
-        PathBuf::from("../dist-web")
-    };
+    println!("[Server] Serving from: {:?}", root_path);
 
     // Gestion du path et assets
     let clean_path = if path_str.starts_with("/mobile/") {
