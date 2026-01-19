@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct SyncResult {
     pub success: bool,
     pub error: Option<String>,
+    pub summary: Option<String>,
 }
 
 #[derive(Serialize, Debug)]
@@ -429,7 +430,8 @@ async fn pull_from_cloud(school_id: &str, token: &str) -> Result<PullData, Strin
     Ok(response.data)
 }
 
-fn process_pull_data(mut conn: Connection, data: PullData) -> Result<(), String> {
+fn process_pull_data(mut conn: Connection, data: PullData) -> Result<i32, String> {
+    let mut total_added = 0;
     info!("Processing pulled data into local database...");
 
     // Set busy timeout to handle contention
@@ -544,7 +546,16 @@ fn process_pull_data(mut conn: Connection, data: PullData) -> Result<(), String>
     info!("Successfully processed {} notes", note_count);
 
     tx.commit().map_err(|e| format!("Commit Error: {}", e))?;
-    Ok(())
+
+    total_added = ay_count
+        + class_count
+        + student_count
+        + subject_count
+        + grade_count
+        + rep_count
+        + note_count
+        + domain_count;
+    Ok(total_added)
 }
 
 #[tauri::command]
@@ -574,13 +585,13 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
 
     // 2. Perform Pull
     let pull_data = pull_from_cloud(&school_id, &token).await?;
-    {
+    let pull_total = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-        process_pull_data(conn, pull_data)?;
-    }
+        process_pull_data(conn, pull_data)?
+    };
 
     // 3. Perform Push
-    let (sync_data, school_info) = {
+    let (sync_data, school_info, push_total) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
 
         let s_name = conn
@@ -613,7 +624,15 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
         };
 
         let data = collect_push_data(&conn)?;
-        (data, s_info)
+        let total = data.academic_years.len()
+            + data.classes.len()
+            + data.domains.len()
+            + data.students.len()
+            + data.subjects.len()
+            + data.grades.len()
+            + data.repechages.len()
+            + data.notes.len();
+        (data, s_info, total as i32)
     };
 
     let response = send_push_data(&school_id, &token, sync_data, school_info).await?;
@@ -624,8 +643,15 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
         process_push_response(&conn, response)?;
     }
 
+    let summary = if push_total > 0 || pull_total > 0 {
+        format!("Sync réussi : {} envoyés, {} reçus", push_total, pull_total)
+    } else {
+        "Tout est à jour".to_string()
+    };
+
     Ok(SyncResult {
         success: true,
         error: None,
+        summary: Some(summary),
     })
 }

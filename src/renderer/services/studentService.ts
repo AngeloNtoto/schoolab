@@ -57,7 +57,7 @@ class StudentService {
    */
   async createStudent(student: Omit<Student, 'id'>): Promise<number> {
     const result = await dbService.execute(
-      'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime(\'now\')))',
       [
         student.first_name,
         student.last_name,
@@ -105,7 +105,7 @@ class StudentService {
 
     values.push(id);
     await dbService.execute(
-      `UPDATE students SET ${fields.join(', ')} WHERE id = ?`,
+      `UPDATE students SET ${fields.join(', ')}, is_dirty = 1, last_modified_at = (datetime('now')) WHERE id = ?`,
       values
     );
   }

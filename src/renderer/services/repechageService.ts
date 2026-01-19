@@ -74,13 +74,13 @@ class RepechageService {
         );
       } else {
         await dbService.execute(
-          'UPDATE repechages SET value = ?, percentage = ? WHERE student_id = ? AND subject_id = ?',
+          'UPDATE repechages SET value = ?, percentage = ?, is_dirty = 1, last_modified_at = (datetime(\'now\')) WHERE student_id = ? AND subject_id = ?',
           [value, percentage, studentId, subjectId]
         );
       }
     } else if (percentage !== 0 && percentage !== null) {
       await dbService.execute(
-        'INSERT INTO repechages (student_id, subject_id, value, percentage) VALUES (?, ?, ?, ?)',
+        'INSERT INTO repechages (student_id, subject_id, value, percentage, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, 1, (datetime(\'now\')))',
         [studentId, subjectId, value, percentage]
       );
     }

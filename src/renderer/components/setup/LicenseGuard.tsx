@@ -4,10 +4,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ShieldAlert, RefreshCw, Heart } from '../iconsSvg';
 import { useLicense } from '../../context/LicenseContext';
+import { useToast } from '../../context/ToastContext';
 import UpgradeModal from '../common/UpgradeModal';
 
 export default function LicenseGuard({ children }: { children: React.ReactNode }) {
   const { license, loading, refreshRemoteLicense } = useLicense();
+  const toast = useToast();
   const [syncOverdue, setSyncOverdue] = React.useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = React.useState(false);
   const navigate = useNavigate();
@@ -137,10 +139,14 @@ export default function LicenseGuard({ children }: { children: React.ReactNode }
     try {
       const res = await invoke<any>('sync_start');
       if (res.success) {
+        toast.success(res.summary || 'Synchronisation réussie');
         const status = await invoke<any>('check_sync_status');
         setSyncOverdue(status.overdue);
+      } else {
+        toast.error('Échec de la synchronisation : ' + res.error);
       }
     } catch(e) {
+      toast.error('Erreur technique lors de la synchronisation');
       console.error(e);
     }
   };

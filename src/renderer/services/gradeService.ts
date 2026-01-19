@@ -61,14 +61,14 @@ class GradeService {
       } else {
         // Mettre à jour
         await dbService.execute(
-          'UPDATE grades SET value = ? WHERE student_id = ? AND subject_id = ? AND period = ?',
+          'UPDATE grades SET value = ?, is_dirty = 1, last_modified_at = (datetime(\'now\')) WHERE student_id = ? AND subject_id = ? AND period = ?',
           [value, studentId, subjectId, period]
         );
       }
     } else if (value !== null) {
       // Insérer
       await dbService.execute(
-        'INSERT INTO grades (student_id, subject_id, period, value) VALUES (?, ?, ?, ?)',
+        'INSERT INTO grades (student_id, subject_id, period, value, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, 1, (datetime(\'now\')))',
         [studentId, subjectId, period, value]
       );
     }

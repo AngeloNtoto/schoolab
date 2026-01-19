@@ -33,7 +33,7 @@ export const academicYearService = {
   create: async (name: string, startDate: string, endDate: string): Promise<number> => {
     try {
       const result = await dbService.execute(
-        'INSERT INTO academic_years (name, start_date, end_date, is_active) VALUES (?, ?, ?, 0)',
+        'INSERT INTO academic_years (name, start_date, end_date, is_active, is_dirty, last_modified_at) VALUES (?, ?, ?, 0, 1, (datetime(\'now\')))',
         [name, startDate, endDate]
       );
       return result.lastInsertId;
@@ -46,8 +46,8 @@ export const academicYearService = {
   setActive: async (id: number): Promise<void> => {
     try {
       // Transaction-like behavior usually, but we'll do two separate calls
-      await dbService.execute('UPDATE academic_years SET is_active = 0');
-      await dbService.execute('UPDATE academic_years SET is_active = 1 WHERE id = ?', [id]);
+      await dbService.execute('UPDATE academic_years SET is_active = 0, is_dirty = 1, last_modified_at = (datetime(\'now\'))');
+      await dbService.execute('UPDATE academic_years SET is_active = 1, is_dirty = 1, last_modified_at = (datetime(\'now\')) WHERE id = ?', [id]);
     } catch (error) {
       console.error('Failed to set active academic year:', error);
       throw error;

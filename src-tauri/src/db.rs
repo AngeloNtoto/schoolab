@@ -165,16 +165,36 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
 
     // Migration logic for existing databases
     let _ = conn.execute("ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT ''", []);
-    let _ = conn.execute("ALTER TABLE classes ADD COLUMN server_id TEXT", []);
-    let _ = conn.execute(
-        "ALTER TABLE classes ADD COLUMN is_dirty INTEGER DEFAULT 1",
-        [],
-    );
-    let _ = conn.execute("ALTER TABLE subjects ADD COLUMN server_id TEXT", []);
-    let _ = conn.execute(
-        "ALTER TABLE subjects ADD COLUMN is_dirty INTEGER DEFAULT 1",
-        [],
-    );
+
+    let sync_tables = vec![
+        "academic_years",
+        "classes",
+        "students",
+        "subjects",
+        "grades",
+        "notes",
+        "domains",
+        "repechages",
+    ];
+
+    for table in sync_tables {
+        let _ = conn.execute(
+            &format!("ALTER TABLE {table} ADD COLUMN server_id TEXT"),
+            [],
+        );
+        let _ = conn.execute(
+            &format!("ALTER TABLE {table} ADD COLUMN is_dirty INTEGER DEFAULT 1"),
+            [],
+        );
+        let _ = conn.execute(&format!("ALTER TABLE {table} ADD COLUMN last_modified_at TEXT DEFAULT '1970-01-01 00:00:00'"), []);
+        let _ = conn.execute(
+            &format!(
+                "ALTER TABLE {table} ADD COLUMN updated_at TEXT DEFAULT '1970-01-01 00:00:00'"
+            ),
+            [],
+        );
+    }
+
     let _ = conn.execute(
         "ALTER TABLE subjects ADD COLUMN category TEXT DEFAULT ''",
         [],
@@ -184,11 +204,6 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         [],
     );
     let _ = conn.execute("ALTER TABLE subjects ADD COLUMN domain_id INTEGER", []);
-    let _ = conn.execute("ALTER TABLE domains ADD COLUMN server_id TEXT", []);
-    let _ = conn.execute(
-        "ALTER TABLE domains ADD COLUMN is_dirty INTEGER DEFAULT 1",
-        [],
-    );
 
     // Setup triggers for all sync tables
     let sync_tables = vec![

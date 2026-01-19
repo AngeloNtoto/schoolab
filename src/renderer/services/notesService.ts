@@ -36,7 +36,7 @@ export const notesService = {
   create: async (note: Omit<Note, 'id' | 'created_at'>): Promise<void> => {
     try {
       await dbService.execute(
-        'INSERT INTO notes (title, content, target_type, target_id, academic_year_id, tags) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO notes (title, content, target_type, target_id, academic_year_id, tags, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, ?, ?, 1, (datetime(\'now\')))',
         [note.title, note.content, note.target_type, note.target_id || null, note.academic_year_id || null, note.tags || '']
       );
     } catch (error) {
@@ -70,7 +70,7 @@ export const notesService = {
       
       values.push(id);
       await dbService.execute(
-        `UPDATE notes SET ${updates.join(', ')} WHERE id = ?`,
+        `UPDATE notes SET ${updates.join(', ')}, is_dirty = 1, last_modified_at = (datetime('now')) WHERE id = ?`,
         values
       );
     } catch (error) {

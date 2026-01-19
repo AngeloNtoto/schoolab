@@ -618,7 +618,7 @@ export default function SettingsPage() {
                             try {
                               const res = await syncService.start();
                               if (res.success) {
-                                toast.success('Upload Cloud réussi');
+                                toast.success(res.summary || 'Upload Cloud réussi');
                                 loadSettings();
                               } else {
                                 toast.error('Échec : ' + res.error);

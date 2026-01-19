@@ -56,8 +56,8 @@ class ClassService {
    */
   async createSubject(subject: Omit<Subject, 'id'>): Promise<number> {
     const result = await dbService.execute(
-      `INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, is_dirty, last_modified_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime('now')))`,
       [
         subject.name,
         subject.code,
