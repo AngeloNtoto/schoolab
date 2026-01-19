@@ -113,10 +113,8 @@ pub struct GradePush {
     pub localId: i64,
     #[serde(alias = "id")]
     pub serverId: Option<String>,
-    #[serde(alias = "studentLocalId")]
-    pub studentId: i64,
-    #[serde(alias = "subjectLocalId")]
-    pub subjectId: i64,
+    pub studentLocalId: i64,
+    pub subjectLocalId: i64,
     pub period: String,
     pub points: f64,
     #[serde(alias = "lastModifiedAt")]
@@ -141,10 +139,8 @@ pub struct RepechagePush {
     pub localId: i64,
     #[serde(alias = "id")]
     pub serverId: Option<String>,
-    #[serde(alias = "studentLocalId")]
-    pub studentId: i64,
-    #[serde(alias = "subjectLocalId")]
-    pub subjectId: i64,
+    pub studentLocalId: i64,
+    pub subjectLocalId: i64,
     pub value: f64,
     pub percentage: f64,
     #[serde(alias = "lastModifiedAt")]
@@ -210,11 +206,11 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         .map_err(|e| e.to_string())?;
 
     let grades_dirty: Vec<GradePush> = conn.prepare("SELECT id, student_id, subject_id, period, value, server_id, last_modified_at FROM grades WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(GradePush { localId: row.get(0)?, serverId: row.get(5)?, studentId: row.get(1)?, subjectId: row.get(2)?, period: row.get(3)?, points: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(GradePush { localId: row.get(0)?, serverId: row.get(5)?, studentLocalId: row.get(1)?, subjectLocalId: row.get(2)?, period: row.get(3)?, points: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
     let repechages_dirty: Vec<RepechagePush> = conn.prepare("SELECT id, student_id, subject_id, value, percentage, server_id, last_modified_at FROM repechages WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(RepechagePush { localId: row.get(0)?, serverId: row.get(5)?, studentId: row.get(1)?, subjectId: row.get(2)?, value: row.get(3)?, percentage: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(RepechagePush { localId: row.get(0)?, serverId: row.get(5)?, studentLocalId: row.get(1)?, subjectLocalId: row.get(2)?, value: row.get(3)?, percentage: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
     let notes_dirty: Vec<NotePush> = conn.prepare("SELECT id, title, content, academic_year_id, server_id, last_modified_at FROM notes WHERE is_dirty = 1")
@@ -506,7 +502,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     for g in data.grades {
         match conn.execute(
             "INSERT OR REPLACE INTO grades (id, student_id, subject_id, period, value, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
-            params![g.localId, g.studentId, g.subjectId, g.period, g.points, g.serverId],
+            params![g.localId, g.studentLocalId, g.subjectLocalId, g.period, g.points, g.serverId],
         ) {
             Ok(_) => grade_count += 1,
             Err(e) => error!("Failed to insert Grade {}: {}", g.localId, e),
@@ -519,7 +515,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     for r in data.repechages {
         match conn.execute(
             "INSERT OR REPLACE INTO repechages (id, student_id, subject_id, value, percentage, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
-            params![r.localId, r.studentId, r.subjectId, r.value, r.percentage, r.serverId],
+            params![r.localId, r.studentLocalId, r.subjectLocalId, r.value, r.percentage, r.serverId],
         ) {
             Ok(_) => rep_count += 1,
             Err(e) => error!("Failed to insert Repechage {}: {}", r.localId, e),
