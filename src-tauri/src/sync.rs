@@ -18,6 +18,7 @@ pub struct SyncData {
     pub students: Vec<StudentPush>,
     pub subjects: Vec<SubjectPush>,
     pub grades: Vec<GradePush>,
+    pub repechages: Vec<RepechagePush>,
     pub notes: Vec<NotePush>,
 }
 
@@ -134,6 +135,22 @@ pub struct NotePush {
     pub last_modified_at: String,
 }
 
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RepechagePush {
+    pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
+    #[serde(alias = "studentLocalId")]
+    pub studentId: i64,
+    #[serde(alias = "subjectLocalId")]
+    pub subjectId: i64,
+    pub value: f64,
+    pub percentage: f64,
+    #[serde(alias = "lastModifiedAt")]
+    pub last_modified_at: String,
+}
+
 #[derive(Deserialize, Debug)]
 pub struct PushResponse {
     pub success: bool,
@@ -147,6 +164,9 @@ pub struct PushResults {
     pub domains: Option<Vec<ResultItem>>,
     pub students: Option<Vec<ResultItem>>,
     pub subjects: Option<Vec<ResultItem>>,
+    pub grades: Option<Vec<ResultItem>>,
+    pub repechages: Option<Vec<ResultItem>>,
+    pub notes: Option<Vec<ResultItem>>,
 }
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
@@ -157,43 +177,48 @@ pub struct ResultItem {
 
 fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
     info!("Collecting data to push...");
-    let ay_dirty: Vec<AcademicYearPush> = conn.prepare("SELECT id, name, start_date, end_date, is_active, last_modified_at FROM academic_years WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(AcademicYearPush { localId: row.get(0)?, name: row.get(1)?, startDate: row.get(2)?, endDate: row.get(3)?, isCurrent: row.get(4)?, last_modified_at: row.get(5)? }))?.collect::<Result<Vec<_>, _>>())
+    let ay_dirty: Vec<AcademicYearPush> = conn.prepare("SELECT id, name, start_date, end_date, is_active, server_id, last_modified_at FROM academic_years WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(AcademicYearPush { localId: row.get(0)?, serverId: row.get(5)?, name: row.get(1)?, startDate: row.get(2)?, endDate: row.get(3)?, isCurrent: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    let classes_dirty: Vec<ClassPush> = conn.prepare("SELECT id, name, level, option, section, academic_year_id, last_modified_at FROM classes WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(ClassPush { localId: row.get(0)?, name: row.get(1)?, level: row.get(2)?, option: row.get(3)?, section: row.get(4)?, academicYearLocalId: row.get(5)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
+    let classes_dirty: Vec<ClassPush> = conn.prepare("SELECT id, name, level, option, section, academic_year_id, server_id, last_modified_at FROM classes WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(ClassPush { localId: row.get(0)?, serverId: row.get(6)?, name: row.get(1)?, level: row.get(2)?, option: row.get(3)?, section: row.get(4)?, academicYearLocalId: row.get(5)?, last_modified_at: row.get(7)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    let students_dirty: Vec<StudentPush> = conn.prepare("SELECT id, first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, is_abandoned, abandon_reason, class_id, last_modified_at FROM students WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(StudentPush { localId: row.get(0)?, firstName: row.get(1)?, lastName: row.get(2)?, postName: row.get(3)?, gender: row.get(4)?, birthDate: row.get(5)?, birthplace: row.get(6)?, conduite: row.get(7)?, conduiteP1: row.get(8)?, conduiteP2: row.get(9)?, conduiteP3: row.get(10)?, conduiteP4: row.get(11)?, isAbandoned: row.get::<_, i32>(12)? != 0, abandonReason: row.get(13)?, classLocalId: row.get(14)?, last_modified_at: row.get(15)? }))?.collect::<Result<Vec<_>, _>>())
+    let students_dirty: Vec<StudentPush> = conn.prepare("SELECT id, first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, is_abandoned, abandon_reason, class_id, server_id, last_modified_at FROM students WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(StudentPush { localId: row.get(0)?, serverId: row.get(15)?, firstName: row.get(1)?, lastName: row.get(2)?, postName: row.get(3)?, gender: row.get(4)?, birthDate: row.get(5)?, birthplace: row.get(6)?, conduite: row.get(7)?, conduiteP1: row.get(8)?, conduiteP2: row.get(9)?, conduiteP3: row.get(10)?, conduiteP4: row.get(11)?, isAbandoned: row.get::<_, i32>(12)? != 0, abandonReason: row.get(13)?, classLocalId: row.get(14)?, last_modified_at: row.get(16)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
     let domains_dirty: Vec<DomainPush> = conn
-        .prepare("SELECT id, name, display_order, last_modified_at FROM domains WHERE is_dirty = 1")
+        .prepare("SELECT id, name, display_order, server_id, last_modified_at FROM domains WHERE is_dirty = 1")
         .and_then(|mut stmt| {
             stmt.query_map([], |row| {
                 Ok(DomainPush {
                     localId: row.get(0)?,
+                    serverId: row.get(3)?,
                     name: row.get(1)?,
                     displayOrder: row.get(2)?,
-                    last_modified_at: row.get(3)?,
+                    last_modified_at: row.get(4)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()
         })
         .map_err(|e| e.to_string())?;
 
-    let subjects_dirty: Vec<SubjectPush> = conn.prepare("SELECT id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, last_modified_at FROM subjects WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(SubjectPush { localId: row.get(0)?, name: row.get(1)?, code: row.get(2)?, maxP1: row.get(3)?, maxP2: row.get(4)?, maxExam1: row.get(5)?, maxP3: row.get(6)?, maxP4: row.get(7)?, maxExam2: row.get(8)?, category: row.get(9)?, subDomain: row.get(10)?, domainLocalId: row.get(11)?, classLocalId: row.get(12)?, last_modified_at: row.get(13)? }))?.collect::<Result<Vec<_>, _>>())
+    let subjects_dirty: Vec<SubjectPush> = conn.prepare("SELECT id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, server_id, last_modified_at FROM subjects WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(SubjectPush { localId: row.get(0)?, serverId: row.get(13)?, name: row.get(1)?, code: row.get(2)?, maxP1: row.get(3)?, maxP2: row.get(4)?, maxExam1: row.get(5)?, maxP3: row.get(6)?, maxP4: row.get(7)?, maxExam2: row.get(8)?, category: row.get(9)?, subDomain: row.get(10)?, domainLocalId: row.get(11)?, classLocalId: row.get(12)?, last_modified_at: row.get(14)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    let grades_dirty: Vec<GradePush> = conn.prepare("SELECT id, student_id, subject_id, period, value, last_modified_at FROM grades WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(GradePush { localId: row.get(0)?, studentId: row.get(1)?, subjectId: row.get(2)?, period: row.get(3)?, points: row.get(4)?, last_modified_at: row.get(5)? }))?.collect::<Result<Vec<_>, _>>())
+    let grades_dirty: Vec<GradePush> = conn.prepare("SELECT id, student_id, subject_id, period, value, server_id, last_modified_at FROM grades WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(GradePush { localId: row.get(0)?, serverId: row.get(5)?, studentId: row.get(1)?, subjectId: row.get(2)?, period: row.get(3)?, points: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    let notes_dirty: Vec<NotePush> = conn.prepare("SELECT id, title, content, academic_year_id, last_modified_at FROM notes WHERE is_dirty = 1")
-        .and_then(|mut stmt| stmt.query_map([], |row| Ok(NotePush { localId: row.get(0)?, title: row.get(1)?, content: row.get(2)?, academicYearLocalId: row.get(3)?, last_modified_at: row.get(4)? }))?.collect::<Result<Vec<_>, _>>())
+    let repechages_dirty: Vec<RepechagePush> = conn.prepare("SELECT id, student_id, subject_id, value, percentage, server_id, last_modified_at FROM repechages WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(RepechagePush { localId: row.get(0)?, serverId: row.get(5)?, studentId: row.get(1)?, subjectId: row.get(2)?, value: row.get(3)?, percentage: row.get(4)?, last_modified_at: row.get(6)? }))?.collect::<Result<Vec<_>, _>>())
+        .map_err(|e| e.to_string())?;
+
+    let notes_dirty: Vec<NotePush> = conn.prepare("SELECT id, title, content, academic_year_id, server_id, last_modified_at FROM notes WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(NotePush { localId: row.get(0)?, serverId: row.get(4)?, title: row.get(1)?, content: row.get(2)?, academicYearLocalId: row.get(3)?, last_modified_at: row.get(5)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
     let data = SyncData {
@@ -203,6 +228,7 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         students: students_dirty,
         subjects: subjects_dirty,
         grades: grades_dirty,
+        repechages: repechages_dirty,
         notes: notes_dirty,
     };
 
@@ -327,6 +353,30 @@ fn process_push_response(conn: &Connection, response: PushResponse) -> Result<()
                 );
             }
         }
+        if let Some(gr_res) = response.results.grades {
+            for item in gr_res {
+                let _ = conn.execute(
+                    "UPDATE grades SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
+        if let Some(rep_res) = response.results.repechages {
+            for item in rep_res {
+                let _ = conn.execute(
+                    "UPDATE repechages SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
+        if let Some(nt_res) = response.results.notes {
+            for item in nt_res {
+                let _ = conn.execute(
+                    "UPDATE notes SET server_id = ?, is_dirty = 0 WHERE id = ?",
+                    params![item.serverId, item.localId],
+                );
+            }
+        }
     }
     Ok(())
 }
@@ -347,6 +397,7 @@ pub struct PullData {
     pub students: Vec<StudentPush>,
     pub subjects: Vec<SubjectPush>,
     pub grades: Vec<GradePush>,
+    pub repechages: Vec<RepechagePush>,
     pub notes: Vec<NotePush>,
 }
 
@@ -422,6 +473,14 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
         let _ = conn.execute(
             "INSERT OR REPLACE INTO grades (id, student_id, subject_id, period, value, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
             params![g.localId, g.studentId, g.subjectId, g.period, g.points, g.serverId],
+        );
+    }
+
+    // Repechages
+    for r in data.repechages {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO repechages (id, student_id, subject_id, value, percentage, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
+            params![r.localId, r.studentId, r.subjectId, r.value, r.percentage, r.serverId],
         );
     }
 
