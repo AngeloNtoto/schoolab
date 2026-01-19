@@ -218,12 +218,21 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
     ];
 
     for table in sync_tables {
+        // Drop old trigger if it was recursive (v1.3.1 behavior)
+        let _ = conn.execute(
+            &format!("DROP TRIGGER IF EXISTS trg_{table}_updated_at"),
+            [],
+        );
+
         let trigger_updated = format!(
             "
             CREATE TRIGGER IF NOT EXISTS trg_{table}_updated_at
             AFTER UPDATE ON {table}
             FOR EACH ROW
-            WHEN (NEW.is_dirty = OLD.is_dirty OR NEW.is_dirty = 1)
+            -- Only fire if column other than is_dirty/updated_at/last_modified_at has changed,
+            -- OR if is_dirty is being kept at 0 during a normal update.
+            -- Simplest way to avoid loop: only fire if NEW.is_dirty is the same as OLD.is_dirty AND we are not already 1.
+            WHEN (NEW.is_dirty = OLD.is_dirty AND NEW.is_dirty = 0)
             BEGIN
                 UPDATE {table} SET 
                     updated_at = (datetime('now')), 
@@ -235,6 +244,12 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         );
         conn.execute(&trigger_updated, [])
             .map_err(|e| e.to_string())?;
+
+        // Also ensure any record without a server_id is marked as dirty
+        let _ = conn.execute(
+            &format!("UPDATE {table} SET is_dirty = 1 WHERE server_id IS NULL AND is_dirty = 0"),
+            [],
+        );
     }
 
     // Settings trigger

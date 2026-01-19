@@ -583,14 +583,7 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
         (s_id, tok)
     };
 
-    // 2. Perform Pull
-    let pull_data = pull_from_cloud(&school_id, &token).await?;
-    let pull_total = {
-        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-        process_pull_data(conn, pull_data)?
-    };
-
-    // 3. Perform Push
+    // 2. Perform Push
     let (sync_data, school_info, push_total) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
 
@@ -635,13 +628,20 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
         (data, s_info, total as i32)
     };
 
-    let response = send_push_data(&school_id, &token, sync_data, school_info).await?;
+    let push_response = send_push_data(&school_id, &token, sync_data, school_info).await?;
 
-    // 4. Finalize Push
+    // 3. Finalize Push
     {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-        process_push_response(&conn, response)?;
+        process_push_response(&conn, push_response)?;
     }
+
+    // 4. Perform Pull
+    let pull_data = pull_from_cloud(&school_id, &token).await?;
+    let pull_total = {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+        process_pull_data(conn, pull_data)?
+    };
 
     let summary = if push_total > 0 || pull_total > 0 {
         format!("Sync réussi : {} envoyés, {} reçus", push_total, pull_total)
