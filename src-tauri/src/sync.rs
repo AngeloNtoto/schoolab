@@ -19,7 +19,6 @@ pub struct SyncData {
     pub subjects: Vec<SubjectPush>,
     pub grades: Vec<GradePush>,
     pub notes: Vec<NotePush>,
-    pub deletions: Vec<DeletionPush>,
 }
 
 // La struct SchoolInfo est désormais importée depuis crate::SchoolInfo (définie dans lib.rs)
@@ -111,12 +110,6 @@ pub struct NotePush {
     pub academicYearLocalId: Option<i64>,
     pub last_modified_at: String,
 }
-#[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
-pub struct DeletionPush {
-    pub tableName: String,
-    pub localId: i64,
-}
 
 #[derive(Deserialize, Debug)]
 pub struct PushResponse {
@@ -131,20 +124,12 @@ pub struct PushResults {
     pub domains: Option<Vec<ResultItem>>,
     pub students: Option<Vec<ResultItem>>,
     pub subjects: Option<Vec<ResultItem>>,
-    pub deletions: Option<Vec<DeletionResultItem>>,
 }
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
 pub struct ResultItem {
     pub localId: i64,
     pub serverId: String,
-}
-#[allow(non_snake_case)]
-#[derive(Deserialize, Debug)]
-pub struct DeletionResultItem {
-    pub tableName: String,
-    pub localId: i64,
-    pub success: bool,
 }
 
 fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
@@ -180,29 +165,48 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         .and_then(|mut stmt| stmt.query_map([], |row| Ok(SubjectPush { localId: row.get(0)?, name: row.get(1)?, code: row.get(2)?, maxP1: row.get(3)?, maxP2: row.get(4)?, maxExam1: row.get(5)?, maxP3: row.get(6)?, maxP4: row.get(7)?, maxExam2: row.get(8)?, category: row.get(9)?, subDomain: row.get(10)?, domainLocalId: row.get(11)?, classLocalId: row.get(12)?, last_modified_at: row.get(13)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    let deletions: Vec<DeletionPush> = conn
-        .prepare("SELECT table_name, local_id FROM sync_deletions")
-        .and_then(|mut stmt| {
-            stmt.query_map([], |row| {
-                Ok(DeletionPush {
-                    tableName: row.get(0)?,
-                    localId: row.get(1)?,
-                })
-            })?
-            .collect::<Result<Vec<_>, _>>()
-        })
+    let grades_dirty: Vec<GradePush> = conn.prepare("SELECT id, student_id, subject_id, period, value, last_modified_at FROM grades WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(GradePush { localId: row.get(0)?, studentId: row.get(1)?, subjectId: row.get(2)?, period: row.get(3)?, points: row.get(4)?, last_modified_at: row.get(5)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
-    Ok(SyncData {
+    let notes_dirty: Vec<NotePush> = conn.prepare("SELECT id, title, content, academic_year_id, last_modified_at FROM notes WHERE is_dirty = 1")
+        .and_then(|mut stmt| stmt.query_map([], |row| Ok(NotePush { localId: row.get(0)?, title: row.get(1)?, content: row.get(2)?, academicYearLocalId: row.get(3)?, last_modified_at: row.get(4)? }))?.collect::<Result<Vec<_>, _>>())
+        .map_err(|e| e.to_string())?;
+
+    let data = SyncData {
         academic_years: ay_dirty,
         classes: classes_dirty,
         domains: domains_dirty,
         students: students_dirty,
         subjects: subjects_dirty,
-        grades: vec![],
-        notes: vec![],
-        deletions,
-    })
+        grades: grades_dirty,
+        notes: notes_dirty,
+    };
+
+    info!("Collected push data stats:");
+    info!("- AcademicYears: {}", data.academic_years.len());
+
+    // Debug: Log total counts to verify DB state
+    let total_ay: i64 = conn
+        .query_row("SELECT COUNT(*) FROM academic_years", [], |r| r.get(0))
+        .unwrap_or(0);
+    let total_classes: i64 = conn
+        .query_row("SELECT COUNT(*) FROM classes", [], |r| r.get(0))
+        .unwrap_or(0);
+    let total_students: i64 = conn
+        .query_row("SELECT COUNT(*) FROM students", [], |r| r.get(0))
+        .unwrap_or(0);
+    info!(
+        "DEBUG DB STATE: Total AY: {}, Total Classes: {}, Total Students: {}",
+        total_ay, total_classes, total_students
+    );
+
+    info!("- Classes: {}", data.classes.len());
+    info!("- Domains: {}", data.domains.len());
+    info!("- Students: {}", data.students.len());
+    info!("- Subjects: {}", data.subjects.len());
+
+    Ok(data)
 }
 
 async fn send_push_data(
@@ -217,9 +221,16 @@ async fn send_push_data(
         "data": sync_data,
         "schoolInfo": school_info
     });
+    let url = format!("{}/api/sync/push", get_cloud_url());
+    info!("Sending POST request to: {}", url);
+    info!(
+        "Payload size (approx): {} bytes",
+        serde_json::to_string(&payload).unwrap_or_default().len()
+    );
+
     let client = reqwest::Client::new();
     let res = client
-        .post(format!("{}/api/sync/push", get_cloud_url()))
+        .post(&url)
         .header(CONTENT_TYPE, "application/json")
         .header(AUTHORIZATION, format!("Bearer {}", token))
         .header("x-hwid", get_hwid_internal())
@@ -228,11 +239,20 @@ async fn send_push_data(
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.status().is_success() {
-        res.json().await.map_err(|e| e.to_string())
-    } else {
-        Err(format!("Server error: {}", res.status()))
+    let status = res.status();
+    let text = res.text().await.unwrap_or_default();
+
+    info!("Cloud status: {}", status);
+    info!("Cloud response (first 1000): {:.1000}", text);
+
+    if !status.is_success() {
+        return Err(format!("Server error: {} | body: {:.500}", status, text));
     }
+
+    let response: PushResponse = serde_json::from_str(&text)
+        .map_err(|e| format!("JSON Parse Error: {} | body: {:.200}", e, text))?;
+
+    Ok(response)
 }
 
 fn process_push_response(conn: &Connection, response: PushResponse) -> Result<(), String> {
@@ -275,16 +295,6 @@ fn process_push_response(conn: &Connection, response: PushResponse) -> Result<()
                     "UPDATE subjects SET server_id = ?, is_dirty = 0 WHERE id = ?",
                     params![item.serverId, item.localId],
                 );
-            }
-        }
-        if let Some(del_res) = response.results.deletions {
-            for del in del_res {
-                if del.success {
-                    let _ = conn.execute(
-                        "DELETE FROM sync_deletions WHERE table_name = ? AND local_id = ?",
-                        params![del.tableName, del.localId],
-                    );
-                }
             }
         }
     }

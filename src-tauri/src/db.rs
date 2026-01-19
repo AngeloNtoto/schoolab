@@ -159,32 +159,6 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
             UNIQUE(student_id, subject_id)
         );
-
-        CREATE TABLE IF NOT EXISTS sync_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT DEFAULT (datetime('now')),
-            type TEXT NOT NULL,
-            status TEXT NOT NULL,
-            records_synced TEXT,
-            error_message TEXT,
-            duration_ms INTEGER
-        );
-
-        CREATE TABLE IF NOT EXISTS sync_deletions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            table_name TEXT NOT NULL,
-            local_id INTEGER NOT NULL,
-            deleted_at TEXT DEFAULT (datetime('now'))
-        );
-
-        CREATE TABLE IF NOT EXISTS record_snapshots (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            table_name TEXT NOT NULL,
-            record_id INTEGER NOT NULL,
-            data TEXT NOT NULL,
-            captured_at TEXT DEFAULT (datetime('now')),
-            UNIQUE(table_name, record_id)
-        );
     ",
     )
     .map_err(|e| e.to_string())?;
@@ -245,19 +219,6 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         "
         );
         conn.execute(&trigger_updated, [])
-            .map_err(|e| e.to_string())?;
-
-        let trigger_deleted = format!(
-            "
-            CREATE TRIGGER IF NOT EXISTS trg_{table}_deleted
-            AFTER DELETE ON {table}
-            BEGIN
-                INSERT INTO sync_deletions (table_name, local_id)
-                VALUES ('{table}', OLD.id);
-            END;
-        "
-        );
-        conn.execute(&trigger_deleted, [])
             .map_err(|e| e.to_string())?;
     }
 

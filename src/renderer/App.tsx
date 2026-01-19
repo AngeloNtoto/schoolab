@@ -21,7 +21,6 @@ import NetworkDashboard from './pages/Network/NetworkDashboard';
 import Layout from './components/layout/Layout';
 import AcademicYearsManager from './components/setup/AcademicYearsManager';
 import SettingsPage from './pages/SettingsPage';
-import SyncHistoryPage from './pages/SyncHistoryPage';
 import NotesPage from './pages/NotesPage';
 import AuthScreen from './components/setup/AuthScreen';
 import { CacheProvider } from './context/CacheContext';
@@ -177,7 +176,6 @@ export default function App() {
               <Route path="/network" element={<NetworkDashboard />} />
               <Route path="/academic-years" element={<AcademicYearsManager />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/history" element={<SyncHistoryPage />} />
               <Route path="/notes" element={<NotesPage />} />
             </Route>
             <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />

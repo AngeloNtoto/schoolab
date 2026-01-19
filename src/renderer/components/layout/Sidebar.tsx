@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote, History as HistoryIcon } from '../iconsSvg';
+import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote } from '../iconsSvg';
 import { SchoolabSymbol, LogoFull } from '../ui/Logo';
 
 interface SidebarProps {
@@ -45,7 +45,6 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
     { path: '/network', icon: Network, label: 'Réseau' },
-    { path: '/history', icon: HistoryIcon, label: 'Historique' },
     { path: '/academic-years', icon: CalendarRange, label: 'Années Académiques' },
   ];
 

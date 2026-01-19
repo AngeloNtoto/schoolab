@@ -774,7 +774,13 @@ export default function SettingsPage() {
                     <div className="text-center pt-4 border-t border-slate-100 dark:border-white/5">
                       <button 
                         onClick={async () => {
-                          if (window.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?")) {
+                          const confirmed = await dialog.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?", {
+                            title: "Mode Développeur",
+                            confirmLabel: "Générer",
+                            cancelLabel: "Annuler"
+                          });
+                          
+                          if (confirmed) {
                             setLoading(true);
                             try {
                               await seedingService.seedDatabase();
