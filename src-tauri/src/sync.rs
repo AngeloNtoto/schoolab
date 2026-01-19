@@ -429,13 +429,20 @@ async fn pull_from_cloud(school_id: &str, token: &str) -> Result<PullData, Strin
     Ok(response.data)
 }
 
-fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
+fn process_pull_data(mut conn: Connection, data: PullData) -> Result<(), String> {
     info!("Processing pulled data into local database...");
+
+    // Set busy timeout to handle contention
+    let _ = conn.execute("PRAGMA busy_timeout = 5000", []);
+
+    let tx = conn
+        .transaction()
+        .map_err(|e| format!("Transaction Error: {}", e))?;
 
     let mut ay_count = 0;
     // Academic Years
     for ay in data.academicYears {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO academic_years (id, name, start_date, end_date, is_active, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
             params![ay.localId, ay.name, ay.startDate, ay.endDate, ay.isCurrent as i32, ay.serverId],
         ) {
@@ -461,7 +468,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Domains
     let mut domain_count = 0;
     for d in data.domains {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO domains (id, name, display_order, server_id, is_dirty) VALUES (?, ?, ?, ?, 0)",
             params![d.localId, d.name, d.displayOrder, d.serverId],
         ) {
@@ -474,7 +481,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Students
     let mut student_count = 0;
     for s in data.students {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO students (id, first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, is_abandoned, abandon_reason, class_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
             params![s.localId, s.firstName, s.lastName, s.postName, s.gender, s.birthDate, s.birthplace, s.conduite, s.conduiteP1, s.conduiteP2, s.conduiteP3, s.conduiteP4, s.isAbandoned as i32, s.abandonReason, s.classLocalId, s.serverId],
         ) {
@@ -487,7 +494,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Subjects
     let mut subject_count = 0;
     for sub in data.subjects {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO subjects (id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
             params![sub.localId, sub.name, sub.code, sub.maxP1, sub.maxP2, sub.maxExam1, sub.maxP3, sub.maxP4, sub.maxExam2, sub.category, sub.subDomain, sub.domainLocalId, sub.classLocalId, sub.serverId],
         ) {
@@ -500,7 +507,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Grades
     let mut grade_count = 0;
     for g in data.grades {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO grades (id, student_id, subject_id, period, value, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
             params![g.localId, g.studentLocalId, g.subjectLocalId, g.period, g.points, g.serverId],
         ) {
@@ -513,7 +520,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Repechages
     let mut rep_count = 0;
     for r in data.repechages {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO repechages (id, student_id, subject_id, value, percentage, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
             params![r.localId, r.studentLocalId, r.subjectLocalId, r.value, r.percentage, r.serverId],
         ) {
@@ -526,7 +533,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     // Notes
     let mut note_count = 0;
     for n in data.notes {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO notes (id, title, content, academic_year_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, 0)",
             params![n.localId, n.title, n.content, n.academicYearLocalId, n.serverId],
         ) {
@@ -536,6 +543,7 @@ fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
     }
     info!("Successfully processed {} notes", note_count);
 
+    tx.commit().map_err(|e| format!("Commit Error: {}", e))?;
     Ok(())
 }
 
@@ -568,7 +576,7 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
     let pull_data = pull_from_cloud(&school_id, &token).await?;
     {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-        process_pull_data(&conn, pull_data)?;
+        process_pull_data(conn, pull_data)?;
     }
 
     // 3. Perform Push
