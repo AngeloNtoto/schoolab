@@ -246,7 +246,14 @@ async fn send_push_data(
     info!("Cloud response (first 1000): {:.1000}", text);
 
     if !status.is_success() {
-        return Err(format!("Server error: {} | body: {:.500}", status, text));
+        if let Ok(err_json) = serde_json::from_str::<serde_json::Value>(&text) {
+            let msg = err_json["error"]
+                .as_str()
+                .unwrap_or("Erreur serveur inconnue");
+            let code = err_json["code"].as_str().unwrap_or("SERVER_ERROR");
+            return Err(format!("{} ({})", msg, code));
+        }
+        return Err(format!("Erreur Serveur ({}): {:.500}", status, text));
     }
 
     let response: PushResponse = serde_json::from_str(&text)
