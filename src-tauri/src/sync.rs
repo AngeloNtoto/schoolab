@@ -1,5 +1,5 @@
 use crate::{get_cloud_url, get_db_path, get_hwid_internal, SchoolInfo};
-use log::info;
+use log::{error, info};
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
