@@ -25,38 +25,49 @@ pub struct SyncData {
 // pour éviter la duplication et les avertissements de code mort.
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AcademicYearPush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub name: String,
     pub startDate: String,
     pub endDate: String,
     pub isCurrent: bool,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClassPush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub name: String,
     pub level: String,
     pub option: String,
     pub section: String,
     pub academicYearLocalId: i64,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DomainPush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub name: String,
     pub displayOrder: i64,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct StudentPush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub firstName: String,
     pub lastName: String,
     pub postName: String,
@@ -71,12 +82,15 @@ pub struct StudentPush {
     pub isAbandoned: bool,
     pub abandonReason: String,
     pub classLocalId: i64,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SubjectPush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub name: String,
     pub code: String,
     pub maxP1: i64,
@@ -89,25 +103,34 @@ pub struct SubjectPush {
     pub subDomain: String,
     pub domainLocalId: Option<i64>,
     pub classLocalId: i64,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GradePush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
+    #[serde(alias = "studentLocalId")]
     pub studentId: i64,
+    #[serde(alias = "subjectLocalId")]
     pub subjectId: i64,
     pub period: String,
     pub points: f64,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 #[allow(non_snake_case)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NotePush {
     pub localId: i64,
+    #[serde(alias = "id")]
+    pub serverId: Option<String>,
     pub title: String,
     pub content: String,
     pub academicYearLocalId: Option<i64>,
+    #[serde(alias = "lastModifiedAt")]
     pub last_modified_at: String,
 }
 
@@ -308,15 +331,119 @@ fn process_push_response(conn: &Connection, response: PushResponse) -> Result<()
     Ok(())
 }
 
+#[derive(Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct PullResponse {
+    pub success: bool,
+    pub data: PullData,
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct PullData {
+    pub academicYears: Vec<AcademicYearPush>,
+    pub classes: Vec<ClassPush>,
+    pub domains: Vec<DomainPush>,
+    pub students: Vec<StudentPush>,
+    pub subjects: Vec<SubjectPush>,
+    pub grades: Vec<GradePush>,
+    pub notes: Vec<NotePush>,
+}
+
+async fn pull_from_cloud(school_id: &str, token: &str) -> Result<PullData, String> {
+    info!("Pulling data from cloud...");
+    let url = format!("{}/api/sync/pull?schoolId={}", get_cloud_url(), school_id);
+    let client = reqwest::Client::new();
+    let res = client
+        .get(&url)
+        .header(AUTHORIZATION, format!("Bearer {}", token))
+        .header("x-hwid", get_hwid_internal())
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let text = res.text().await.unwrap_or_default();
+    let response: PullResponse = serde_json::from_str(&text)
+        .map_err(|e| format!("Pull JSON Error: {} | body: {:.500}", e, text))?;
+
+    if !response.success {
+        return Err("Server reported failure during pull".to_string());
+    }
+
+    Ok(response.data)
+}
+
+fn process_pull_data(conn: &Connection, data: PullData) -> Result<(), String> {
+    info!("Processing pulled data...");
+
+    // Batch insert/update using OR IGNORE or REPLACE strategy for simple sync
+    // Academic Years
+    for ay in data.academicYears {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO academic_years (id, name, start_date, end_date, is_active, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
+            params![ay.localId, ay.name, ay.startDate, ay.endDate, ay.isCurrent as i32, ay.serverId],
+        );
+    }
+
+    // Classes
+    for c in data.classes {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO classes (id, name, level, option, section, academic_year_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
+            params![c.localId, c.name, c.level, c.option, c.section, c.academicYearLocalId, c.serverId],
+        );
+    }
+
+    // Domains
+    for d in data.domains {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO domains (id, name, display_order, server_id, is_dirty) VALUES (?, ?, ?, ?, 0)",
+            params![d.localId, d.name, d.displayOrder, d.serverId],
+        );
+    }
+
+    // Students
+    for s in data.students {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO students (id, first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, is_abandoned, abandon_reason, class_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+            params![s.localId, s.firstName, s.lastName, s.postName, s.gender, s.birthDate, s.birthplace, s.conduite, s.conduiteP1, s.conduiteP2, s.conduiteP3, s.conduiteP4, s.isAbandoned as i32, s.abandonReason, s.classLocalId, s.serverId],
+        );
+    }
+
+    // Subjects
+    for sub in data.subjects {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO subjects (id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+            params![sub.localId, sub.name, sub.code, sub.maxP1, sub.maxP2, sub.maxExam1, sub.maxP3, sub.maxP4, sub.maxExam2, sub.category, sub.subDomain, sub.domainLocalId, sub.classLocalId, sub.serverId],
+        );
+    }
+
+    // Grades
+    for g in data.grades {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO grades (id, student_id, subject_id, period, value, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, 0)",
+            params![g.localId, g.studentId, g.subjectId, g.period, g.points, g.serverId],
+        );
+    }
+
+    // Notes
+    for n in data.notes {
+        let _ = conn.execute(
+            "INSERT OR REPLACE INTO notes (id, title, content, academic_year_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, 0)",
+            params![n.localId, n.title, n.content, n.academicYearLocalId, n.serverId],
+        );
+    }
+
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, String> {
     info!("Starting sync process...");
     let db_path = get_db_path(&app_handle);
 
-    // 2. Send Data (Async, no db lock held)
-    let (sync_data, school_info, school_id, token) = {
+    // 1. Fetch credentials
+    let (school_id, token) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
-
         let s_id: String = conn
             .query_row(
                 "SELECT value FROM settings WHERE key = 'school_id'",
@@ -324,7 +451,6 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
                 |r| r.get(0),
             )
             .map_err(|_| "NOT_LINKED")?;
-
         let tok: String = conn
             .query_row(
                 "SELECT value FROM settings WHERE key = 'license_token'",
@@ -332,6 +458,19 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
                 |r| r.get(0),
             )
             .map_err(|_| "NOT_LINKED")?;
+        (s_id, tok)
+    };
+
+    // 2. Perform Pull
+    let pull_data = pull_from_cloud(&school_id, &token).await?;
+    {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+        process_pull_data(&conn, pull_data)?;
+    }
+
+    // 3. Perform Push
+    let (sync_data, school_info) = {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
 
         let s_name = conn
             .query_row(
@@ -356,20 +495,19 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
             .ok();
 
         let s_info = SchoolInfo {
-            id: s_id.clone(),
+            id: school_id.clone(),
             name: s_name,
             city: s_city,
             pobox: s_pobox,
         };
 
         let data = collect_push_data(&conn)?;
-
-        (data, s_info, s_id, tok)
+        (data, s_info)
     };
 
     let response = send_push_data(&school_id, &token, sync_data, school_info).await?;
 
-    // 3. Process Response (Sync)
+    // 4. Finalize Push
     {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         process_push_response(&conn, response)?;
