@@ -455,7 +455,7 @@ fn process_pull_data(mut conn: Connection, data: PullData) -> Result<(), String>
     // Classes
     let mut class_count = 0;
     for c in data.classes {
-        match conn.execute(
+        match tx.execute(
             "INSERT OR REPLACE INTO classes (id, name, level, option, section, academic_year_id, server_id, is_dirty) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
             params![c.localId, c.name, c.level, c.option, c.section, c.academicYearLocalId, c.serverId],
         ) {
