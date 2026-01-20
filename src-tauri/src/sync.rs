@@ -180,7 +180,6 @@ pub struct PushResults {
 #[derive(Deserialize, Debug)]
 pub struct DeletionResultItem {
     pub localId: i64,
-    pub tableName: String,
     pub success: bool,
 }
 #[allow(non_snake_case)]
