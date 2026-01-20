@@ -469,6 +469,31 @@ async fn refresh_remote_license(app_handle: tauri::AppHandle) -> Result<serde_js
             .ok();
         }
 
+        // Mise à jour des informations de l'école (Nouveau)
+        if let Some(school) = result["school"].as_object() {
+            if let Some(name) = school.get("name").and_then(|v| v.as_str()) {
+                conn.execute(
+                    "INSERT OR REPLACE INTO settings (key, value) VALUES ('school_name', ?)",
+                    params![name],
+                )
+                .ok();
+            }
+            if let Some(city) = school.get("city").and_then(|v| v.as_str()) {
+                conn.execute(
+                    "INSERT OR REPLACE INTO settings (key, value) VALUES ('school_city', ?)",
+                    params![city],
+                )
+                .ok();
+            }
+            if let Some(pobox) = school.get("pobox").and_then(|v| v.as_str()) {
+                conn.execute(
+                    "INSERT OR REPLACE INTO settings (key, value) VALUES ('school_pobox', ?)",
+                    params![pobox],
+                )
+                .ok();
+            }
+        }
+
         let info = get_license_info(app_handle).await?;
         Ok(serde_json::json!({ "success": true, "info": info }))
     } else {
