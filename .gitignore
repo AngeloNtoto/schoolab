@@ -3,6 +3,4 @@ node_modules
 dist-web
 vite
 dist
-.agent
-.env
 *.local
