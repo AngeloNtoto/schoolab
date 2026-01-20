@@ -21,13 +21,55 @@ export interface UpdateProgress {
 
 export type ProgressCallback = (progress: UpdateProgress) => void;
 
+const UPDATE_STORAGE_KEY = 'schoolab_update_detected_at';
+const AUTO_UPDATE_THRESHOLD_DAYS = 2;
+
 export const updateService = {
+  /**
+   * Retourne le nombre de jours depuis que la mise à jour a été détectée
+   */
+  getDaysPending: (): number => {
+    const detectedAt = localStorage.getItem(UPDATE_STORAGE_KEY);
+    if (!detectedAt) return 0;
+    const diff = Date.now() - parseInt(detectedAt);
+    return diff / (1000 * 60 * 60 * 24);
+  },
+
+  /**
+   * Réinitialise le compteur de détection
+   */
+  resetUpdateDetection: () => {
+    localStorage.removeItem(UPDATE_STORAGE_KEY);
+  },
+
+  /**
+   * Enregistre l'heure de détection si ce n'est pas déjà fait
+   */
+  markUpdateDetected: () => {
+    if (!localStorage.getItem(UPDATE_STORAGE_KEY)) {
+      localStorage.setItem(UPDATE_STORAGE_KEY, Date.now().toString());
+    }
+  },
+
+  /**
+   * Vérifie si la mise à jour doit être forcée (plus de 2 jours)
+   */
+  shouldForceUpdate: (): boolean => {
+    const days = updateService.getDaysPending();
+    return days >= AUTO_UPDATE_THRESHOLD_DAYS;
+  },
+
   /**
    * Vérifie si une mise à jour est disponible
    */
   check: async (): Promise<{ available: boolean; version?: string }> => {
     try {
       const update = await check();
+      if (update?.available) {
+        updateService.markUpdateDetected();
+      } else {
+        updateService.resetUpdateDetection();
+      }
       return {
         available: !!update?.available,
         version: update?.version
@@ -57,6 +99,7 @@ export const updateService = {
       
       if (!update?.available) {
         console.log('[Updater] Aucune mise à jour disponible.');
+        updateService.resetUpdateDetection();
         onProgress?.({ 
           status: 'Application à jour', 
           percent: 0, 
@@ -65,6 +108,9 @@ export const updateService = {
         });
         return { available: false };
       }
+
+      // Marquer la détection pour le compteur de 2 jours
+      updateService.markUpdateDetected();
 
       console.log(`[Updater] Nouvelle version disponible : ${update.version}`);
       onProgress?.({ 

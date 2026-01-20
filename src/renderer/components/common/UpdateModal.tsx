@@ -27,6 +27,12 @@ export default function UpdateModal() {
     const result = await updateService.checkForUpdates(true, setProgress);
     if (result.available) {
       setIsVisible(true);
+      
+      // Si la mise à jour date de plus de 2 jours, on force l'installation
+      if (updateService.shouldForceUpdate()) {
+        console.log('[Updater] Mise à jour forcée (plus de 2 jours)');
+        handleInstall();
+      }
     }
   };
 

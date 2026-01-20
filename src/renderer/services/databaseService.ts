@@ -19,7 +19,7 @@ class DatabaseServiceImpl implements DatabaseService {
     if (api) {
       // Dans Tauri, on ouvre la base de données. 
       // En développement on utilise dev.db, en production ecole.db
-      const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+      const isDev = import.meta.env.DEV;
       const dbName = isDev ? 'dev.db' : 'ecole.db';
       
       // On récupère le chemin absolu pour être sûr d'ouvrir la même base que le backend
