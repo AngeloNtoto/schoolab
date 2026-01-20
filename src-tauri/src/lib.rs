@@ -529,6 +529,8 @@ pub fn run() {
             activate_license,
             refresh_remote_license,
             sync::sync_start,
+            sync::sync_push,
+            sync::sync_pull,
             auth_check,
             auth_create,
             auth_verify,

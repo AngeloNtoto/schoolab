@@ -21,6 +21,15 @@ pub struct SyncData {
     pub grades: Vec<GradePush>,
     pub repechages: Vec<RepechagePush>,
     pub notes: Vec<NotePush>,
+    pub deletions: Vec<SyncDeletionEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
+pub struct SyncDeletionEntry {
+    pub localId: i64,
+    pub tableName: String,
+    pub serverId: String,
 }
 
 // La struct SchoolInfo est désormais importée depuis crate::SchoolInfo (définie dans lib.rs)
@@ -164,6 +173,15 @@ pub struct PushResults {
     pub grades: Option<Vec<ResultItem>>,
     pub repechages: Option<Vec<ResultItem>>,
     pub notes: Option<Vec<ResultItem>>,
+    pub deletions: Option<Vec<DeletionResultItem>>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Debug)]
+pub struct DeletionResultItem {
+    pub localId: i64,
+    pub tableName: String,
+    pub success: bool,
 }
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
@@ -218,6 +236,20 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         .and_then(|mut stmt| stmt.query_map([], |row| Ok(NotePush { localId: row.get(0)?, serverId: row.get(4)?, title: row.get(1)?, content: row.get(2)?, academicYearLocalId: row.get(3)?, last_modified_at: row.get(5)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 
+    let deletions: Vec<SyncDeletionEntry> = conn
+        .prepare("SELECT id, table_name, server_id FROM sync_deletions")
+        .and_then(|mut stmt| {
+            stmt.query_map([], |row| {
+                Ok(SyncDeletionEntry {
+                    localId: row.get(0)?,
+                    tableName: row.get(1)?,
+                    serverId: row.get(2)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()
+        })
+        .map_err(|e| e.to_string())?;
+
     let data = SyncData {
         academic_years: ay_dirty,
         classes: classes_dirty,
@@ -227,30 +259,16 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         grades: grades_dirty,
         repechages: repechages_dirty,
         notes: notes_dirty,
+        deletions,
     };
 
     info!("Collected push data stats:");
     info!("- AcademicYears: {}", data.academic_years.len());
-
-    // Debug: Log total counts to verify DB state
-    let total_ay: i64 = conn
-        .query_row("SELECT COUNT(*) FROM academic_years", [], |r| r.get(0))
-        .unwrap_or(0);
-    let total_classes: i64 = conn
-        .query_row("SELECT COUNT(*) FROM classes", [], |r| r.get(0))
-        .unwrap_or(0);
-    let total_students: i64 = conn
-        .query_row("SELECT COUNT(*) FROM students", [], |r| r.get(0))
-        .unwrap_or(0);
-    info!(
-        "DEBUG DB STATE: Total AY: {}, Total Classes: {}, Total Students: {}",
-        total_ay, total_classes, total_students
-    );
-
     info!("- Classes: {}", data.classes.len());
     info!("- Domains: {}", data.domains.len());
     info!("- Students: {}", data.students.len());
     info!("- Subjects: {}", data.subjects.len());
+    info!("- Deletions: {}", data.deletions.len());
 
     Ok(data)
 }
@@ -372,6 +390,16 @@ fn process_push_response(conn: &Connection, response: PushResponse) -> Result<()
                     "UPDATE notes SET server_id = ?, is_dirty = 0 WHERE id = ?",
                     params![item.serverId, item.localId],
                 );
+            }
+        }
+        if let Some(del_res) = response.results.deletions {
+            for item in del_res {
+                if item.success {
+                    let _ = conn.execute(
+                        "DELETE FROM sync_deletions WHERE id = ?",
+                        params![item.localId],
+                    );
+                }
             }
         }
     }
@@ -559,11 +587,10 @@ fn process_pull_data(mut conn: Connection, data: PullData) -> Result<i32, String
 }
 
 #[tauri::command]
-pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, String> {
-    info!("Starting sync process...");
+pub async fn sync_push(app_handle: tauri::AppHandle) -> Result<SyncResult, String> {
+    info!("Starting sync push process...");
     let db_path = get_db_path(&app_handle);
 
-    // 1. Fetch credentials
     let (school_id, token) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         let s_id: String = conn
@@ -583,7 +610,6 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
         (s_id, tok)
     };
 
-    // 2. Perform Push
     let (sync_data, school_info, push_total) = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
 
@@ -624,34 +650,86 @@ pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, Stri
             + data.subjects.len()
             + data.grades.len()
             + data.repechages.len()
-            + data.notes.len();
+            + data.notes.len()
+            + data.deletions.len();
         (data, s_info, total as i32)
     };
 
+    if push_total == 0 {
+        return Ok(SyncResult {
+            success: true,
+            error: None,
+            summary: Some("Déjà à jour".to_string()),
+        });
+    }
+
     let push_response = send_push_data(&school_id, &token, sync_data, school_info).await?;
 
-    // 3. Finalize Push
     {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         process_push_response(&conn, push_response)?;
     }
 
-    // 4. Perform Pull
+    Ok(SyncResult {
+        success: true,
+        error: None,
+        summary: Some(format!("Envoyé : {} éléments", push_total)),
+    })
+}
+
+#[tauri::command]
+pub async fn sync_pull(app_handle: tauri::AppHandle) -> Result<SyncResult, String> {
+    info!("Starting sync pull process...");
+    let db_path = get_db_path(&app_handle);
+
+    let (school_id, token) = {
+        let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+        let s_id: String = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'school_id'",
+                [],
+                |r| r.get(0),
+            )
+            .map_err(|_| "NOT_LINKED")?;
+        let tok: String = conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'license_token'",
+                [],
+                |r| r.get(0),
+            )
+            .map_err(|_| "NOT_LINKED")?;
+        (s_id, tok)
+    };
+
     let pull_data = pull_from_cloud(&school_id, &token).await?;
     let pull_total = {
         let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
         process_pull_data(conn, pull_data)?
     };
 
-    let summary = if push_total > 0 || pull_total > 0 {
-        format!("Sync réussi : {} envoyés, {} reçus", push_total, pull_total)
-    } else {
-        "Tout est à jour".to_string()
-    };
-
     Ok(SyncResult {
         success: true,
         error: None,
-        summary: Some(summary),
+        summary: Some(format!("Reçu : {} éléments", pull_total)),
+    })
+}
+
+#[tauri::command]
+pub async fn sync_start(app_handle: tauri::AppHandle) -> Result<SyncResult, String> {
+    let push = sync_push(app_handle.clone()).await?;
+    let pull = sync_pull(app_handle).await?;
+
+    Ok(SyncResult {
+        success: push.success && pull.success,
+        error: if !push.success {
+            push.error
+        } else {
+            pull.error
+        },
+        summary: Some(format!(
+            "Sync complet ({} envoyé, {} reçu)",
+            push.summary.unwrap_or_else(|| "0".to_string()),
+            pull.summary.unwrap_or_else(|| "0".to_string())
+        )),
     })
 }

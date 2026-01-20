@@ -22,7 +22,7 @@ export default function SettingsPage() {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [activationType, setActivationType] = useState<'ACTIVATE' | 'REGISTER'>('ACTIVATE');
   const [activationError, setActivationError] = useState('');
-  const { license: licenseStatus, refreshLicense, refreshRemoteLicense, syncPull } = useLicense();
+  const { license: licenseStatus, refreshLicense, refreshRemoteLicense, syncPull, syncPush } = useLicense();
   const [hwid, setHwid] = useState('');
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [cloudSchoolId, setCloudSchoolId] = useState<string | null>(null);
@@ -612,13 +612,14 @@ export default function SettingsPage() {
                     {/* Interactive Controls (Plus Only) */}
                     {licenseStatus?.plan === 'PLUS' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4 animate-in slide-in-from-bottom-4 duration-1000">
+                        {/* Session Push */}
                         <button 
                           onClick={async () => {
                             setLoading(true);
                             try {
-                              const res = await syncService.start();
+                              const res = await syncPush();
                               if (res.success) {
-                                toast.success(res.summary || 'Upload Cloud réussi');
+                                toast.success(res.summary || 'Envoyé au Cloud avec succès');
                                 loadSettings();
                               } else {
                                 toast.error('Échec : ' + res.error);
@@ -633,19 +634,20 @@ export default function SettingsPage() {
                           className="flex items-center justify-between p-8 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-[2.5rem] hover:border-indigo-500/50 transition-all group/push shadow-xl"
                         >
                           <div className="text-left">
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Backup</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Mise à jour</div>
                             <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Envoyer au Cloud</div>
                           </div>
                           <RefreshCw size={32} className={`text-indigo-500 group-hover/push:rotate-180 transition-all duration-700 ${loading ? "animate-spin" : ""}`} />
                         </button>
 
+                        {/* Session Pull */}
                         <button 
                           onClick={async () => {
                             setLoading(true);
                             try {
                               const res = await syncPull();
                               if (res.success) {
-                                toast.success('Import Cloud réussi');
+                                toast.success(res.summary || 'Import Cloud réussi');
                                 loadSettings();
                               } else {
                                 toast.error('Échec : ' + res.error);
@@ -660,7 +662,7 @@ export default function SettingsPage() {
                           className="flex items-center justify-between p-8 bg-indigo-600 text-white rounded-[2.5rem] hover:bg-indigo-700 shadow-[0_20px_40px_rgba(79,70,229,0.3)] transition-all group/pull"
                         >
                           <div className="text-left">
-                            <div className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Restauration</div>
+                            <div className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Synchronisation</div>
                             <div className="text-xl font-black tracking-tight">Recevoir du Cloud</div>
                           </div>
                           <Download size={32} className="group-hover/pull:translate-y-1 transition-transform" />
@@ -774,11 +776,7 @@ export default function SettingsPage() {
                     <div className="text-center pt-4 border-t border-slate-100 dark:border-white/5">
                       <button 
                         onClick={async () => {
-                          const confirmed = await dialog.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?", {
-                            title: "Mode Développeur",
-                            confirmLabel: "Générer",
-                            cancelLabel: "Annuler"
-                          });
+                          const confirmed = window.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?");
                           
                           if (confirmed) {
                             setLoading(true);

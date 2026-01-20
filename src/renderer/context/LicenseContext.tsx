@@ -20,7 +20,8 @@ interface LicenseContextType {
   loading: boolean;
   refreshLicense: () => Promise<void>;
   refreshRemoteLicense: () => Promise<void>;
-  syncPull: () => Promise<{ success: boolean; error?: string }>;
+  syncPull: () => Promise<{ success: boolean; error?: string; summary?: string }>;
+  syncPush: () => Promise<{ success: boolean; error?: string; summary?: string }>;
 }
 
 const LicenseContext = createContext<LicenseContextType | undefined>(undefined);
@@ -64,19 +65,39 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const syncPush = async () => {
+    try {
+      const result = await syncService.push();
+      return result;
+    } catch (error: any) {
+      console.error("Sync push failed", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   useEffect(() => {
     refreshLicense();
 
     console.log("[LicenseContext] Setting up auto-refresh interval (30s)");
-    const interval = setInterval(() => {
+    const licenseInterval = setInterval(() => {
       refreshRemoteLicense();
     }, 30 * 1000);
 
-    return () => clearInterval(interval);
+    // Background Push every 5 minutes (300s)
+    console.log("[LicenseContext] Setting up background sync push interval (5m)");
+    const syncInterval = setInterval(async () => {
+      console.log("[LicenseContext] Triggering background push...");
+      syncPush(); // Silent call
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(licenseInterval);
+      clearInterval(syncInterval);
+    };
   }, []);
 
   return (
-    <LicenseContext.Provider value={{ license, loading, refreshLicense, refreshRemoteLicense, syncPull }}>
+    <LicenseContext.Provider value={{ license, loading, refreshLicense, refreshRemoteLicense, syncPull, syncPush }}>
       {children}
     </LicenseContext.Provider>
   );

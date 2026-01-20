@@ -17,10 +17,13 @@ export const syncService = {
     return await api?.invoke('check_sync_status');
   },
 
+  push: async (): Promise<SyncResult> => {
+    const api = await getTauriAPI();
+    return await api?.invoke('sync_push');
+  },
+
   pull: async (): Promise<SyncResult> => {
     const api = await getTauriAPI();
-    // sync_pull n'est pas encore implémenté en Rust ou a un autre nom.
-    // Pour l'instant, on utilise sync_start qui fait le push.
-    return await api?.invoke('sync_start');
+    return await api?.invoke('sync_pull');
   }
 };

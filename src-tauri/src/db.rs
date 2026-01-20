@@ -159,6 +159,13 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
             UNIQUE(student_id, subject_id)
         );
+
+        CREATE TABLE IF NOT EXISTS sync_deletions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            table_name TEXT NOT NULL,
+            server_id TEXT NOT NULL,
+            deleted_at TEXT DEFAULT (datetime('now'))
+        );
     ",
     )
     .map_err(|e| e.to_string())?;
@@ -250,6 +257,23 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             &format!("UPDATE {table} SET is_dirty = 1 WHERE server_id IS NULL AND is_dirty = 0"),
             [],
         );
+
+        // Deletion triggers
+        let _ = conn.execute(&format!("DROP TRIGGER IF EXISTS trg_{table}_deleted"), []);
+        let trigger_deleted = format!(
+            "
+            CREATE TRIGGER IF NOT EXISTS trg_{table}_deleted
+            AFTER DELETE ON {table}
+            FOR EACH ROW
+            WHEN OLD.server_id IS NOT NULL
+            BEGIN
+                INSERT INTO sync_deletions (table_name, server_id)
+                VALUES ('{table}', OLD.server_id);
+            END;
+        "
+        );
+        conn.execute(&trigger_deleted, [])
+            .map_err(|e| e.to_string())?;
     }
 
     // Settings trigger
