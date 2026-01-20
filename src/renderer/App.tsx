@@ -37,6 +37,7 @@ import { listen } from '@tauri-apps/api/event';
 
 import { updateService } from './services/updateService';
 import { initLogger } from './services/logger';
+import UpdateModal from './components/common/UpdateModal';
 
 // Authentication states
 type AuthState = 'loading' | 'create-password' | 'login' | 'authenticated';
@@ -53,9 +54,6 @@ export default function App() {
     initLogger();
     
     checkAuthState();
-    
-    // Vérifier les mises à jour au démarrage
-    updateService.checkForUpdates(true);
 
     // Listen for database changes from the web server (mobile)
     const unlisten = listen('db:changed', (event) => {
@@ -185,6 +183,7 @@ export default function App() {
       </CacheProvider>
       </LicenseProvider>
       </ThemeProvider>
+      <UpdateModal />
     </HashRouter>
   );
 }
