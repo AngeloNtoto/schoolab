@@ -78,9 +78,10 @@ pub fn get_hwid_internal() -> String {
 }
 
 pub fn get_cloud_url() -> String {
-    // Utilise dotenv_codegen pour injecter la variable AU MOMENT DE LA COMPILATION
-    // Cela permet d'embarquer l'URL dans l'exécutable final.
-    dotenv_codegen::dotenv!("CLOUD_URL").to_string()
+    let url = dotenv_codegen::dotenv!("CLOUD_URL").to_string();
+    // Note: On loggue la variable locale 'url' et non l'appel de fonction pour éviter la récursion infinie
+    log::info!("Cloud URL: {}", url);
+    url
 }
 
 #[tauri::command]
