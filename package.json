@@ -1,7 +1,7 @@
 {
   "name": "schoolab",
   "productName": "Schoolab",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "type": "module",
   "description": "Schoolab est la première application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
   "displayName": "Schoolab",
