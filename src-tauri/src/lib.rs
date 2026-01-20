@@ -78,17 +78,9 @@ pub fn get_hwid_internal() -> String {
 }
 
 pub fn get_cloud_url() -> String {
-    // Chargement manuel ultra-simple du fichier .env
-    if let Ok(content) = std::fs::read_to_string(".env") {
-        for line in content.lines() {
-            if line.starts_with("CLOUD_URL=") {
-                return line.replace("CLOUD_URL=", "").trim().to_string();
-            }
-        }
-    }
-    // Fallback si pas de .env ou pas de CLOUD_URL
-    std::env::var("CLOUD_URL")
-        .unwrap_or_else(|_| "https://schoolab.vercel.apphost:3000".to_string())
+    // Utilise dotenv_codegen pour injecter la variable AU MOMENT DE LA COMPILATION
+    // Cela permet d'embarquer l'URL dans l'exécutable final.
+    dotenv_codegen::dotenv!("CLOUD_URL").to_string()
 }
 
 #[tauri::command]
