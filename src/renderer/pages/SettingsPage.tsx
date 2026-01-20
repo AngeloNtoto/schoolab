@@ -776,15 +776,21 @@ export default function SettingsPage() {
                     <div className="text-center pt-4 border-t border-slate-100 dark:border-white/5">
                       <button 
                         onClick={async () => {
-                          const confirmed = window.confirm("Voulez-vous peupler la base de données avec 15 classes et des données de test ?");
+                          const confirmed = await toast.confirm({
+                            title: 'Mode D\u00e9veloppeur',
+                            message: 'Voulez-vous peupler la base de donn\u00e9es avec 15 classes et des donn\u00e9es de test ?',
+                            confirmLabel: 'G\u00e9n\u00e9rer',
+                            cancelLabel: 'Annuler',
+                            variant: 'warning'
+                          });
                           
                           if (confirmed) {
                             setLoading(true);
                             try {
                               await seedingService.seedDatabase();
-                              toast.success("Base de données peuplée avec succès !");
+                              toast.success("Base de donn\u00e9es peupl\u00e9e avec succ\u00e8s !");
                             } catch (e) {
-                              toast.error("Échec du peuplement");
+                              toast.error("\u00c9chec du peuplement");
                               console.error(e);
                             } finally {
                               setLoading(false);

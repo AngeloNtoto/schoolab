@@ -129,7 +129,14 @@ export default function ClassDetails({
 
   const handleDeleteStudent = async () => {
     if (contextMenu) {
-      if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${contextMenu.student.last_name} ?`)) {
+      const confirmed = await toast.confirm({
+        title: 'Supprimer l\'élève',
+        message: `Êtes-vous sûr de vouloir supprimer l'élève ${contextMenu.student.last_name} ? Cette action est irréversible.`,
+        confirmLabel: 'Supprimer',
+        cancelLabel: 'Annuler',
+        variant: 'danger'
+      });
+      if (confirmed) {
         await onDeleteStudent(contextMenu.student.id);
       }
     }
