@@ -4,5 +4,5 @@ dist-web
 vite
 dist
 .agent
-.env
+env
 *.local
