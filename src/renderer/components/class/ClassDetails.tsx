@@ -536,14 +536,29 @@ const StudentRow = React.memo(({
         return (
           <React.Fragment key={subject.id}>
             {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
-              <GradeCell value={getGrade(subject.id, 'P1')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} />
+              <GradeCell 
+                value={getGrade(subject.id, 'P1')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P1"
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} 
+              />
             )}
             {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
-              <GradeCell value={getGrade(subject.id, 'P2')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} />
+              <GradeCell 
+                value={getGrade(subject.id, 'P2')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P2"
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} 
+              />
             )}
             {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
               <GradeCell 
                 value={getGrade(subject.id, 'EXAM1')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="EXAM1"
                 isExam disabled={!hasExam1} 
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
               />
@@ -554,14 +569,29 @@ const StudentRow = React.memo(({
               </td>
             )}
             {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
-              <GradeCell value={getGrade(subject.id, 'P3')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} />
+              <GradeCell 
+                value={getGrade(subject.id, 'P3')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P3"
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} 
+              />
             )}
             {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
-              <GradeCell value={getGrade(subject.id, 'P4')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} />
+              <GradeCell 
+                value={getGrade(subject.id, 'P4')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P4"
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} 
+              />
             )}
             {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
               <GradeCell 
                 value={getGrade(subject.id, 'EXAM2')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="EXAM2"
                 isExam disabled={!hasExam2} 
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
               />
@@ -578,8 +608,11 @@ const StudentRow = React.memo(({
   );
 });
 
-const GradeCell = React.memo(({ value, isExam = false, disabled = false, onChange }: { 
+const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = false, disabled = false, onChange }: { 
   value: number | null; 
+  studentIdx: number;
+  subjectId: number;
+  period: string;
   isExam?: boolean; 
   disabled?: boolean;
   onChange: (val: number | null) => void 
@@ -616,6 +649,13 @@ const GradeCell = React.memo(({ value, isExam = false, disabled = false, onChang
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleBlur();
+      // Auto-navigation vers l'élève suivant après un court délai pour laisser React mettre à jour le DOM si nécessaire
+      setTimeout(() => {
+        const nextCell = document.querySelector(`[data-student-idx="${studentIdx + 1}"][data-subject-id="${subjectId}"][data-period="${period}"]`) as HTMLElement;
+        if (nextCell) {
+          nextCell.click();
+        }
+      }, 50);
     } else if (e.key === 'Escape') {
       setIsEditing(false);
       setEditValue(value?.toString() || '');
@@ -640,12 +680,15 @@ const GradeCell = React.memo(({ value, isExam = false, disabled = false, onChang
 
   return (
     <td 
+      data-student-idx={studentIdx}
+      data-subject-id={subjectId}
+      data-period={period}
       className={`px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 transition-colors ${
         disabled
           ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
           : `cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 ${isExam ? 'bg-slate-50 dark:bg-slate-800/50 font-medium' : ''}`
       }`}
-      onDoubleClick={() => !disabled && setIsEditing(true)}
+      onClick={() => !disabled && setIsEditing(true)}
       title={disabled ? "Pas d'examen pour ce cours" : ""}
     >
       {disabled ? 'N/A' : (value !== null ? value : '-')}
