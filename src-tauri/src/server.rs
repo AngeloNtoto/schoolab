@@ -98,13 +98,27 @@ fn serve_static_file(
 ) -> Response<Box<dyn io::Read + Send>> {
     // En production, les ressources sont copiées dans le resource_dir avec la structure dist-web/
     // En développement, on utilise le chemin relatif ../dist-web
+    // En production, les ressources sont copiées dans le resource_dir.
+    // On essaie plusieurs chemins possibles pour plus de robustesse.
     let root_path = app_handle
         .path()
         .resource_dir()
-        .map(|p| p.join("dist-web"))
+        .map(|p| {
+            let direct = p.join("dist-web");
+            if direct.exists() {
+                direct
+            } else {
+                let up = p.join("_up_").join("dist-web");
+                if up.exists() {
+                    up
+                } else {
+                    direct // Fallback par défaut
+                }
+            }
+        })
         .unwrap_or_else(|_| PathBuf::from("../dist-web"));
 
-    println!("[Server] Serving from: {:?}", root_path);
+    println!("[Server] Resolved root_path: {:?}", root_path);
 
     // Gestion du path et assets
     let clean_path = if path_str.starts_with("/mobile/") {

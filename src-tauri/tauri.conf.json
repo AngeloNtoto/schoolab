@@ -32,7 +32,7 @@
       "nsis"
     ],
     "resources": [
-      "../dist-web/**/*"
+      {"src": "../dist-web/**/*", "target": "dist-web/"}
     ],
     "createUpdaterArtifacts": true,
     "icon": [
