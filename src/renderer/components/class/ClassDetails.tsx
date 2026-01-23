@@ -284,8 +284,8 @@ export default function ClassDetails({
             
             <table className="w-full border-collapse min-w-max">
           <thead className="sticky top-0 z-20 shadow-sm">
-            {/* Ligne d'en-tête principale */}
-                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700">
+            <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700">
+                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
                   #
                 </th>
                 <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px]">
@@ -305,7 +305,7 @@ export default function ClassDetails({
 
             {/* Ligne de sous-en-tête avec les Maxima */}
             <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/80">
-              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px]'>
+              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]'>
                 #
               </th>
               <th className='sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900/80 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
@@ -526,7 +526,7 @@ const StudentRow = React.memo(({
 
   return (
     <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-800/30'}`}>
-      <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400">
+      <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px]">
         {idx + 1}
       </td>
       <td 
