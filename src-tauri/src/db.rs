@@ -172,6 +172,10 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
 
     // Migration logic for existing databases
     let _ = conn.execute("ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT ''", []);
+    let _ = conn.execute(
+        "ALTER TABLE sync_deletions ADD COLUMN server_id TEXT NOT NULL DEFAULT ''",
+        [],
+    );
 
     let sync_tables = vec![
         "academic_years",
