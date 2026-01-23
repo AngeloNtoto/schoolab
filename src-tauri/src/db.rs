@@ -57,7 +57,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
 
         CREATE TABLE IF NOT EXISTS students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            first_name TEXT NOT NULL,
+            first_name TEXT DEFAULT '',
             last_name TEXT NOT NULL,
             post_name TEXT DEFAULT '',
             gender TEXT CHECK(gender IN ('M', 'F')) NOT NULL,

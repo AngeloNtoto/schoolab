@@ -153,9 +153,9 @@ class StudentService {
       for (const student of students) {
         // Validation des champs requis pour cet élève
         // Si un champ obligatoire est manquant, on lance une erreur descriptive
-        if (!student.first_name || !student.last_name) {
+        if (!student.last_name) {
           throw new Error(
-            `Élève invalide : le prénom et le nom sont obligatoires. ` +
+            `Élève invalide : le nom est obligatoire. ` +
             `Données reçues : ${JSON.stringify(student)}`
           );
         }

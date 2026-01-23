@@ -226,7 +226,7 @@ export default function ClassDetails({
                 <select 
                   value={focusedPeriod}
                   onChange={(e) => setFocusedPeriod(e.target.value)}
-                  className="bg-transparent border-none text-white px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
+                  className="border-none  text-blue-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
                 >
                   <option value="all" className="bg-slate-900 text-white">Tout</option>
                   <option value="P1" className="bg-slate-900 text-white">P1 uniquement</option>
@@ -285,10 +285,12 @@ export default function ClassDetails({
             <table className="w-full border-collapse min-w-max">
           <thead className="sticky top-0 z-20 shadow-sm">
             {/* Ligne d'en-tête principale */}
-            <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700">
-              <th className="sticky left-0 z-30 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px]">
-                Élèves ({filteredAndSortedStudents.length})
-              </th>
+                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700">
+                  #
+                </th>
+                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px]">
+                  Élèves ({filteredAndSortedStudents.length})
+                </th>
               
               {subjects.map(subject => (
                 <th 
@@ -303,7 +305,10 @@ export default function ClassDetails({
 
             {/* Ligne de sous-en-tête avec les Maxima */}
             <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/80">
-              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
+              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px]'>
+                #
+              </th>
+              <th className='sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900/80 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
                 Nom et PostNom
               </th>
               {subjects.map(subject => {
@@ -521,8 +526,11 @@ const StudentRow = React.memo(({
 
   return (
     <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-800/30'}`}>
+      <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400">
+        {idx + 1}
+      </td>
       <td 
-        className="sticky left-0 bg-inherit px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600"
+        className="sticky left-[40px] bg-inherit px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600"
         onContextMenu={(e) => onContextMenu(e, student)}
       >
         {student.last_name} {student.first_name}
@@ -634,13 +642,21 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (editValue.trim() === '') {
-      onChange(null);
+    const finalValue = editValue.trim();
+    if (finalValue === '') {
+      // Si la valeur est vide, on envoie null pour indiquer une suppression
+      if (value !== null) {
+        onChange(null);
+      }
     } else {
-      const num = parseFloat(editValue);
+      const num = parseFloat(finalValue);
       if (!isNaN(num)) {
-        onChange(num);
+        // Seulement si la valeur a changé
+        if (num !== value) {
+          onChange(num);
+        }
       } else {
+        // En cas de valeur invalide, on remet l'ancienne valeur
         setEditValue(value?.toString() || '');
       }
     }

@@ -14,6 +14,8 @@ use serde_json::json;
 use tauri::{Emitter, Manager};
 use tiny_http::{Header, Method, Response, Server, StatusCode};
 
+use tauri::path::BaseDirectory;
+
 // Structure d'information du serveur
 #[derive(Clone, Serialize, Debug)]
 pub struct ServerInfo {
@@ -100,26 +102,24 @@ fn serve_static_file(
     // En développement, on utilise le chemin relatif ../dist-web
     // En production, les ressources sont copiées dans le resource_dir.
     // On essaie plusieurs chemins possibles pour plus de robustesse.
-    let root_path = app_handle
-        .path()
-        .resource_dir()
-        .map(|p| {
-            let direct = p.join("dist-web");
-            if direct.exists() {
-                direct
-            } else {
-                let up = p.join("_up_").join("dist-web");
-                if up.exists() {
-                    up
-                } else {
-                    direct // Fallback par défaut
-                }
-            }
-        })
-        .unwrap_or_else(|_| PathBuf::from("../dist-web"));
+    let candidates = [
+        app_handle
+            .path()
+            .resolve("dist-web", BaseDirectory::Resource)
+            .ok(),
+        app_handle
+            .path()
+            .resolve("_up_/dist-web", BaseDirectory::Resource)
+            .ok(),
+    ];
+
+    let root_path = candidates
+        .into_iter()
+        .flatten()
+        .find(|p| p.exists())
+        .unwrap_or_else(|| PathBuf::from("../dist-web"));
 
     println!("[Server] Resolved root_path: {:?}", root_path);
-
     // Gestion du path et assets
     let clean_path = if path_str.starts_with("/mobile/") {
         &path_str[8..]
