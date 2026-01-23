@@ -63,6 +63,7 @@ export default function ClassDetails({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
+  const [focusedPeriod, setFocusedPeriod] = useState<string>('all');
 
   const toast = useToast();
 
@@ -219,6 +220,23 @@ export default function ClassDetails({
               >
                 Abandons ({students.filter(s => Boolean((s as Student).is_abandoned)).length})
               </button>
+
+              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 ml-2">
+                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest pl-2">Vue:</span>
+                <select 
+                  value={focusedPeriod}
+                  onChange={(e) => setFocusedPeriod(e.target.value)}
+                  className="bg-transparent border-none text-white px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
+                >
+                  <option value="all" className="bg-slate-900 text-white">Tout</option>
+                  <option value="P1" className="bg-slate-900 text-white">P1 uniquement</option>
+                  <option value="P2" className="bg-slate-900 text-white">P2 uniquement</option>
+                  <option value="EXAM1" className="bg-slate-900 text-white">Examen S1</option>
+                  <option value="P3" className="bg-slate-900 text-white">P3 uniquement</option>
+                  <option value="P4" className="bg-slate-900 text-white">P4 uniquement</option>
+                  <option value="EXAM2" className="bg-slate-900 text-white">Examen S2</option>
+                </select>
+              </div>
             </div>
             
             <div className="flex items-center gap-2 w-full md:w-auto justify-end">
@@ -275,7 +293,7 @@ export default function ClassDetails({
               {subjects.map(subject => (
                 <th 
                   key={subject.id} 
-                  colSpan={8} 
+                  colSpan={focusedPeriod === 'all' ? 8 : 1} 
                   className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700"
                 >
                   {subject.name}
@@ -295,57 +313,65 @@ export default function ClassDetails({
                 
                 return (
                 <React.Fragment key={subject.id}>
-                  {/* P1 */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
-                    P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
+                    </th>
+                  )}
                   
-                  {/* P2 */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
-                    P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
+                    </th>
+                  )}
                   
-                  {/* Ex1 */}
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
-                    hasExam1 
-                      ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30' 
-                      : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
-                  }`}>
-                    Ex1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {hasExam1 ? `/${subject.max_exam1}` : 'N/A'}
-                    </span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+                    <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                      hasExam1 
+                        ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30' 
+                        : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
+                    }`}>
+                      Ex1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {hasExam1 ? `/${subject.max_exam1}` : 'N/A'}
+                      </span>
+                    </th>
+                  )}
                   
-                  {/* Semestre 1 */}
-                  <th className="px-2 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-100 dark:bg-blue-900/40 min-w-[60px]">
-                    Sem1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
-                  </th>
+                  {focusedPeriod === 'all' && (
+                    <th className="px-2 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-100 dark:bg-blue-900/40 min-w-[60px]">
+                      Sem1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
+                    </th>
+                  )}
                   
-                  {/* P3 */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
-                    P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
+                    </th>
+                  )}
                   
-                  {/* P4 */}
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
-                    P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
+                    </th>
+                  )}
                   
-                  {/* Ex2 */}
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
-                    hasExam2 
-                      ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30' 
-                      : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
-                  }`}>
-                    Ex2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {hasExam2 ? `/${subject.max_exam2}` : 'N/A'}
-                    </span>
-                  </th>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+                    <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                      hasExam2 
+                        ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30' 
+                        : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
+                    }`}>
+                      Ex2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {hasExam2 ? `/${subject.max_exam2}` : 'N/A'}
+                      </span>
+                    </th>
+                  )}
                   
-                  {/* Semestre 2 */}
-                  <th className="px-2 py-2 text-xs font-semibold text-green-700 dark:text-green-400 border-r-2 border-slate-400 dark:border-slate-500 bg-green-100 dark:bg-green-900/40 min-w-[60px]">
-                    Sem2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
-                  </th>
+                  {focusedPeriod === 'all' && (
+                    <th className="px-2 py-2 text-xs font-semibold text-green-700 dark:text-green-400 border-r-2 border-slate-400 dark:border-slate-500 bg-green-100 dark:bg-green-900/40 min-w-[60px]">
+                      Sem2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
+                    </th>
+                  )}
                 </React.Fragment>
                 )
               })}
@@ -362,6 +388,7 @@ export default function ClassDetails({
                 gradesMap={gradesMap}
                 onContextMenu={onContextMenu}
                 onUpdateGrade={onGradeUpdate}
+                focusedPeriod={focusedPeriod}
               />
             ))}
           </tbody>
@@ -462,6 +489,7 @@ const StudentRow = React.memo(({
   gradesMap, 
   onContextMenu, 
   onUpdateGrade,
+  focusedPeriod
 }: { 
   student: Student; 
   subjects: Subject[]; 
@@ -469,6 +497,7 @@ const StudentRow = React.memo(({
   gradesMap: Map<string, number>;
   onContextMenu: (e: React.MouseEvent, student: Student) => void;
   onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  focusedPeriod: string;
 }) => {
   const getGrade = (subjectId: number, period: string) => {
     return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
@@ -506,26 +535,42 @@ const StudentRow = React.memo(({
 
         return (
           <React.Fragment key={subject.id}>
-            <GradeCell value={getGrade(subject.id, 'P1')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} />
-            <GradeCell value={getGrade(subject.id, 'P2')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} />
-            <GradeCell 
-              value={getGrade(subject.id, 'EXAM1')} 
-              isExam disabled={!hasExam1} 
-              onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
-            />
-            <td className="px-2 py-3 text-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-r-2 border-slate-400 dark:border-slate-500">
-              {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
-            </td>
-            <GradeCell value={getGrade(subject.id, 'P3')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} />
-            <GradeCell value={getGrade(subject.id, 'P4')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} />
-            <GradeCell 
-              value={getGrade(subject.id, 'EXAM2')} 
-              isExam disabled={!hasExam2} 
-              onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
-            />
-            <td className="px-2 py-3 text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-r-2 border-slate-400 dark:border-slate-500">
-              {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
-            </td>
+            {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+              <GradeCell value={getGrade(subject.id, 'P1')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+              <GradeCell value={getGrade(subject.id, 'P2')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'EXAM1')} 
+                isExam disabled={!hasExam1} 
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
+              />
+            )}
+            {focusedPeriod === 'all' && (
+              <td className="px-2 py-3 text-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-r-2 border-slate-400 dark:border-slate-500">
+                {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
+              </td>
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+              <GradeCell value={getGrade(subject.id, 'P3')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+              <GradeCell value={getGrade(subject.id, 'P4')} onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'EXAM2')} 
+                isExam disabled={!hasExam2} 
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
+              />
+            )}
+            {focusedPeriod === 'all' && (
+              <td className="px-2 py-3 text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-r-2 border-slate-400 dark:border-slate-500">
+                {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
+              </td>
+            )}
           </React.Fragment>
         );
       })}
