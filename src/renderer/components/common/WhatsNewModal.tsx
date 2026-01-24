@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, ArrowRight, Check, Rocket } from '../iconsSvg';
 import { changelog, ReleaseNote } from '../../data/changelog';
-import pkg from '../../../../../package.json'; // Ensure path is correct relative to this file
-
+import pkg from '../../../../package.json'
 interface WhatsNewModalProps {
   onClose?: () => void;
 }

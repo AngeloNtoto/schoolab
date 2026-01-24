@@ -18,19 +18,19 @@ export const changelog: ReleaseNote[] = [
     features: [
       {
         tag: "Nouveau",
-        text: "Comparatif complet des plans (Gratuit, Pro, Plus) dans les paramètres."
+        text: "Découvrez nos nouvelles offres Pro et Plus adaptées à la taille de votre école."
       },
       {
         tag: "Nouveau",
-        text: "Interface de contact directe pour l'activation des licences."
+        text: "Activez votre licence en un clic via WhatsApp ou Email directement depuis l'application."
       },
       {
         tag: "Amélioration",
-        text: "Optimisation de l'affichage sur tablettes et mobiles."
+        text: "Profitez d'une expérience fluide et agréable sur vos tablettes et smartphones."
       },
       {
-        tag: "Sécurité",
-        text: "Renforcement de la gestion des limites d'élèves pour la version gratuite."
+        tag: "Nouveau",
+        text: "Bénéficiez de réductions exceptionnelles sur les abonnements annuels (jusqu'à -40%)."
       }
     ]
   }
