@@ -311,8 +311,7 @@ export default function SettingsPage() {
                           </div>
                         </button>
                         <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>Mode Éclatant</h4>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Optimisé pour le travail de jour</p>
+                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>Mode Jour</h4>
                         </div>
                       </div>
 
@@ -343,8 +342,7 @@ export default function SettingsPage() {
                           </div>
                         </button>
                         <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>Mode Nocturne</h4>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Élégant et reposant pour les yeux</p>
+                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>Mode Sombre</h4>
                         </div>
                       </div>
                     </div>
@@ -560,7 +558,7 @@ export default function SettingsPage() {
                           <p className="text-slate-500 dark:text-slate-400 max-w-lg font-medium text-base leading-relaxed">
                             {licenseStatus?.plan === 'PLUS' 
                               ? "Votre établissement est parfaitement synchronisé sur tous vos postes de travail."
-                              : "Vos données académiques sont sauvegardées en temps réel sur l'infrastructure sécurisée de Schoolab."}
+                              : "Vos Données Sont Sécurisée."}
                           </p>
                         </div>
 
@@ -806,6 +804,14 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+
+
+              {/* Upgrade Modal */}
+              <UpgradeModal 
+                isOpen={showUpgradeModal} 
+                onClose={() => setShowUpgradeModal(false)} 
+                featureName="la synchronisation cloud"
+              />
 
             </div>
           </div>

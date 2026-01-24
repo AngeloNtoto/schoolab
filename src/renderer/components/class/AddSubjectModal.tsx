@@ -174,11 +174,11 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/5 w-full max-w-3xl transform scale-100 animate-in fade-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/5 w-full max-w-3xl transform scale-100 animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
         
         {/* Header section with blue gradient */}
-        <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden transition-colors duration-500">
+        <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden transition-colors duration-500 shrink-0">
             <div className="absolute top-0 right-0 p-8 text-white/5 rotate-12">
                 <BookOpen size={120} />
             </div>
@@ -204,7 +204,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
             </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Form Section (3/5) */}
             <div className="lg:col-span-3 space-y-6">
