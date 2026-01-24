@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, X, CheckCircle, ShieldCheck, RefreshCw, User, Check, Building2, Globe, Phone, Mail, ArrowLeft, ArrowRight } from '../iconsSvg';
 import { useTheme } from '../../context/ThemeContext';
+import { useLicense } from '../../context/LicenseContext';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -17,10 +18,13 @@ type PlanType = 'PRO' | 'PLUS';
  */
 export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fonctionnalité' }: UpgradeModalProps) {
   const { theme } = useTheme();
+  const { license } = useLicense(); // Get license info
   const [view, setView] = useState<ViewState>('plans');
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
   if (!isOpen) return null;
+
+  const currentPlan = license?.active ? license.plan : 'BASIC';
 
   const handleSelectPlan = (plan: PlanType) => {
     setSelectedPlan(plan);
@@ -128,7 +132,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
             <div className="flex-1 p-5 lg:p-8 pt-10 grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
               
               {/* GRATUIT (Free) */}
-              <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-5 border border-slate-200 dark:border-white/5 flex flex-col relative z-0 transition-opacity duration-300 hover:bg-slate-100 dark:hover:bg-white/10">
+              <div className={`rounded-2xl p-5 border flex flex-col relative z-0 transition-opacity duration-300 ${currentPlan === 'BASIC' || currentPlan === 'TRIAL' ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'}`}>
                  <div className="space-y-2 mb-6 text-center">
                    <h3 className="text-lg font-black text-slate-500 dark:text-slate-400 uppercase tracking-tight">Gratuit</h3>
                    <div className="flex items-baseline justify-center gap-1">
@@ -144,13 +148,16 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                    <FeatureItem text="Pas de Sync" cross />
                  </div>
 
-                 <button className="w-full mt-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold text-[10px] uppercase tracking-widest cursor-not-allowed opacity-70">
-                   Plan Actuel
+                 <button 
+                  disabled
+                  className="w-full mt-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest cursor-not-allowed opacity-70"
+                 >
+                   {currentPlan === 'BASIC' || currentPlan === 'TRIAL' ? 'Choisi' : 'Inclus'}
                  </button>
               </div>
 
               {/* PRO */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border-2 border-slate-200 dark:border-white/10 shadow-lg flex flex-col relative z-10 hover:border-blue-200 dark:hover:border-blue-900/30 transition-colors">
+              <div className={`bg-white dark:bg-slate-900 rounded-2xl p-5 border-2 shadow-lg flex flex-col relative z-10 transition-colors ${currentPlan === 'PRO' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 dark:border-white/10 hover:border-blue-200 dark:hover:border-blue-900/30'}`}>
                  <div className="space-y-2 mb-6 text-center">
                    <h3 className="text-lg font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight">Pro</h3>
                    <div className="flex items-baseline justify-center gap-1">
@@ -168,32 +175,43 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                    <FeatureItem text="Sans Cloud" cross />
                  </div>
 
-                 <button 
-                  onClick={() => handleSelectPlan('PRO')}
-                  className="w-full mt-6 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors border border-blue-200 dark:border-blue-500/20"
-                 >
-                   Choisir Pro
-                 </button>
+                 {currentPlan === 'PRO' ? (
+                    <button 
+                      disabled
+                      className="w-full mt-6 py-3 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest cursor-default"
+                    >
+                      Choisi
+                    </button>
+                 ) : (
+                    <button 
+                      onClick={() => handleSelectPlan('PRO')}
+                      className="w-full mt-6 py-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest hover:bg-blue-100 dark:hover:bg-blue-900/20 transition-colors border border-blue-200 dark:border-blue-500/20"
+                    >
+                      Choisir Pro
+                    </button>
+                 )}
               </div>
 
               {/* PLUS (Hero) */}
-              <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-xl relative z-20 top-0 lg:-top-4 lg:-bottom-4 group">
+              <div className={`rounded-2xl p-0.5 shadow-xl relative z-20 top-0 lg:-top-4 lg:-bottom-4 group ${currentPlan === 'PLUS' ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-indigo-500 to-purple-600'}`}>
                 {/* Badge Recommandé */}
-                <div className="absolute top-0 right-1/2 translate-x-1/2 -mt-3">
-                   <div className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1 min-w-max">
-                     <Sparkles size={10} />
-                     Recommandé
-                   </div>
-                </div>
+                {currentPlan !== 'PLUS' && (
+                  <div className="absolute top-0 right-1/2 translate-x-1/2 -mt-3">
+                     <div className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1 min-w-max">
+                       <Sparkles size={10} />
+                       Recommandé
+                     </div>
+                  </div>
+                )}
 
                  <div className="bg-white dark:bg-slate-900 h-full w-full rounded-[0.9rem] p-6 flex flex-col relative overflow-hidden">
                    {/* Fond subtil */}
-                   <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 bg-indigo-50 dark:bg-indigo-500/5 rounded-full blur-2xl w-32 h-32 pointer-events-none group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/10 transition-colors duration-500"></div>
+                   <div className={`absolute top-0 right-0 p-8 -mr-8 -mt-8 rounded-full blur-2xl w-32 h-32 pointer-events-none transition-colors duration-500 ${currentPlan === 'PLUS' ? 'bg-emerald-50 dark:bg-emerald-500/5' : 'bg-indigo-50 dark:bg-indigo-500/5 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/10'}`}></div>
 
                    <div className="space-y-2 mb-6 relative z-10 text-center">
-                     <div className="flex items-center justify-center gap-1.5 text-indigo-500 mb-1">
+                     <div className={`flex items-center justify-center gap-1.5 mb-1 ${currentPlan === 'PLUS' ? 'text-emerald-500' : 'text-indigo-500'}`}>
                        <Sparkles size={16} fill="currentColor" className="text-amber-400" />
-                       <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-600 uppercase tracking-tight">Plus</h3>
+                       <h3 className={`text-xl font-black text-transparent bg-clip-text uppercase tracking-tight ${currentPlan === 'PLUS' ? 'bg-gradient-to-r from-emerald-600 to-teal-600' : 'bg-gradient-to-r from-indigo-600 to-pink-600'}`}>Plus</h3>
                      </div>
                      <div className="flex items-baseline justify-center gap-1">
                        <span className="text-4xl font-black text-slate-900 dark:text-white">50$</span>
@@ -206,18 +224,27 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
 
                    <div className="space-y-2.5 flex-1 relative z-10">
                      <FeatureItem text="Tout de PRO" highlight bold />
-                     <FeatureItem text="Sync Cloud Instant" icon={RefreshCw} highlight bold color="text-indigo-500" />
+                     <FeatureItem text="Sync Cloud Instant" icon={RefreshCw} highlight bold color={currentPlan === 'PLUS' ? "text-emerald-500" : "text-indigo-500"} />
                      <FeatureItem text="Multi-postes" icon={User} highlight bold color="text-pink-500" />
-                     <FeatureItem text="Sauvegarde Auto" icon={ShieldCheck} highlight bold color="text-emerald-500" />
+                     <FeatureItem text="Sauvegarde Auto" icon={ShieldCheck} highlight bold color={currentPlan === 'PLUS' ? "text-emerald-500" : "text-emerald-500"} />
                      <FeatureItem text="Support WhatsApp" highlight />
                    </div>
 
-                   <button 
-                    onClick={() => handleSelectPlan('PLUS')}
-                    className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 active:scale-[0.98] transition-all relative z-10"
-                   >
-                     Passer à Plus
-                   </button>
+                   {currentPlan === 'PLUS' ? (
+                      <button 
+                        disabled
+                        className="w-full mt-6 py-4 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-black text-xs uppercase tracking-widest cursor-default relative z-10"
+                      >
+                        Choisi
+                      </button>
+                   ) : (
+                      <button 
+                        onClick={() => handleSelectPlan('PLUS')}
+                        className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 active:scale-[0.98] transition-all relative z-10"
+                      >
+                        Passer à Plus
+                      </button>
+                   )}
                  </div>
               </div>
 
