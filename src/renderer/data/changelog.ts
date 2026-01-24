@@ -26,7 +26,7 @@ export const changelog: ReleaseNote[] = [
       },
       {
         tag: "Amélioration",
-        text: "Profitez d'une expérience fluide et agréable sur vos tablettes et smartphones."
+        text: "Profitez d'une expérience fluide et agréable sur votre ordinateur."
       },
       {
         tag: "Nouveau",
