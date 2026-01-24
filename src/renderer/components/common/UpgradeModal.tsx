@@ -162,7 +162,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                    <h3 className="text-base md:text-lg font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight">Pro</h3>
                    <div className="flex items-baseline justify-center gap-1">
                      <span className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">7$</span>
-                     <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">/mois <span className="block text-[8px] text-blue-500 lowercase">(ou 50$/an)</span></span>
+                     <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">/mois <span className="block text-[8px] text-blue-500 lowercase font-medium">(ou 50$/an <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1 rounded">-40%</span>)</span></span>
                    </div>
                    <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide">Établissement</p>
                  </div>
@@ -180,7 +180,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                       disabled
                       className="w-full mt-4 md:mt-6 py-3 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest cursor-default"
                     >
-                      Choisi
+                      Plan actuel
                     </button>
                  ) : (
                     <button 
@@ -215,7 +215,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                      </div>
                      <div className="flex items-baseline justify-center gap-1">
                        <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white">10$</span>
-                       <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">/mois <span className="block text-[8px] text-emerald-200 lowercase">(ou 80$/an)</span></span>
+                       <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">/mois <span className="block text-[8px] text-indigo-500 lowercase font-medium">(ou 80$/an <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-1 rounded">-33%</span>)</span></span>
                      </div>
                      <p className="text-[9px] md:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                        Réseau & Sync
@@ -235,7 +235,7 @@ export default function UpgradeModal({ isOpen, onClose, featureName = 'cette fon
                         disabled
                         className="w-full mt-4 md:mt-6 py-4 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-black text-xs uppercase tracking-widest cursor-default relative z-10"
                       >
-                        Choisi
+                        Plan Actuel
                       </button>
                    ) : (
                       <button 

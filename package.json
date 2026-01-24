@@ -22,6 +22,12 @@
     "email": "Angelontoto7@gmail.com",
     "phone": "+243810396812"
   },
+  "release": {
+    "github": {
+      "owner": "schoolab",
+      "repo": "schoolab"
+    }
+  },
   "license": "proprietary",
   "preview": true,
   "devDependencies": {

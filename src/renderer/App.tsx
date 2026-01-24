@@ -38,6 +38,7 @@ import { listen } from '@tauri-apps/api/event';
 import { updateService } from './services/updateService';
 import { initLogger } from './services/logger';
 import UpdateModal from './components/common/UpdateModal';
+import WhatsNewModal from './components/common/WhatsNewModal';
 
 // Authentication states
 type AuthState = 'loading' | 'create-password' | 'login' | 'authenticated';
@@ -184,6 +185,7 @@ export default function App() {
       </LicenseProvider>
       </ThemeProvider>
       <UpdateModal />
+      <WhatsNewModal />
     </HashRouter>
   );
 }
