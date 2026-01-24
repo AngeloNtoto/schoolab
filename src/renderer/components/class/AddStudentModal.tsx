@@ -4,6 +4,8 @@ import { X, UserPlus, Upload, FileText, Clipboard, Sparkles, Check, ArrowRight, 
 import { Student } from '../../services/studentService';
 import { useToast } from '../../context/ToastContext';
 import { parseDocx, parsePastedText, mapHeaders, parseDate as smartParseDate, parseGender, RawStudent } from '../../lib/importUtils';
+import { useLicense } from '../../context/LicenseContext';
+import UpgradeModal from '../common/UpgradeModal';
 
 interface AddStudentModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface AddStudentModalProps {
   onAddStudent: (student: Partial<Student>) => Promise<void>;
   onImportStudents: (students: Partial<Student>[]) => Promise<void>;
   classId: number;
+  currentStudentCount: number;
 }
 
 function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: string }) {
@@ -26,7 +29,7 @@ function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: st
   );
 }
 
-export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImportStudents, classId }: AddStudentModalProps) {
+export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImportStudents, classId, currentStudentCount }: AddStudentModalProps) {
   const [activeTab, setActiveTab] = useState<'manual' | 'import'>('manual');
   const [importStep, setImportStep] = useState<'initial' | 'mapping' | 'preview'>('initial');
   const [pastedText, setPastedText] = useState('');
@@ -37,8 +40,18 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const { license } = useLicense();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
+  const currentPlan = license?.active ? license.plan : 'BASIC';
+  const isFreePlan = currentPlan === 'BASIC'; // Basic/Trial is limited
 
   const [error, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
+    if (isFreePlan && currentStudentCount >= 50) {
+      setShowUpgradeModal(true);
+      return { error: 'Limite atteinte' };
+    }
+
     const student = {
       last_name: formData.get('last_name') as string,
       post_name: formData.get('post_name') as string,
@@ -119,6 +132,11 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
   };
 
   const performImport = async () => {
+    if (isFreePlan && (currentStudentCount + parsedStudents.length) > 50) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setLoading(true);
     await onImportStudents(parsedStudents);
     toast.success(`${parsedStudents.length} élèves importés`);
@@ -136,6 +154,12 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
   if (!isOpen) return null;
 
   return (
+    <>
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        featureName="la gestion illimitée des élèves" 
+      />
     <div 
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 overflow-y-auto animate-in fade-in duration-300"
       onClick={handleClose}
@@ -313,5 +337,6 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
         </div>
       </div>
     </div>
+    </>
   );
 }

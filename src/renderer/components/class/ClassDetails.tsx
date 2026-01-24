@@ -409,6 +409,7 @@ export default function ClassDetails({
           onAddStudent={onAddStudent}
           onImportStudents={onImportStudents}
           classId={Number(id)}
+          currentStudentCount={students.length}
         />
       )}
 
