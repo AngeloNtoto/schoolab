@@ -108,7 +108,8 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
     } else {
         // If no repêchage, show existing logic or "Néant"
          if (rankedStudent.percentage < 50) {
-            return <span className="text-red-600 font-bold text-[7.5px] uppercase">A échoué</span>;
+            const failLabel = selectedPeriod === 'ANNUAL' ? "Redouble la classe" : "Échoué";
+            return <span className="text-red-600 font-bold text-[7.5px] uppercase">{failLabel}</span>;
          }
          return <span className="text-green-600 font-medium text-[7.5px]">Passé</span>;
     }
@@ -116,7 +117,8 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
 
   // Default BEFORE_REPECHAGE logic
   if (rankedStudent.percentage < 50) {
-    return <span className="text-red-600 font-bold text-[7.5px] uppercase">Redouble la classe</span>;
+    const failLabel = selectedPeriod === 'ANNUAL' ? "Redouble la classe" : "Échoué";
+    return <span className="text-red-600 font-bold text-[7.5px] uppercase">{failLabel}</span>;
   }
 
   if (rankedStudent.failedSubjects.length > 0) {
