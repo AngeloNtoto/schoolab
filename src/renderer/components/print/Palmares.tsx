@@ -115,47 +115,22 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
   }
 
   // Default BEFORE_REPECHAGE logic
-  const failedList = rankedStudent.failedSubjects.length > 0 ? (
-    <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px] mt-0.5">
-      <span className="text-amber-600 font-semibold whitespace-nowrap">
-        Échec ({rankedStudent.failedSubjects.length} cours) :
-      </span>
-      <span className="text-slate-700">
-        {rankedStudent.subjectDetails
-          .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
-          .map((s: any) => s.subjectName + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
-          .join(', ')}
-      </span>
-    </div>
-  ) : null;
-
-  const missingList = rankedStudent.missingSubjects.length > 0 ? (
-    <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px] mt-0.5">
-      <span className="text-slate-500 font-semibold whitespace-nowrap">
-        Manque de points ({rankedStudent.missingSubjects.length}) :
-      </span>
-      <span className="text-red-500 italic">{rankedStudent.missingSubjects.join(', ')}</span>
-    </div>
-  ) : null;
-
   if (rankedStudent.percentage < 50) {
-    return (
-      <div>
-        <span className="text-red-600 font-bold text-[7.5px] uppercase">
-          {selectedPeriod === 'ANNUAL' ? 'Redouble la classe' : 'Échoué'}
-        </span>
-        {failedList}
-        {missingList}
-      </div>
-    );
+    return <span className="text-red-600 font-bold text-[7.5px] uppercase">Redouble la classe</span>;
   }
 
-  if (rankedStudent.failedSubjects.length > 0 || rankedStudent.missingSubjects.length > 0) {
+  if (rankedStudent.failedSubjects.length > 0) {
+    const failures = rankedStudent.subjectDetails
+      .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
+      .map((s: any) => s.subjectName + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
+      .join(', ');
+
     return (
-      <div>
-        <span className="text-green-600 font-medium text-[7.5px]">— Passé</span>
-        {failedList}
-        {missingList}
+      <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
+        <span className="text-amber-600 font-semibold whitespace-nowrap">
+          Échec ({rankedStudent.failedSubjects.length} cours) :
+        </span>
+        <span className="text-slate-700">{failures}</span>
       </div>
     );
   }
@@ -294,20 +269,18 @@ export default function Palmares({
           const gradeEntry = grades.find(g => g.student_id === student.id && g.subject_id === subject.id && g.period === periodData.period);
           const grade = gradeEntry ? gradeEntry.value : null;
           
-          // Si une note attendue est manquante, on continue quand même le calcul (la note vaudra 0)
-          // mais on signale que l'élève a des cotes manquantes.
+          // Si une note attendue est manquante, l'élève ne peut pas être classé
           if (grade === null) {
-            // hasAllGrades = false; // On ne le marque plus comme non classé systématiquement
+            hasAllGrades = false;
+            // On enregistre le nom du cours pour l'afficher dans l'observation
             missingSubjects.push(subject.code || subject.name);
-            // On continue sans break pour permettre le classement ("noms de cours ou manque de points pour les classés")
+            break;
           }
-          subjectPoints += grade || 0;
+          subjectPoints += grade;
           subjectMaxPoints += maxForPeriod;
         }
-        
-        // Finalement, on considère un élève unranked seulement s'il n'a AUCUNE note du tout (optionnel)
-        // hasAllGrades reste true par défaut. On peut enlever hasAllGrades si on veut classer tout le monde.
-        // if (!hasAllGrades) break; // Retiré pour permettre le classement complet
+
+        if (!hasAllGrades) break;
 
         totalPoints += subjectPoints;
         totalMaxPoints += subjectMaxPoints;
