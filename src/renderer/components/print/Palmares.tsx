@@ -80,8 +80,10 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
   }
 
   if (rankedStudent.isUnranked) {
+    console.log(`tableau ${rankedStudent.missingSubjects }`)
     // Afficher les cours dont les notes manquent pour aider l'utilisateur
     if (rankedStudent.missingSubjects.length > 0) {
+      
       return (
         <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
           <span className="text-slate-500 font-semibold whitespace-nowrap">
@@ -275,17 +277,21 @@ export default function Palmares({
           if (grade === null) {
             hasAllGrades = false;
             // On enregistre le nom du cours pour l'afficher dans l'observation
-            missingSubjects.push(subject.code || subject.name);
-            break;
+            if (!missingSubjects.includes(subject.code || subject.name)) {
+              missingSubjects.push(subject.code || subject.name);
+            }
+            break; // On arrête de chercher les autres périodes pour CE cours
           }
           subjectPoints += grade;
           subjectMaxPoints += maxForPeriod;
         }
 
-        if (!hasAllGrades) break;
+        // On ne "break" plus la boucle des sujets ici pour pouvoir lister TOUS les cours manquants
 
-        totalPoints += subjectPoints;
-        totalMaxPoints += subjectMaxPoints;
+        if (hasAllGrades) {
+          totalPoints += subjectPoints;
+          totalMaxPoints += subjectMaxPoints;
+        }
 
         if (subjectMaxPoints > 0) {
           const subjectPercentage = (subjectPoints / subjectMaxPoints) * 100;
