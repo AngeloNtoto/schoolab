@@ -249,15 +249,20 @@ export default function Palmares({
         let subjectMaxPoints = 0;
 
         for (const periodData of periodsConfig) {
+          // Si le max pour cette période est 0 (ex: cours sans examen de semestre) on ignore complètement cette période — pas de note à chercher
+          const maxForPeriod = periodData.getMax(subject);
+          if (maxForPeriod === 0) continue;
+
           const gradeEntry = grades.find(g => g.student_id === student.id && g.subject_id === subject.id && g.period === periodData.period);
           const grade = gradeEntry ? gradeEntry.value : null;
           
+          // Si une note attendue est manquante, l'élève ne peut pas être classé
           if (grade === null) {
             hasAllGrades = false;
             break;
           }
           subjectPoints += grade;
-          subjectMaxPoints += periodData.getMax(subject);
+          subjectMaxPoints += maxForPeriod;
         }
 
         if (!hasAllGrades) break;
