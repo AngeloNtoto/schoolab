@@ -53,7 +53,8 @@ interface RankedStudent {
   application: string;
   isUnranked: boolean;
   failedSubjects: string[];
-  repechageSubjects: string[]; // Added for repêchage mode
+  repechageSubjects: string[]; // Matières repêchées
+  missingSubjects: string[];   // Matières avec notes manquantes (cause du "Non classé")
   subjectDetails: {
     subjectName: string;
     points: number;
@@ -79,6 +80,17 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
   }
 
   if (rankedStudent.isUnranked) {
+    // Afficher les cours dont les notes manquent pour aider l'utilisateur
+    if (rankedStudent.missingSubjects.length > 0) {
+      return (
+        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
+          <span className="text-slate-500 font-semibold whitespace-nowrap">
+            Non classé — Cotes manquantes ({rankedStudent.missingSubjects.length}) :
+          </span>
+          <span className="text-red-500 italic">{rankedStudent.missingSubjects.join(', ')}</span>
+        </div>
+      );
+    }
     return <span className="text-slate-500 italic text-[7.5px]">Non classé</span>;
   }
 
@@ -242,6 +254,7 @@ export default function Palmares({
       let hasAllGrades = true;
       const failedSubjects: string[] = [];
       const repechageSubjects: string[] = [];
+      const missingSubjects: string[] = []; // Cours avec notes manquantes
       const subjectDetails: RankedStudent['subjectDetails'] = [];
 
       for (const subject of subjects) {
@@ -259,6 +272,8 @@ export default function Palmares({
           // Si une note attendue est manquante, l'élève ne peut pas être classé
           if (grade === null) {
             hasAllGrades = false;
+            // On enregistre le nom du cours pour l'afficher dans l'observation
+            missingSubjects.push(subject.code || subject.name);
             break;
           }
           subjectPoints += grade;
@@ -302,6 +317,7 @@ export default function Palmares({
         isUnranked: !hasAllGrades,
         failedSubjects,
         repechageSubjects,
+        missingSubjects,
         subjectDetails,
       });
     }

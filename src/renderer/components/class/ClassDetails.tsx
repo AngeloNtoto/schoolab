@@ -630,10 +630,12 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
   const [editValue, setEditValue] = useState(value?.toString() || '');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Synchroniser la valeur affichée quand la prop change
   useEffect(() => {
     setEditValue(value?.toString() || '');
   }, [value]);
 
+  // Focus et sélection automatique à l'ouverture du mode édition
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -644,29 +646,47 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
   const handleBlur = () => {
     setIsEditing(false);
     const finalValue = editValue.trim();
+
     if (finalValue === '') {
-      // Si la valeur est vide, on envoie null pour indiquer une suppression
+      // Champ vidé manuellement → supprimer la note
       if (value !== null) {
         onChange(null);
       }
+    } else if (finalValue === '0') {
+      // Un seul "0" = probablement involontaire → traité comme manque de cote
+      // On ne l'enregistre pas en BDD pour éviter les remplissages accidentels
+      if (value !== null) {
+        onChange(null);
+      }
+      setEditValue('');
     } else {
-      const num = parseFloat(finalValue);
-      if (!isNaN(num)) {
-        // Seulement si la valeur a changé
+      // "00" est traité comme un vrai zéro intentionnel (l'utilisateur a confirmé)
+      const num = finalValue === '00' ? 0 : parseFloat(finalValue);
+      if (!isNaN(num) && num >= 0) {
+        // Seulement si la valeur a réellement changé
         if (num !== value) {
           onChange(num);
         }
       } else {
-        // En cas de valeur invalide, on remet l'ancienne valeur
+        // Valeur invalide → on restaure l'ancienne valeur
         setEditValue(value?.toString() || '');
       }
+    }
+  };
+
+  // Filtrer les caractères autorisés (chiffres, point décimal uniquement)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // Autoriser uniquement : chiffres et un seul point décimal
+    if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
+      setEditValue(raw);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleBlur();
-      // Auto-navigation vers l'élève suivant après un court délai pour laisser React mettre à jour le DOM si nécessaire
+      // Auto-navigation vers l'élève suivant (même colonne)
       setTimeout(() => {
         const nextCell = document.querySelector(`[data-student-idx="${studentIdx + 1}"][data-subject-id="${subjectId}"][data-period="${period}"]`) as HTMLElement;
         if (nextCell) {
@@ -679,36 +699,41 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
     }
   };
 
-  if (isEditing && !disabled) {
-    return (
-      <td className="p-0 border-r border-slate-200 dark:border-slate-700">
-        <input
-          ref={inputRef}
-          type="number"
-          className="w-full h-full px-1 py-3 text-center outline-none bg-blue-50 dark:bg-blue-900/50 focus:bg-blue-100 dark:focus:bg-blue-800/50 font-medium text-slate-800 dark:text-white"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-        />
-      </td>
-    );
-  }
-
+  // La cellule garde TOUJOURS la même structure <td> — l'input est en overlay
   return (
     <td 
       data-student-idx={studentIdx}
       data-subject-id={subjectId}
       data-period={period}
-      className={`px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 transition-colors ${
+      className={`relative px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 transition-colors duration-150 ${
         disabled
           ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
-          : `cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 ${isExam ? 'bg-slate-50 dark:bg-slate-800/50 font-medium' : ''}`
+          : isEditing
+            ? 'bg-blue-50 dark:bg-blue-900/40'
+            : `cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-300 ${isExam ? 'bg-slate-50 dark:bg-slate-800/50 font-medium' : ''}`
       }`}
-      onClick={() => !disabled && setIsEditing(true)}
+      onClick={() => !disabled && !isEditing && setIsEditing(true)}
       title={disabled ? "Pas d'examen pour ce cours" : ""}
     >
-      {disabled ? 'N/A' : (value !== null ? value : '-')}
+      {/* Texte affiché (toujours présent pour maintenir la taille) */}
+      <span className={`${isEditing && !disabled ? 'invisible' : ''}`}>
+        {disabled ? 'N/A' : (value !== null ? value : '-')}
+      </span>
+
+      {/* Input en overlay — prend exactement la taille de la cellule */}
+      {isEditing && !disabled && (
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="decimal"
+          className="absolute inset-0 w-full h-full text-center outline-none bg-transparent font-medium text-slate-800 dark:text-white caret-blue-500"
+          value={editValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          autoComplete="off"
+        />
+      )}
     </td>
   );
 });
