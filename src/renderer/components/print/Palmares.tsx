@@ -181,9 +181,22 @@ export default function Palmares({
       size: A4; 
       margin: 0; 
     }
+    /* Supprimer les en-têtes/pieds de page automatiques du navigateur (URL, titre, date) */
+    @page {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    @page :first {
+      margin-top: 0;
+    }
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+    }
+    /* Cacher tout texte généré par le navigateur dans les marges */
+    html {
+      margin: 0 !important;
+      padding: 0 !important;
     }
     body { 
       background: white; 
