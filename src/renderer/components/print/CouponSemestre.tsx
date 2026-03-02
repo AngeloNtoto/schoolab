@@ -92,9 +92,13 @@ export default function CouponSemestre({
 
   const totalMax = totalMaxP1 + totalMaxP2 + totalMaxExam;
   const totalObtained = totalObtP1 + totalObtP2 + totalObtExam;
+  // Pourcentage global du semestre
   const percentageSemestre = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(1) : '0';
-  const percentageP1=totalMaxP1>0?((totalObtP1/totalMaxP1)*100).toFixed(1):'0';
-  const percentageP2=totalMaxP2>0?((totalObtP2/totalMaxP2)*100).toFixed(1):'0';
+  // Pourcentage par sous-période
+  const percentageP1 = totalMaxP1 > 0 ? ((totalObtP1 / totalMaxP1) * 100).toFixed(1) : '0';
+  const percentageP2 = totalMaxP2 > 0 ? ((totalObtP2 / totalMaxP2) * 100).toFixed(1) : '0';
+  // Pourcentage pour l'examen
+  const percentageExam = totalMaxExam > 0 ? ((totalObtExam / totalMaxExam) * 100).toFixed(1) : '0';
 
   return (
     <div className="bg-white border-2 border-black text-[9px] font-serif p-2 h-full">
@@ -151,7 +155,7 @@ export default function CouponSemestre({
 
               return (
                 <React.Fragment key={key}>
-                  <tr className="bg-slate-50 font-semibold bg-slate-200 text-[7px]">
+                  <tr className="bg-slate-200 font-semibold text-[7px]">
                     <td className="border border-black text-left px-1">MAXIMA</td>
                     <td className="border border-black text-center">{maxP1}</td>
                     <td className="border border-black text-center">{maxP2}</td>
@@ -201,24 +205,24 @@ export default function CouponSemestre({
             </td>
             <td className="border border-black text-center py-0">
               <div className="text-[7px]">{totalObtained}</div>
-              <div className="border-t font-semibold border-slate-400 text-[8px] font-bold">{totalMax}</div>
+              <div className="border-t border-slate-400 text-[8px] font-bold">{totalMax}</div>
             </td>
           </tr>
-          {/* Ligne du Pourcentage */}
+          {/* Ligne du Pourcentage — affiche le % pour chaque sous-période, l'examen, et le total */}
           <tr className="font-bold">
             <td className="border border-black text-left px-1">POURCENTAGE</td>
             <td className="border border-black text-center">{percentageP1}%</td>
             <td className="border border-black text-center">{percentageP2}%</td>
-            <td className='bg-black border border-black'></td>
+            <td className="border border-black text-center">{totalMaxExam > 0 ? `${percentageExam}%` : ''}</td>
             <td className="border border-black text-center">{percentageSemestre}%</td>
           </tr>
+          {/* Ligne PLACE — utilise les bonnes clés de StudentRanks (tot1 / tot2) */}
           <tr className="font-bold">
             <td className="border border-black text-left px-1">PLACE</td>
-             {/* todo: ranks  afficher les places pour different periodes*/}
-            <td className='border border-black text-center'>{ranks?.[(semester === 'S1' ? 'p1' : 'p3') as keyof StudentRanks] || '?'}/{totalStudents || '?'}</td>
-            <td className='border border-black text-center'>{ranks?.[(semester === 'S1' ? 'p2' : 'p4') as keyof StudentRanks] || '?'}/{totalStudents || '?'}</td>
-            <td className='border border-black bg-black'></td>
-            <td className="border border-black text-center">{ranks?.[(semester === 'S1' ? 'totP1' : 'totP2') as keyof StudentRanks] || '?'}/ {totalStudents || '?'}</td>
+            <td className='border border-black text-center'>{ranks?.[semester === 'S1' ? 'p1' : 'p3'] ?? '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-center'>{ranks?.[semester === 'S1' ? 'p2' : 'p4'] ?? '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-center'>{totalMaxExam > 0 ? `${ranks?.[semester === 'S1' ? 'ex1' : 'ex2'] ?? '?'}/${totalStudents || '?'}` : ''}</td>
+            <td className="border border-black text-center">{ranks?.[semester === 'S1' ? 'tot1' : 'tot2'] ?? '?'}/{totalStudents || '?'}</td>
           </tr>
           <tr className="font-bold">
             <td className="border border-black text-left px-1">CONDUITE</td>

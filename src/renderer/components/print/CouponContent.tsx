@@ -379,32 +379,32 @@ export default function CouponContent({
                   <td className="border border-black bg-slate-100 py-0.5">{totalTG || ''}</td>
                 </tr>
             
-                {/* POURCENTAGE */}
+                {/* POURCENTAGE — affiche aussi les % des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctP1}%</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctP2}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] bg-black`}></td>
+                  <td className={`border border-black py-0.5 text-[9px] ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctTot1}%</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctP3}%</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctP4}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] bg-black`}></td>
+                  <td className={`border border-black py-0.5 text-[9px] ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
                   <td className="border border-black py-0.5 text-[9px]">{pctTot2}%</td>
                   <td className="border border-black bg-slate-100 py-0.5 text-[9px]">{pctTG}%</td>
                 </tr>
 
-                {/* PLACE */}
+                {/* PLACE — affiche aussi les places des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 py-0">PLACE</td>
-                  <td className="border border-black py-0.5">{ranks?.p1 || ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black py-0.5">{ranks?.p2 || ''}/{totalStudents || '?'}</td>
-                  <td className={`border border-black py-0.5 bg-black`}></td>
-                  <td className="border border-black py-0.5">{ranks?.tot1 || ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black py-0.5">{ranks?.p3 || ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black py-0.5">{ranks?.p4 || ''}/{totalStudents || '?'}</td>
-                  <td className={`border border-black py-0.5 bg-black`}></td>
-                  <td className="border border-black py-0.5">{ranks?.tot2 || ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black bg-blue-50 py-0.5">{ranks?.tg || ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p1 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p2 ?? ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${ranks?.ex1 ?? '?'}/${totalStudents || '?'}` : ''}</td>
+                  <td className="border border-black py-0.5">{ranks?.tot1 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p3 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black py-0.5">{ranks?.p4 ?? ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${ranks?.ex2 ?? '?'}/${totalStudents || '?'}` : ''}</td>
+                  <td className="border border-black py-0.5">{ranks?.tot2 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black bg-blue-50 py-0.5">{ranks?.tg ?? ''}/{totalStudents || '?'}</td>
                 </tr>
 
                 {/* APPLICATION */}
