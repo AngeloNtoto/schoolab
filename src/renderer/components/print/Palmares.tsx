@@ -124,6 +124,7 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
   }
 
   if (rankedStudent.failedSubjects.length > 0) {
+    // Afficher le nom du cours + (points/maxima) pour toutes les périodes
     const failures = rankedStudent.subjectDetails
       .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
       .map((s: any) => s.subjectName + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
@@ -204,8 +205,8 @@ export default function Palmares({
     if (percentage >= 80) return 'E';
     if (percentage >= 60) return 'TB';
     if (percentage >= 50) return 'B';
-    if (percentage >= 30) return 'Ma';
-    return 'Mé';
+    if (percentage >= 40) return 'Mé';
+    return 'Ma';
   };
   
   const getPeriodConfig = (period: Period) => {
@@ -492,13 +493,15 @@ export default function Palmares({
         </table>
 
         <div className="mt-8 flex justify-between text-sm break-inside-avoid">
-          <div>
-            <p className="font-bold">Fait à {schoolCity}</p>
-            <p>Le ____/____/______</p>
-          </div>
+          {/* Signature du chef à gauche */}
           <div className="text-center">
             <p className="font-bold mb-16">Le Chef d'Établissement</p>
             <p className="border-t border-black pt-1">Nom et Signature</p>
+          </div>
+          {/* Lieu et date à droite */}
+          <div className="text-right">
+            <p className="font-bold">Fait à {schoolCity}</p>
+            <p>Le ____/____/______</p>
           </div>
         </div>
       </div>
