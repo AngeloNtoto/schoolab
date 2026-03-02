@@ -216,7 +216,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
               </div>
 
               <form action={formAction} className="space-y-6">
-                <div className={`grid ${isPrimaryClass ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'} gap-6`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Nom de la matière</label>
                         <input
@@ -229,7 +229,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             required
                         />
                     </div>
-                    {/* Champ code visible pour toutes les classes (y compris primaire) */}
+                    {/* Code disponible pour toutes les classes (y compris éducation de base) */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
                         <input

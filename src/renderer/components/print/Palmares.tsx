@@ -128,15 +128,15 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
     // Afficher le nom du cours + (points/maxima) pour toutes les périodes
     const failures = rankedStudent.subjectDetails
       .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
-      .map((s: any) => s.subjectCode + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
+      .map((s: any) => s.subjectCode + " "+(selectedPeriod === "ANNUAL" ? `${s.points}/${s.maxPoints}` : ''))
       .join(', ');
 
     return (
-      <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
+      <div className="flex flex-wrap items-center leading-tight text-[7.5px]">
         <span className="text-amber-600 font-semibold whitespace-nowrap">
-          Échec ({rankedStudent.failedSubjects.length} cours) :
+          Échec({rankedStudent.failedSubjects.length}cours) :
         </span>
-        <span className="text-slate-700">{failures}</span>
+        <span className="text-slate-700 ml-0">{failures}</span>
       </div>
     );
   }
