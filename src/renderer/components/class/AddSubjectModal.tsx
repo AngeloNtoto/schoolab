@@ -216,7 +216,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
               </div>
 
               <form action={formAction} className="space-y-6">
-                <div className={`grid ${isPrimaryClass ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'} gap-6`}>
+                <div className={`grid ${isPrimaryClass ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'} gap-6`}>
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Nom de la matière</label>
                         <input
@@ -229,19 +229,18 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             required
                         />
                     </div>
-                    {!isPrimaryClass && (
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
-                            <input
-                                name="code"
-                                type="text"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
-                                placeholder="Ex: MATH"
-                            />
-                        </div>
-                    )}
+                    {/* Champ code visible pour toutes les classes (y compris primaire) */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
+                        <input
+                            name="code"
+                            type="text"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                            placeholder="Ex: MATH"
+                        />
+                    </div>
                 </div>
                 
                 {isPrimaryClass && (

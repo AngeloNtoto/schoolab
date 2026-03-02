@@ -57,6 +57,7 @@ interface RankedStudent {
   missingSubjects: string[];   // Matières avec notes manquantes (cause du "Non classé")
   subjectDetails: {
     subjectName: string;
+    subjectCode: string;
     points: number;
     maxPoints: number;
   }[];
@@ -127,7 +128,7 @@ const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStu
     // Afficher le nom du cours + (points/maxima) pour toutes les périodes
     const failures = rankedStudent.subjectDetails
       .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
-      .map((s: any) => s.subjectName + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
+      .map((s: any) => s.subjectCode + (selectedPeriod === "ANNUAL" ? ` (${s.points}/${s.maxPoints})` : ''))
       .join(', ');
 
     return (
@@ -321,7 +322,8 @@ export default function Palmares({
         }
 
         subjectDetails.push({
-          subjectName: subject.code || subject.name,
+          subjectCode:subject.code,
+          subjectName: subject.name,
           points: subjectPoints,
           maxPoints: subjectMaxPoints,
         });
