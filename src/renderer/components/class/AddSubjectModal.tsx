@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2, Sparkles, Layers } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, ChevronUp, ChevronDown } from '../iconsSvg';
+import { classService } from '../../services/classService';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
 import SubjectCatalog from './SubjectCatalog';
@@ -183,6 +184,28 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     } catch (error) {
       console.error('Failed to delete subject:', error);
       toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  // Fonction pour déplacer une matière vers le haut ou le bas dans l'ordre d'affichage
+  const handleMoveSubject = async (subjectId: number, direction: 'up' | 'down') => {
+    const idx = subjects.findIndex(s => s.id === subjectId);
+    if (idx === -1) return;
+    // On ne peut pas monter le premier ou descendre le dernier
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === subjects.length - 1) return;
+    
+    // Construire le nouvel ordre en swappant les positions
+    const newOrder = subjects.map(s => s.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    
+    try {
+      await classService.reorderSubjects(newOrder);
+      onSuccess(); // Rafraîchir la liste
+    } catch (error) {
+      console.error('Erreur réorganisation:', error);
+      toast.error('Erreur lors de la réorganisation');
     }
   };
 
@@ -501,17 +524,42 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                                 )}
                             </div>
                             
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
-                                className={`p-2 rounded-xl transition-all ${
-                                    isActive 
-                                        ? 'hover:bg-white/10 text-white' 
-                                        : 'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                }`}
-                                title="Supprimer"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            {/* Boutons de réorganisation ↑↓ et suppression */}
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleMoveSubject(subject.id, 'up'); }}
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                        isActive 
+                                            ? 'hover:bg-white/10 text-white/60 hover:text-white' 
+                                            : 'text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                    }`}
+                                    title="Monter"
+                                >
+                                    <ChevronUp size={14} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleMoveSubject(subject.id, 'down'); }}
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                        isActive 
+                                            ? 'hover:bg-white/10 text-white/60 hover:text-white' 
+                                            : 'text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                    }`}
+                                    title="Descendre"
+                                >
+                                    <ChevronDown size={14} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
+                                    className={`p-2 rounded-xl transition-all ${
+                                        isActive 
+                                            ? 'hover:bg-white/10 text-white' 
+                                            : 'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                    }`}
+                                    title="Supprimer"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
                       </div>
                     );

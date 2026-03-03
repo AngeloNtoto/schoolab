@@ -21,6 +21,7 @@ export interface Subject {
   class_id?: number;
   domain_id?: number;
   category?: string;
+  display_order?: number;  // Ordre d'affichage dans le bulletin et la grille
 }
 
 /**
@@ -45,7 +46,7 @@ class ClassService {
    */
   async getSubjectsByClass(classId: number): Promise<Subject[]> {
     return await dbService.query<Subject>(
-      'SELECT * FROM subjects WHERE class_id = ? ORDER BY created_at ASC, name ASC',
+      'SELECT * FROM subjects WHERE class_id = ? ORDER BY display_order ASC, created_at ASC, name ASC',
       [classId]
     );
   }
@@ -56,8 +57,8 @@ class ClassService {
    */
   async createSubject(subject: Omit<Subject, 'id'>): Promise<number> {
     const result = await dbService.execute(
-      `INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, is_dirty, last_modified_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime('now')))`,
+      `INSERT INTO subjects (name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, display_order, is_dirty, last_modified_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime('now')))`,
       [
         subject.name,
         subject.code,
@@ -68,10 +69,31 @@ class ClassService {
         subject.max_p4,
         subject.max_exam2,
         subject.class_id,
-        subject.domain_id || null
+        subject.domain_id || null,
+        subject.display_order || 0
       ]
     );
     return result.lastInsertId;
+  }
+
+  /**
+   * Met à jour l'ordre d'affichage d'une matière individuelle.
+   */
+  async updateSubjectOrder(subjectId: number, displayOrder: number): Promise<void> {
+    await dbService.execute(
+      'UPDATE subjects SET display_order = ?, is_dirty = 1, last_modified_at = datetime(\'now\') WHERE id = ?',
+      [displayOrder, subjectId]
+    );
+  }
+
+  /**
+   * Réorganise l'ordre de plusieurs matières en batch (après drag-and-drop ou boutons ↑↓).
+   * @param orderedIds Liste d'IDs dans l'ordre souhaité
+   */
+  async reorderSubjects(orderedIds: number[]): Promise<void> {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await this.updateSubjectOrder(orderedIds[i], i + 1);
+    }
   }
 }
 

@@ -28,3 +28,6 @@ VALUES ('Domaine des Langues', 1),
   ),
   ('Domaine des Arts', 4),
   ('Domaine du Développement Personnel', 5);
+-- Ajout d'un ordre d'affichage pour les matières (pour le bulletin et la grille)
+ALTER TABLE subjects
+ADD COLUMN display_order INTEGER DEFAULT 0;
