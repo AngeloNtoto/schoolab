@@ -48,7 +48,7 @@ export default function Class() {
     
     // Hooks personnalisés pour les élèves et notes (avec cache)
     const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents, updateStudent, refresh: refreshStudents } = useStudents(Number(id));
-    const { grades, gradesMap, loading: gradesLoading, updateGrade } = useGrades(Number(id));
+    const { grades, gradesMap, loading: gradesLoading, updateGrade, refresh: refreshGrades } = useGrades(Number(id));
     
     // Chargement initial des données de la classe et paramètres école
     useEffect(() => {
@@ -95,6 +95,15 @@ export default function Class() {
         const sData = await classService.getSubjectsByClass(Number(id));
         setSubjects(sData);
     }, [id]);
+
+    // Callback pour tout rafraîchir d'un coup (matières + élèves + notes) sans redemander le mdp
+    const refreshAll = useCallback(async () => {
+        await Promise.all([
+            refreshSubjects(),
+            refreshStudents(),
+            refreshGrades()
+        ]);
+    }, [refreshSubjects, refreshStudents, refreshGrades]);
 
     // Callback pour ouvrir le modal d'édition avec un élève spécifique
     const handleEditStudent = useCallback((studentId: number) => {
@@ -270,6 +279,7 @@ export default function Class() {
                     onDeleteStudent={deleteStudent}
                     onImportStudents={importStudents}
                     onRefreshSubjects={refreshSubjects}
+                    onRefreshAll={refreshAll}
                     onSetEditingSubject={setEditingSubject}
                 />
             </div>

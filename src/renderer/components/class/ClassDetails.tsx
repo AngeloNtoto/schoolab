@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp, Lock, Unlock, Maximize, Minimize, Download } from '../iconsSvg';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp, Lock, Unlock, Maximize, Minimize, Download, RefreshCw } from '../iconsSvg';
 
 // Services & Hooks
 import { ClassData, Subject } from '../../services/classService';
@@ -32,6 +32,7 @@ interface ClassDetailsProps {
   onDeleteStudent: (studentId: number) => Promise<void>;
   onImportStudents: (students: Partial<Student>[]) => Promise<void>;
   onRefreshSubjects: () => Promise<void>;
+  onRefreshAll: () => Promise<void>;
   onSetEditingSubject: (subject: Subject | null) => void;
   onOpenRepechage: (studentId: number) => void;
 }
@@ -53,6 +54,7 @@ export default function ClassDetails({
   onDeleteStudent,
   onImportStudents,
   onRefreshSubjects,
+  onRefreshAll,
   onSetEditingSubject,
   onOpenRepechage
 }: ClassDetailsProps) {
@@ -69,6 +71,7 @@ export default function ClassDetails({
   const [focusedSubject, setFocusedSubject] = useState<number | 'all'>('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const toast = useToast();
 
@@ -259,6 +262,8 @@ export default function ClassDetails({
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform duration-300" />
               </button>
+
+         
               
               <div className="flex flex-col min-w-0">
                 <h1 className="text-xl font-black text-white dark:text-slate-100 flex items-center gap-2 tracking-tight truncate leading-none">
@@ -274,6 +279,26 @@ export default function ClassDetails({
                 </div>
               </div>
             </div>
+            
+                 {/* Bouton d'actualisation — rafraîchit matières, élèves et notes sans redemander le mdp */}
+              <button 
+                onClick={async () => {
+                  setRefreshing(true);
+                  try {
+                    await onRefreshAll();
+                    toast.success('Données actualisées');
+                  } catch {
+                    toast.error('Erreur lors de l\'actualisation');
+                  } finally {
+                    setRefreshing(false);
+                  }
+                }}
+                disabled={refreshing}
+                className="p-8 bg-white/10 hover:bg-white hover:text-blue-600 dark:hover:text-slate-900 rounded-xl text-white transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 hover:scale-105 active:scale-95 group shrink-0 disabled:opacity-50"
+                title="Actualiser les données"
+              >
+                <RefreshCw size={18} className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+              </button>
 
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
