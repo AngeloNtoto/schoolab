@@ -160,10 +160,18 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   };
 
   const handleDeleteDomain = async (id: number) => {
-    if(!confirm("Supprimer ce domaine ?")) return;
+    // Confirmation via modal personnalisé
+    const confirmed = await toast.confirm({
+      title: 'Supprimer ce domaine ?',
+      message: 'Les cours associés ne seront plus groupés sous ce domaine.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       await dbService.execute('DELETE FROM domains WHERE id = ?', [id]);
-      // Pas besoin de sync_deletions ici — le trigger de suppression s'en charge si l'entité a un server_id
+      // Le trigger de suppression s'en charge pour sync_deletions si server_id existe
       toast.success("Domaine supprimé");
       fetchConfig();
     } catch (e) {
@@ -193,10 +201,18 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   };
 
   const handleDeleteOption = async (id: number) => {
-    if(!confirm("Supprimer cette option de la liste ? \n\nNOTE: Les classes existantes utilisant cette option conserveront leur nom, mais l'option ne sera plus proposée pour les nouvelles classes.")) return;
+    // Confirmation via modal personnalisé
+    const confirmed = await toast.confirm({
+      title: 'Supprimer cette option ?',
+      message: 'Les classes existantes conserveront leur nom, mais l\'option ne sera plus proposée pour les nouvelles classes.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       await dbService.execute('DELETE FROM options WHERE id = ?', [id]);
-      // Pas besoin de sync_deletions ici — le trigger de suppression s'en charge si l'entité a un server_id
+      // Le trigger de suppression s'en charge pour sync_deletions si server_id existe
       toast.success("Option retirée de la liste");
       fetchConfig();
     } catch (e) {

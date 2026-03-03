@@ -60,7 +60,15 @@ export default function AcademicYearsManager() {
   };
 
   const handleDelete = async (id: number) => {
-     if(!confirm("Êtes-vous sûr ? Cela pourrait affecter les données liées.")) return;
+     // Confirmation via modal personnalisé
+     const confirmed = await toast.confirm({
+       title: 'Supprimer cette année ?',
+       message: 'Cela pourrait affecter les données liées (classes, notes, etc.).',
+       confirmLabel: 'Supprimer',
+       cancelLabel: 'Annuler',
+       variant: 'danger'
+     });
+     if (!confirmed) return;
      try {
        await academicYearService.delete(id);
        await loadYears();

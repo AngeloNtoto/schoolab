@@ -6,3 +6,4 @@ dist
 .agent
 env
 *.local
+cours.json

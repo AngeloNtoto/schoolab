@@ -138,49 +138,44 @@ export const HUMANITIES_COURSE_CATALOG: CatalogCategory[] = [
   {
     category: 'Sciences',
     courses: [
-      { name: 'Mathématiques', code: 'MATH', max_period: 10, max_exam: 20 },
-      { name: 'Physique', code: 'PHYS', max_period: 10, max_exam: 20 },
-      { name: 'Chimie', code: 'CHIM', max_period: 10, max_exam: 20 },
-      { name: 'Biologie', code: 'BIO', max_period: 10, max_exam: 20 },
-      { name: 'Sciences naturelles', code: 'SN', max_period: 10, max_exam: 20 },
-      { name: 'Informatique', code: 'INFO', max_period: 10, max_exam: 20 },
+      { name: 'Mathématiques', code: 'MATH', max_period: 50, max_exam: 100 },
+      { name: 'Physique', code: 'PHYS', max_period: 20, max_exam: 40 },
+      { name: 'Chimie', code: 'CHIM', max_period: 20, max_exam: 40 },
+      { name: 'Biologie', code: 'BIO', max_period: 20, max_exam: 40 },
+      { name: 'Informatique', code: 'INFO', max_period: 20, max_exam: 40 },
     ],
   },
   {
     category: 'Langues',
     courses: [
-      { name: 'Français', code: 'FR', max_period: 10, max_exam: 20 },
-      { name: 'Anglais', code: 'ANG', max_period: 10, max_exam: 20 },
+      { name: 'Français', code: 'FR', max_period: 50, max_exam: 100 },
+      { name: 'Anglais', code: 'ANG', max_period: 20, max_exam: 100 },
     ],
   },
   {
     category: 'Sciences humaines',
     courses: [
-      { name: 'Histoire', code: 'HIST', max_period: 10, max_exam: 20 },
-      { name: 'Géographie', code: 'GEOG', max_period: 10, max_exam: 20 },
-      { name: 'Éducation civique', code: 'EDC', max_period: 10, max_exam: 20 },
-      { name: 'Philosophie', code: 'PHILO', max_period: 10, max_exam: 20 },
-      { name: 'Religion', code: 'REL', max_period: 10, max_exam: 20 },
+      { name: 'Histoire', code: 'HIST', max_period: 20, max_exam: 40 },
+      { name: 'Géographie', code: 'GEOG', max_period: 20, max_exam: 40 },
+      { name: 'Éducation civique', code: 'EDC', max_period: 20, max_exam: 40 },
+      { name: 'Philosophie', code: 'PHILO', max_period: 20, max_exam: 40 },
+      { name: 'Religion', code: 'REL', max_period: 20, max_exam: 40 },
     ],
   },
   {
     category: 'Techniques',
     courses: [
-      { name: 'Électronique', code: 'ETRO', max_period: 20, max_exam: 40 },
-      { name: 'Électricité', code: 'ELEC', max_period: 20, max_exam: 40 },
-      { name: 'Mécanique', code: 'MECA', max_period: 20, max_exam: 40 },
-      { name: 'Dessin technique', code: 'DT', max_period: 10, max_exam: 20 },
-      { name: 'Laboratoire', code: 'LABO', max_period: 100, max_exam: 0 },
-      { name: 'Menuiserie', code: 'MEN', max_period: 20, max_exam: 40 },
-      { name: 'Construction', code: 'CONST', max_period: 20, max_exam: 40 },
+      { name: 'Électronique', code: 'ETRO', max_period: 40, max_exam: 80 },
+      { name: 'Électricité', code: 'ELEC', max_period: 40, max_exam: 80 },
+      { name: 'Mécanique', code: 'MECA', max_period: 40, max_exam: 80 },
+      { name: 'Dessin technique', code: 'DT', max_period: 40, max_exam: 80 },
+      { name: 'Laboratoire', code: 'LABO', max_period: 100, max_exam: 0 }
     ],
   },
   {
     category: 'Arts & Sport',
     courses: [
-      { name: 'Éducation physique', code: 'EPS', max_period: 10, max_exam: 20 },
-      { name: 'Dessin', code: 'DES', max_period: 10, max_exam: 20 },
-      { name: 'Musique', code: 'MUS', max_period: 10, max_exam: 20 },
+      { name: 'Éducation physique', code: 'EPS', max_period: 10, max_exam: 20 }
     ],
   },
 ];

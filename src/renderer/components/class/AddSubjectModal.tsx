@@ -165,7 +165,15 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   }, null);
 
   const handleDelete = async (subjectId: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette matière ? Toutes les notes associées seront perdues.')) return;
+    // Confirmation via modal personnalisé au lieu du confirm() du navigateur
+    const confirmed = await toast.confirm({
+      title: 'Supprimer la matière',
+      message: 'Toutes les notes associées seront perdues. Cette action est irréversible.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     
     try {
       await dbService.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
@@ -225,7 +233,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                         : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    <Sparkles size={14} />
+                    <Layers size={14} />
                     Catalogue
                   </button>
                   <button

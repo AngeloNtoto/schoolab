@@ -236,7 +236,15 @@ export default function TransferInbox() {
           className: content.data.classInfo.name
         });
       } else {
-        if (confirm('Voulez-vous vraiment importer ces données ?')) {
+        // Confirmation via modal personnalisé avant import
+        const confirmed = await toast.confirm({
+          title: 'Importer ces données ?',
+          message: 'Les données de cette classe seront ajoutées à votre base locale.',
+          confirmLabel: 'Importer',
+          cancelLabel: 'Annuler',
+          variant: 'info'
+        });
+        if (confirmed) {
           const success = await importClassData(content.data);
           if (success) {
             toast.success('Données importées avec succès !');
@@ -281,7 +289,15 @@ export default function TransferInbox() {
   };
 
   const handleReject = async (filename: string) => {
-    if (confirm('Supprimer ce transfert ?')) {
+    // Confirmation via modal personnalisé
+    const confirmed = await toast.confirm({
+      title: 'Supprimer ce transfert ?',
+      message: 'Ce transfert sera définitivement retiré de votre boîte de réception.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (confirmed) {
       await networkService.rejectFile(filename);
       loadTransfers();
     }

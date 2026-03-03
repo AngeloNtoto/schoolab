@@ -96,7 +96,15 @@ export default function NotesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette note ?')) return;
+    // Confirmation via modal personnalisé
+    const confirmed = await toast.confirm({
+      title: 'Supprimer cette note ?',
+      message: 'Cette action est irréversible.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
     try {
       await notesService.delete(id);
       setNotes(prev => prev.filter(n => n.id !== id));
