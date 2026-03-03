@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Check, Plus, ChevronRight } from '../iconsSvg';
+import { Check, Plus, ChevronRight, Info } from '../iconsSvg';
 import {
   EB_COURSE_CATALOG,
   HUMANITIES_COURSE_CATALOG,
@@ -387,7 +387,7 @@ export default function SubjectCatalog({
           {/* Petit icône info avec tooltip */}
           <div className="relative group">
             <div className={`w-5 h-5 rounded-full bg-${accentCls}-100 dark:bg-${accentCls}-900/30 flex items-center justify-center cursor-help`}>
-              <span className={`text-[10px] font-black text-${accentCls}-500`}>i</span>
+              <Info size={12} className={`text-${accentCls}-500`} />
             </div>
             <div className="absolute right-0 top-7 z-50 hidden group-hover:block w-56 p-2.5 bg-slate-800 dark:bg-slate-700 text-white text-[10px] font-medium rounded-xl shadow-xl leading-relaxed">
               Cochez les cours à ajouter. Modifiez les pondérations si besoin (examen = 2× période).
