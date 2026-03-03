@@ -556,7 +556,7 @@ export default function App() {
       {/* ── Footer ── */}
       <footer className="mt-auto border-t border-slate-200 bg-white">
         <div className="max-w-4xl mx-auto px-4 py-4 text-center text-slate-400 text-xs font-medium">
-          &copy; 2026 Schoolab - Système de gestion scolaire
+          &copy; 2026 Schoolab - Système de gestion scolaire cc
         </div>
       </footer>
     </div>
