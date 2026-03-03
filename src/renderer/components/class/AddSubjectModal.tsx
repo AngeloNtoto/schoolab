@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2 } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers } from '../iconsSvg';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
+import SubjectCatalog from './SubjectCatalog';
 
 interface Subject {
   id: number;
@@ -43,6 +44,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const [maxExam, setMaxExam] = useState('20');  // Un seul champ pour les deux examens
   
   const [loading, setLoading] = useState(false);
+
+  // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre
+  // Par défaut on affiche le catalogue sauf si on est en mode édition
+  const [activeTab, setActiveTab] = useState<'catalog' | 'manual'>(editingSubject ? 'manual' : 'catalog');
   
   // Domain-related state
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -206,14 +211,66 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
 
         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* Form Section (3/5) */}
-            <div className="lg:col-span-3 space-y-6">
-              <div className="flex items-center gap-3 px-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-                    {editingSubject ? 'Modifier la matière' : 'Nouvelle Matière'}
-                </h3>
-              </div>
+            {/* Form Section (3/5) — avec onglets Catalogue / Manuel */}
+            <div className="lg:col-span-3 space-y-4">
+              {/* Onglets Catalogue / Manuel */}
+              {!editingSubject && (
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('catalog')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'catalog'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Sparkles size={14} />
+                    Catalogue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('manual')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'manual'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Plus size={14} />
+                    Saisie manuelle
+                  </button>
+                </div>
+              )}
+
+              {/* Titre de section : mode édition */}
+              {editingSubject && (
+                <div className="flex items-center gap-3 px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                    Modifier la matière
+                  </h3>
+                </div>
+              )}
+
+              {/* CONTENU : Catalogue ou Manuel */}
+              {activeTab === 'catalog' && !editingSubject ? (
+                <SubjectCatalog
+                  classId={classId}
+                  classLevel={classLevel}
+                  existingSubjectNames={subjects.map(s => s.name)}
+                  onSuccess={onSuccess}
+                />
+              ) : (
+                <>
+                  {!editingSubject && (
+                    <div className="flex items-center gap-3 px-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                      <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                        Nouvelle Matière
+                      </h3>
+                    </div>
+                  )}
 
               <form action={formAction} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -371,6 +428,8 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   )}
                 </div>
               </form>
+              </>
+              )}
             </div>
 
             {/* List Section (2/5) */}
