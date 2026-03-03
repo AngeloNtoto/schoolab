@@ -279,8 +279,9 @@ export default function ClassDetails({
                 </div>
               </div>
             </div>
-            
-                 {/* Bouton d'actualisation — rafraîchit matières, élèves et notes sans redemander le mdp */}
+
+            <div className="flex items-center gap-2 shrink-0">
+                {/* Bouton d'actualisation — rafraîchit matières, élèves et notes sans redemander le mdp */}
               <button 
                 onClick={async () => {
                   setRefreshing(true);
@@ -294,13 +295,11 @@ export default function ClassDetails({
                   }
                 }}
                 disabled={refreshing}
-                className="p-8 bg-white/10 hover:bg-white hover:text-blue-600 dark:hover:text-slate-900 rounded-xl text-white transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 hover:scale-105 active:scale-95 group shrink-0 disabled:opacity-50"
+                className="p-2.5 bg-white/10 hover:bg-white hover:text-blue-600 dark:hover:text-slate-900 rounded-xl text-white transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 hover:scale-105 active:scale-95 group shrink-0 disabled:opacity-50"
                 title="Actualiser les données"
               >
                 <RefreshCw size={18} className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
               </button>
-
-            <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
                 <button 
                   onClick={onOpenPalmares}
