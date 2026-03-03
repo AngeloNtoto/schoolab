@@ -187,31 +187,36 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     }
   };
 
-  // ── Drag & Drop : état de l'élément en cours de glissement ──
-  const [draggedId, setDraggedId] = React.useState<number | null>(null);
+  // ── Système de réorganisation par clic ──
+  // Double-clic sur l'icône ≡ → sélection (gros visuel orange)
+  // Puis clic sur une autre matière → déplacement à cette position
+  const [movingId, setMovingId] = React.useState<number | null>(null);
 
-  // Quand on relâche sur un autre élément, on réorganise la liste
-  const handleDrop = async (targetId: number) => {
-    if (draggedId === null || draggedId === targetId) {
-      setDraggedId(null);
+  // Quand on clique sur une matière alors qu'une autre est en cours de déplacement
+  const handleReorderClick = async (targetId: number) => {
+    // Si rien n'est sélectionné, ignorer (le clic normal d'édition s'applique)
+    if (movingId === null) return;
+    // Clic sur la même → annuler la sélection
+    if (movingId === targetId) {
+      setMovingId(null);
       return;
     }
-    // Construire la nouvelle liste en déplaçant draggedId à la position de targetId
+    // Déplacer movingId à la position de targetId
     const ids = subjects.map(s => s.id);
-    const fromIdx = ids.indexOf(draggedId);
+    const fromIdx = ids.indexOf(movingId);
     const toIdx = ids.indexOf(targetId);
-    if (fromIdx === -1 || toIdx === -1) { setDraggedId(null); return; }
-    // Retirer l'élément de sa position d'origine et l'insérer à la cible
+    if (fromIdx === -1 || toIdx === -1) { setMovingId(null); return; }
     ids.splice(fromIdx, 1);
-    ids.splice(toIdx, 0, draggedId);
+    ids.splice(toIdx, 0, movingId);
     try {
       await classService.reorderSubjects(ids);
+      toast.success('Ordre mis à jour');
       onSuccess();
     } catch (error) {
       console.error('Erreur réorganisation:', error);
       toast.error('Erreur lors de la réorganisation');
     }
-    setDraggedId(null);
+    setMovingId(null);
   };
 
   return (
@@ -491,17 +496,23 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     return (
                       <div
                         key={subject.id}
-                        onClick={() => onSelectSubject?.(subject)}
-                        draggable
-                        onDragStart={() => setDraggedId(subject.id)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={() => handleDrop(subject.id)}
-                        onDragEnd={() => setDraggedId(null)}
-                        className={`group relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden ${
-                            draggedId === subject.id ? 'opacity-40 scale-95' :
-                            isActive 
-                                ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
-                                : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+                        onClick={() => {
+                          // Si une matière est en mode déplacement, gérer le placement
+                          if (movingId !== null) {
+                            handleReorderClick(subject.id);
+                            return;
+                          }
+                          // Sinon, ouvrir l'édition normalement
+                          onSelectSubject?.(subject);
+                        }}
+                        className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+                            movingId === subject.id
+                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-500 ring-4 ring-amber-200 dark:ring-amber-800 scale-[1.02] shadow-xl shadow-amber-200/50'
+                                : movingId !== null
+                                    ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-300 dark:border-blue-600 border-dashed hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:scale-[1.01]'
+                                    : isActive 
+                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                                        : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
                         }`}
                       >
                         {isActive && (
@@ -535,18 +546,33 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                                 )}
                             </div>
                             
-                            {/* Poignée de glissement + bouton suppression */}
+                            {/* Bouton de réorganisation + suppression */}
                             <div className="flex items-center gap-1">
-                                <div
-                                    className={`p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition-all ${
-                                        isActive 
-                                            ? 'text-white/40 hover:text-white/70' 
-                                            : 'text-slate-200 hover:text-slate-400'
+                                {/* Indicateur si c'est l'élément sélectionné pour déplacement */}
+                                {movingId === subject.id && (
+                                    <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest animate-pulse mr-1">Déplacer...</span>
+                                )}
+                                {/* Indicateur "déposer ici" si un autre élément est en déplacement */}
+                                {movingId !== null && movingId !== subject.id && (
+                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mr-1">→ Ici</span>
+                                )}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Double-clic ou clic sur l'icône = sélectionner/désélectionner pour déplacement
+                                        setMovingId(prev => prev === subject.id ? null : subject.id);
+                                    }}
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                        movingId === subject.id
+                                            ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
+                                            : isActive 
+                                                ? 'text-white/40 hover:text-white/70 hover:bg-white/10' 
+                                                : 'text-slate-200 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
-                                    title="Maintenir et glisser pour réorganiser"
+                                    title="Cliquer pour réorganiser"
                                 >
                                     <GripVertical size={16} />
-                                </div>
+                                </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
                                     className={`p-2 rounded-xl transition-all ${
