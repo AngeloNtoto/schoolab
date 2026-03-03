@@ -663,3 +663,13 @@ export const Minimize = createIcon("Minimize", [
   ["path", { d: "M3 16h3a2 2 0 0 1 2 2v3", key: "wsl07o2" }],
   ["path", { d: "M16 21v-3a2 2 0 0 1 2-2h3", key: "18trek2" }]
 ]);
+
+// Icône poignée de glissement (6 points) pour le drag-and-drop
+export const GripVertical = createIcon("GripVertical", [
+  ["circle", { cx: "9", cy: "12", r: "1", key: "1vg1" }],
+  ["circle", { cx: "9", cy: "5", r: "1", key: "1vg2" }],
+  ["circle", { cx: "9", cy: "19", r: "1", key: "1vg3" }],
+  ["circle", { cx: "15", cy: "12", r: "1", key: "1vg4" }],
+  ["circle", { cx: "15", cy: "5", r: "1", key: "1vg5" }],
+  ["circle", { cx: "15", cy: "19", r: "1", key: "1vg6" }]
+]);

@@ -84,15 +84,17 @@ export default function App() {
     });
   };
 
-  const getCurrentMax = () => {
-    if (!selectedSubject) return 10;
+  // Récupère le max possible pour la période active (supporte le passage d'une matière externe)
+  const getCurrentMax = (sub?: Subject | null) => {
+    const s = sub || selectedSubject;
+    if (!s) return 10;
     switch(period) {
-      case 'P1': return selectedSubject.max_p1;
-      case 'P2': return selectedSubject.max_p2;
-      case 'EXAM1': return selectedSubject.max_exam1;
-      case 'P3': return selectedSubject.max_p3;
-      case 'P4': return selectedSubject.max_p4;
-      case 'EXAM2': return selectedSubject.max_exam2;
+      case 'P1': return s.max_p1;
+      case 'P2': return s.max_p2;
+      case 'EXAM1': return s.max_exam1;
+      case 'P3': return s.max_p3;
+      case 'P4': return s.max_p4;
+      case 'EXAM2': return s.max_exam2;
       default: return 10;
     }
   };
@@ -149,6 +151,7 @@ export default function App() {
           <GradingTable 
             selectedClass={selectedClass}
             selectedSubject={selectedSubject}
+            subjects={subjects}
             period={period}
             setPeriod={setPeriod}
             students={students}
@@ -157,6 +160,7 @@ export default function App() {
             currentMax={getCurrentMax()}
             onGradeChange={handleGradeChange}
             onBack={() => setSelectedSubject(null)}
+            onSelectSubject={setSelectedSubject}
             statusMessage={statusMessage}
           />
         )}

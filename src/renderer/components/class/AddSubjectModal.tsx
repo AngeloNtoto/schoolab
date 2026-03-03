@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2, Sparkles, Layers, ChevronUp, ChevronDown } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical } from '../iconsSvg';
 import { classService } from '../../services/classService';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
@@ -187,26 +187,31 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     }
   };
 
-  // Fonction pour déplacer une matière vers le haut ou le bas dans l'ordre d'affichage
-  const handleMoveSubject = async (subjectId: number, direction: 'up' | 'down') => {
-    const idx = subjects.findIndex(s => s.id === subjectId);
-    if (idx === -1) return;
-    // On ne peut pas monter le premier ou descendre le dernier
-    if (direction === 'up' && idx === 0) return;
-    if (direction === 'down' && idx === subjects.length - 1) return;
-    
-    // Construire le nouvel ordre en swappant les positions
-    const newOrder = subjects.map(s => s.id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
-    
+  // ── Drag & Drop : état de l'élément en cours de glissement ──
+  const [draggedId, setDraggedId] = React.useState<number | null>(null);
+
+  // Quand on relâche sur un autre élément, on réorganise la liste
+  const handleDrop = async (targetId: number) => {
+    if (draggedId === null || draggedId === targetId) {
+      setDraggedId(null);
+      return;
+    }
+    // Construire la nouvelle liste en déplaçant draggedId à la position de targetId
+    const ids = subjects.map(s => s.id);
+    const fromIdx = ids.indexOf(draggedId);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) { setDraggedId(null); return; }
+    // Retirer l'élément de sa position d'origine et l'insérer à la cible
+    ids.splice(fromIdx, 1);
+    ids.splice(toIdx, 0, draggedId);
     try {
-      await classService.reorderSubjects(newOrder);
-      onSuccess(); // Rafraîchir la liste
+      await classService.reorderSubjects(ids);
+      onSuccess();
     } catch (error) {
       console.error('Erreur réorganisation:', error);
       toast.error('Erreur lors de la réorganisation');
     }
+    setDraggedId(null);
   };
 
   return (
@@ -487,7 +492,13 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                       <div
                         key={subject.id}
                         onClick={() => onSelectSubject?.(subject)}
+                        draggable
+                        onDragStart={() => setDraggedId(subject.id)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => handleDrop(subject.id)}
+                        onDragEnd={() => setDraggedId(null)}
                         className={`group relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+                            draggedId === subject.id ? 'opacity-40 scale-95' :
                             isActive 
                                 ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
                                 : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
@@ -524,30 +535,18 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                                 )}
                             </div>
                             
-                            {/* Boutons de réorganisation ↑↓ et suppression */}
+                            {/* Poignée de glissement + bouton suppression */}
                             <div className="flex items-center gap-1">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleMoveSubject(subject.id, 'up'); }}
-                                    className={`p-1.5 rounded-lg transition-all ${
+                                <div
+                                    className={`p-1.5 rounded-lg cursor-grab active:cursor-grabbing transition-all ${
                                         isActive 
-                                            ? 'hover:bg-white/10 text-white/60 hover:text-white' 
-                                            : 'text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                            ? 'text-white/40 hover:text-white/70' 
+                                            : 'text-slate-200 hover:text-slate-400'
                                     }`}
-                                    title="Monter"
+                                    title="Maintenir et glisser pour réorganiser"
                                 >
-                                    <ChevronUp size={14} />
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); handleMoveSubject(subject.id, 'down'); }}
-                                    className={`p-1.5 rounded-lg transition-all ${
-                                        isActive 
-                                            ? 'hover:bg-white/10 text-white/60 hover:text-white' 
-                                            : 'text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-                                    }`}
-                                    title="Descendre"
-                                >
-                                    <ChevronDown size={14} />
-                                </button>
+                                    <GripVertical size={16} />
+                                </div>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
                                     className={`p-2 rounded-xl transition-all ${

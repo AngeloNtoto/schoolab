@@ -221,6 +221,11 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         [],
     );
     let _ = conn.execute("ALTER TABLE subjects ADD COLUMN domain_id INTEGER", []);
+    // Migration: ordre d'affichage des matières (bulletin, grille)
+    let _ = conn.execute(
+        "ALTER TABLE subjects ADD COLUMN display_order INTEGER DEFAULT 0",
+        [],
+    );
 
     // Migration: Ajouter les colonnes manquantes à la table options (pour les bases existantes)
     let _ = conn.execute(
