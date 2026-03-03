@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Settings2, GraduationCap, Info } from '../iconsSvg';
-import { LEVELS, EB_COURSE_CATALOG, HUMANITIES_COURSE_CATALOG, CatalogCourse } from '../../../constants/school';
+import { X, School, Save, Layers, BookOpen, Plus, Trash2, Check, Sparkles, Settings2, GraduationCap } from '../iconsSvg';
+import { LEVELS } from '../../../constants/school';
 import { getClassDisplayName } from '../../lib/classUtils';
 import { useToast } from '../../context/ToastContext';
 
@@ -36,7 +36,7 @@ interface EditClassModalProps {
 
 export default function EditClassModal({ classData, onClose, onSuccess }: EditClassModalProps) {
   const [activeTab, setActiveTab] = useState<'identity' | 'config'>('identity');
-  const [activeConfigSection, setActiveConfigSection] = useState<'options' | 'domains' | 'courses'>('options');
+  const [activeConfigSection, setActiveConfigSection] = useState<'options' | 'domains'>('options');
   
   const [name, setName] = useState(classData?.name || '');
   const [level, setLevel] = useState(classData?.level || LEVELS[0]);
@@ -438,12 +438,6 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                       >
                           Domaines
                       </button>
-                      <button 
-                        onClick={() => setActiveConfigSection('courses')}
-                        className={`flex-1 py-1.5 rounded-lg text-[9px] font-bold transition-all ${activeConfigSection === 'courses' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
-                      >
-                          Cours
-                      </button>
                   </div>
 
                   {activeConfigSection === 'options' ? (
@@ -503,7 +497,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                                 ))}
                             </div>
                        </div>
-                  ) : activeConfigSection === 'domains' ? (
+                  ) : (
                        <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
                             <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl flex items-start gap-3 shrink-0">
                                 <BookOpen className="text-purple-600 shrink-0 mt-0.5" size={16} />
@@ -549,77 +543,6 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                                     </div>
                                 ))}
                             </div>
-                       </div>
-                  ) : (
-                       /* Onglet Cours permanents — aperçu du catalogue intégré */
-                       <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl flex items-start gap-3 shrink-0">
-                                <Info className="text-emerald-600 shrink-0 mt-0.5" size={16} />
-                                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300/80 leading-relaxed">
-                                    Cours proposés par défaut lors de la création d'une classe. Examen = 2× période.
-                                </p>
-                            </div>
-
-                            {/* Liste en lecture seule du catalogue EB */}
-                            <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-white/5 p-2 space-y-2 custom-scrollbar">
-                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest px-2 py-1">
-                                    Éducation de Base (7ème / 8ème)
-                                </p>
-                                {EB_COURSE_CATALOG.map(group => (
-                                    <div key={group.subdomain} className="space-y-1">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-2">
-                                            {group.subdomain}
-                                        </p>
-                                        {group.courses.map(course => (
-                                            <div key={course.name} className="flex items-center justify-between p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-white/5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[8px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">
-                                                        {course.code}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                                        {course.name}
-                                                    </span>
-                                                </div>
-                                                <span className="text-[9px] font-bold text-slate-400">
-                                                    P:{course.max_period} E:{course.max_period * 2}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-
-                                <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
-
-                                <p className="text-[9px] font-black text-purple-500 uppercase tracking-widest px-2 py-1">
-                                    Humanités (1ère – 4ème)
-                                </p>
-                                {HUMANITIES_COURSE_CATALOG.map(cat => (
-                                    <div key={cat.category} className="space-y-1">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-2">
-                                            {cat.category}
-                                        </p>
-                                        {cat.courses.map(course => (
-                                            <div key={course.name} className="flex items-center justify-between p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-white/5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[8px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded">
-                                                        {course.code}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                                                        {course.name}
-                                                    </span>
-                                                </div>
-                                                <span className="text-[9px] font-bold text-slate-400">
-                                                    P:{course.max_period} E:{course.max_period * 2}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-
-                            <p className="text-[9px] text-slate-400 text-center font-medium shrink-0">
-                                Pour modifier le catalogue, éditez <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-[8px]">school.ts</code>
-                            </p>
                        </div>
                   )}
               </div>
