@@ -507,9 +507,9 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                         }}
                         className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
                             movingId === subject.id
-                                ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 dark:border-amber-500 ring-4 ring-amber-200 dark:ring-amber-800 scale-[1.02] shadow-xl shadow-amber-200/50'
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 scale-[1.02] shadow-lg shadow-blue-200/30'
                                 : movingId !== null
-                                    ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-300 dark:border-blue-600 border-dashed hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:scale-[1.01]'
+                                    ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 border-dashed hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400'
                                     : isActive 
                                         ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
                                         : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
@@ -550,7 +550,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             <div className="flex items-center gap-1">
                                 {/* Indicateur si c'est l'élément sélectionné pour déplacement */}
                                 {movingId === subject.id && (
-                                    <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest animate-pulse mr-1">Déplacer...</span>
+                                    <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest animate-pulse mr-1">Déplacer...</span>
                                 )}
                                 {/* Indicateur "déposer ici" si un autre élément est en déplacement */}
                                 {movingId !== null && movingId !== subject.id && (
@@ -564,7 +564,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                                     }}
                                     className={`p-1.5 rounded-lg transition-all ${
                                         movingId === subject.id
-                                            ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
+                                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
                                             : isActive 
                                                 ? 'text-white/40 hover:text-white/70 hover:bg-white/10' 
                                                 : 'text-slate-200 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
