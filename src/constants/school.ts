@@ -205,7 +205,7 @@ export const SUBJECT_TEMPLATES: Record<string, {
     { name: 'Mathématiques', code: 'MATH', max_p1: 50, max_p2: 50, max_exam1: 100, max_p3: 50, max_p4: 50, max_exam2: 100 },
     { name: 'Électronique', code: 'ETRO', max_p1: 20, max_p2: 20, max_exam1: 40, max_p3: 20, max_p4: 20, max_exam2: 40 },
     { name: 'Laboratoire', code: 'LABO', max_p1: 100, max_p2: 100, max_exam1: 0, max_p3: 100, max_p4: 100, max_exam2: 0 },
-    { name: 'Français', code: 'FR', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
+    { name: 'Français', code: 'FR',  max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },
   ],
   'MENUISERIE': [
     { name: 'Mathématiques', code: 'MATH', max_p1: 10, max_p2: 10, max_exam1: 20, max_p3: 10, max_p4: 10, max_exam2: 20 },

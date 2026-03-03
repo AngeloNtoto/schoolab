@@ -167,7 +167,7 @@ export default function App() {
       </main>
       <footer className="mt-auto border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-6 text-center text-slate-400 text-sm font-medium">
-          &copy; 2026 Schoolab - Système de gestion scolaire d'excellence.
+          &copy; 2026 Schoolab - Système de gestion scolaire d'excellence cc.
         </div>
       </footer>
     </div>
