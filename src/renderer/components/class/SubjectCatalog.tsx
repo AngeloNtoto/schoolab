@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Check, Plus, Sparkles, ChevronRight } from '../iconsSvg';
+import { Check, Plus, ChevronRight } from '../iconsSvg';
 import {
   EB_COURSE_CATALOG,
   HUMANITIES_COURSE_CATALOG,
@@ -365,20 +365,9 @@ export default function SubjectCatalog({
 
   return (
     <div className="space-y-3 h-full flex flex-col">
-      {/* Barre d'info compacte */}
-      <div className={`bg-${accentCls}-50 dark:bg-${accentCls}-900/20 p-3 rounded-xl flex items-center gap-3 shrink-0`}>
-        <Sparkles className={`text-${accentCls}-600 shrink-0`} size={16} />
-        <p className={`text-[10px] font-bold text-${accentCls}-700 dark:text-${accentCls}-300/80`}>
-          {isPrimary
-            ? 'Cochez les cours à ajouter. Modifiez les pondérations si besoin (examen = 2× période).'
-            : 'Sélectionnez les cours communs. Pondérations modifiables, examen = 2× période.'
-          }
-        </p>
-      </div>
-
-      {/* Actions rapides */}
+      {/* Actions rapides + info tooltip */}
       <div className="flex items-center justify-between shrink-0">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button type="button" onClick={handleSelectAll}
             className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline">
             Tout sélectionner
@@ -389,11 +378,23 @@ export default function SubjectCatalog({
             Tout désélectionner
           </button>
         </div>
-        {selected.size > 0 && (
-          <span className={`text-[10px] font-black text-${accentCls}-600 bg-${accentCls}-50 dark:bg-${accentCls}-900/30 px-2 py-0.5 rounded-lg`}>
-            {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <span className={`text-[10px] font-black text-${accentCls}-600 bg-${accentCls}-50 dark:bg-${accentCls}-900/30 px-2 py-0.5 rounded-lg`}>
+              {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+            </span>
+          )}
+          {/* Petit icône info avec tooltip */}
+          <div className="relative group">
+            <div className={`w-5 h-5 rounded-full bg-${accentCls}-100 dark:bg-${accentCls}-900/30 flex items-center justify-center cursor-help`}>
+              <span className={`text-[10px] font-black text-${accentCls}-500`}>i</span>
+            </div>
+            <div className="absolute right-0 top-7 z-50 hidden group-hover:block w-56 p-2.5 bg-slate-800 dark:bg-slate-700 text-white text-[10px] font-medium rounded-xl shadow-xl leading-relaxed">
+              Cochez les cours à ajouter. Modifiez les pondérations si besoin (examen = 2× période).
+              <div className="absolute -top-1 right-2 w-2 h-2 bg-slate-800 dark:bg-slate-700 rotate-45" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Catalogue scrollable (accordéon) */}
