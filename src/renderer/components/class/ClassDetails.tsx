@@ -68,6 +68,7 @@ export default function ClassDetails({
   const [lockedPeriods, setLockedPeriods] = useState<Set<string>>(new Set());
   const [focusedSubject, setFocusedSubject] = useState<number | 'all'>('all');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showToolbar, setShowToolbar] = useState(false);
 
   const toast = useToast();
 
@@ -357,9 +358,17 @@ export default function ClassDetails({
               </button>
             </div>
           </div>
-
-          {/* Barre d'outils mark board : filtre matière, progression, verrouillage, export, plein écran */}
-          <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-3 mt-1">
+          {/* Toggle barre d'outils + barre d'outils pliable */}
+          <div className="border-t border-white/10 mt-1">
+            <button
+              onClick={() => setShowToolbar(prev => !prev)}
+              className="w-full flex items-center justify-center gap-1.5 py-1 text-white/30 hover:text-white/60 transition-colors"
+            >
+              <ChevronDown size={14} className={`transition-transform duration-300 ${showToolbar ? 'rotate-180' : ''}`} />
+              <span className="text-[8px] font-black uppercase tracking-widest">{showToolbar ? 'Masquer' : 'Outils'}</span>
+            </button>
+            {showToolbar && (
+          <div className="flex flex-wrap items-center gap-3 pb-3 px-1 animate-in slide-in-from-top-2 duration-200">
             {/* Filtre par matière */}
             <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
               <span className="text-white/40 text-[9px] font-black uppercase tracking-widest pl-2">Cours:</span>
@@ -446,6 +455,8 @@ export default function ClassDetails({
             >
               {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
             </button>
+          </div>
+            )}
           </div>
         </div>
       </header>
@@ -908,7 +919,7 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
     }, 30);
   };
 
-  // Trouver la cellule voisine (Tab / Shift+Tab)
+  // Trouver la cellule voisine (ArrowLeft / ArrowRight)
   const findSiblingCell = (direction: 'next' | 'prev') => {
     const allCells = Array.from(document.querySelectorAll(
       `[data-student-idx="${studentIdx}"][data-period]`
@@ -972,11 +983,19 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
       handleBlur();
       // Descendre d'une ligne (même colonne)
       navigateTo(studentIdx + 1, subjectId, period);
-    } else if (e.key === 'Tab') {
+    } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       handleBlur();
-      // Tab = cellule suivante, Shift+Tab = précédente (même ligne)
-      const sibling = findSiblingCell(e.shiftKey ? 'prev' : 'next');
+      // Flèche droite = cellule suivante (même ligne)
+      const sibling = findSiblingCell('next');
+      if (sibling) {
+        setTimeout(() => sibling.click(), 30);
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      handleBlur();
+      // Flèche gauche = cellule précédente (même ligne)
+      const sibling = findSiblingCell('prev');
       if (sibling) {
         setTimeout(() => sibling.click(), 30);
       }
