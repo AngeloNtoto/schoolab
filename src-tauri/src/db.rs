@@ -326,6 +326,21 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         [],
     )
     .map_err(|e| e.to_string())?;
+
+    // Seed des options par défaut (correspond aux constantes de school.ts)
+    conn.execute(
+        "INSERT OR IGNORE INTO options (label, value, short, display_order) VALUES
+        ('Éducation de Base', 'EB', 'EB', 1),
+        ('Électronique', 'ELECTRONIQUE', 'ETRO', 2),
+        ('Électricité', 'ELECTRICITE', 'ELEC', 3),
+        ('Mécanique Automobile', 'MECANIQUE_AUTOMOBILE', 'ACL', 4),
+        ('Machines outils', 'MACHINES_OUTILS', 'MO', 5),
+        ('Construction', 'CONSTRUCTION', 'HTC', 6),
+        ('Menuiserie', 'MENUISERIE', 'MEN', 7);
+    ",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
     info!("Database path: {}", db_path.display());
     info!("Database initialized and schema verified.");
     Ok(())
