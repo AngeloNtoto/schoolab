@@ -55,9 +55,11 @@ class StudentService {
    * Crée un nouvel élève.
    * @param student Les données de l'élève (sans ID)
    */
-  async createStudent(student: Omit<Student, 'id'>): Promise<number> {
+  async createStudent(student: Omit<Student, 'id'>, ignoreDuplicates = false): Promise<number> {
+    // Utilise INSERT OR IGNORE si on veut sauter les doublons (import en masse)
+    const insertKeyword = ignoreDuplicates ? 'INSERT OR IGNORE' : 'INSERT';
     const result = await dbService.execute(
-      'INSERT INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime(\'now\')))',
+      `${insertKeyword} INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime('now')))`,
       [
         student.first_name,
         student.last_name,
@@ -136,56 +138,46 @@ class StudentService {
    * @returns Le nombre d'élèves importés avec succès
    * @throws Error si l'importation échoue (avec message descriptif)
    */
-  async importStudents(students: Omit<Student, 'id'>[]): Promise<number> {
+  async importStudents(students: Omit<Student, 'id'>[]): Promise<{ imported: number; skipped: number }> {
     // Validation préalable : vérifier qu'on a au moins un élève à importer
     if (!students || students.length === 0) {
       throw new Error('Aucun élève à importer');
     }
 
-    // Compteur pour le résultat final
+    // Compteurs pour le résultat final
     let importedCount = 0;
+    let skippedCount = 0;
 
     try {
-      // IMPORTATION EN BOUCLE :
-      // Pour chaque élève dans le tableau, on utilise la fonction createStudent existante
-      // Cela garantit que la même logique de validation et d'insertion est appliquée
-      // PRINCIPE : Réutilisation du code (DRY - Don't Repeat Yourself)
       for (const student of students) {
-        // Validation des champs requis pour cet élève
-        // Si un champ obligatoire est manquant, on lance une erreur descriptive
+        // Validation : le nom est obligatoire
         if (!student.last_name) {
-          throw new Error(
-            `Élève invalide : le nom est obligatoire. ` +
-            `Données reçues : ${JSON.stringify(student)}`
-          );
+          skippedCount++;
+          continue; // On saute les élèves sans nom plutôt que de tout crasher
         }
 
-        // Vérification que class_id est bien défini
-        // C'est crucial car chaque élève DOIT être associé à une classe
+        // Vérification du class_id
         if (!student.class_id) {
-          throw new Error(
-            `L'élève ${student.first_name} ${student.last_name} n'a pas de classe associée`
-          );
+          skippedCount++;
+          continue;
         }
 
-        // Insertion de l'élève dans la base de données
-        // On utilise createStudent pour garantir la cohérence avec les créations manuelles
-        await this.createStudent(student);
+        // Insertion avec INSERT OR IGNORE pour ne pas bloquer sur les doublons
+        // Si l'élève existe déjà (même nom + prénom + classe), il est simplement ignoré
+        const result = await this.createStudent(student, true);
         
-        // Incrémentation du compteur pour le suivi
-        importedCount++;
+        // lastInsertId = 0 si l'insertion a été ignorée (doublon)
+        if (result > 0) {
+          importedCount++;
+        } else {
+          skippedCount++;
+        }
       }
 
-      // Retour du nombre d'élèves importés avec succès
-      return importedCount;
+      return { imported: importedCount, skipped: skippedCount };
 
     } catch (error) {
-      // GESTION D'ERREUR :
-      // Si une erreur survient pendant l'importation, on la capture et on la renvoie
-      // avec un message plus descriptif pour aider au débogage
       console.error('Erreur lors de l\'importation des élèves:', error);
-      
-      // On enrichit le message d'erreur avec le contexte
       throw new Error(
         `Échec de l'importation après ${importedCount} élève(s) importé(s) : ${
           error instanceof Error ? error.message : 'Erreur inconnue'

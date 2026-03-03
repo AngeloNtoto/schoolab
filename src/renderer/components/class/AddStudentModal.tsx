@@ -138,10 +138,18 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
     }
 
     setLoading(true);
-    await onImportStudents(parsedStudents);
-    toast.success(`${parsedStudents.length} élèves importés`);
-    onClose();
-    setLoading(false);
+    try {
+      const result = await onImportStudents(parsedStudents);
+      // Le résultat peut être un objet { imported, skipped } ou void selon l'implémentation
+      // On affiche un message adapté
+      toast.success(`${parsedStudents.length} élèves traités`);
+      onClose();
+    } catch (err) {
+      console.error('Erreur import:', err);
+      toast.error('Erreur lors de l\'importation');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClose = () => {
