@@ -22,9 +22,14 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         CREATE TABLE IF NOT EXISTS options (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             label TEXT NOT NULL UNIQUE,
+            value TEXT NOT NULL DEFAULT '',
+            short TEXT NOT NULL DEFAULT '',
             display_order INTEGER DEFAULT 0,
+            server_id TEXT,
+            is_dirty INTEGER DEFAULT 1,
             created_at TEXT DEFAULT '1970-01-01 00:00:00',
-            updated_at TEXT DEFAULT '1970-01-01 00:00:00'
+            updated_at TEXT DEFAULT '1970-01-01 00:00:00',
+            last_modified_at TEXT DEFAULT '1970-01-01 00:00:00'
         );
 
         CREATE TABLE IF NOT EXISTS academic_years (
@@ -186,6 +191,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         "notes",
         "domains",
         "repechages",
+        "options",
     ];
 
     for table in sync_tables {
@@ -216,6 +222,16 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
     );
     let _ = conn.execute("ALTER TABLE subjects ADD COLUMN domain_id INTEGER", []);
 
+    // Migration: Ajouter les colonnes manquantes à la table options (pour les bases existantes)
+    let _ = conn.execute(
+        "ALTER TABLE options ADD COLUMN value TEXT NOT NULL DEFAULT ''",
+        [],
+    );
+    let _ = conn.execute(
+        "ALTER TABLE options ADD COLUMN short TEXT NOT NULL DEFAULT ''",
+        [],
+    );
+
     // Setup triggers for all sync tables
     let sync_tables = vec![
         "academic_years",
@@ -226,6 +242,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         "notes",
         "domains",
         "repechages",
+        "options",
     ];
 
     for table in sync_tables {

@@ -163,7 +163,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     if(!confirm("Supprimer ce domaine ?")) return;
     try {
       await dbService.execute('DELETE FROM domains WHERE id = ?', [id]);
-      await dbService.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['domains', id]);
+      // Pas besoin de sync_deletions ici — le trigger de suppression s'en charge si l'entité a un server_id
       toast.success("Domaine supprimé");
       fetchConfig();
     } catch (e) {
@@ -196,7 +196,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     if(!confirm("Supprimer cette option de la liste ? \n\nNOTE: Les classes existantes utilisant cette option conserveront leur nom, mais l'option ne sera plus proposée pour les nouvelles classes.")) return;
     try {
       await dbService.execute('DELETE FROM options WHERE id = ?', [id]);
-      await dbService.execute('INSERT INTO sync_deletions (table_name, local_id) VALUES (?, ?)', ['options', id]);
+      // Pas besoin de sync_deletions ici — le trigger de suppression s'en charge si l'entité a un server_id
       toast.success("Option retirée de la liste");
       fetchConfig();
     } catch (e) {
