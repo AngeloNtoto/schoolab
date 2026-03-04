@@ -70,16 +70,28 @@ export default function BulletinPrimaireContent({
     return Number.isInteger(val) ? val.toString() : val.toFixed(1);
   };
 
-  // Group subjects by domain
+  // Groupement des matières : domaine → sous-domaines → matières
+  // Chaque domaine contient des sous-domaines, et chaque sous-domaine contient ses matières
   const subjectsByDomain = useMemo(() => {
-    const grouped = new Map<number | null, Subject[]>();
+    // Structure : Map<domainId, { subjects: Subject[], bySubDomain: Map<string, Subject[]> }>
+    const grouped = new Map<number | null, { subjects: Subject[], bySubDomain: Map<string, Subject[]> }>();
     
     subjects.forEach(subject => {
       const domainId = subject.domain_id ?? null;
       if (!grouped.has(domainId)) {
-        grouped.set(domainId, []);
+        grouped.set(domainId, { subjects: [], bySubDomain: new Map() });
       }
-      grouped.get(domainId)!.push(subject);
+      const entry = grouped.get(domainId)!;
+      entry.subjects.push(subject);
+      
+      // Grouper aussi par sous-domaine si disponible
+      const subDomain = (subject as any).sub_domain || '';
+      if (subDomain) {
+        if (!entry.bySubDomain.has(subDomain)) {
+          entry.bySubDomain.set(subDomain, []);
+        }
+        entry.bySubDomain.get(subDomain)!.push(subject);
+      }
     });
     
     return grouped;
@@ -231,7 +243,7 @@ export default function BulletinPrimaireContent({
           </tr>
         </thead>
         <tbody>
-          {Array.from(subjectsByDomain.entries()).map(([domainId, domainSubjects]) => {
+          {Array.from(subjectsByDomain.entries()).map(([domainId, { subjects: domainSubjects, bySubDomain }]) => {
             const domainName = getDomainName(domainId);
             
             let domainMaxP = 0;
@@ -245,17 +257,8 @@ export default function BulletinPrimaireContent({
             let domainP3 = 0, domainP4 = 0, domainEx2 = 0, domainTot2 = 0;
             let domainTG = 0;
 
-            return (
-              <React.Fragment key={domainId ?? 'no-domain'}>
-                {/* Domain Header */}
-                <tr className="bg-slate-200">
-                  <td colSpan={20} className="border border-black p-1 font-bold uppercase text-left text-[9px]">
-                    {domainName}
-                  </td>
-                </tr>
-                
-                {/* Subjects in this domain */}
-                {domainSubjects.map(subject => {
+            // Fonction pour rendre une ligne de matière (réutilisée partout)
+            const renderSubjectRow = (subject: Subject) => {
                   const p1 = getGrade(subject.id, 'P1');
                   const p2 = getGrade(subject.id, 'P2');
                   const ex1 = getGrade(subject.id, 'EXAM1');
@@ -269,19 +272,19 @@ export default function BulletinPrimaireContent({
                   const tg = (tot1 !== null || tot2 !== null) ? (tot1 || 0) + (tot2 || 0) : null;
                   
                   const maxP = subject.max_p1;
-                  const maxEx1 = subject.max_exam1;
-                  const maxEx2 = subject.max_exam2;
-                  const maxTot1 = (maxP * 2) + maxEx1;
-                  const maxTot2 = (maxP * 2) + maxEx2;
-                  const maxTG = maxTot1 + maxTot2;
+                  const maxEx1Val = subject.max_exam1;
+                  const maxEx2Val = subject.max_exam2;
+                  const maxTot1Val = (maxP * 2) + maxEx1Val;
+                  const maxTot2Val = (maxP * 2) + maxEx2Val;
+                  const maxTGVal = maxTot1Val + maxTot2Val;
 
+                  // Accumuler les totaux du domaine
                   domainMaxP += maxP;
-                  domainMaxEx1 += maxEx1;
-                  domainMaxEx2 += maxEx2;
-                  domainMaxTot1 += maxTot1;
-                  domainMaxTot2 += maxTot2;
-                  domainMaxTG += maxTG;
-
+                  domainMaxEx1 += maxEx1Val;
+                  domainMaxEx2 += maxEx2Val;
+                  domainMaxTot1 += maxTot1Val;
+                  domainMaxTot2 += maxTot2Val;
+                  domainMaxTG += maxTGVal;
                   if (p1 !== null) domainP1 += p1;
                   if (p2 !== null) domainP2 += p2;
                   if (ex1 !== null) domainEx1 += ex1;
@@ -298,26 +301,61 @@ export default function BulletinPrimaireContent({
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className="border border-black">{formatValue(p1)}</td>
                       <td className="border border-black">{formatValue(p2)}</td>
-                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx1)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx1Val)}</td>
                       <td className="border border-black">{formatValue(ex1)}</td>
-                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot1)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot1Val)}</td>
                       <td className="border border-black font-bold">{formatValue(tot1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className="border border-black">{formatValue(p3)}</td>
                       <td className="border border-black">{formatValue(p4)}</td>
-                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx2)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx2Val)}</td>
                       <td className="border border-black">{formatValue(ex2)}</td>
-                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot2)}</td>
+                      <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot2Val)}</td>
                       <td className="border border-black font-bold">{formatValue(tot2)}</td>
-                      <td className="border border-black font-bold bg-slate-100">{formatValue(maxTG)}</td>
+                      <td className="border border-black font-bold bg-slate-100">{formatValue(maxTGVal)}</td>
                       <td className="border border-black font-bold bg-slate-100">{formatValue(tg)}</td>
                       <td className="border border-black"></td>
                       <td className="border border-black"></td>
                     </tr>
                   );
-                })}
+            };
+
+            // Matières sans sous-domaine (affichées directement sous le domaine)
+            const subjectsWithoutSubDomain = domainSubjects.filter(s => !(s as any).sub_domain);
+
+            return (
+              <React.Fragment key={domainId ?? 'no-domain'}>
+                {/* En-tête du domaine — fond gris foncé */}
+                <tr className="bg-slate-200">
+                  <td colSpan={20} className="border border-black p-1 font-bold uppercase text-left text-[9px]">
+                    {domainName}
+                  </td>
+                </tr>
                 
-                {/* Domain Subtotal */}
+                {/* Si le domaine a des sous-domaines, les afficher avec un sous-header */}
+                {bySubDomain.size > 0 ? (
+                  <>
+                    {Array.from(bySubDomain.entries()).map(([subDomainName, subDomainSubjects]) => (
+                      <React.Fragment key={subDomainName}>
+                        {/* Sous-header du sous-domaine — fond gris clair, texte italique */}
+                        <tr className="bg-slate-100">
+                          <td colSpan={20} className="border border-black px-3 py-0.5 text-left text-[8px] italic font-semibold text-slate-600">
+                            ↳ {subDomainName}
+                          </td>
+                        </tr>
+                        {/* Matières de ce sous-domaine */}
+                        {subDomainSubjects.map(renderSubjectRow)}
+                      </React.Fragment>
+                    ))}
+                    {/* Matières du domaine qui n'ont pas de sous-domaine */}
+                    {subjectsWithoutSubDomain.map(renderSubjectRow)}
+                  </>
+                ) : (
+                  /* Pas de sous-domaines : toutes les matières directement */
+                  domainSubjects.map(renderSubjectRow)
+                )}
+                
+                {/* Sous-total du domaine */}
                 <tr className="bg-slate-100 font-bold">
                   <td className="border border-black p-1 text-left uppercase">SOUS-TOTAL</td>
                   <td className="border border-black">{formatValue(domainMaxP)}</td>

@@ -122,7 +122,8 @@ export default function SubjectCatalog({
   const findCourse = (key: CourseKey): { course: CatalogCourse; domain?: string; subdomain?: string } | null => {
     for (const group of EB_COURSE_CATALOG) {
       for (const course of group.courses) {
-        if (courseKey(group.subdomain, course) === key) {
+        // La clé utilise le nom du domaine (pas le sous-domaine) pour être cohérent avec le catalogue
+        if (courseKey(group.domain, course) === key) {
           return { course, domain: group.domain, subdomain: group.subdomain };
         }
       }
@@ -198,7 +199,8 @@ export default function SubjectCatalog({
     if (isPrimary) {
       EB_COURSE_CATALOG.forEach(group => {
         group.courses.forEach(c => {
-          if (!alreadyExists(c.name)) allKeys.add(courseKey(group.subdomain, c));
+          // Utilise group.domain comme clé (cohérent avec le catalogue restructuré)
+          if (!alreadyExists(c.name)) allKeys.add(courseKey(group.domain, c));
         });
       });
     } else {
@@ -211,7 +213,7 @@ export default function SubjectCatalog({
     setSelected(allKeys);
     // Ouvrir tous les groupes pour montrer la sélection
     const allGroupLabels = isPrimary
-      ? EB_COURSE_CATALOG.map(g => g.subdomain)
+      ? [...new Set(EB_COURSE_CATALOG.map(g => g.domain))]
       : HUMANITIES_COURSE_CATALOG.map(c => c.category);
     setExpandedGroups(new Set(allGroupLabels));
   };
@@ -400,9 +402,103 @@ export default function SubjectCatalog({
       {/* Catalogue scrollable (accordéon) */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-2">
         {isPrimary
-          ? EB_COURSE_CATALOG.map(group =>
-              renderGroup(group.subdomain, group.domain, group.courses, accentCls)
-            )
+          ? (() => {
+              // Regrouper le catalogue EB par domaine, les sous-domaines à l'intérieur
+              const domainGroups = new Map<string, { subdomain: string; courses: CatalogCourse[] }[]>();
+              EB_COURSE_CATALOG.forEach(group => {
+                if (!domainGroups.has(group.domain)) {
+                  domainGroups.set(group.domain, []);
+                }
+                domainGroups.get(group.domain)!.push({ subdomain: group.subdomain, courses: group.courses });
+              });
+
+              return Array.from(domainGroups.entries()).map(([domainName, subdomains]) => {
+                // Tous les cours de ce domaine (pour la checkbox et le compteur)
+                const allCourses = subdomains.flatMap(sd => sd.courses);
+                const isDomainExpanded = expandedGroups.has(domainName);
+                const allKeys = allCourses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
+                const allDomainSelected = allKeys.length > 0 && allKeys.every(k => selected.has(k));
+                const someDomainSelected = allKeys.some(k => selected.has(k));
+                const domainSelectedCount = allKeys.filter(k => selected.has(k)).length;
+
+                return (
+                  <div key={domainName} className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+                    {/* En-tête du domaine */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(domainName)}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <div className={`transition-transform duration-200 text-slate-400 ${isDomainExpanded ? 'rotate-90' : ''}`}>
+                        <ChevronRight size={14} />
+                      </div>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Toggle tous les cours du domaine
+                          const keys = allCourses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
+                          const allSel = keys.every(k => selected.has(k));
+                          setSelected(prev => {
+                            const next = new Set(prev);
+                            if (allSel) { keys.forEach(k => next.delete(k)); }
+                            else { keys.forEach(k => next.add(k)); }
+                            return next;
+                          });
+                          if (!allSel && !isDomainExpanded) toggleExpand(domainName);
+                        }}
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                          allDomainSelected ? `bg-blue-600 border-blue-600` :
+                          someDomainSelected ? `bg-blue-200 border-blue-400` :
+                          'border-slate-300 dark:border-slate-600'
+                        }`}
+                      >
+                        {(allDomainSelected || someDomainSelected) && <Check size={10} className="text-white" />}
+                      </div>
+                      <div className="text-left flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate uppercase">
+                          {domainName}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {domainSelectedCount > 0 && (
+                          <span className="text-[9px] font-black text-blue-600 bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 rounded-full">
+                            {domainSelectedCount}
+                          </span>
+                        )}
+                        <span className="text-[9px] font-bold text-slate-400">{allCourses.length}</span>
+                      </div>
+                    </button>
+
+                    {/* Contenu déplié : sous-domaines avec leurs cours */}
+                    {isDomainExpanded && (
+                      <div className="animate-in slide-in-from-top-1 duration-200">
+                        {subdomains.map(sd => {
+                          const sdKeys = sd.courses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
+                          const sdSelectedCount = sdKeys.filter(k => selected.has(k)).length;
+                          return (
+                            <div key={sd.subdomain}>
+                              {/* Sous-header du sous-domaine */}
+                              <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-100/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-white/5">
+                                <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest truncate">
+                                  ↳ {sd.subdomain}
+                                </span>
+                                {sdSelectedCount > 0 && (
+                                  <span className="text-[8px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-1 py-0.5 rounded">
+                                    {sdSelectedCount}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Cours du sous-domaine */}
+                              {sd.courses.map(course => renderCourseRow(course, domainName, accentCls))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()
           : HUMANITIES_COURSE_CATALOG.map(cat =>
               renderGroup(cat.category, null, cat.courses, accentCls)
             )
