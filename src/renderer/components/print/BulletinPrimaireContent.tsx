@@ -325,12 +325,14 @@ export default function BulletinPrimaireContent({
 
             return (
               <React.Fragment key={domainId ?? 'no-domain'}>
-                {/* En-tête du domaine — fond gris foncé */}
-                <tr className="bg-slate-200">
-                  <td colSpan={20} className="border border-black p-1 font-bold uppercase text-left text-[9px]">
-                    {domainName}
-                  </td>
-                </tr>
+                {/* En-tête du domaine — seulement si le domaine existe vraiment */}
+                {domainId !== null && (
+                  <tr className="bg-slate-200">
+                    <td colSpan={20} className="border border-black p-1 font-bold uppercase text-center text-[9px]">
+                      {domainName}
+                    </td>
+                  </tr>
+                )}
                 
                 {/* Si le domaine a des sous-domaines, les afficher avec un sous-header */}
                 {bySubDomain.size > 0 ? (
@@ -339,8 +341,8 @@ export default function BulletinPrimaireContent({
                       <React.Fragment key={subDomainName}>
                         {/* Sous-header du sous-domaine — fond gris clair, texte italique */}
                         <tr className="bg-slate-100">
-                          <td colSpan={20} className="border border-black px-3 py-0.5 text-left text-[8px] italic font-semibold text-slate-600">
-                            ↳ {subDomainName}
+                          <td colSpan={20} className="border border-black p-1 font-bold uppercase text-center text-[9px]">
+                              {subDomainName}
                           </td>
                         </tr>
                         {/* Matières de ce sous-domaine */}
