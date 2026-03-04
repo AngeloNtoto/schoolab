@@ -476,18 +476,20 @@ export default function SubjectCatalog({
                           const sdKeys = sd.courses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
                           const sdSelectedCount = sdKeys.filter(k => selected.has(k)).length;
                           return (
-                            <div key={sd.subdomain}>
-                              {/* Sous-header du sous-domaine */}
-                              <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-100/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-white/5">
-                                <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest truncate">
-                                  ↳ {sd.subdomain}
-                                </span>
-                                {sdSelectedCount > 0 && (
-                                  <span className="text-[8px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-1 py-0.5 rounded">
-                                    {sdSelectedCount}
+                            <div key={sd.subdomain || 'no-sd'}>
+                              {/* Sous-header seulement si le sous-domaine existe */}
+                              {sd.subdomain && (
+                                <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-100/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-white/5">
+                                  <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest truncate">
+                                    ↳ {sd.subdomain}
                                   </span>
-                                )}
-                              </div>
+                                  {sdSelectedCount > 0 && (
+                                    <span className="text-[8px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-1 py-0.5 rounded">
+                                      {sdSelectedCount}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               {/* Cours du sous-domaine */}
                               {sd.courses.map(course => renderCourseRow(course, domainName, accentCls))}
                             </div>

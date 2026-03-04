@@ -47,10 +47,10 @@ export interface CatalogCourse {
   max_exam: number;     // max par examen (EXAM1, EXAM2 = même valeur)
 }
 
-/** Groupe de cours avec un sous-domaine (pour l'éducation de base) */
+/** Groupe de cours avec un sous-domaine optionnel (pour l'éducation de base) */
 export interface CatalogGroup {
-  domain: string;       // nom du domaine (correspondra au domaine dans la BDD)
-  subdomain: string;    // sous-domaine affiché
+  domain: string;        // nom du domaine (correspondra au domaine dans la BDD)
+  subdomain?: string;    // sous-domaine affiché (optionnel, certains domaines n'en ont pas)
   courses: CatalogCourse[];
 }
 
@@ -95,7 +95,7 @@ export const EB_COURSE_CATALOG: CatalogGroup[] = [
   },
   {
     domain: 'Domaine des langues',
-    subdomain: 'Langues',
+    // Pas de sous-domaine pour les langues
     courses: [
       { name: 'Français', code: 'FR', max_period: 50, max_exam: 100 },
       { name: 'Anglais', code: 'ANG', max_period: 30, max_exam: 60 },
@@ -103,7 +103,7 @@ export const EB_COURSE_CATALOG: CatalogGroup[] = [
   },
   {
     domain: "Domaine de l'univers social et environnement",
-    subdomain: 'Univers social',
+    // Pas de sous-domaine
     courses: [
       { name: 'Religion', code: 'REL', max_period: 20, max_exam: 40 },
       { name: 'Éducation à la vie', code: 'EDV', max_period: 20, max_exam: 40 },
@@ -113,8 +113,8 @@ export const EB_COURSE_CATALOG: CatalogGroup[] = [
     ],
   },
   {
-    domain: 'Domaine des arts',
-    subdomain: 'Arts',
+    domain: 'Domaines des arts',
+    // Pas de sous-domaine
     courses: [
       { name: 'Dessin', code: 'DES', max_period: 20, max_exam: 40 },
       { name: 'Musique', code: 'MUS', max_period: 20, max_exam: 40 },
@@ -122,7 +122,7 @@ export const EB_COURSE_CATALOG: CatalogGroup[] = [
   },
   {
     domain: 'Domaine du développement personnel',
-    subdomain: 'Développement personnel',
+    // Pas de sous-domaine
     courses: [
       { name: 'Éducation physique', code: 'EPS', max_period: 20, max_exam: 40 },
     ],
