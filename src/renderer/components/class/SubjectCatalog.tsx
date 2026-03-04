@@ -46,8 +46,8 @@ export default function SubjectCatalog({
   // On détermine le type de catalogue à afficher
   const isPrimary = classLevel === '7ème' || classLevel === '8ème';
 
-  // État : cours cochés par l'utilisateur
-  const [selected, setSelected] = useState<Set<CourseKey>>(new Set());
+  // État : cours sélectionnés DANS L'ORDRE de sélection (le premier sélectionné = display_order 0)
+  const [selected, setSelected] = useState<CourseKey[]>([]);
   // État : groupes ouverts/fermés (accordéon), tous fermés par défaut
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   // État : pondérations modifiées par l'utilisateur (clé → max_period)
@@ -72,30 +72,35 @@ export default function SubjectCatalog({
     });
   };
 
-  // Toggle la sélection d'un cours
+  // Toggle la sélection d'un cours (ajoute à la fin ou retire)
   const toggleCourse = (key: CourseKey) => {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
+      const idx = prev.indexOf(key);
+      if (idx >= 0) {
+        // Désélectionner : retirer de la liste
+        return prev.filter((_, i) => i !== idx);
+      } else {
+        // Sélectionner : ajouter à la fin (il sera le dernier dans l'ordre)
+        return [...prev, key];
+      }
     });
   };
 
   // Sélectionner/désélectionner tout un groupe
   const toggleGroup = (groupLabel: string, courses: CatalogCourse[], e: React.MouseEvent) => {
-    e.stopPropagation(); // Empêche le toggle de l'accordéon
+    e.stopPropagation();
     const keys = courses.filter(c => !alreadyExists(c.name)).map(c => courseKey(groupLabel, c));
-    const allSelected = keys.every(k => selected.has(k));
+    const allSelected = keys.every(k => selected.includes(k));
 
     setSelected(prev => {
-      const next = new Set(prev);
       if (allSelected) {
-        keys.forEach(k => next.delete(k));
+        // Retirer tous les cours du groupe
+        return prev.filter(k => !keys.includes(k));
       } else {
-        keys.forEach(k => next.add(k));
+        // Ajouter les cours pas encore sélectionnés (en gardant l'existant)
+        const toAdd = keys.filter(k => !prev.includes(k));
+        return [...prev, ...toAdd];
       }
-      return next;
     });
 
     // Ouvrir le groupe automatiquement quand on sélectionne
@@ -138,25 +143,35 @@ export default function SubjectCatalog({
     return null;
   };
 
-  // Ajouter tous les cours sélectionnés
+  // Ajouter tous les cours sélectionnés DANS L'ORDRE de sélection
   const handleAddSelected = async () => {
-    if (selected.size === 0) return;
+    if (selected.length === 0) return;
     setIsAdding(true);
 
     try {
       let addedCount = 0;
+      // Récupérer le max display_order actuel pour continuer la numérotation
+      const maxOrderResult = await dbService.query<{ max_order: number | null }>(
+        'SELECT MAX(display_order) as max_order FROM subjects WHERE class_id = ?', [classId]
+      );
+      let currentOrder = (maxOrderResult[0]?.max_order ?? -1) + 1;
 
+      // Parcourir dans l'ORDRE de sélection (le premier sélectionné a le plus petit display_order)
       for (const key of selected) {
         const found = findCourse(key);
         if (!found) continue;
         const { course, domain, subdomain } = found;
         if (alreadyExists(course.name)) continue;
 
-        // Pondération effective (override ou catalogue)
-        const maxPeriod = getEffectivePeriod(key, course.max_period);
-        const maxExam = maxPeriod * 2; // Examen = 2× période
+        // Vérification supplémentaire : pas de doublon nom+class_id en BDD
+        const existing = await dbService.query<{ id: number }>(
+          'SELECT id FROM subjects WHERE name = ? AND class_id = ?', [course.name, classId]
+        );
+        if (existing.length > 0) continue;
 
-        // Résoudre le domain_id pour l'EB
+        const maxPeriod = getEffectivePeriod(key, course.max_period);
+        const maxExam = maxPeriod * 2;
+
         let domainId: number | null = null;
         if (isPrimary && domain) {
           try {
@@ -174,14 +189,15 @@ export default function SubjectCatalog({
         }
 
         await dbService.execute(
-          `INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, is_dirty)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-          [course.name, course.code, subdomain || '', maxPeriod, maxPeriod, maxExam, maxPeriod, maxPeriod, maxExam, classId, domainId]
+          `INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, display_order, is_dirty)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+          [course.name, course.code, subdomain || '', maxPeriod, maxPeriod, maxExam, maxPeriod, maxPeriod, maxExam, classId, domainId, currentOrder]
         );
+        currentOrder++;
         addedCount++;
       }
 
-      setSelected(new Set());
+      setSelected([]);
       setOverrides(new Map());
       toast.success(`${addedCount} cours ajouté${addedCount > 1 ? 's' : ''} avec succès`);
       onSuccess();
@@ -193,20 +209,21 @@ export default function SubjectCatalog({
     }
   };
 
-  // Tout sélectionner
+  // Tout sélectionner (ajoute dans l'ordre du catalogue)
   const handleSelectAll = () => {
-    const allKeys = new Set<CourseKey>();
+    const allKeys: CourseKey[] = [];
     if (isPrimary) {
       EB_COURSE_CATALOG.forEach(group => {
         group.courses.forEach(c => {
-          // Utilise group.domain comme clé (cohérent avec le catalogue restructuré)
-          if (!alreadyExists(c.name)) allKeys.add(courseKey(group.domain, c));
+          const key = courseKey(group.domain, c);
+          if (!alreadyExists(c.name) && !allKeys.includes(key)) allKeys.push(key);
         });
       });
     } else {
       HUMANITIES_COURSE_CATALOG.forEach(cat => {
         cat.courses.forEach(c => {
-          if (!alreadyExists(c.name)) allKeys.add(courseKey(cat.category, c));
+          const key = courseKey(cat.category, c);
+          if (!alreadyExists(c.name) && !allKeys.includes(key)) allKeys.push(key);
         });
       });
     }
@@ -218,7 +235,7 @@ export default function SubjectCatalog({
     setExpandedGroups(new Set(allGroupLabels));
   };
 
-  const handleDeselectAll = () => setSelected(new Set());
+  const handleDeselectAll = () => setSelected([]);
 
   // ================================================================
   // Rendu d'un cours individuel (ligne dans le catalogue)
@@ -226,7 +243,7 @@ export default function SubjectCatalog({
   const renderCourseRow = (course: CatalogCourse, groupLabel: string, accentCls: string) => {
     const key = courseKey(groupLabel, course);
     const exists = alreadyExists(course.name);
-    const isSelected = selected.has(key);
+    const isSelected = selected.includes(key);
     const effectivePeriod = getEffectivePeriod(key, course.max_period);
     const effectiveExam = effectivePeriod * 2;
 
@@ -296,9 +313,9 @@ export default function SubjectCatalog({
     const isExpanded = expandedGroups.has(groupLabel);
     const availableCourses = courses.filter(c => !alreadyExists(c.name));
     const groupKeys = availableCourses.map(c => courseKey(groupLabel, c));
-    const allGroupSelected = groupKeys.length > 0 && groupKeys.every(k => selected.has(k));
-    const someGroupSelected = groupKeys.some(k => selected.has(k));
-    const selectedCount = groupKeys.filter(k => selected.has(k)).length;
+    const allGroupSelected = groupKeys.length > 0 && groupKeys.every(k => selected.includes(k));
+    const someGroupSelected = groupKeys.some(k => selected.includes(k));
+    const selectedCount = groupKeys.filter(k => selected.includes(k)).length;
 
     return (
       <div key={groupLabel} className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
@@ -381,9 +398,9 @@ export default function SubjectCatalog({
           </button>
         </div>
         <div className="flex items-center gap-2">
-          {selected.size > 0 && (
+          {selected.length > 0 && (
             <span className={`text-[10px] font-black text-${accentCls}-600 bg-${accentCls}-50 dark:bg-${accentCls}-900/30 px-2 py-0.5 rounded-lg`}>
-              {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+              {selected.length} sélectionné{selected.length > 1 ? 's' : ''}
             </span>
           )}
           {/* Petit icône info avec tooltip */}
@@ -417,9 +434,9 @@ export default function SubjectCatalog({
                 const allCourses = subdomains.flatMap(sd => sd.courses);
                 const isDomainExpanded = expandedGroups.has(domainName);
                 const allKeys = allCourses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
-                const allDomainSelected = allKeys.length > 0 && allKeys.every(k => selected.has(k));
-                const someDomainSelected = allKeys.some(k => selected.has(k));
-                const domainSelectedCount = allKeys.filter(k => selected.has(k)).length;
+                const allDomainSelected = allKeys.length > 0 && allKeys.every(k => selected.includes(k));
+                const someDomainSelected = allKeys.some(k => selected.includes(k));
+                const domainSelectedCount = allKeys.filter(k => selected.includes(k)).length;
 
                 return (
                   <div key={domainName} className="border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
@@ -437,12 +454,14 @@ export default function SubjectCatalog({
                           e.stopPropagation();
                           // Toggle tous les cours du domaine
                           const keys = allCourses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
-                          const allSel = keys.every(k => selected.has(k));
+                          const allSel = keys.every(k => selected.includes(k));
                           setSelected(prev => {
-                            const next = new Set(prev);
-                            if (allSel) { keys.forEach(k => next.delete(k)); }
-                            else { keys.forEach(k => next.add(k)); }
-                            return next;
+                            if (allSel) {
+                              return prev.filter(k => !keys.includes(k));
+                            } else {
+                              const toAdd = keys.filter(k => !prev.includes(k));
+                              return [...prev, ...toAdd];
+                            }
                           });
                           if (!allSel && !isDomainExpanded) toggleExpand(domainName);
                         }}
@@ -474,7 +493,7 @@ export default function SubjectCatalog({
                       <div className="animate-in slide-in-from-top-1 duration-200">
                         {subdomains.map(sd => {
                           const sdKeys = sd.courses.filter(c => !alreadyExists(c.name)).map(c => courseKey(domainName, c));
-                          const sdSelectedCount = sdKeys.filter(k => selected.has(k)).length;
+                          const sdSelectedCount = sdKeys.filter(k => selected.includes(k)).length;
                           return (
                             <div key={sd.subdomain || 'no-sd'}>
                               {/* Sous-header seulement si le sous-domaine existe */}
@@ -508,7 +527,7 @@ export default function SubjectCatalog({
       </div>
 
       {/* Bouton flottant d'ajout en masse */}
-      {selected.size > 0 && (
+      {selected.length > 0 && (
         <div className="shrink-0 pt-2 border-t border-slate-100 dark:border-white/5">
           <button
             type="button"
@@ -528,7 +547,7 @@ export default function SubjectCatalog({
             ) : (
               <>
                 <Plus size={18} />
-                Ajouter {selected.size} cours
+                Ajouter {selected.length} cours
               </>
             )}
           </button>

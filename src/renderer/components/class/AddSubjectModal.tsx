@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check } from '../iconsSvg';
 import { classService } from '../../services/classService';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
@@ -217,6 +217,38 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       toast.error('Erreur lors de la réorganisation');
     }
     setMovingId(null);
+  };
+
+  // ── Mode suppression multiple ──
+  const [multiDeleteMode, setMultiDeleteMode] = React.useState(false);
+  const [deletingIds, setDeletingIds] = React.useState<Set<number>>(new Set());
+
+  // Toggle sélection d'un cours pour suppression
+  const toggleDeleteId = (id: number) => {
+    setDeletingIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Supprimer tous les cours sélectionnés
+  const handleMultiDelete = async () => {
+    if (deletingIds.size === 0) return;
+    try {
+      for (const id of deletingIds) {
+        await dbService.execute('DELETE FROM subjects WHERE id = ?', [id]);
+        await dbService.execute('DELETE FROM grades WHERE subject_id = ?', [id]);
+      }
+      toast.success(`${deletingIds.size} matière${deletingIds.size > 1 ? 's' : ''} supprimée${deletingIds.size > 1 ? 's' : ''}`);
+      setDeletingIds(new Set());
+      setMultiDeleteMode(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur suppression multiple:', error);
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
   return (
@@ -480,7 +512,34 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                     <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Matières existantes</h3>
                 </div>
-                <span className="bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400">{subjects.length}</span>
+                <div className="flex items-center gap-2">
+                  {/* Bouton pour activer/désactiver le mode suppression multiple */}
+                  <button
+                    onClick={() => {
+                      setMultiDeleteMode(!multiDeleteMode);
+                      setDeletingIds(new Set());
+                      setMovingId(null);
+                    }}
+                    className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all ${
+                      multiDeleteMode
+                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-slate-100 text-slate-500 hover:text-red-500 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    {multiDeleteMode ? 'Annuler' : 'Sélectionner'}
+                  </button>
+                  {/* Bouton supprimer la sélection */}
+                  {multiDeleteMode && deletingIds.size > 0 && (
+                    <button
+                      onClick={handleMultiDelete}
+                      className="text-[9px] font-black px-2 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all flex items-center gap-1"
+                    >
+                      <Trash2 size={10} />
+                      Supprimer ({deletingIds.size})
+                    </button>
+                  )}
+                  <span className="bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400">{subjects.length}</span>
+                </div>
               </div>
 
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -497,33 +556,51 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                       <div
                         key={subject.id}
                         onClick={() => {
-                          // Si une matière est en mode déplacement, gérer le placement
+                          // Mode suppression multiple : toggle la sélection
+                          if (multiDeleteMode) {
+                            toggleDeleteId(subject.id);
+                            return;
+                          }
+                          // Mode réorganisation : placer la matière
                           if (movingId !== null) {
                             handleReorderClick(subject.id);
                             return;
                           }
-                          // Sinon, ouvrir l'édition normalement
+                          // Mode normal : ouvrir l'édition
                           onSelectSubject?.(subject);
                         }}
                         className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
-                            movingId === subject.id
-                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 scale-[1.02] shadow-lg shadow-blue-200/30'
-                                : movingId !== null
-                                    ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 border-dashed hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400'
-                                    : isActive 
-                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
-                                        : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+                            multiDeleteMode && deletingIds.has(subject.id)
+                                ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
+                                : movingId === subject.id
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 scale-[1.02] shadow-lg shadow-blue-200/30'
+                                    : movingId !== null
+                                        ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 border-dashed hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400'
+                                        : isActive 
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                                            : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
                         }`}
                       >
-                        {isActive && (
+                        {isActive && !multiDeleteMode && (
                             <div className="absolute top-0 right-0 p-4 opacity-20 rotate-12">
                                 <BookOpen size={64} />
                             </div>
                         )}
                         
-                        <div className="relative z-10 flex items-center justify-between">
-                            <div className="space-y-1">
-                                <p className={`font-black tracking-tight ${isActive ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>{subject.name}</p>
+                        <div className="relative z-10 flex items-center gap-3">
+                            {/* Checkbox visible en mode multiDelete */}
+                            {multiDeleteMode && (
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                                deletingIds.has(subject.id)
+                                  ? 'bg-red-500 border-red-500 text-white'
+                                  : 'border-slate-300 dark:border-slate-600'
+                              }`}>
+                                {deletingIds.has(subject.id) && <Check size={12} />}
+                              </div>
+                            )}
+                            
+                            <div className="space-y-1 flex-1">
+                                <p className={`font-black tracking-tight ${isActive && !multiDeleteMode ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>{subject.name}</p>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
                                         {subject.code || (isPrimaryClass ? 'PRIMAIRE' : 'NULL')}
