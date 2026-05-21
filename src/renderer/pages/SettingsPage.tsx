@@ -2,13 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { settingsService } from '../services/settingsService';
 import { useLicense } from '../context/LicenseContext';
-import { Clock, Moon, Sun, School, Info, Building2, Key, ShieldCheck, User, Heart, Sparkles, Settings, ShieldAlert, RefreshCw, Download } from '../components/iconsSvg';
+import { 
+  Clock, 
+  Moon, 
+  Sun, 
+  School, 
+  Info, 
+  Building2, 
+  Key, 
+  ShieldCheck, 
+  User, 
+  Heart, 
+  Sparkles, 
+  Settings, 
+  ShieldAlert, 
+  RefreshCw, 
+  Download, 
+  Copy, 
+  Check, 
+  Mail, 
+  Phone 
+} from '../components/iconsSvg';
 import { useToast } from '../context/ToastContext';
 import { seedingService } from '../services/seedingService';
 import { licenseService } from '../services/licenseService';
 import { syncService } from '../services/syncService';
 import { dbService } from '../services/databaseService'; // Import du service de base de données locale
-import pkg from "../../../package.json"
+import pkg from "../../../package.json";
 import UpgradeModal from '../components/common/UpgradeModal';
 
 export default function SettingsPage() {
@@ -29,7 +49,9 @@ export default function SettingsPage() {
   const [cloudSchoolId, setCloudSchoolId] = useState<string | null>(null);
   const toast = useToast();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [copied, setCopied] = useState(false); // État pour indiquer si l'ID Machine a été copié avec succès
 
+  // Chargement initial des paramètres stockés localement
   useEffect(() => {
     loadSettings();
   }, []);
@@ -42,13 +64,13 @@ export default function SettingsPage() {
     if (city) setSchoolCity(city);
     if (pobox) setSchoolPoBox(pobox);
 
-    // Load cloud info
+    // Charge la date de dernière synchro et l'ID d'établissement lié au Cloud
     const lastSyncTime = await settingsService.get('last_sync_time');
     const sId = await settingsService.get('school_id');
     setLastSync(lastSyncTime);
     setCloudSchoolId(sId);
 
-    // Load HWID
+    // Récupération de l'identifiant matériel unique (HWID)
     try {
       const id = await licenseService.getHWID();
       setHwid(id);
@@ -57,6 +79,16 @@ export default function SettingsPage() {
     }
   };
 
+  // Copie de l'ID machine unique pour simplifier l'activation
+  const handleCopyHWID = () => {
+    if (!hwid) return;
+    navigator.clipboard.writeText(hwid);
+    setCopied(true);
+    toast.success('ID Machine copié avec succès !');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Gestionnaire d'activation de licence
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseKey) return;
@@ -105,375 +137,293 @@ export default function SettingsPage() {
     }
   };
 
+  // Liste des onglets de configuration
   const tabs = [
-    { id: 'general' as const, label: 'École', icon: Building2, description: 'Informations de l\'établissement' },
-    { id: 'appearance' as const, label: 'Apparence', icon: Sparkles, description: 'Thème et affichage' },
-    { id: 'licence' as const, label: 'Licence', icon: Heart, description: 'Activation et statut' },
-    { id: 'cloud' as const, label: 'Cloud', icon: RefreshCw, description: 'Synchronisation Cloud' },
-    { id: 'about' as const, label: 'À propos', icon: Info, description: 'Informations sur l\'application' },
+    { id: 'general' as const, label: 'Établissement', icon: Building2, description: 'Fiche d\'identité' },
+    { id: 'appearance' as const, label: 'Thème', icon: Sun, description: 'Affichage et couleurs' },
+    { id: 'licence' as const, label: 'Licence & Droits', icon: ShieldCheck, description: 'Statut et clé produit' },
+    { id: 'cloud' as const, label: 'Cloud & Synchro', icon: RefreshCw, description: 'Sauvegardes centralisées' },
+    { id: 'about' as const, label: 'À propos', icon: Info, description: 'Version et assistance' },
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 transition-colors duration-500">
-      {/* Header */}
-      <div className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 px-6 py-6 shadow-lg transition-all duration-500 sticky top-0 z-30 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-white/20 dark:bg-blue-600/30 rounded-2xl shadow-xl backdrop-blur-md rotate-3 hover:rotate-0 transition-transform duration-500">
-              <Settings size={20} className="text-white dark:text-blue-400" />
+    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+      
+      {/* Barre d'en-tête professionnelle et sobre */}
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-5 sticky top-0 z-30 shadow-sm backdrop-blur-md">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">
+              <Settings size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white dark:text-slate-100 tracking-tight">Paramètres</h1>
-              <p className="text-blue-100 dark:text-slate-500 font-bold uppercase tracking-widest text-[8px]">Gestion globale de Schoolab</p>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Paramètres Système</h1>
+              <p className="text-slate-400 dark:text-slate-500 text-xs">Configuration globale et administration de l'application</p>
             </div>
           </div>
+          {licenseStatus?.active && (
+            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-semibold tracking-wide">
+              {licenseStatus.plan === 'PLUS' ? 'Plan Schoolab Plus' : 'Plan Schoolab Pro'}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Navigation - Plus Grand */}
-          <div className="lg:w-72 flex-shrink-0">
-            <div className="bg-white dark:bg-slate-900/50 dark:backdrop-blur-xl rounded-[1.5rem] border border-slate-200 dark:border-white/5 p-3 shadow-2xl shadow-slate-200/40 dark:shadow-black/40 sticky top-24 transition-all duration-500">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all mb-2 last:mb-0 group ${activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30 dark:shadow-blue-600/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-blue-400'
+          
+          {/* Navigation latérale structurée et claire */}
+          <div className="lg:w-64 flex-shrink-0">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm space-y-1">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
-                >
-                  <div className={`p-2.5 rounded-xl transition-colors duration-300 ${activeTab === tab.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20'}`}>
-                    <tab.icon size={22} className={activeTab === tab.id ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-blue-600'} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className={`font-bold text-sm tracking-tight truncate ${activeTab === tab.id ? 'text-white' : 'text-slate-900 dark:text-slate-200'}`}>
-                      {tab.label}
+                  >
+                    <tab.icon size={18} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm truncate">{tab.label}</div>
                     </div>
-                    <div className={`text-[10px] text-slate-400 truncate ${activeTab === tab.id ? 'text-blue-100/80' : ''}`}>
-                      {tab.description}
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Content Area - Plus Compact */}
+          {/* Zone de contenu principale, sobre et bien aérée */}
           <div className="flex-1">
-            <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden transition-all duration-500">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
 
-              {/* Général - Informations École */}
+              {/* SECTION GÉNÉRALE : Fiche d'identité de l'établissement */}
               {activeTab === 'general' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
-                  <div className="px-6 py-5 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-800 via-blue-900 to-slate-950">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-white/10 dark:bg-indigo-600/30 rounded-xl text-white shadow-lg">
-                        <Building2 size={20} />
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="p-6">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Identité Numérique de l'Établissement</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Ces informations officielles sont directement extraites de votre clé d'enregistrement.</p>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* Fiche d'identité formelle et épurée */}
+                    <div className="bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg">
+                          <School size={24} />
+                        </div>
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nom de l'Établissement</span>
+                            <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+                              {schoolName || <span className="opacity-30 italic">Aucune école identifiée</span>}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Ville</span>
+                              <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                                {schoolCity || '--'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Boîte Postale</span>
+                              <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                                {schoolPoBox || '--'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Plan Actuel</span>
+                              <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                                {licenseStatus?.plan || 'Gratuit'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-white">Identité Numérique</h2>
-                        <p className="text-[10px] text-blue-100/70 font-semibold uppercase tracking-widest">Profil de l'établissement</p>
+                    </div>
+
+                    {/* Encadré d'information utile */}
+                    <div className="p-4 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-lg flex items-start gap-3">
+                      <Info size={16} className="text-blue-500 mt-0.5" />
+                      <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Note de sécurité :</span> L'identité de votre établissement est cryptée et liée de manière unique à votre clé de licence. Elle apparaît de manière officielle sur tous les palmarès, bulletins et fiches d'élèves générés pour empêcher l'usage non autorisé de votre copie de Schoolab.
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
 
+              {/* SECTION APPARENCE : Thème et personnalisation visuelle */}
+              {activeTab === 'appearance' && (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="p-6">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Thème et Affichage</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Ajustez l'ambiance visuelle du logiciel pour un confort de travail optimal.</p>
+                  </div>
+                  
                   <div className="p-6 space-y-6">
-                    {/* Identity Card */}
-                    <div className="relative group">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-                      <div className="relative bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-6 shadow-xl overflow-hidden">
-                        {/* Decorative background */}
-                        <div className="absolute top-0 right-0 p-6 text-slate-50 dark:text-white/5 pointer-events-none -rotate-12 translate-x-8 -translate-y-8">
-                          <School size={140} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      
+                      {/* Choix Mode Jour */}
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`text-left p-4 rounded-xl border transition-all flex flex-col justify-between aspect-[3/2] ${
+                          theme === 'light'
+                            ? 'border-blue-600 bg-blue-50/20 dark:bg-blue-900/10 ring-2 ring-blue-500/10'
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">Clair / Jour</span>
+                          <div className={`p-1.5 rounded-full ${theme === 'light' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                            <Sun size={14} />
+                          </div>
                         </div>
-
-                        <div className="relative z-10 space-y-6">
-                          {/* Nom de l'école */}
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Nom Officiel</label>
-                            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                              {schoolName || <span className="opacity-30 italic">École non identifiée</span>}
+                        
+                        {/* Mini aperçu symbolisant le mode clair */}
+                        <div className="w-full h-16 bg-slate-50 rounded-lg border border-slate-200/60 p-2 flex flex-col gap-1.5 opacity-80">
+                          <div className="h-2 w-1/3 bg-slate-300 rounded-full"></div>
+                          <div className="flex-1 bg-white border border-slate-200/40 rounded p-1.5 flex gap-2">
+                            <div className="w-4 h-full bg-blue-100 rounded-sm"></div>
+                            <div className="flex-1 space-y-1">
+                              <div className="h-1 bg-slate-200 rounded-full w-full"></div>
+                              <div className="h-1 bg-slate-100 rounded-full w-2/3"></div>
                             </div>
                           </div>
+                        </div>
+                      </button>
 
-                          {/* Grille d'informations - 4 colonnes */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5 border-t border-slate-100 dark:border-white/5">
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
-                                <Building2 size={12} className="text-blue-500" /> Ville
-                              </div>
-                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
-                                {schoolCity || "--"}
-                              </div>
-                            </div>
-
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
-                                <Key size={12} className="text-indigo-500" /> Boîte Postale
-                              </div>
-                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
-                                {schoolPoBox || "--"}
-                              </div>
-                            </div>
-
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
-                                <Sparkles size={12} className="text-emerald-500" /> Plan
-                              </div>
-                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
-                                {licenseStatus?.plan || "Gratuit"}
-                              </div>
-                            </div>
-
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-2">
-                                <ShieldCheck size={12} className="text-amber-500" /> Licence
-                              </div>
-                              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
-                                {licenseStatus?.active ? `${licenseStatus.daysRemaining}j` : "Inactive"}
-                              </div>
+                      {/* Choix Mode Sombre */}
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`text-left p-4 rounded-xl border transition-all flex flex-col justify-between aspect-[3/2] ${
+                          theme === 'dark'
+                            ? 'border-blue-500 bg-blue-950/10 ring-2 ring-blue-500/10'
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">Sombre / Nuit</span>
+                          <div className={`p-1.5 rounded-full ${theme === 'dark' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                            <Moon size={14} />
+                          </div>
+                        </div>
+                        
+                        {/* Mini aperçu symbolisant le mode sombre */}
+                        <div className="w-full h-16 bg-slate-950 rounded-lg border border-slate-800 p-2 flex flex-col gap-1.5 opacity-80">
+                          <div className="h-2 w-1/3 bg-slate-800 rounded-full"></div>
+                          <div className="flex-1 bg-slate-900 border border-slate-800 rounded p-1.5 flex gap-2">
+                            <div className="w-4 h-full bg-indigo-950/40 rounded-sm border border-slate-800"></div>
+                            <div className="flex-1 space-y-1">
+                              <div className="h-1 bg-slate-800 rounded-full w-full"></div>
+                              <div className="h-1 bg-slate-900 rounded-full w-2/3"></div>
                             </div>
                           </div>
+                        </div>
+                      </button>
 
-                          {/* ID Cloud */}
-                          {cloudSchoolId && (
-                            <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                              <RefreshCw size={16} className="text-blue-500" />
-                              <div className="text-xs">
-                                <span className="text-slate-500">ID Cloud: </span>
-                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{cloudSchoolId}</span>
-                              </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION LICENCE : Enregistrement du produit et restrictions */}
+              {activeTab === 'licence' && (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="p-6">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Licence d'Utilisation</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Consultez les droits actifs sur ce poste de travail et saisissez vos clés d'activation.</p>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* Fiche d'état de la licence */}
+                    <div className="bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl ${licenseStatus?.active ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                          <ShieldCheck size={28} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                            {licenseStatus?.active 
+                              ? (licenseStatus.plan === 'PLUS' ? 'Schoolab Plus (Multi-Postes)' : 'Schoolab Pro (Monoposte)') 
+                              : 'Version Gratuite / Démo'}
+                          </h3>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                            {licenseStatus?.active 
+                              ? `Abonnement actif jusqu'au ${new Date(licenseStatus.expiresAt).toLocaleDateString('fr-FR')}`
+                              : 'Aucune licence détectée. Activez une clé pour débloquer les limites.'}
+                          </p>
+                          {licenseStatus?.active && (
+                            <div className="flex gap-4 mt-2 text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              <span>Clé : {licenseStatus.key?.substring(0, 8)}...</span>
+                              <span>•</span>
+                              <span>Restant : {licenseStatus.daysRemaining} jour(s)</span>
                             </div>
                           )}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Note d'information */}
-                    <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl flex items-start gap-4">
-                      <div className="p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow text-blue-600 dark:text-blue-400">
-                        <Info size={18} />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">Synchronisation Automatique</h4>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                          L'identité de votre école est liée à votre clé de licence et apparaît sur les bulletins.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Apparence */}
-              {activeTab === 'appearance' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-800 via-blue-900 to-slate-950 transition-all duration-700">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <Sparkles size={24} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Expérience Visuelle</h2>
-                        <p className="text-[9px] text-blue-100/70 dark:text-blue-400/60 font-black uppercase tracking-[0.2em]">Personnalisation de l'interface</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-8 space-y-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                      {/* Premium Theme Selector: Light */}
-                      <div className="space-y-6">
+                      {licenseStatus?.active && (
                         <button
-                          onClick={() => setTheme('light')}
-                          className={`group relative w-full aspect-[4/3] rounded-[3rem] p-1 transition-all duration-500 hover:scale-[1.02] ${theme === 'light' ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl shadow-blue-500/30 ring-8 ring-blue-500/10' : 'bg-slate-200 dark:bg-white/5 grayscale hovr:grayscale-0'
-                            }`}
+                          onClick={async () => {
+                            setLoading(true);
+                            await refreshRemoteLicense();
+                            setLoading(false);
+                            toast.success('Licence actualisée depuis le serveur.');
+                          }}
+                          disabled={loading}
+                          className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
                         >
-                          <div className="w-full h-full bg-slate-50 rounded-[2.8rem] overflow-hidden relative shadow-inner">
-                            <div className="absolute inset-0 bg-white p-6 flex flex-col gap-4">
-                              <div className="h-4 w-1/3 bg-slate-100 rounded-full"></div>
-                              <div className="flex-1 bg-white border border-slate-100 rounded-[1.5rem] p-4 flex gap-3">
-                                <div className="w-12 h-full bg-blue-50 rounded-xl"></div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-3 bg-slate-100 rounded-full w-full"></div>
-                                  <div className="h-3 bg-slate-50 rounded-full w-2/3"></div>
-                                </div>
-                              </div>
-                            </div>
-                            {theme === 'light' && (
-                              <div className="absolute top-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg animate-in zoom-in-50 duration-500">
-                                <Sun size={20} />
-                              </div>
-                            )}
-                          </div>
+                          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                          Actualiser
                         </button>
-                        <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'light' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>Mode Jour</h4>
-                        </div>
-                      </div>
-
-                      {/* Premium Theme Selector: Dark */}
-                      <div className="space-y-6">
-                        <button
-                          onClick={() => setTheme('dark')}
-                          className={`group relative w-full aspect-[4/3] rounded-[3rem] p-1 transition-all duration-500 hover:scale-[1.02] ${theme === 'dark' ? 'bg-gradient-to-br from-indigo-500 to-slate-900 shadow-2xl shadow-indigo-600/30 ring-8 ring-indigo-500/10' : 'bg-slate-200 dark:bg-white/5 grayscale hover:grayscale-0'
-                            }`}
-                        >
-                          <div className="w-full h-full bg-slate-950 rounded-[2.8rem] overflow-hidden relative shadow-inner">
-                            <div className="absolute inset-0 bg-slate-900 p-6 flex flex-col gap-4">
-                              <div className="h-4 w-1/3 bg-slate-800 rounded-full"></div>
-                              <div className="flex-1 bg-slate-950 border border-white/5 rounded-[1.5rem] p-4 flex gap-3">
-                                <div className="w-12 h-full bg-indigo-900/20 rounded-xl border border-white/5"></div>
-                                <div className="flex-1 space-y-2">
-                                  <div className="h-3 bg-slate-800 rounded-full w-full"></div>
-                                  <div className="h-3 bg-slate-900 rounded-full w-2/3"></div>
-                                </div>
-                              </div>
-                            </div>
-                            {theme === 'dark' && (
-                              <div className="absolute top-6 right-6 p-3 bg-indigo-600 text-white rounded-full shadow-lg animate-in zoom-in-50 duration-500">
-                                <Moon size={20} />
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                        <div className="text-center space-y-1">
-                          <h4 className={`text-xl font-black tracking-tight transition-colors ${theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>Mode Sombre</h4>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Licence */}
-              {activeTab === 'licence' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-600 via-blue-700 to-indigo-900 dark:from-indigo-900/40 dark:via-slate-900/40 dark:to-blue-900/40 transition-all duration-500">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <ShieldCheck size={24} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Licence & Sécurité</h2>
-                        <p className="text-[9px] text-indigo-100/70 dark:text-indigo-400/60 font-black uppercase tracking-[0.2em]">Authentification du produit</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-8 space-y-8">
-                    {/* License Card */}
-                    <div className="relative group perspective-1000">
-                      <div className={`absolute -inset-1 rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 ${licenseStatus?.active ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-
-                      <div className="relative bg-white dark:bg-slate-900/80 dark:backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[3rem] p-10 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-2xl">
-                        {/* Mesh Gradient Background */}
-                        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-500/5 to-transparent pointer-events-none"></div>
-
-                        <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
-                          {/* Left: Status Icon */}
-                          <div className="relative">
-                            <div className={`w-32 h-32 rounded-[2.5rem] flex items-center justify-center shadow-2xl transform transition-transform duration-700 group-hover:scale-110 group-hover:rotate-3 ${licenseStatus?.active
-                                ? 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white'
-                                : 'bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-800 text-white'
-                              }`}>
-                              {licenseStatus?.plan === 'PLUS' ? <Sparkles size={48} /> : <ShieldCheck size={48} />}
-                            </div>
-                            {licenseStatus?.active && (
-                              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg border-4 border-slate-50 dark:border-slate-800">
-                                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Center: Info */}
-                          <div className="flex-1 text-center md:text-left space-y-3">
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                              <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
-                                {licenseStatus?.active ? (licenseStatus.plan === 'PLUS' ? 'Schoolab Plus' : 'Schoolab Pro') : 'Version Gratuite'}
-                              </h3>
-                              {licenseStatus?.active && (
-                                <span className="px-4 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                  Actif
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-slate-500 dark:text-slate-400 font-medium text-base max-w-md">
-                              {licenseStatus?.active
-                                ? `Votre licence est valide jusqu'au ${new Date(licenseStatus.expiresAt).toLocaleDateString()}.`
-                                : "Débloquez toutes les fonctionnalités premium pour votre établissement."}
-                            </p>
-
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 pt-2">
-                              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <Clock size={14} className="text-indigo-500" />
-                                <span>{licenseStatus?.daysRemaining} jours restants</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <Key size={14} className="text-indigo-500" />
-                                <span>Key: {licenseStatus?.key?.substring(0, 4)}...</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Right: Refresh Button */}
-                          <button
-                            onClick={async () => {
-                              setLoading(true);
-                              await refreshRemoteLicense();
-                              setLoading(false);
-                              toast.success('Licence synchronisée');
-                            }}
-                            disabled={loading}
-                            className="p-6 bg-slate-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-3xl transition-all border border-slate-100 dark:border-white/5 shadow-inner group/sync"
-                          >
-                            <RefreshCw size={24} className={`text-slate-400 group-hover/sync:text-indigo-500 transition-all ${loading ? "animate-spin" : "group-hover/sync:rotate-180"}`} />
-                          </button>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Activation Form */}
+                    {/* Saisie de Clé de Licence si non actif */}
                     {(!licenseStatus?.active || licenseStatus?.isTrial) && (
-                      <div className="p-10 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-[3rem] border border-indigo-100/50 dark:border-indigo-500/10 space-y-8 animate-in slide-in-from-top-4 duration-1000">
-                        <div className="space-y-2">
-                          <h4 className="text-xl font-black text-slate-900 dark:text-slate-200 tracking-tight">Activer une licence</h4>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Saisissez votre clé produit pour lever les restrictions.</p>
+                      <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Enregistrer une clé produit</h4>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs">Veuillez renseigner le code d'enregistrement reçu lors de votre achat.</p>
                         </div>
-
-                        <form onSubmit={handleActivate} className="space-y-6">
+                        
+                        <form onSubmit={handleActivate} className="space-y-4">
                           <div className="relative">
                             <input
                               type="text"
                               value={licenseKey}
                               onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-                              className="w-full px-10 py-8 bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-[2rem] focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all uppercase font-black text-2xl tracking-[0.3em] text-slate-900 dark:text-white placeholder-slate-200 dark:placeholder-slate-800 shadow-2xl dark:shadow-none"
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all uppercase font-mono font-bold text-lg tracking-wider text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-800"
                               placeholder="XXXX-XXXX-XXXX-XXXX"
                             />
-                            <div className="absolute top-1/2 right-10 -translate-y-1/2 text-slate-200 dark:text-slate-800">
-                              <Key size={32} />
+                            <div className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-300 dark:text-slate-700">
+                              <Key size={20} />
                             </div>
                           </div>
 
                           {showPasswordPrompt && (
-                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                              <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest px-1">Mot de passe de protection</label>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Mot de passe de protection administrateur</label>
                               <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-8 py-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-xl dark:text-white shadow-xl dark:shadow-none"
-                                placeholder="••••••••"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm text-slate-900 dark:text-white"
+                                placeholder="Définir un mot de passe"
                               />
                             </div>
                           )}
 
                           {activationError && (
-                            <div className="p-5 bg-red-500/5 border border-red-500/20 rounded-2xl flex items-center gap-4 text-red-500 text-sm font-black uppercase tracking-widest">
-                              <ShieldAlert size={20} />
+                            <div className="p-3.5 bg-red-500/5 border border-red-500/20 rounded-lg flex items-center gap-2.5 text-red-600 dark:text-red-400 text-xs font-semibold">
+                              <ShieldAlert size={16} />
                               {activationError}
                             </div>
                           )}
@@ -481,136 +431,90 @@ export default function SettingsPage() {
                           <button
                             type="submit"
                             disabled={loading || !licenseKey}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white py-8 rounded-[2rem] font-black text-xl uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(79,70,229,0.3)] transition-all transform active:scale-[0.98] disabled:opacity-50"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
                           >
-                            {loading ? 'Activation...' : 'Activer Schoolab Premium'}
+                            {loading ? 'Validation en cours...' : 'Activer Schoolab Premium'}
                           </button>
                         </form>
                       </div>
                     )}
 
-                    {/* Hardware Info Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                      <div className="p-8 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl space-y-4">
-                        <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          <User size={16} className="text-indigo-500" />
-                          Configuration Poste
+                    {/* Bloc ID Unique de l'Ordinateur (HWID) */}
+                    <div className="bg-slate-50/50 dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          <User size={14} className="text-slate-400" />
+                          <span>Identifiant Matériel du Poste (HWID)</span>
                         </div>
-                        <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 break-all bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-white/5">
-                          ID: {hwid}
-                        </div>
+                        <button
+                          onClick={handleCopyHWID}
+                          className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {copied ? (
+                            <>
+                              <Check size={12} className="text-emerald-500" />
+                              <span className="text-emerald-500">Copié !</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} />
+                              <span>Copier l'identifiant</span>
+                            </>
+                          )}
+                        </button>
                       </div>
-                      <div className="p-8 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-3xl space-y-4">
-                        <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          <Building2 size={16} className="text-indigo-500" />
-                          Licence Scolaire
-                        </div>
-                        <div className="font-black text-slate-700 dark:text-slate-300">
-                          {schoolName || 'Chargement...'}
-                        </div>
+                      
+                      <div className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 font-mono text-[11px] text-slate-600 dark:text-slate-400 break-all select-all">
+                        {hwid || 'Génération de l\'identifiant matériel unique...'}
                       </div>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal">
+                        Fournissez cet identifiant machine unique à votre administrateur pour générer une clé produit spécifiquement valide pour cet ordinateur.
+                      </p>
                     </div>
+
                   </div>
                 </div>
               )}
 
-              {/* Cloud Synchronization */}
+              {/* SECTION CLOUD : Synchronisation cloud et résilience des données */}
               {activeTab === 'cloud' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-                  <div className="px-8 py-8 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-indigo-800 via-blue-900 to-slate-950 transition-all duration-700">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-white/10 dark:bg-indigo-600/30 rounded-2xl text-white shadow-2xl backdrop-blur-md transition-all">
-                        <RefreshCw size={24} />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">
-                          {licenseStatus?.plan === 'PLUS' ? 'Schoolab Cloud' : 'Sauvegarde & Sécurité'}
-                        </h2>
-                        <p className="text-[9px] text-blue-100/70 dark:text-blue-400/60 font-black uppercase tracking-[0.2em]">
-                          {licenseStatus?.plan === 'PLUS' ? 'Synchronisation centralisée' : 'Protection de vos données'}
-                        </p>
-                      </div>
-                    </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="p-6">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Sauvegarde & Synchronisation Cloud</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Conservez vos données à l'abri ou synchronisez vos différents postes en temps réel.</p>
                   </div>
-
-                  <div className="p-8 space-y-8 group/cloud">
-                    {/* Main Status Display */}
-                    <div className="relative">
-                      <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-[3.5rem] blur-xl opacity-50"></div>
-                      <div className="relative bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[3rem] p-10 flex flex-col items-center text-center space-y-8 shadow-2xl">
-
-                        <div className="relative">
-                          <div className={`w-28 h-28 rounded-full flex items-center justify-center transition-all duration-1000 transform ${cloudSchoolId ? 'bg-indigo-500 text-white shadow-[0_0_50px_rgba(99,102,241,0.4)] scale-110' : 'bg-slate-100 text-slate-300'}`}>
-                            {cloudSchoolId ? <ShieldCheck size={48} /> : <RefreshCw size={48} className="animate-spin-slow" />}
-                          </div>
-                          {cloudSchoolId && (
-                            <div className="absolute top-0 right-0 w-8 h-8 bg-emerald-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* Statut actuel de la liaison Cloud */}
+                    <div className="bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl ${cloudSchoolId ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                          <RefreshCw size={24} className={!cloudSchoolId ? 'animate-spin-slow' : ''} />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {cloudSchoolId ? 'Base de Données Liée au Cloud' : 'En Attente de Configuration'}
+                          </h3>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                            {cloudSchoolId 
+                              ? `ID Cloud : ${cloudSchoolId}` 
+                              : 'Veuillez activer une licence compatible PLUS pour configurer la synchronisation.'}
+                          </p>
+                          {lastSync && (
+                            <span className="inline-block text-[10px] text-slate-400 mt-1">
+                              Dernière synchronisation : {new Date(lastSync).toLocaleString('fr-FR')}
+                            </span>
                           )}
                         </div>
-
-                        <div className="space-y-4">
-                          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">
-                            {cloudSchoolId ? (licenseStatus?.plan === 'PLUS' ? 'Cloud Synchronisé' : 'Données Protégées') : 'Configuration Requise'}
-                          </h3>
-                          <p className="text-slate-500 dark:text-slate-400 max-w-lg font-medium text-base leading-relaxed">
-                            {licenseStatus?.plan === 'PLUS'
-                              ? "Votre établissement est parfaitement synchronisé sur tous vos postes de travail."
-                              : "Vos Données Sont Sécurisée."}
-                          </p>
-                        </div>
-
-                        {licenseStatus?.plan === 'PLUS' && (
-                          <div className="flex items-center gap-12 pt-4">
-                            <div className="text-center">
-                              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Dernier Pull</div>
-                              <div className="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                                {lastSync ? new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                              </div>
-                            </div>
-                            <div className="w-px h-10 bg-slate-200 dark:bg-white/5"></div>
-                            <div className="text-center">
-                              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">ID Cloud</div>
-                              <div className="text-lg font-black text-slate-700 dark:text-slate-300">
-                                {cloudSchoolId ? `${cloudSchoolId.substring(0, 8)}...` : '--'}
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    {/* Upsell for Plus */}
-                    {licenseStatus?.plan !== 'PLUS' && (
-                      <div className="p-10 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-12 text-white/10 rotate-12 group-hover:scale-125 transition-transform duration-1000">
-                          <Sparkles size={160} />
-                        </div>
-                        <div className="relative z-10 space-y-6">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">
-                            <Sparkles size={14} />
-                            Recommandation
-                          </div>
-                          <h4 className="text-2xl font-black tracking-tight leading-tight">
-                            Libérez le plein potentiel <br /> avec Schoolab Plus
-                          </h4>
-                          <p className="text-blue-100 text-base font-medium max-w-xl leading-relaxed">
-                            Passez au niveau supérieur : travaillez simultanément sur plusieurs ordinateurs avec une synchronisation bidirectionnelle instantanée.
-                          </p>
-                          <button
-                            onClick={() => setShowUpgradeModal(true)}
-                            className="bg-white text-blue-900 px-8 py-4 rounded-[1.5rem] font-black text-base uppercase tracking-widest shadow-2xl hover:bg-blue-50 transition-all active:scale-95"
-                          >
-                            Synchroniser maintenant
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Interactive Controls (Plus Only) */}
-                    {licenseStatus?.plan === 'PLUS' && (
-                      <div className="space-y-6 pt-4 animate-in slide-in-from-bottom-4 duration-1000">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                          {/* Session Push */}
+                    {/* Contrôles interactifs si Plan PLUS */}
+                    {licenseStatus?.plan === 'PLUS' ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          
+                          {/* Push local -> serveur */}
                           <button
                             onClick={async () => {
                               setLoading(true);
@@ -629,23 +533,23 @@ export default function SettingsPage() {
                               }
                             }}
                             disabled={loading || !cloudSchoolId}
-                            className="flex items-center justify-between p-8 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-[2.5rem] hover:border-indigo-500/50 transition-all group/push shadow-xl"
+                            className="flex items-center justify-between p-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-600 rounded-lg transition-all group text-left"
                           >
-                            <div className="text-left">
-                              <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Mise à jour</div>
-                              <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Envoyer au Cloud</div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Mettre à jour le Cloud</span>
+                              <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">Envoyer au Cloud</div>
                             </div>
-                            <RefreshCw size={32} className={`text-indigo-500 group-hover/push:rotate-180 transition-all duration-700 ${loading ? "animate-spin" : ""}`} />
+                            <RefreshCw size={20} className={`text-blue-500 group-hover:rotate-180 transition-all duration-500 ${loading ? 'animate-spin' : ''}`} />
                           </button>
 
-                          {/* Session Pull */}
+                          {/* Pull serveur -> local */}
                           <button
                             onClick={async () => {
                               setLoading(true);
                               try {
                                 const res = await syncPull();
                                 if (res.success) {
-                                  toast.success(res.summary || 'Import Cloud réussi');
+                                  toast.success(res.summary || 'Données importées avec succès');
                                   loadSettings();
                                 } else {
                                   toast.error('Échec : ' + res.error);
@@ -657,30 +561,31 @@ export default function SettingsPage() {
                               }
                             }}
                             disabled={loading || !cloudSchoolId}
-                            className="flex items-center justify-between p-8 bg-indigo-600 text-white rounded-[2.5rem] hover:bg-indigo-700 shadow-[0_20px_40px_rgba(79,70,229,0.3)] transition-all group/pull"
+                            className="flex items-center justify-between p-5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all text-left shadow-sm"
                           >
-                            <div className="text-left">
-                              <div className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Synchronisation</div>
-                              <div className="text-xl font-black tracking-tight">Recevoir du Cloud</div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">Importer les dernières saisies</span>
+                              <div className="text-sm font-bold mt-0.5">Recevoir du Cloud</div>
                             </div>
-                            <Download size={32} className="group-hover/pull:translate-y-1 transition-transform" />
+                            <Download size={20} className="text-white" />
                           </button>
                         </div>
 
-                        {/* Force Sync / Troubleshoot Section */}
-                        <div className="p-6 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 dark:border-amber-500/30 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
-                          <div className="space-y-1 text-center md:text-left">
-                            <h5 className="font-bold text-amber-800 dark:text-amber-400 text-sm">Forcer une resynchronisation totale</h5>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs">
-                              Recommandé si votre base Cloud a été réinitialisée ou s'il y a des erreurs de relations manquantes.
+                        {/* Section de Dépannage forcé */}
+                        <div className="p-5 border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 rounded-lg space-y-3">
+                          <div>
+                            <h5 className="text-sm font-bold text-amber-800 dark:text-amber-400">Forcer une resynchronisation complète</h5>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                              Utilisez cette option si vous avez réinitialisé votre base de données distante, ou s'il y a des incohérences de relations sur vos postes.
                             </p>
                           </div>
+                          
                           <button
                             onClick={async () => {
                               const confirmed = await toast.confirm({
-                                title: 'Forcer la synchronisation ?',
-                                message: 'Cela va réinitialiser l\'état de synchronisation de vos données locales et tout renvoyer au Cloud pour corriger les erreurs de relations.',
-                                confirmLabel: 'Tout renvoyer',
+                                title: 'Réinitialiser & Renvoyer ?',
+                                message: 'Cette action réinitialisera l\'état local de vos données et les renverra en intégralité au serveur.',
+                                confirmLabel: 'Renvoyer les données',
                                 cancelLabel: 'Annuler',
                                 variant: 'warning'
                               });
@@ -688,22 +593,18 @@ export default function SettingsPage() {
                               if (confirmed) {
                                 setLoading(true);
                                 try {
-                                  // Réinitialisation de l'état de synchronisation local pour toutes les tables de données
                                   const tables = ["academic_years", "classes", "students", "subjects", "grades", "notes", "domains", "repechages"];
                                   for (const table of tables) {
-                                    // On remet is_dirty à 1 et on nettoie le server_id pour forcer un upsert complet et propre
                                     await dbService.execute(`UPDATE ${table} SET is_dirty = 1, server_id = NULL`);
                                   }
-
-                                  toast.success("État local réinitialisé. Envoi en cours...");
-
-                                  // Déclenchement du push pour envoyer l'ensemble des données
+                                  toast.success("État local réinitialisé. Envoi des données...");
+                                  
                                   const res = await syncPush();
                                   if (res.success) {
-                                    toast.success(res.summary || 'Toutes les données ont été renvoyées avec succès !');
+                                    toast.success(res.summary || 'Données renvoyées avec succès !');
                                     loadSettings();
                                   } else {
-                                    toast.error('Échec de la synchronisation : ' + res.error);
+                                    toast.error('Échec de l\'envoi : ' + res.error);
                                   }
                                 } catch (e) {
                                   toast.error('Erreur technique lors du forçage');
@@ -714,125 +615,125 @@ export default function SettingsPage() {
                               }
                             }}
                             disabled={loading || !cloudSchoolId}
-                            className="px-6 py-4 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center gap-2"
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all"
                           >
-                            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                             Réinitialiser & Renvoyer
                           </button>
                         </div>
+                      </div>
+                    ) : (
+                      /* Invitation de mise à niveau */
+                      <div className="p-6 bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-lg space-y-4">
+                        <div className="flex items-start gap-3">
+                          <Sparkles size={18} className="text-amber-500 mt-0.5" />
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Activez Schoolab Plus</h4>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mt-0.5">
+                              Le forfait Plus vous permet de faire travailler simultanément plusieurs enseignants, gestionnaires ou encodeurs sur des ordinateurs séparés avec une fusion et synchronisation bidirectionnelle intelligente de toutes vos saisies.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => setShowUpgradeModal(true)}
+                          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                        >
+                          En savoir plus
+                        </button>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* À propos de l'App */}
+              {/* SECTION À PROPOS : Support technique et assistance */}
               {activeTab === 'about' && (
-                <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
-                  <div className="px-6 py-5 border-b border-transparent dark:border-white/5 bg-gradient-to-br from-blue-600 via-indigo-700 to-blue-800">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-white/10 rounded-xl text-white shadow-lg">
-                        <Info size={20} />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-bold text-white">À propos de Schoolab</h2>
-                        <p className="text-[10px] text-blue-100/70 font-semibold uppercase tracking-widest">Version {pkg.version}</p>
-                      </div>
-                    </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="p-6">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">À Propos de Schoolab</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Informations relatives à votre version installée et contacts d'assistance technique.</p>
                   </div>
-
+                  
                   <div className="p-6 space-y-6">
-                    {/* Logo & Version */}
-                    <div className="flex items-center gap-6 p-6 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
-                        <School size={40} className="text-white" />
+                    {/* Présentation du produit */}
+                    <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+                      <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center shadow-inner">
+                        <School size={32} className="text-white" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white">Schoolab <span className="text-blue-600">Pro</span></h3>
-                        <p className="text-slate-500 text-sm mt-1">Logiciel de gestion scolaire moderne</p>
-                        <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold">
-                          v{pkg.version}
-                        </div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Schoolab Pro</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs">Logiciel moderne et performant de gestion académique</p>
+                        <span className="inline-block mt-1.5 px-2.5 py-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-bold rounded-full">
+                          Version {pkg.version}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Description de l'application */}
-                    <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                      <h4 className="font-bold text-slate-900 dark:text-white mb-3">À propos de l'application</h4>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                        <strong>Schoolab</strong> est une solution complète de gestion académique conçue pour les établissements scolaires.
-                        Elle permet de gérer efficacement les classes, les élèves, les notes, les bulletins et la synchronisation cloud
-                        pour un suivi pédagogique optimal.
-                      </p>
-                      <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>Gestion des classes, élèves et matières</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>Saisie et calcul automatique des notes et moyennes</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>Génération de bulletins personnalisés</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>Synchronisation cloud multi-postes (Plan Plus)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>Interface mobile pour saisie distante des notes</span>
-                        </li>
+                    {/* Liste des fonctionnalités supportées */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fonctionnalités Incluses</h4>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-600 dark:text-slate-400">
+                        <li className="flex items-center gap-2">• Saisie et calcul automatisé des examens</li>
+                        <li className="flex items-center gap-2">• Génération et impression des palmarès scolaires</li>
+                        <li className="flex items-center gap-2">• Gestion intelligente des repêchages</li>
+                        <li className="flex items-center gap-2">• Suivi et comportement (Conduite) des élèves</li>
+                        <li className="flex items-center gap-2">• Sauvegardes automatisées en base de données</li>
+                        <li className="flex items-center gap-2">• Synchronisation Cloud sécurisée (Plan Plus)</li>
                       </ul>
                     </div>
 
-                    {/* Infos développeur & contact */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                            <User size={18} className="text-blue-600 dark:text-blue-400" />
+                    {/* Contacts du Support Client */}
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Support technique & Assistance</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        {/* Mail support */}
+                        <a
+                          href="mailto:NartrixSoft@gmail.com"
+                          className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950/20 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors group"
+                        >
+                          <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all">
+                            <Mail size={16} />
                           </div>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Développement</span>
-                        </div>
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">Equipe Schoolab</p>
-                        <p className="text-xs text-slate-500 mt-1">NartrixSoft Engineering</p>
-                      </div>
+                          <div>
+                            <div className="text-xs font-semibold text-slate-400 uppercase">Par Courriel</div>
+                            <div className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">NartrixSoft@gmail.com</div>
+                          </div>
+                        </a>
 
-                      <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <Heart size={18} className="text-green-600 dark:text-green-400" />
+                        {/* WhatsApp support */}
+                        <a
+                          href="https://wa.me/243903582030"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-950/20 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors group"
+                        >
+                          <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                            <Phone size={16} />
                           </div>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Contact & Support</span>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <p className="text-slate-600 dark:text-slate-400">
-                            <span className="font-semibold">Email:</span> <a href="mailto:NartrixSoft@gmail.com" className="text-blue-600 hover:underline">NartrixSoft@gmail.com</a>
-                          </p>
-                          <p className="text-slate-600 dark:text-slate-400">
-                            <span className="font-semibold">WhatsApp:</span> <a href="https://wa.me/243903582030" className="text-green-600 hover:underline">+243 903 582 030</a>
-                          </p>
-                        </div>
+                          <div>
+                            <div className="text-xs font-semibold text-slate-400 uppercase">Par WhatsApp</div>
+                            <div className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-0.5">+243 903 582 030</div>
+                          </div>
+                        </a>
+
                       </div>
                     </div>
 
-                    {/* Copyright & System */}
-                    <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-white/5 rounded-xl text-xs text-slate-500">
+                    {/* Bloc Informations Légales */}
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                       <span>© 2026 NartrixSoft - Tous droits réservés</span>
-                      <span className="font-mono text-[10px]">ID: {hwid?.substring(0, 16)}...</span>
+                      <span>Licence individuelle concédée à l'établissement</span>
                     </div>
 
-                    {/* Developer Tool */}
-                    <div className="text-center pt-4 border-t border-slate-100 dark:border-white/5">
+                    {/* Outils de développement discrets */}
+                    <div className="text-center pt-2">
                       <button
                         onClick={async () => {
                           const confirmed = await toast.confirm({
-                            title: 'Mode D\u00e9veloppeur',
-                            message: 'Voulez-vous peupler la base de donn\u00e9es avec 15 classes et des donn\u00e9es de test ?',
-                            confirmLabel: 'G\u00e9n\u00e9rer',
+                            title: 'Mode Développeur',
+                            message: 'Voulez-vous peupler la base de données locale avec des données de simulation de test ?',
+                            confirmLabel: 'Générer',
                             cancelLabel: 'Annuler',
                             variant: 'warning'
                           });
@@ -841,9 +742,9 @@ export default function SettingsPage() {
                             setLoading(true);
                             try {
                               await seedingService.seedDatabase();
-                              toast.success("Base de donn\u00e9es peupl\u00e9e avec succ\u00e8s !");
+                              toast.success("Base de données alimentée avec succès !");
                             } catch (e) {
-                              toast.error("\u00c9chec du peuplement");
+                              toast.error("Échec de l'alimentation");
                               console.error(e);
                             } finally {
                               setLoading(false);
@@ -851,17 +752,17 @@ export default function SettingsPage() {
                           }
                         }}
                         disabled={loading}
-                        className="text-[10px] font-bold uppercase tracking-wide text-slate-400 hover:text-blue-600 transition-colors"
+                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-blue-600 transition-colors"
                       >
-                        {loading ? "Génération en cours..." : "Données de test (Dev)"}
+                        {loading ? "Génération des données de simulation..." : "Données de simulation (Dev)"}
                       </button>
                     </div>
+
                   </div>
                 </div>
               )}
 
-
-              {/* Upgrade Modal */}
+              {/* Fenêtre modale de mise à niveau */}
               <UpgradeModal
                 isOpen={showUpgradeModal}
                 onClose={() => setShowUpgradeModal(false)}

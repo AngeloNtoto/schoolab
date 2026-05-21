@@ -69,79 +69,79 @@ type PalmaresMode = 'BEFORE_REPECHAGE' | 'AFTER_REPECHAGE';
 /**
  * Composant pour l'affichage propre de l'observation d'un élève
  */
+// Composant pour afficher les observations des élèves avec une excellente lisibilité (textes en gras et contrastés)
 const StudentObservation = ({ rankedStudent, selectedPeriod, mode }: { rankedStudent: RankedStudent, selectedPeriod: Period, mode: PalmaresMode }) => {
   const student = rankedStudent.student;
-  
+
+  // Si l'élève a abandonné, on l'affiche en rouge foncé très épais
   if (student.is_abandoned) {
     return (
-      <span className="text-red-600 font-bold text-[7.5px]">
+      <span className="text-red-700 font-black text-[7.5px]">
         Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
       </span>
     );
   }
 
+  // Si l'élève n'est pas classé (notes manquantes)
   if (rankedStudent.isUnranked) {
-    console.log(`tableau ${rankedStudent.missingSubjects }`)
-    // Afficher les cours dont les notes manquent pour aider l'utilisateur
+    console.log(`tableau ${rankedStudent.missingSubjects}`)
     if (rankedStudent.missingSubjects.length > 0) {
-      
       return (
-        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
-          <span className="text-slate-500 font-semibold whitespace-nowrap">
+        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px] font-bold text-slate-800">
+          <span className="text-slate-700 font-black whitespace-nowrap">
             Non classé : ({rankedStudent.missingSubjects.length}) :
           </span>
-          <span className="text-red-500 italic">{rankedStudent.missingSubjects.join(', ')}</span>
+          <span className="text-red-700 italic font-black">{rankedStudent.missingSubjects.join(', ')}</span>
         </div>
       );
     }
-    return <span className="text-slate-500 italic text-[7.5px]">Non classé</span>;
+    return <span className="text-slate-700 italic text-[7.5px] font-black">Non classé</span>;
   }
 
-  // Logic for AFTER_REPECHAGE mode
+  // Mode d'affichage après les séances de repêchage
   if (mode === 'AFTER_REPECHAGE') {
     if (rankedStudent.repechageSubjects.length > 0) {
-       return (
-        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px]">
-          <span className="text-blue-600 font-semibold whitespace-nowrap">
+      return (
+        <div className="flex flex-wrap items-center gap-x-1 leading-tight text-[7.5px] font-bold text-slate-800">
+          <span className="text-blue-700 font-black whitespace-nowrap">
             Repêché ({rankedStudent.repechageSubjects.length} cours) :
           </span>
-          <span className="text-slate-700">{rankedStudent.repechageSubjects.join(', ')}</span>
+          <span className="text-slate-900 font-black">{rankedStudent.repechageSubjects.join(', ')}</span>
         </div>
       );
     } else {
-        // If no repêchage, show existing logic or "Néant"
-         if (rankedStudent.percentage < 50) {
-            const failLabel = selectedPeriod === 'ANNUAL' ? "Redouble la classe" : "Échoué";
-            return <span className="text-red-600 font-bold text-[7.5px] uppercase">{failLabel}</span>;
-         }
-         return <span className="text-green-600 font-medium text-[7.5px]">Passé</span>;
+      if (rankedStudent.percentage < 50) {
+        const failLabel = selectedPeriod === 'ANNUAL' ? "Redouble la classe" : "Échoué";
+        return <span className="text-red-700 font-black text-[7.5px] uppercase">{failLabel}</span>;
+      }
+      return <span className="text-green-700 font-black text-[7.5px]">Passé</span>;
     }
   }
 
-  // Default BEFORE_REPECHAGE logic
+  // Comportement standard (avant ou sans repêchage)
   if (rankedStudent.percentage < 50) {
     const failLabel = selectedPeriod === 'ANNUAL' ? "Redouble la classe" : "Échoué";
-    return <span className="text-red-600 font-bold text-[7.5px] uppercase">{failLabel}</span>;
+    return <span className="text-red-700 font-black text-[7.5px] uppercase">{failLabel}</span>;
   }
 
+  // S'il y a des échecs à certains cours
   if (rankedStudent.failedSubjects.length > 0) {
-    // Afficher le nom du cours + (points/maxima) pour toutes les périodes
     const failures = rankedStudent.subjectDetails
       .filter((s: any) => (s.points / s.maxPoints) * 100 < 50)
-      .map((s: any) => s.subjectCode + " "+(selectedPeriod === "ANNUAL" ? `${s.points}/${s.maxPoints}` : ''))
+      .map((s: any) => s.subjectCode + " " + (selectedPeriod === "ANNUAL" ? `${s.points}/${s.maxPoints}` : ''))
       .join(', ');
 
     return (
-      <div className="flex flex-wrap items-center leading-tight text-[7.5px]">
-        <span className="text-amber-600 font-semibold whitespace-nowrap">
+      <div className="flex flex-wrap items-center leading-tight text-[7.5px] font-bold text-slate-800">
+        <span className="text-amber-700 font-black whitespace-nowrap">
           Échec({rankedStudent.failedSubjects.length}cours) :
         </span>
-        <span className="text-slate-700 ml-0">{failures}</span>
+        <span className="text-slate-900 ml-0 font-black">{failures}</span>
       </div>
     );
   }
 
-  return <span className="text-green-600 font-medium text-[7.5px]">— Passé</span>;
+  return <span className="text-green-700 font-black text-[7.5px]">— Passé</span>;
 };
 
 interface PalmaresProps {
@@ -166,7 +166,7 @@ export default function Palmares({
   onClose
 }: PalmaresProps) {
   const palmaresRef = useRef<HTMLDivElement>(null);
-  
+
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('SEM1');
   const [onlyAbandons, setOnlyAbandons] = useState(false);
   const [sortByAbandon] = useState(false);
@@ -198,14 +198,23 @@ export default function Palmares({
     html {
       margin: 0 !important;
       padding: 0 !important;
+      color: #000000 !important;
     }
+    /* Forcer le noir pur sur tout le document pour une visibilité d'impression maximale */
     body { 
       background: white; 
       margin: 0; 
       font-size: 10px;
+      color: #000000 !important;
     }
     table {
       font-size: 9px !important;
+      color: #000000 !important;
+      border-color: #000000 !important;
+    }
+    th, td {
+      color: #000000 !important;
+      border-color: #000000 !important;
     }
     .print-reset {
       margin: 0 !important;
@@ -222,7 +231,7 @@ export default function Palmares({
     if (percentage >= 40) return 'Mé';
     return 'Ma';
   };
-  
+
   const getPeriodConfig = (period: Period) => {
     const configs: Record<Period, Array<{ period: string; getMax: (s: Subject) => number }>> = {
       'P1': [{ period: 'P1', getMax: (s) => s.max_p1 }],
@@ -256,11 +265,11 @@ export default function Palmares({
   const rankedStudents = useMemo(() => {
     const rankings: RankedStudent[] = [];
     let studentsToProcess = [...students];
-    
+
     if (onlyAbandons) {
       studentsToProcess = studentsToProcess.filter(s => !s.is_abandoned);
     }
-    
+
     if (sortByAbandon) {
       studentsToProcess.sort((a, b) => (b.is_abandoned ? 1 : 0) - (a.is_abandoned ? 1 : 0));
     }
@@ -287,7 +296,7 @@ export default function Palmares({
 
           const gradeEntry = grades.find(g => g.student_id === student.id && g.subject_id === subject.id && g.period === periodData.period);
           const grade = gradeEntry ? gradeEntry.value : null;
-          
+
           // Si une note attendue est manquante, l'élève ne peut pas être classé
           if (grade === null) {
             hasAllGrades = false;
@@ -314,23 +323,23 @@ export default function Palmares({
             failedSubjects.push(subject.code || subject.name);
           }
         }
-        
+
         // Check for Repechage in this subject (> 1%)
         const rep = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
         if (rep && rep.percentage > 1) {
-            repechageSubjects.push(subject.code || subject.name);
+          repechageSubjects.push(subject.code || subject.name);
         }
 
         subjectDetails.push({
-          subjectCode:subject.code,
+          subjectCode: subject.code,
           subjectName: subject.name,
           points: subjectPoints,
           maxPoints: subjectMaxPoints,
         });
       }
 
-      const percentage = hasAllGrades && totalMaxPoints > 0 
-        ? (totalPoints / totalMaxPoints) * 100 
+      const percentage = hasAllGrades && totalMaxPoints > 0
+        ? (totalPoints / totalMaxPoints) * 100
         : 0;
 
       rankings.push({
@@ -359,7 +368,7 @@ export default function Palmares({
     });
 
     for (let i = 0; i < ranked.length; i++) {
-        ranked[i].rank = i + 1;
+      ranked[i].rank = i + 1;
     }
 
     return [...ranked, ...unranked];
@@ -374,7 +383,7 @@ export default function Palmares({
       case 'SEM1': return `${stu.conduite_p1 || '-'} / ${stu.conduite_p2 || '-'}`;
       case 'SEM2': return `${stu.conduite_p3 || '-'} / ${stu.conduite_p4 || '-'}`;
       case 'ANNUAL': return `${stu.conduite_p1 || '-'} / ${stu.conduite_p2 || '-'} / ${stu.conduite_p3 || '-'} / ${stu.conduite_p4 || '-'}`;
-      default: return'-';
+      default: return '-';
     }
   };
 
@@ -395,7 +404,7 @@ export default function Palmares({
           <ArrowLeft size={20} />
           Retour à la classe
         </button>
-        
+
         <div className="flex items-center gap-4">
           <select
             value={selectedPeriod}
@@ -412,13 +421,13 @@ export default function Palmares({
             <option value="SEM2">Semestre 2</option>
             <option value="ANNUAL">Annuel</option>
           </select>
-          
+
           <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input 
-              type="checkbox" 
-              checked={onlyAbandons} 
-              onChange={(e) => setOnlyAbandons(e.target.checked)} 
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" 
+            <input
+              type="checkbox"
+              checked={onlyAbandons}
+              onChange={(e) => setOnlyAbandons(e.target.checked)}
+              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
             />
             <span>Exclure les abandons</span>
           </label>
@@ -444,20 +453,21 @@ export default function Palmares({
         </div>
       </div>
 
-      <div 
+      <div
         ref={palmaresRef}
         className="print-container max-w-[210mm] mx-auto bg-white shadow-xl p-8 min-h-[297mm]"
       >
-        <div className="border-2 border-black mb-4">
-          <div className="flex justify-between items-start p-4">
-            <div className="text-[10px]">
-              <p className="font-bold text-slate-800">École: {schoolName}</p>
+        {/* Informations d'en-tête de l'école et de la classe, avec des textes en gras noir intense pour l'impression */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center px-4 text-black font-bold">
+            <div className="text-[12px] space-y-0.5">
+              <p className="font-bold text-black">École: {schoolName}</p>
               <p>Ville: {schoolCity}</p>
               <p>Boîte Postale: {schoolPoBox}</p>
             </div>
-            
-            <div className="text-[10px] text-right">
-              <p className="font-bold text-slate-800">Classe: {classInfo.name}</p>
+
+            <div className="text-[10px] text-right space-y-0.5">
+              <p className="font-black text-black">Classe: {classInfo.name}</p>
               <p>Effectif: {stats.total}</p>
               <p>Ont réussi: {stats.passed}</p>
               <p>Ont échoué: {stats.failed}</p>
@@ -466,39 +476,48 @@ export default function Palmares({
           </div>
         </div>
 
-        <h1 className="text-center text-[15px] font-bold mb-2 uppercase text-slate-800">
+        {/* Titre principal du document imprimable */}
+        <h1 className="text-center text-[15px] font-black mb-2 uppercase text-black">
           Palmarès {palmaresMode === 'AFTER_REPECHAGE' ? '(Après Repêchage)' : ''} - {classInfo.name} - {selectedPeriod}
         </h1>
 
-        <table className="w-full border-collapse border-2 border-black text-[10px]">
+        {/* Tableau du palmarès avec bordures nettes et textes épaissis */}
+        <table className="w-full border-collapse border-2 border-black text-[10px] text-black">
           <thead>
-            <tr className="bg-slate-100 text-[8px]">
-              <th className="border border-black px-1 py-0 w-8">N°</th>
-              <th className="border border-black px-1.5 py-0 text-left">Nom et Postnom</th>
-              <th className="border border-black px-1.5 py-0 w-14">%</th>
-              <th className="border border-black px-1.5 py-0 w-20">Application</th>
-              <th className="border border-black px-1.5 py-0 w-20">Conduite</th>
-              <th className="border border-black px-1.5 py-0">Observation</th>
+            {/* Ligne d'en-tête avec textes en majuscule gras et fond légèrement grisé */}
+            <tr className="bg-slate-100 text-[8px] font-black text-black">
+              <th className="border border-black px-1 py-0 w-8 font-black">N°</th>
+              <th className="border border-black px-1.5 py-0 text-left font-black">Nom et Postnom</th>
+              <th className="border border-black px-1.5 py-0 w-14 font-black">%</th>
+              <th className="border border-black px-1.5 py-0 w-20 font-black">Application</th>
+              <th className="border border-black px-1.5 py-0 w-20 font-black">Conduite</th>
+              <th className="border border-black px-1.5 py-0 font-black">Observation</th>
             </tr>
           </thead>
           <tbody>
             {rankedStudents.map((rankedStudent) => (
               <tr key={rankedStudent.student.id} className={rankedStudent.isUnranked ? 'bg-slate-50' : ''}>
-                <td className="border border-black px-1 py-0.5 text-center font-medium">
+                {/* Numéro d'ordre (rang ou tiret pour les non-classés) */}
+                <td className="border border-black px-1 py-0.5 text-center font-black text-black">
                   {rankedStudent.isUnranked ? '-' : rankedStudent.rank}
                 </td>
-                <td className="border border-black px-2 py-0.5 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                {/* Identité de l'élève en gras intense de taille 12px pour conserver les dimensions */}
+                <td className="border border-black px-2 font-black text-[12px] text-black whitespace-nowrap overflow-hidden text-ellipsis">
                   {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
                 </td>
-                <td className="border border-black px-2 py-0.5 text-center font-bold">
+                {/* Pourcentage de réussite en gras noir intense */}
+                <td className="border border-black px-2 py-0.5 text-center font-black text-black">
                   {rankedStudent.isUnranked ? '-' : `${rankedStudent.percentage.toFixed(1)}%`}
                 </td>
-                <td className="border border-black px-2 py-0.5 text-center">
+                {/* Note d'application */}
+                <td className="border border-black px-2 py-0.5 text-center font-black text-black">
                   {rankedStudent.application}
                 </td>
-                <td className="border border-black px-1 py-0.5 text-center">
+                {/* Conduite de l'élève */}
+                <td className="border border-black px-1 py-0.5 text-center font-black text-black">
                   {formatConduite(rankedStudent.student)}
                 </td>
+                {/* Observations en petits caractères très lisibles (gras) */}
                 <td className="border border-black px-1.5 py-0.5">
                   <StudentObservation rankedStudent={rankedStudent} selectedPeriod={selectedPeriod} mode={palmaresMode} />
                 </td>
@@ -507,16 +526,17 @@ export default function Palmares({
           </tbody>
         </table>
 
-        <div className="mt-8 flex justify-between text-sm break-inside-avoid">
-          {/* Signature du chef à gauche */}
+        {/* Espace dédié aux signatures de fin de document */}
+        <div className="mt-8 flex justify-between text-sm break-inside-avoid text-black font-bold">
+          {/* Signature à gauche */}
           <div className="text-center">
-            <p className="font-bold mb-16">Le Chef d'Établissement</p>
+            <p className="font-black mb-16 text-black">Le Chef d'Établissement</p>
             <p className="border-t border-black pt-1">Nom et Signature</p>
           </div>
           {/* Lieu et date à droite */}
           <div className="text-right">
-            <p className="font-bold">Fait à {schoolCity}</p>
-            <p>Le ____/____/______</p>
+            <p className="font-black text-black">Fait à {schoolCity}</p>
+            <p className="text-black">Le ____/____/______</p>
           </div>
         </div>
       </div>
