@@ -1,0 +1,1131 @@
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp, Lock, Unlock, Maximize, Minimize, Download, RefreshCw } from '../iconsSvg';
+
+// Services & Hooks
+import { ClassData, Subject } from '../../services/classService';
+import { Student } from '../../services/studentService';
+import { useToast } from '../../context/ToastContext';
+
+// Composants
+import AddStudentModal from './AddStudentModal';
+import AddSubjectModal from './AddSubjectModal';
+
+// Interface pour les props
+interface ClassDetailsProps {
+  // Données pré-chargées
+  classInfo: ClassData;
+  subjects: Subject[];
+  students: Student[];
+  gradesMap: Map<string, number>;
+  editingSubject: Subject | null;
+  loading?: boolean;
+  
+  // Actions
+  onEditStudent: (studentId: number) => void;
+  onOpenBulletin: (studentId: number) => void;
+  onOpenBulkPrint: () => void;
+  onOpenCouponsPrint: () => void;
+  onOpenPalmares: () => void;
+  onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  onAddStudent: (student: Partial<Student>) => Promise<void>;
+  onDeleteStudent: (studentId: number) => Promise<void>;
+  onImportStudents: (students: Partial<Student>[]) => Promise<void>;
+  onRefreshSubjects: () => Promise<void>;
+  onRefreshAll: () => Promise<void>;
+  onSetEditingSubject: (subject: Subject | null) => void;
+  onOpenRepechage: (studentId: number) => void;
+}
+
+export default function ClassDetails({
+  classInfo,
+  subjects,
+  students,
+  gradesMap,
+  editingSubject,
+  loading,
+  onEditStudent,
+  onOpenBulletin,
+  onOpenBulkPrint,
+  onOpenCouponsPrint,
+  onOpenPalmares,
+  onUpdateGrade,
+  onAddStudent,
+  onDeleteStudent,
+  onImportStudents,
+  onRefreshSubjects,
+  onRefreshAll,
+  onSetEditingSubject,
+  onOpenRepechage
+}: ClassDetailsProps) {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  // Search & Sort State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
+  const [focusedPeriod, setFocusedPeriod] = useState<string>('all');
+  // Nouveaux états pour les améliorations du mark board
+  const [lockedPeriods, setLockedPeriods] = useState<Set<string>>(new Set());
+  const [focusedSubject, setFocusedSubject] = useState<number | 'all'>('all');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showToolbar, setShowToolbar] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const toast = useToast();
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
+
+  // Filter & Sort Logic
+  const filteredAndSortedStudents = useMemo(() => {
+    let result = [...students];
+    // Filter by abandon status if requested
+    if (showOnlyAbandons) {
+      result = result.filter(s => Boolean((s as Student).is_abandoned));
+    }
+
+    // Filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.last_name.toLowerCase().includes(q) || 
+        s.first_name.toLowerCase().includes(q) || 
+        (s.post_name && s.post_name.toLowerCase().includes(q))
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      const nameA = `${a.last_name} ${a.first_name}`;
+      const nameB = `${b.last_name} ${b.first_name}`;
+      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
+
+    return result;
+  }, [students, searchQuery, sortOrder]);
+
+  // Sujets filtrés par le sélecteur de matière
+  const displayedSubjects = useMemo(() => {
+    if (focusedSubject === 'all') return subjects;
+    return subjects.filter(s => s.id === focusedSubject);
+  }, [subjects, focusedSubject]);
+
+  // Calcul de la progression : combien de notes remplies par période
+  const progressData = useMemo(() => {
+    const periods = ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'];
+    const data: Record<string, { filled: number; total: number }> = {};
+    for (const p of periods) {
+      let filled = 0;
+      let total = 0;
+      for (const student of filteredAndSortedStudents) {
+        for (const subject of displayedSubjects) {
+          // Ignorer les examens désactivés (max = 0)
+          const isExamDisabled = (p === 'EXAM1' && subject.max_exam1 === 0) || (p === 'EXAM2' && subject.max_exam2 === 0);
+          if (isExamDisabled) continue;
+          total++;
+          const val = gradesMap.get(`${student.id}-${subject.id}-${p}`);
+          if (val !== undefined) filled++;
+        }
+      }
+      data[p] = { filled, total };
+    }
+    return data;
+  }, [filteredAndSortedStudents, displayedSubjects, gradesMap]);
+
+  // Stats par colonne (moyenne, min, max) pour la période active
+  const columnStats = useMemo(() => {
+    const stats: Record<string, { avg: number; min: number; max: number; count: number }> = {};
+    const targetPeriods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
+    for (const subject of displayedSubjects) {
+      for (const p of targetPeriods) {
+        const key = `${subject.id}-${p}`;
+        const values: number[] = [];
+        for (const student of filteredAndSortedStudents) {
+          const val = gradesMap.get(`${student.id}-${subject.id}-${p}`);
+          if (val !== undefined) values.push(val);
+        }
+        if (values.length > 0) {
+          stats[key] = {
+            avg: values.reduce((a, b) => a + b, 0) / values.length,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            count: values.length
+          };
+        }
+      }
+    }
+    return stats;
+  }, [displayedSubjects, filteredAndSortedStudents, gradesMap, focusedPeriod]);
+
+  // Basculer le verrouillage d'une période
+  const toggleLockPeriod = (period: string) => {
+    setLockedPeriods(prev => {
+      const next = new Set(prev);
+      if (next.has(period)) next.delete(period);
+      else next.add(period);
+      return next;
+    });
+  };
+
+  // Export CSV rapide de la grille visible
+  const handleExportCSV = () => {
+    if (!classInfo) return;
+    const periods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
+    // En-tête CSV
+    let csv = 'N°,Nom,Prénom';
+    for (const sub of displayedSubjects) {
+      for (const p of periods) {
+        csv += `,${sub.name} ${p}`;
+      }
+    }
+    csv += '\n';
+    // Données
+    filteredAndSortedStudents.forEach((student, idx) => {
+      csv += `${idx + 1},${student.last_name},${student.first_name}`;
+      for (const sub of displayedSubjects) {
+        for (const p of periods) {
+          const val = gradesMap.get(`${student.id}-${sub.id}-${p}`);
+          csv += `,${val !== undefined ? val : ''}`;
+        }
+      }
+      csv += '\n';
+    });
+    // Télécharger le fichier
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${classInfo.name}_notes.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Export CSV téléchargé');
+  };
+
+
+  // Récupération optimisée d'une note via la Map (O(1))
+  const getGrade = (studentId: number, subjectId: number, period: string) => {
+    return gradesMap.get(`${studentId}-${subjectId}-${period}`) ?? null;
+  };
+
+  const onGradeUpdate = useCallback(async (studentId: number, subjectId: number, period: string, value: number | null) => {
+    try {
+      await onUpdateGrade(studentId, subjectId, period, value);
+    } catch (error) {
+      console.error('Failed to update grade:', error);
+      toast.error('Erreur lors de la mise à jour de la note');
+    }
+  }, [onUpdateGrade, toast]);
+
+
+  const onContextMenu = useCallback((e: React.MouseEvent, student: Student) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, student });
+  }, []);
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  const handleDeleteStudent = async () => {
+    if (contextMenu) {
+      const confirmed = await toast.confirm({
+        title: 'Supprimer l\'élève',
+        message: `Êtes-vous sûr de vouloir supprimer l'élève ${contextMenu.student.last_name} ? Cette action est irréversible.`,
+        confirmLabel: 'Supprimer',
+        cancelLabel: 'Annuler',
+        variant: 'danger'
+      });
+      if (confirmed) {
+        await onDeleteStudent(contextMenu.student.id);
+      }
+    }
+  };
+
+  return (
+    <div className={`flex-1 flex flex-col h-full bg-slate-50/50 dark:bg-[#020617] min-h-0 transition-colors duration-500 ${isFullscreen ? 'fixed inset-0 z-90' : ''}`}>
+      {/* En-tête Unifié */}
+      <header className="bg-blue-600 dark:bg-slate-900 border-b border-white/5 sticky top-0 z-30 shadow-lg">
+        <div className="px-6 py-3">
+          {/* Static Header: Row 1 */}
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="p-2.5 bg-white/10 hover:bg-white hover:text-blue-600 dark:hover:text-slate-900 rounded-xl text-white transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 hover:scale-105 active:scale-95 group shrink-0"
+              >
+                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform duration-300" />
+              </button>
+
+         
+              
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-xl font-black text-white dark:text-slate-100 flex items-center gap-2 tracking-tight truncate leading-none">
+                  {classInfo ? `${classInfo.level} ${classInfo.option}` : 'Chargement...'} 
+                  <span className="text-blue-300/50 dark:text-slate-500 font-light ml-1">|</span> 
+                  <span className="truncate text-blue-100/90 dark:text-slate-300">{classInfo?.section || '...'}</span>
+                </h1>
+                <div className="flex items-center gap-3 mt-1.5 font-black uppercase tracking-widest text-[9px]">
+                  <p className="text-blue-100/60 dark:text-slate-500 flex gap-3">
+                    <span className="flex items-center gap-1"><Users size={11}/> {students.length} élèves</span>
+                    <span className="flex items-center gap-1"><BookOpen size={11}/> {subjects.length} cours</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+                {/* Bouton d'actualisation — rafraîchit matières, élèves et notes sans redemander le mdp */}
+              <button 
+                onClick={async () => {
+                  setRefreshing(true);
+                  try {
+                    await onRefreshAll();
+                    toast.success('Données actualisées');
+                  } catch {
+                    toast.error('Erreur lors de l\'actualisation');
+                  } finally {
+                    setRefreshing(false);
+                  }
+                }}
+                disabled={refreshing}
+                className="p-2.5 bg-white/10 hover:bg-white hover:text-blue-600 dark:hover:text-slate-900 rounded-xl text-white transition-all duration-300 backdrop-blur-md shadow-lg shadow-black/5 hover:scale-105 active:scale-95 group shrink-0 disabled:opacity-50"
+                title="Actualiser les données"
+              >
+                <RefreshCw size={18} className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+              </button>
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
+                <button 
+                  onClick={onOpenPalmares}
+                  className="flex items-center gap-1.5 hover:bg-white hover:text-blue-600 px-4 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all text-white border border-transparent"
+                >
+                  <Award size={14} />
+                  <span>Palmarès</span>
+                </button>
+                <div className="flex items-center gap-1 px-1 border-l border-white/10 ml-0.5">
+                  <button onClick={onOpenCouponsPrint} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all" title="Coupons">
+                    <Printer size={16} />
+                  </button>
+                  <button onClick={onOpenBulkPrint} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all" title="Bulletins">
+                    <FileText size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Search, Sort & Major Actions (Permanent) */}
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-t border-white/10 pt-3">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative group flex-1 md:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Rechercher par nom..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 bg-white/10 dark:bg-black/20 border border-white/10 rounded-xl text-white placeholder-white/30 focus:bg-white/15 outline-none font-bold text-xs transition-all"
+                />
+              </div>
+              <button 
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                className="p-2.5 bg-white/10 hover:bg-white hover:text-blue-600 text-white rounded-xl border border-white/10 transition-all active:scale-95"
+                title="Trier la liste"
+              >
+                <ArrowUpDown size={18} className={`transition-transform duration-500 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+              </button>
+              <button
+                onClick={() => setShowOnlyAbandons(prev => !prev)}
+                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showOnlyAbandons ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-white/5 text-red-300 border border-white/10 hover:bg-white/10'}`}
+              >
+                Abandons ({students.filter(s => Boolean((s as Student).is_abandoned)).length})
+              </button>
+
+              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 ml-2">
+                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest pl-2">Vue:</span>
+                <select 
+                  value={focusedPeriod}
+                  onChange={(e) => setFocusedPeriod(e.target.value)}
+                  className="border-none  text-blue-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
+                >
+                  <option value="all" className="bg-slate-900 text-white">Tout</option>
+                  <option value="P1" className="bg-slate-900 text-white">P1 uniquement</option>
+                  <option value="P2" className="bg-slate-900 text-white">P2 uniquement</option>
+                  <option value="EXAM1" className="bg-slate-900 text-white">Examen S1</option>
+                  <option value="P3" className="bg-slate-900 text-white">P3 uniquement</option>
+                  <option value="P4" className="bg-slate-900 text-white">P4 uniquement</option>
+                  <option value="EXAM2" className="bg-slate-900 text-white">Examen S2</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+              <button 
+                onClick={() => setShowAddSubjectModal(true)}
+                className="flex items-center gap-2 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-100 px-5 py-2.5 rounded-xl border border-indigo-500/30 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
+              >
+                <BookOpen size={16} />
+                Gérer les cours
+              </button>
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 bg-white text-blue-600 dark:bg-blue-600 dark:text-white px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-all font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95"
+              >
+                <Plus size={16} />
+                Ajouter un élève
+              </button>
+            </div>
+          </div>
+          {/* Toggle barre d'outils + barre d'outils pliable */}
+          <div className="border-t border-white/10 mt-1">
+            <button
+              onClick={() => setShowToolbar(prev => !prev)}
+              className="w-full flex items-center justify-center gap-1.5 py-1 text-white/30 hover:text-white/60 transition-colors"
+            >
+              <ChevronDown size={14} className={`transition-transform duration-300 ${showToolbar ? 'rotate-180' : ''}`} />
+              <span className="text-[8px] font-black uppercase tracking-widest">{showToolbar ? 'Masquer' : 'Outils'}</span>
+            </button>
+            {showToolbar && (
+          <div className="flex flex-wrap items-center gap-3 pb-3 px-1 animate-in slide-in-from-top-2 duration-200">
+            {/* Filtre par matière */}
+            <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10">
+              <span className="text-white/40 text-[9px] font-black uppercase tracking-widest pl-2">Cours:</span>
+              <select
+                value={focusedSubject === 'all' ? 'all' : String(focusedSubject)}
+                onChange={(e) => setFocusedSubject(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="border-none text-blue-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
+              >
+                <option value="all" className="bg-slate-900 text-white">Tous ({subjects.length})</option>
+                {subjects.map(s => (
+                  <option key={s.id} value={s.id} className="bg-slate-900 text-white">{s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Barres de progression par période */}
+            {focusedPeriod !== 'all' && progressData[focusedPeriod] && (
+              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                <span className="text-[9px] font-black text-white/50 uppercase tracking-widest">{focusedPeriod}:</span>
+                <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                    style={{ width: `${progressData[focusedPeriod].total > 0 ? (progressData[focusedPeriod].filled / progressData[focusedPeriod].total * 100) : 0}%` }}
+                  />
+                </div>
+                <span className="text-[9px] font-black text-emerald-400">
+                  {progressData[focusedPeriod].filled}/{progressData[focusedPeriod].total}
+                </span>
+              </div>
+            )}
+
+            {/* Mini-barres de progression globales (mode "all") */}
+            {focusedPeriod === 'all' && (
+              <div className="flex items-center gap-1.5">
+                {['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'].map(p => {
+                  const d = progressData[p];
+                  if (!d || d.total === 0) return null;
+                  const pct = Math.round((d.filled / d.total) * 100);
+                  return (
+                    <div key={p} className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg border border-white/10" title={`${d.filled}/${d.total} notes remplies`}>
+                      <span className="text-[8px] font-black text-white/40 uppercase">{p.replace('EXAM', 'Ex')}</span>
+                      <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-400' : pct > 50 ? 'bg-blue-400' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex-1" />
+
+            {/* Verrouillage de la période active */}
+            {focusedPeriod !== 'all' && (
+              <button
+                onClick={() => toggleLockPeriod(focusedPeriod)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
+                  lockedPeriods.has(focusedPeriod)
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10'
+                }`}
+                title={lockedPeriods.has(focusedPeriod) ? 'Déverrouiller' : 'Verrouiller'}
+              >
+                {lockedPeriods.has(focusedPeriod) ? <Lock size={12} /> : <Unlock size={12} />}
+                {lockedPeriods.has(focusedPeriod) ? 'Verrouillé' : 'Verrouiller'}
+              </button>
+            )}
+
+            {/* Export CSV */}
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest transition-all"
+              title="Exporter en CSV"
+            >
+              <Download size={12} />
+              Export
+            </button>
+
+            {/* Mode plein écran */}
+            <button
+              onClick={() => setIsFullscreen(prev => !prev)}
+              className="p-1.5 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all"
+              title={isFullscreen ? 'Quitter le plein écran' : 'Mode Focus'}
+            >
+              {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+            </button>
+          </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Contenu Principal - Grille scrollable */}
+      <div className="flex-1 overflow-auto relative">
+        {/* Loader non-intrusif si on a déjà des données, sinon loader plein écran */}
+        {loading && students.length === 0 ? (
+          <><div className="absolute top-0 left-0 right-0 z-40">
+                <div className="h-0.5 w-full bg-blue-500/20 overflow-hidden">
+                  <div className="h-full bg-blue-500 animate-loading" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+            </>
+        ) : !classInfo ? (
+          <div className="p-8 text-center text-slate-500">Aucune donnée trouvée pour cette classe.</div>
+        ) : (
+          <>
+            {/* Indicateur de chargement discret pour les mises à jour en arrière-plan */}
+            {loading && (
+              <div className="absolute top-0 left-0 right-0 z-40">
+                <div className="h-0.5 w-full bg-blue-500/20 overflow-hidden">
+                  <div className="h-full bg-blue-500 animate-loading" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+            )}
+            
+            <table className="w-full border-collapse min-w-max">
+          <thead className="sticky top-0 z-20 shadow-sm">
+            <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700">
+                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
+                  #
+                </th>
+                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px]">
+                  Élèves ({filteredAndSortedStudents.length})
+                </th>
+              
+              {displayedSubjects.map(subject => (
+                <th 
+                  key={subject.id} 
+                  colSpan={focusedPeriod === 'all' ? 8 : 1} 
+                  className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700"
+                >
+                  {subject.name}
+                </th>
+              ))}
+            </tr>
+
+            {/* Ligne de sous-en-tête avec les Maxima */}
+            <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/80">
+              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]'>
+                #
+              </th>
+              <th className='sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900/80 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
+                Nom et PostNom
+              </th>
+              {displayedSubjects.map(subject => {
+                // Détection cours sans examen pour styling conditionnel des en-têtes
+                const hasExam1 = subject.max_exam1 > 0;
+                const hasExam2 = subject.max_exam2 > 0;
+                
+                return (
+                <React.Fragment key={subject.id}>
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
+                    </th>
+                  )}
+                  
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
+                    </th>
+                  )}
+                  
+                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+                    <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                      hasExam1 
+                        ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30' 
+                        : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
+                    }`}>
+                      Ex1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {hasExam1 ? `/${subject.max_exam1}` : 'N/A'}
+                      </span>
+                    </th>
+                  )}
+                  
+                  {focusedPeriod === 'all' && (
+                    <th className="px-2 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-100 dark:bg-blue-900/40 min-w-[60px]">
+                      Sem1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
+                    </th>
+                  )}
+                  
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
+                    </th>
+                  )}
+                  
+                  {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+                    <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                      P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
+                    </th>
+                  )}
+                  
+                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+                    <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                      hasExam2 
+                        ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30' 
+                        : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
+                    }`}>
+                      Ex2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {hasExam2 ? `/${subject.max_exam2}` : 'N/A'}
+                      </span>
+                    </th>
+                  )}
+                  
+                  {focusedPeriod === 'all' && (
+                    <th className="px-2 py-2 text-xs font-semibold text-green-700 dark:text-green-400 border-r-2 border-slate-400 dark:border-slate-500 bg-green-100 dark:bg-green-900/40 min-w-[60px]">
+                      Sem2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
+                    </th>
+                  )}
+                </React.Fragment>
+                )
+              })}
+            </tr>
+          </thead>
+
+          <tbody>
+            {filteredAndSortedStudents.map((student, idx) => (
+              <StudentRow 
+                key={student.id}
+                student={student}
+                idx={idx}
+                subjects={displayedSubjects}
+                gradesMap={gradesMap}
+                onContextMenu={onContextMenu}
+                onUpdateGrade={onGradeUpdate}
+                focusedPeriod={focusedPeriod}
+                lockedPeriods={lockedPeriods}
+              />
+            ))}
+          </tbody>
+
+          {/* Footer statistique : moyenne, min, max par colonne */}
+          <tfoot className="sticky bottom-0 z-10 bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-600">
+            <tr>
+              <td className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700">
+                <span className="text-[9px] font-black text-slate-400 uppercase">Σ</span>
+              </td>
+              <td className="sticky left-[40px] z-20 bg-slate-100 dark:bg-slate-800 px-4 py-2 border-r-2 border-slate-300 dark:border-slate-600">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Moy / Min / Max</span>
+              </td>
+              {displayedSubjects.map(subject => {
+                const periods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
+                return (
+                  <React.Fragment key={subject.id}>
+                    {periods.map(p => {
+                      const stat = columnStats[`${subject.id}-${p}`];
+                      const isExamCol = p.startsWith('EXAM');
+
+                      return (
+                        <td key={p} className={`px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 ${isExamCol ? 'border-r-slate-300 dark:border-r-slate-600' : ''}`}>
+                          {stat ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{stat.avg.toFixed(1)}</span>
+                              <span className="text-[8px] font-black text-slate-400">{stat.min}–{stat.max}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-300">-</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    {focusedPeriod === 'all' && (
+                      <>
+                        {/* Cellule vide pour Sem1 */}
+                        <td className="px-1 py-2 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-50/50 dark:bg-blue-900/20" />
+                        {/* Les périodes P3, P4, EXAM2 sont déjà dans le map ci-dessus */}
+                      </>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tr>
+          </tfoot>
+          </table>
+        </>
+        )}
+      </div>
+
+      {showAddModal && (
+        <AddStudentModal 
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAddStudent={onAddStudent}
+          onImportStudents={onImportStudents}
+          classId={Number(id)}
+          currentStudentCount={students.length}
+        />
+      )}
+
+      {showAddSubjectModal && (
+        <AddSubjectModal
+          classId={Number(id)}
+          classLevel={classInfo?.level || ''}
+          subjects={subjects}
+          editingSubject={editingSubject}
+          onSelectSubject={(subject) => {
+            onSetEditingSubject(subject);
+            setShowAddSubjectModal(true);
+          }}
+          onClose={() => {
+            onSetEditingSubject(null);
+            setShowAddSubjectModal(false);
+          }}
+          onSuccess={() => {
+            onRefreshSubjects();
+            onSetEditingSubject(null);
+          }}
+        />
+      )}
+
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div 
+          className="fixed bg-white dark:bg-slate-800 shadow-lg dark:shadow-2xl rounded-lg py-1 z-50 border border-slate-200 dark:border-slate-700 min-w-40px"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button 
+            onClick={() => {
+              onEditStudent(contextMenu.student.id);
+              closeContextMenu();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-2"
+          >
+            <Edit size={16} />
+            Éditer l'élève
+          </button>
+          <button 
+            onClick={() => {
+              onOpenBulletin(contextMenu.student.id);
+              closeContextMenu();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-2"
+          >
+            <FileText size={16} />
+            Voir le bulletin
+          </button>
+          <button 
+            onClick={() => {
+              onOpenRepechage(contextMenu.student.id);
+              closeContextMenu();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-2"
+          >
+            <TrendingUp size={16} />
+            Gérer le repêchage
+          </button>
+          <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+          <button 
+            onClick={() => {
+              handleDeleteStudent();
+              closeContextMenu();
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center gap-2"
+          >
+            <Trash2 size={16} />
+            Supprimer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const StudentRow = React.memo(({ 
+  student, 
+  subjects, 
+  idx, 
+  gradesMap, 
+  onContextMenu, 
+  onUpdateGrade,
+  focusedPeriod,
+  lockedPeriods
+}: { 
+  student: Student; 
+  subjects: Subject[]; 
+  idx: number;
+  gradesMap: Map<string, number>;
+  onContextMenu: (e: React.MouseEvent, student: Student) => void;
+  onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  focusedPeriod: string;
+  lockedPeriods: Set<string>;
+}) => {
+  const getGrade = (subjectId: number, period: string) => {
+    return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
+  };
+
+  const calculateSemesterTotal = (subjectId: number, semester: 1 | 2) => {
+    if (semester === 1) {
+      const p1 = getGrade(subjectId, 'P1');
+      const p2 = getGrade(subjectId, 'P2');
+      const ex1 = getGrade(subjectId, 'EXAM1');
+      if (p1 === null && p2 === null && ex1 === null) return null;
+      return (p1 || 0) + (p2 || 0) + (ex1 || 0);
+    } else {
+      const p3 = getGrade(subjectId, 'P3');
+      const p4 = getGrade(subjectId, 'P4');
+      const ex2 = getGrade(subjectId, 'EXAM2');
+      if (p3 === null && p4 === null && ex2 === null) return null;
+      return (p3 || 0) + (p4 || 0) + (ex2 || 0);
+    }
+  };
+
+  return (
+    <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-800/30'}`}>
+      <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px]">
+        {idx + 1}
+      </td>
+      <td 
+        className="sticky left-[40px] bg-inherit px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600"
+        onContextMenu={(e) => onContextMenu(e, student)}
+      >
+        {student.last_name} {student.first_name}
+      </td>
+      {subjects.map(subject => {
+        const sem1Total = calculateSemesterTotal(subject.id, 1);
+        const sem2Total = calculateSemesterTotal(subject.id, 2);
+        const hasExam1 = subject.max_exam1 > 0;
+        const hasExam2 = subject.max_exam2 > 0;
+
+        return (
+          <React.Fragment key={subject.id}>
+            {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'P1')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P1"
+                maxValue={subject.max_p1}
+                locked={lockedPeriods.has('P1')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} 
+              />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'P2')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P2"
+                maxValue={subject.max_p2}
+                locked={lockedPeriods.has('P2')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} 
+              />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'EXAM1')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="EXAM1"
+                isExam disabled={!hasExam1}
+                maxValue={subject.max_exam1}
+                locked={lockedPeriods.has('EXAM1')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
+              />
+            )}
+            {focusedPeriod === 'all' && (
+              <td className="px-2 py-3 text-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-r-2 border-slate-400 dark:border-slate-500">
+                {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
+              </td>
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'P3')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P3"
+                maxValue={subject.max_p3}
+                locked={lockedPeriods.has('P3')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} 
+              />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'P4')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="P4"
+                maxValue={subject.max_p4}
+                locked={lockedPeriods.has('P4')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} 
+              />
+            )}
+            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+              <GradeCell 
+                value={getGrade(subject.id, 'EXAM2')} 
+                studentIdx={idx}
+                subjectId={subject.id}
+                period="EXAM2"
+                isExam disabled={!hasExam2}
+                maxValue={subject.max_exam2}
+                locked={lockedPeriods.has('EXAM2')}
+                onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
+              />
+            )}
+            {focusedPeriod === 'all' && (
+              <td className="px-2 py-3 text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-r-2 border-slate-400 dark:border-slate-500">
+                {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
+              </td>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </tr>
+  );
+});
+
+const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = false, disabled = false, maxValue = 0, locked = false, onChange }: { 
+  value: number | null; 
+  studentIdx: number;
+  subjectId: number;
+  period: string;
+  isExam?: boolean; 
+  disabled?: boolean;
+  maxValue?: number;
+  locked?: boolean;
+  onChange: (val: number | null) => void 
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value?.toString() || '');
+  const [showSaved, setShowSaved] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const tdRef = useRef<HTMLTableCellElement>(null);
+
+  // Synchroniser la valeur affichée quand la prop change
+  useEffect(() => {
+    setEditValue(value?.toString() || '');
+  }, [value]);
+
+  // Focus et sélection automatique à l'ouverture du mode édition
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Fonction utilitaire pour naviguer vers une cellule adjacente
+  const navigateTo = (nextStudentIdx: number, nextSubjectId: number, nextPeriod: string) => {
+    setTimeout(() => {
+      const nextCell = document.querySelector(
+        `[data-student-idx="${nextStudentIdx}"][data-subject-id="${nextSubjectId}"][data-period="${nextPeriod}"]`
+      ) as HTMLElement;
+      if (nextCell) {
+        nextCell.click();
+      }
+    }, 30);
+  };
+
+  // Trouver la cellule voisine (ArrowLeft / ArrowRight)
+  const findSiblingCell = (direction: 'next' | 'prev') => {
+    const allCells = Array.from(document.querySelectorAll(
+      `[data-student-idx="${studentIdx}"][data-period]`
+    )) as HTMLElement[];
+    const currentIndex = allCells.findIndex(
+      c => c.dataset.subjectId === String(subjectId) && c.dataset.period === period
+    );
+    if (currentIndex === -1) return null;
+    const targetIdx = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    return allCells[targetIdx] || null;
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    const finalValue = editValue.trim();
+
+    if (finalValue === '') {
+      // Champ vidé → supprimer la note
+      if (value !== null) {
+        onChange(null);
+        flashSaved();
+      }
+    } else if (finalValue === '0') {
+      // "0" seul = probablement involontaire
+      if (value !== null) {
+        onChange(null);
+      }
+      setEditValue('');
+    } else {
+      // "00" = vrai zéro intentionnel
+      const num = finalValue === '00' ? 0 : parseFloat(finalValue);
+      if (!isNaN(num) && num >= 0) {
+        if (num !== value) {
+          onChange(num);
+          flashSaved();
+        }
+      } else {
+        setEditValue(value?.toString() || '');
+      }
+    }
+  };
+
+  // Petit flash vert "✓" après sauvegarde
+  const flashSaved = () => {
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 800);
+  };
+
+  // Filtrer les caractères autorisés
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
+      setEditValue(raw);
+    }
+  };
+
+  // Gestion clavier enrichie : Enter, Tab, Shift+Tab, flèches, Escape
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBlur();
+      // Descendre d'une ligne (même colonne)
+      navigateTo(studentIdx + 1, subjectId, period);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      handleBlur();
+      // Flèche droite = cellule suivante (même ligne)
+      const sibling = findSiblingCell('next');
+      if (sibling) {
+        setTimeout(() => sibling.click(), 30);
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      handleBlur();
+      // Flèche gauche = cellule précédente (même ligne)
+      const sibling = findSiblingCell('prev');
+      if (sibling) {
+        setTimeout(() => sibling.click(), 30);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      handleBlur();
+      navigateTo(studentIdx + 1, subjectId, period);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      handleBlur();
+      navigateTo(studentIdx - 1, subjectId, period);
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditValue(value?.toString() || '');
+    }
+  };
+
+  // Saisie directe : si la cellule est focusable et qu'on tape un chiffre, entrer en édition
+  const handleCellKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled || locked || isEditing) return;
+    // Un chiffre ou un point → entrer en mode édition avec ce caractère
+    if (/^[0-9.]$/.test(e.key)) {
+      e.preventDefault();
+      setEditValue(e.key);
+      setIsEditing(true);
+    }
+    // Supprimer/Backspace → effacer la note
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      if (value !== null) {
+        onChange(null);
+        flashSaved();
+      }
+    }
+  };
+
+  // Copier-coller : intercepte Ctrl+V sur la cellule (géré au niveau parent aussi)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (disabled || locked) return;
+    e.preventDefault();
+    const text = e.clipboardData.getData('text').trim();
+    const num = parseFloat(text);
+    if (!isNaN(num) && num >= 0) {
+      onChange(num);
+      flashSaved();
+    }
+  };
+
+  // Calcul du pourcentage pour la coloration conditionnelle
+  const percentage = (value !== null && maxValue > 0) ? (value / maxValue) * 100 : null;
+  // Classe CSS conditionnelle basée sur le % de la note
+  const conditionalColorClass = percentage !== null
+    ? percentage < 50
+      ? 'text-red-600 dark:text-red-400'       // < 50% = insuffisant
+      : percentage >= 80
+        ? 'text-emerald-600 dark:text-emerald-400' // ≥ 80% = excellent
+        : ''                                      // entre 50-80% = normal
+    : '';
+
+  return (
+    <td 
+      ref={tdRef}
+      data-student-idx={studentIdx}
+      data-subject-id={subjectId}
+      data-period={period}
+      tabIndex={disabled || locked ? -1 : 0}
+      className={`relative px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 transition-colors duration-150 outline-none focus:ring-2 focus:ring-blue-400/50 focus:ring-inset ${
+        disabled
+          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
+          : locked
+            ? 'bg-amber-50/50 dark:bg-amber-900/10 text-slate-500 cursor-not-allowed'
+            : isEditing
+              ? 'bg-blue-50 dark:bg-blue-900/40'
+              : `cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/30 ${conditionalColorClass || 'text-slate-700 dark:text-slate-300'} ${isExam ? 'bg-slate-50 dark:bg-slate-800/50 font-medium' : ''}`
+      }`}
+      onClick={() => !disabled && !locked && !isEditing && setIsEditing(true)}
+      onKeyDown={handleCellKeyDown}
+      onPaste={handlePaste}
+      title={disabled ? "Pas d'examen pour ce cours" : locked ? "Période verrouillée" : ''}
+    >
+      {/* Texte affiché (toujours présent pour maintenir la taille) */}
+      <span className={`${isEditing && !disabled ? 'invisible' : ''} ${conditionalColorClass}`}>
+        {disabled ? 'N/A' : (value !== null ? value : '-')}
+      </span>
+
+      {/* Flash vert "sauvé" */}
+      {showSaved && (
+        <span className="absolute inset-0 flex items-center justify-center text-emerald-500 text-xs font-bold animate-in fade-in zoom-in duration-200">
+          ✓
+        </span>
+      )}
+
+      {/* Input en overlay */}
+      {isEditing && !disabled && !locked && (
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="decimal"
+          className="absolute inset-0 w-full h-full text-center outline-none bg-transparent font-medium text-slate-800 dark:text-white caret-blue-500"
+          value={editValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          autoComplete="off"
+        />
+      )}
+    </td>
+  );
+});

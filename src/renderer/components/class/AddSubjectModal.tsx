@@ -1,0 +1,694 @@
+import React, { useState, useEffect, useActionState } from 'react';
+import { dbService } from '../../services/databaseService';
+import { useFormStatus } from 'react-dom';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check } from '../iconsSvg';
+import { classService } from '../../services/classService';
+import { domainService, Domain } from '../../services/domainService';
+import { useToast } from '../../context/ToastContext';
+import SubjectCatalog from './SubjectCatalog';
+
+interface Subject {
+  id: number;
+  name: string;
+  code: string;
+  max_p1: number;
+  max_p2: number;
+  max_exam1: number;
+  max_p3: number;
+  max_p4: number;
+  max_exam2: number;
+  domain_id?: number;
+  sub_domain?: string;
+  category?: string;
+}
+
+interface AddSubjectModalProps {
+  classId: number;
+  classLevel: string;
+  subjects: Subject[];
+  onClose: () => void;
+  onSuccess: () => void;
+  editingSubject?: Subject | null;
+  onSelectSubject?: (subject: Subject) => void;
+}
+
+export default function AddSubjectModal({ classId, classLevel, subjects, onClose, onSuccess, editingSubject, onSelectSubject }: AddSubjectModalProps) {
+  // Check if this is a primary class (7ème or 8ème) to show domain selection
+  const isPrimaryClass = classLevel === '7ème' || classLevel === '8ème';
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [subDomain, setSubDomain] = useState('');
+  const toast = useToast();
+  
+  // ÉTATS POUR LES MAXIMA
+  const [maxPeriod, setMaxPeriod] = useState('10');
+  const [maxExam, setMaxExam] = useState('20');  // Un seul champ pour les deux examens
+  
+  const [loading, setLoading] = useState(false);
+
+  // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre
+  // Par défaut on affiche le catalogue sauf si on est en mode édition
+  const [activeTab, setActiveTab] = useState<'catalog' | 'manual'>(editingSubject ? 'manual' : 'catalog');
+  
+  // Domain-related state
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
+  const [showDomainCreate, setShowDomainCreate] = useState(false);
+  const [newDomainName, setNewDomainName] = useState('');
+
+  // LOGIQUE SPÉCIALE POUR LES COURS À 100 POINTS :
+  // Si maxPeriod = 100, alors c'est un cours en évaluation continue
+  // sans examen (max_exam = 0 et champs désactivés)
+  const is100PointCourse = Number(maxPeriod) === 100;
+
+  useEffect(() => {
+    loadDomains();
+  }, []);
+
+  // If editingSubject is provided, prefill the form
+  useEffect(() => {
+    if (editingSubject) {
+      setName(editingSubject.name || '');
+      setCode(editingSubject.code || '');
+      setSubDomain(editingSubject.sub_domain || '');
+      setMaxPeriod(String(editingSubject.max_p1 ?? '10'));
+      // assume exam1 and exam2 are same
+      setMaxExam(String(editingSubject.max_exam1 ?? '20'));
+      setSelectedDomainId(editingSubject.domain_id ?? null);
+    }
+  }, [editingSubject]);
+
+  // EFFET : Mise à jour automatique des examens quand la période change
+  // Si période = 100 → examen = 0 (bloqué)
+  // Sinon → examen = période * 2 (suggéré, mais modifiable)
+  useEffect(() => {
+    const pMax = Number(maxPeriod);
+    if (pMax === 100) {
+      // CAS SPÉCIAL : Évaluation continue, pas d'examen
+      setMaxExam('0');
+    } else {
+      // CAS NORMAL : Suggestion du double de la période
+      // L'utilisateur peut toujours modifier cette valeur
+      setMaxExam((pMax * 2).toString());
+    }
+  }, [maxPeriod]);
+
+  const loadDomains = async () => {
+    try {
+      const allDomains = await domainService.getAllDomains();
+      setDomains(allDomains);
+    } catch (error) {
+      console.error('Failed to load domains:', error);
+    }
+  };
+
+  const handleCreateDomain = async () => {
+    if (!newDomainName.trim()) return;
+
+    try {
+      const newId = await domainService.createDomain(newDomainName.trim());
+      await loadDomains();
+      setSelectedDomainId(newId);
+      setNewDomainName('');
+      setShowDomainCreate(false);
+      toast.success('Domaine créé avec succès');
+    } catch (error) {
+      console.error('Failed to create domain:', error);
+      toast.error('Erreur lors de la création du domaine');
+    }
+  };
+
+  /**
+   * GESTION DE LA SOUMISSION DU FORMULAIRE
+   * 
+   * Un seul maxima d'examen est utilisé pour les deux semestres
+   */
+  // React 19 Action for subject saving
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
+    try {
+      const sName = formData.get('name') as string;
+      const sCode = formData.get('code') as string;
+      const sSubDomain = formData.get('sub_domain') as string;
+      const pMax = Number(formData.get('max_period'));
+      
+      // RÉCUPÉRATION DU MAXIMA D'EXAMEN :
+      // Si période = 100 : forcer exam = 0 (sécurité)
+      const examMax = pMax === 100 ? 0 : Number(formData.get('max_exam'));
+
+      if (editingSubject) {
+        await dbService.execute(
+          'UPDATE subjects SET name = ?, code = ?, sub_domain = ?, max_p1 = ?, max_p2 = ?, max_exam1 = ?, max_p3 = ?, max_p4 = ?, max_exam2 = ?, domain_id = ? WHERE id = ?',
+          [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
+        );
+      } else {
+        await dbService.execute(
+          'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
+        );
+      }
+      
+      // RÉINITIALISATION DU FORMULAIRE :
+      setName('');
+      setCode('');
+      setSubDomain('');
+      setMaxPeriod('10');
+      setMaxExam('20');
+      setSelectedDomainId(null);
+      
+      toast.success(editingSubject ? 'Matière mise à jour' : 'Matière ajoutée avec succès');
+      onSuccess();
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to save subject:', error);
+      toast.error('Erreur lors de l\'enregistrement de la matière');
+      return { success: false };
+    }
+  }, null);
+
+  const handleDelete = async (subjectId: number) => {
+    // Confirmation via modal personnalisé au lieu du confirm() du navigateur
+    const confirmed = await toast.confirm({
+      title: 'Supprimer la matière',
+      message: 'Toutes les notes associées seront perdues. Cette action est irréversible.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
+    
+    try {
+      await dbService.execute('DELETE FROM subjects WHERE id = ?', [subjectId]);
+      
+      onSuccess();
+      toast.success('Matière supprimée');
+    } catch (error) {
+      console.error('Failed to delete subject:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  // ── Système de réorganisation par clic ──
+  // Double-clic sur l'icône ≡ → sélection (gros visuel orange)
+  // Puis clic sur une autre matière → déplacement à cette position
+  const [movingId, setMovingId] = React.useState<number | null>(null);
+
+  // Quand on clique sur une matière alors qu'une autre est en cours de déplacement
+  const handleReorderClick = async (targetId: number) => {
+    // Si rien n'est sélectionné, ignorer (le clic normal d'édition s'applique)
+    if (movingId === null) return;
+    // Clic sur la même → annuler la sélection
+    if (movingId === targetId) {
+      setMovingId(null);
+      return;
+    }
+    // Déplacer movingId à la position de targetId
+    const ids = subjects.map(s => s.id);
+    const fromIdx = ids.indexOf(movingId);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) { setMovingId(null); return; }
+    ids.splice(fromIdx, 1);
+    ids.splice(toIdx, 0, movingId);
+    try {
+      await classService.reorderSubjects(ids);
+      toast.success('Ordre mis à jour');
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur réorganisation:', error);
+      toast.error('Erreur lors de la réorganisation');
+    }
+    setMovingId(null);
+  };
+
+  // ── Mode suppression multiple ──
+  const [multiDeleteMode, setMultiDeleteMode] = React.useState(false);
+  const [deletingIds, setDeletingIds] = React.useState<Set<number>>(new Set());
+
+  // Toggle sélection d'un cours pour suppression
+  const toggleDeleteId = (id: number) => {
+    setDeletingIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Supprimer tous les cours sélectionnés
+  const handleMultiDelete = async () => {
+    if (deletingIds.size === 0) return;
+    try {
+      for (const id of deletingIds) {
+        await dbService.execute('DELETE FROM subjects WHERE id = ?', [id]);
+        await dbService.execute('DELETE FROM grades WHERE subject_id = ?', [id]);
+      }
+      toast.success(`${deletingIds.size} matière${deletingIds.size > 1 ? 's' : ''} supprimée${deletingIds.size > 1 ? 's' : ''}`);
+      setDeletingIds(new Set());
+      setMultiDeleteMode(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur suppression multiple:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/5 w-full max-w-3xl transform scale-100 animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+        
+        {/* Header section with blue gradient */}
+        <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden transition-colors duration-500 shrink-0">
+            <div className="absolute top-0 right-0 p-8 text-white/5 rotate-12">
+                <BookOpen size={120} />
+            </div>
+            
+            <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                    <div className="bg-white/20 dark:bg-blue-600/30 p-3 rounded-2xl shadow-xl backdrop-blur-md rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <BookOpen size={24} className="text-white dark:text-blue-400" />
+                    </div>
+                    <div>
+                        <p className="text-blue-100 dark:text-blue-400/60 font-black uppercase tracking-[0.2em] text-[9px] mb-1">Portail de gestion</p>
+                        <h2 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">
+                            Gérer les <span className="text-blue-200 dark:text-blue-500">matières</span>
+                        </h2>
+                    </div>
+                </div>
+                <button 
+                    onClick={onClose} 
+                    className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl backdrop-blur-md transition-all active:scale-95"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Form Section (3/5) — avec onglets Catalogue / Manuel */}
+            <div className="lg:col-span-3 space-y-4">
+              {/* Onglets Catalogue / Manuel */}
+              {!editingSubject && (
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('catalog')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'catalog'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Layers size={14} />
+                    Catalogue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('manual')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'manual'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Plus size={14} />
+                    Saisie manuelle
+                  </button>
+                </div>
+              )}
+
+              {/* Titre de section : mode édition */}
+              {editingSubject && (
+                <div className="flex items-center gap-3 px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                    Modifier la matière
+                  </h3>
+                </div>
+              )}
+
+              {/* CONTENU : Catalogue ou Manuel */}
+              {activeTab === 'catalog' && !editingSubject ? (
+                <SubjectCatalog
+                  classId={classId}
+                  classLevel={classLevel}
+                  existingSubjectNames={subjects.map(s => s.name)}
+                  onSuccess={onSuccess}
+                />
+              ) : (
+                <>
+                  {!editingSubject && (
+                    <div className="flex items-center gap-3 px-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                      <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                        Nouvelle Matière
+                      </h3>
+                    </div>
+                  )}
+
+              <form action={formAction} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Nom de la matière</label>
+                        <input
+                            name="name"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                            placeholder="Ex: Mathématiques"
+                            required
+                        />
+                    </div>
+                    {/* Code disponible pour toutes les classes (y compris éducation de base) */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
+                        <input
+                            name="code"
+                            type="text"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                            placeholder="Ex: MATH"
+                        />
+                    </div>
+                </div>
+                
+                {isPrimaryClass && (
+                    <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-white/5">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Domaine d'apprentissage</label>
+                            {!showDomainCreate ? (
+                                <div className="flex gap-3">
+                                    <select
+                                        value={selectedDomainId ?? ''}
+                                        onChange={(e) => setSelectedDomainId(e.target.value ? Number(e.target.value) : null)}
+                                        className="flex-1 px-6 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all appearance-none"
+                                    >
+                                        <option value="">Aucun domaine</option>
+                                        {domains.map(domain => (
+                                            <option key={domain.id} value={domain.id}>{domain.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/5 animate-in fade-in slide-in-from-top-2">
+                                    <input
+                                        type="text"
+                                        value={newDomainName}
+                                        onChange={(e) => setNewDomainName(e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold outline-none"
+                                        placeholder="Nom du nouveau domaine"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleCreateDomain}
+                                            className="flex-1 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors"
+                                        >
+                                            Créer
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowDomainCreate(false);
+                                                setNewDomainName('');
+                                            }}
+                                            className="flex-1 py-2 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                                        >
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Sous-Domaine (Optionnel)</label>
+                            <input
+                                name="sub_domain"
+                                type="text"
+                                value={subDomain}
+                                onChange={(e) => setSubDomain(e.target.value)}
+                                className="w-full px-6 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                                placeholder="Ex: Algèbre"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                <div className="bg-slate-50/50 dark:bg-slate-900/30 p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-inner space-y-4">
+                    <div className="flex items-center gap-2 px-1">
+                        <BookOpen size={12} className="text-blue-500" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Configuration des Maxima</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Maxima Période</label>
+                            <input
+                                name="max_period"
+                                type="number"
+                                value={maxPeriod}
+                                onChange={(e) => setMaxPeriod(e.target.value)}
+                                className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm"
+                                min="1"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Maxima Examen</label>
+                            <input
+                                name="max_exam"
+                                type="number"
+                                value={maxExam}
+                                onChange={(e) => setMaxExam(e.target.value)}
+                                disabled={is100PointCourse}
+                                className={`w-full px-4 py-2 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm ${
+                                    is100PointCourse 
+                                        ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-white/5 cursor-not-allowed' 
+                                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-white/5'
+                                }`}
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    <div className={`p-3 rounded-xl border transition-all duration-500 flex items-center justify-between ${is100PointCourse ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' : 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20'}`}>
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Semestriel</p>
+                            <p className={`text-lg font-black ${is100PointCourse ? 'text-amber-600' : 'text-blue-600 dark:text-blue-400'}`}>
+                                {Number(maxPeriod) * 2 + Number(maxExam)} <span className="text-[9px] uppercase">pts</span>
+                            </p>
+                        </div>
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 text-right max-w-[120px]">
+                            {is100PointCourse 
+                                ? "Évaluation continue (sans examen)"
+                                : `Calcul: ${maxPeriod} + ${maxPeriod} + ${maxExam}`}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <SubmitButton editingSubject={editingSubject} />
+                  {editingSubject && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(editingSubject.id)}
+                      className="p-5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-900/20 hover:bg-red-100 transition-colors active:scale-95"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                </div>
+              </form>
+              </>
+              )}
+            </div>
+
+            {/* List Section (2/5) */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                    <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Matières existantes</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Bouton pour activer/désactiver le mode suppression multiple */}
+                  <button
+                    onClick={() => {
+                      setMultiDeleteMode(!multiDeleteMode);
+                      setDeletingIds(new Set());
+                      setMovingId(null);
+                    }}
+                    className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all ${
+                      multiDeleteMode
+                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-slate-100 text-slate-500 hover:text-red-500 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    {multiDeleteMode ? 'Annuler' : 'Sélectionner'}
+                  </button>
+                  {/* Bouton supprimer la sélection */}
+                  {multiDeleteMode && deletingIds.size > 0 && (
+                    <button
+                      onClick={handleMultiDelete}
+                      className="text-[9px] font-black px-2 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all flex items-center gap-1"
+                    >
+                      <Trash2 size={10} />
+                      Supprimer ({deletingIds.size})
+                    </button>
+                  )}
+                  <span className="bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400">{subjects.length}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                {subjects.length === 0 ? (
+                  <div className="py-10 text-center space-y-2">
+                    <BookOpen size={32} className="mx-auto text-slate-200" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune matière configurée</p>
+                  </div>
+                ) : (
+                  subjects.map(subject => {
+                    const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
+                    const isActive = editingSubject?.id === subject.id;
+                    return (
+                      <div
+                        key={subject.id}
+                        onClick={() => {
+                          // Mode suppression multiple : toggle la sélection
+                          if (multiDeleteMode) {
+                            toggleDeleteId(subject.id);
+                            return;
+                          }
+                          // Mode réorganisation : placer la matière
+                          if (movingId !== null) {
+                            handleReorderClick(subject.id);
+                            return;
+                          }
+                          // Mode normal : ouvrir l'édition
+                          onSelectSubject?.(subject);
+                        }}
+                        className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+                            multiDeleteMode && deletingIds.has(subject.id)
+                                ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
+                                : movingId === subject.id
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 scale-[1.02] shadow-lg shadow-blue-200/30'
+                                    : movingId !== null
+                                        ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 border-dashed hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400'
+                                        : isActive 
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                                            : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+                        }`}
+                      >
+                        {isActive && !multiDeleteMode && (
+                            <div className="absolute top-0 right-0 p-4 opacity-20 rotate-12">
+                                <BookOpen size={64} />
+                            </div>
+                        )}
+                        
+                        <div className="relative z-10 flex items-center gap-3">
+                            {/* Checkbox visible en mode multiDelete */}
+                            {multiDeleteMode && (
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                                deletingIds.has(subject.id)
+                                  ? 'bg-red-500 border-red-500 text-white'
+                                  : 'border-slate-300 dark:border-slate-600'
+                              }`}>
+                                {deletingIds.has(subject.id) && <Check size={12} />}
+                              </div>
+                            )}
+                            
+                            <div className="space-y-1 flex-1">
+                                <p className={`font-black tracking-tight ${isActive && !multiDeleteMode ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>{subject.name}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
+                                        {subject.code || (isPrimaryClass ? 'PRIMAIRE' : 'NULL')}
+                                    </span>
+                                    <span className={`text-[9px] font-bold ${isActive ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                                        P:{subject.max_p1} • E:{subject.max_exam1}
+                                    </span>
+                                </div>
+                                {domain && (
+                                    <div className="flex flex-col gap-0.5">
+                                        <p className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-blue-200' : 'text-blue-500 select-none'}`}>
+                                            {domain.name}
+                                        </p>
+                                        {subject.sub_domain && (
+                                            <p className={`text-[8px] font-bold ${isActive ? 'text-blue-300' : 'text-slate-400'}`}>
+                                                ↳ {subject.sub_domain}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Bouton de réorganisation + suppression */}
+                            <div className="flex items-center gap-1">
+                                {/* Indicateur si c'est l'élément sélectionné pour déplacement */}
+                                {movingId === subject.id && (
+                                    <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest animate-pulse mr-1">Déplacer...</span>
+                                )}
+                                {/* Indicateur "déposer ici" si un autre élément est en déplacement */}
+                                {movingId !== null && movingId !== subject.id && (
+                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mr-1">→ Ici</span>
+                                )}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Double-clic ou clic sur l'icône = sélectionner/désélectionner pour déplacement
+                                        setMovingId(prev => prev === subject.id ? null : subject.id);
+                                    }}
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                        movingId === subject.id
+                                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
+                                            : isActive 
+                                                ? 'text-white/40 hover:text-white/70 hover:bg-white/10' 
+                                                : 'text-slate-200 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    }`}
+                                    title="Cliquer pour réorganiser"
+                                >
+                                    <GripVertical size={16} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
+                                    className={`p-2 rounded-xl transition-all ${
+                                        isActive 
+                                            ? 'hover:bg-white/10 text-white' 
+                                            : 'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                    }`}
+                                    title="Supprimer"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+/**
+ * Bouton de soumission avec useFormStatus
+ */
+function SubmitButton({ editingSubject }: { editingSubject: Subject | null | undefined }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+    >
+      {pending && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+      {pending ? 'Enregistrement...' : (editingSubject ? 'Enregistrer' : 'Ajouter la matière')}
+    </button>
+  );
+}

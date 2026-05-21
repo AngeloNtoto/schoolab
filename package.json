@@ -1,0 +1,68 @@
+{
+  "name": "schoolab",
+  "productName": "Schoolab",
+  "version": "1.4.13",
+  "type": "module",
+  "description": "Schoolab est la première application qui vous permet de gerer votre école de manière efficace et permettant d'éviter les erreurs survenant lors du calcul des notes et des bulletins.",
+  "displayName": "Schoolab",
+  "icon": "./assets/icon.ico",
+  "scripts": {
+    "start": "tauri dev",
+    "dev": "pnpm build:mobile && vite",
+    "build": "pnpm build:mobile && vite build",
+    "build:mobile": "vite build src/web-ui",
+    "lint": "eslint --ext .ts,.tsx .",
+    "preview": "vite preview"
+  },
+  "executableName": "schoolab",
+  "keywords": [],
+  "year": "2026",
+  "author": {
+    "name": "Angelo",
+    "email": "Angelontoto7@gmail.com",
+    "phone": "+243810396812"
+  },
+  "release": {
+    "github": {
+      "owner": "schoolab",
+      "repo": "schoolab"
+    }
+  },
+  "license": "proprietary",
+  "preview": true,
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "@tauri-apps/cli": "^2.9.6",
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "clsx": "^2.1.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-import": "^2.32.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.0.0",
+    "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-log": "^2.8.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-sql": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "fflate": "^0.8.2",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6",
+    "react-to-print": "^3.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
