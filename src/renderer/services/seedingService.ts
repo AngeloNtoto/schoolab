@@ -26,6 +26,9 @@ export const seedingService = {
 
     if (!activeYear) throw new Error('Could not find or create an active academic year');
 
+    // Tableau temporaire pour collecter toutes les cotes à insérer
+    const allGradesToInsert: { studentId: number; subjectId: number; period: string; value: number }[] = [];
+
     // 2. Generate 15 classes
     for (let c = 1; c <= 15; c++) {
       const levelNum = (c % 8) + 1;
@@ -56,7 +59,7 @@ export const seedingService = {
           code: s.code,
           max_p1: s.max,
           max_p2: s.max,
-          max_exam1: s.max * 2, // General exam rule
+          max_exam1: s.max * 2, // Règle générale d'examen
           max_p3: s.max,
           max_p4: s.max,
           max_exam2: s.max * 2,
@@ -75,7 +78,7 @@ export const seedingService = {
         let lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
         let fullName = `${firstName} ${lastName}`;
 
-        // Ensure uniqueness within the class
+        // Garantir l'unicité des noms au sein de la classe
         let attempts = 0;
         while (usedNames.has(fullName) && attempts < 100) {
           firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
@@ -99,7 +102,7 @@ export const seedingService = {
       }
 
       // 5. Populate grades based on requested patterns
-      // Patterns: 1=Only P1, 2=First Semester, 3=Full Year, others=Random
+      // Modèles: 1=Seulement P1, 2=Premier Semestre, 3=Année Complète, autres=Aléatoire
       let pattern: 'P1_ONLY' | 'SEM1_ONLY' | 'FULL_YEAR' | 'RANDOM';
       
       if (c === 1) pattern = 'P1_ONLY';
@@ -124,17 +127,39 @@ export const seedingService = {
             } else if (pattern === 'FULL_YEAR') {
               shouldPopulate = true;
             } else {
-              // Random pattern: maybe some periods, maybe not
+              // Modèle aléatoire
               shouldPopulate = Math.random() > 0.4;
             }
 
             if (shouldPopulate) {
               const max = period.includes('EXAM') ? baseMax * 2 : baseMax;
               const value = Math.floor(Math.random() * (max + 1));
-              await gradeService.updateGrade(studentId, subjectId, period, value);
+              
+              // On pousse dans le tableau temporaire pour insertion groupée ultérieure
+              allGradesToInsert.push({ studentId, subjectId, period, value });
             }
           }
         }
+      }
+    }
+
+    // 6. Insertion groupée (Batch Insert) pour une vitesse d'exécution fulgurante et éviter le verrouillage SQLite
+    if (allGradesToInsert.length > 0) {
+      console.log(`Insertion groupée de ${allGradesToInsert.length} cotes en cours...`);
+      const batchSize = 150; // Nombre raisonnable pour éviter d'excéder la limite de 999 paramètres d'expression SQLite
+      for (let i = 0; i < allGradesToInsert.length; i += batchSize) {
+        const chunk = allGradesToInsert.slice(i, i + batchSize);
+        
+        // Génération des points d'interrogation (?, ?, ?, ?, 1, (datetime('now'))) pour chaque enregistrement du chunk
+        const placeholders = chunk.map(() => '(?, ?, ?, ?, 1, (datetime(\'now\')))').join(', ');
+        const sql = `INSERT OR REPLACE INTO grades (student_id, subject_id, period, value, is_dirty, last_modified_at) VALUES ${placeholders}`;
+        
+        const params: any[] = [];
+        chunk.forEach(g => {
+          params.push(g.studentId, g.subjectId, g.period, g.value);
+        });
+        
+        await dbService.execute(sql, params);
       }
     }
 
