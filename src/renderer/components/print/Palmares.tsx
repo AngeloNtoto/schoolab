@@ -93,7 +93,7 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
   // En cas d'abandon de l'élève
   if (student.is_abandoned) {
     return (
-      <span className="text-red-700 font-bold text-[9px] uppercase">
+      <span className="inline-block bg-red-50 text-red-700 font-bold text-[8.5px] uppercase border border-red-200 px-1 py-0.5 rounded">
         Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
       </span>
     );
@@ -104,17 +104,24 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
     return null;
   }
 
-  // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous la forme "Code points/maxPoints"
+  // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous forme de badges discrets sur fond rouge clair
   if (rankedStudent.category === 2) {
-    const failures = rankedStudent.subjectDetails
-      .filter((s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50)
-      .map((s: any) => `${s.subjectCode || s.subjectName} ${Math.round(s.points)}/${s.maxPoints}`)
-      .join(', ');
+    const failedDetails = rankedStudent.subjectDetails.filter(
+      (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
+    );
 
-    return <span className="text-black font-medium text-[9px]">{failures}</span>;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {failedDetails.map((s, idx) => (
+          <span key={idx} className="inline-block bg-red-100/90 text-red-900 border border-red-300 px-1 py-0.5 rounded text-[8.5px] font-bold">
+            {s.subjectCode || s.subjectName} {Math.round(s.points)}/{s.maxPoints}
+          </span>
+        ))}
+      </div>
+    );
   }
 
-  // Catégorie 4 (Non classés) : On affiche à la fois les manques de côtes (Code en gras/bold) et les échecs (Code points/maxPoints en normal)
+  // Catégorie 4 (Non classés) : Affiche des badges distincts pour les manques (gris) et les échecs (rouge clair)
   if (rankedStudent.category === 4) {
     const elements: React.ReactNode[] = [];
 
@@ -124,17 +131,17 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       const isMissing = rankedStudent.missingSubjects.includes(detail.subjectCode || detail.subjectName);
       
       if (isMissing) {
-        // Le cours est en manque de côte : affichage en gras (font-extrabold) pour bien ressortir
+        // Côte manquante : fond gris neutre et texte ultra gras
         elements.push(
-          <span key={i} className="font-extrabold text-black uppercase">
+          <span key={i} className="inline-block bg-slate-100 text-black border border-slate-300 px-1 py-0.5 rounded text-[8.5px] font-extrabold uppercase">
             {detail.subjectCode || detail.subjectName}
           </span>
         );
       } else {
-        // Le cours est en échec : affichage standard avec la note et son maximum
+        // Échec : fond rouge clair très lisible
         if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
           elements.push(
-            <span key={i} className="font-normal text-slate-700">
+            <span key={i} className="inline-block bg-red-100/90 text-red-900 border border-red-300 px-1 py-0.5 rounded text-[8.5px] font-bold">
               {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
             </span>
           );
@@ -142,16 +149,7 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       }
     }
 
-    // Reconstruction avec des virgules de séparation entre les éléments
-    const joinedElements: React.ReactNode[] = [];
-    elements.forEach((el, idx) => {
-      joinedElements.push(el);
-      if (idx < elements.length - 1) {
-        joinedElements.push(<span key={`comma-${idx}`}>, </span>);
-      }
-    });
-
-    return <span className="text-black text-[9px]">{joinedElements}</span>;
+    return <div className="flex flex-wrap gap-1">{elements}</div>;
   }
 
   return null;
@@ -572,5 +570,4 @@ export default function Palmares({
       </div>
     </div>
   );
-}
 }
