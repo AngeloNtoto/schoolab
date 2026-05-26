@@ -302,32 +302,32 @@ export default function SettingsPage() {
       <div className="max-w-6xl mx-auto p-6 md:p-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           
-          {/* Colonne Gauche : Navigation latérale de type macOS Preferences Panel */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-2.5 shadow-sm space-y-1">
+          {/* Colonne Gauche : Navigation latérale fixe de type macOS Preferences Panel */}
+          <div className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-6 lg:self-start">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-3 shadow-sm space-y-1.5">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-left transition-all duration-200 group ${
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all duration-200 group ${
                       isActive
                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/20'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
                     }`}
                   >
                     {/* Icône du bouton avec coloration active dynamique */}
-                    <div className={`p-1.5 rounded-lg transition-colors ${
+                    <div className={`p-2 rounded-lg transition-colors ${
                       isActive 
                         ? 'bg-white/10 text-white' 
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-white dark:group-hover:bg-slate-900'
                     }`}>
-                      <tab.icon size={16} />
+                      <tab.icon size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold tracking-wide">{tab.label}</div>
-                      <div className={`text-[10px] truncate ${isActive ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                      <div className="text-[13px] font-semibold tracking-wide">{tab.label}</div>
+                      <div className={`text-[11px] truncate ${isActive ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>
                         {tab.description}
                       </div>
                     </div>
