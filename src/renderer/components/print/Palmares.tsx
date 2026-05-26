@@ -356,12 +356,19 @@ export default function Palmares({
   };
 
   // Calcul, classement et distribution des élèves au sein des 4 catégories
+  // Critères officiels de délibération :
+  // 1. Admis = ≥50% sans échec
+  // 2. Admis à la 2e session = ≥50% avec ≤5 échecs (branches principales/spécifiques selon le niveau)
+  // 3. Relevable = échec dans la marge (6pts/80, 8pts/160, 10pts/240-300, 12pts/320, 15pts/400-500)
+  // 4. Redouble = ne rentre dans aucune des dispositions ci-dessus
+  // 5. Abandons = élève marqué comme abandonné (is_abandoned)
   const rankedStudents = useMemo(() => {
     const rankings: RankedStudent[] = [];
     let studentsToProcess = [...students];
 
-    // Exclusion facultative des élèves ayant abandonné
-    if (onlyAbandons) {
+    // En mode palmarès final, on ne filtre PAS les abandons car ils sont la catégorie IV
+    // Dans les autres modes, on exclut les abandons si le filtre est activé
+    if (onlyAbandons && palmaresMode !== 'AFTER_SECOND_SESSION') {
       studentsToProcess = studentsToProcess.filter(s => !s.is_abandoned);
     }
 
@@ -372,6 +379,23 @@ export default function Palmares({
     const periodsConfig = getPeriodConfig(selectedPeriod);
 
     for (const student of studentsToProcess) {
+      // Si l'élève est abandonné et qu'on est en mode palmarès final → catégorie 4 directement
+      if (student.is_abandoned && palmaresMode === 'AFTER_SECOND_SESSION') {
+        rankings.push({
+          student,
+          percentage: 0,
+          rank: 0,
+          application: '-',
+          isUnranked: true,
+          category: 4, // Abandons
+          failedSubjects: [],
+          repechageSubjects: [],
+          missingSubjects: [],
+          subjectDetails: [],
+        });
+        continue;
+      }
+
       let totalPoints = 0;
       let totalMaxPoints = 0;
       let hasAllGrades = true;
@@ -436,44 +460,73 @@ export default function Palmares({
         });
       }
 
+      // Application du relèvement automatique pour les modes après délibération et palmarès final (échec unique dans la marge)
+      if (palmaresMode !== 'BEFORE_REPECHAGE' && failedSubjects.length === 1) {
+        const failedDetail = subjectDetails.find(d => d.maxPoints > 0 && (d.points / d.maxPoints) * 100 < 50);
+        if (failedDetail) {
+          const passingScore = failedDetail.maxPoints / 2;
+          const missingPoints = passingScore - failedDetail.points;
+          let margin = 0;
+
+          if (failedDetail.maxPoints <= 80) margin = 6;
+          else if (failedDetail.maxPoints <= 160) margin = 8;
+          else if (failedDetail.maxPoints <= 300) margin = 10;
+          else if (failedDetail.maxPoints <= 320) margin = 12;
+          else margin = 15;
+
+          if (missingPoints <= margin) {
+            // Relèvement automatique conforme aux critères officiels !
+            totalPoints += (passingScore - failedDetail.points);
+            failedDetail.points = passingScore;
+            failedSubjects.pop(); // Retire l'unique échec
+          }
+        }
+      }
+
       // Calcul de la moyenne en pourcentage
       const percentage = hasAllGrades && totalMaxPoints > 0
         ? (totalPoints / totalMaxPoints) * 100
         : 0;
 
-      // Attribution de la catégorie correspondante selon le mode choisi
+      // Attribution de la catégorie selon les critères officiels et le mode choisi
       let category: StudentCategory = 3;
-      if (!hasAllGrades || missingSubjects.length > 0) {
-        category = 4; // Non classé (notes manquantes)
-      } else if (percentage >= 50) {
-        if (palmaresMode === 'AFTER_REPECHAGE') {
-          // Après délibération (1ère session) : si l'élève a plus de 5 échecs restants, il ne peut pas être admis
-          if (failedSubjects.length > 5) {
-            category = 3; // Ont échoué (admis à doubler la classe)
-          } else if (failedSubjects.length === 0) {
-            category = 1; // Réussi sans échecs
-          } else {
-            category = 2; // Réussi avec échecs (tolerable ou admis à la 2ème session)
-          }
-        } else if (palmaresMode === 'AFTER_SECOND_SESSION') {
-          // Après la 2e session : maximum 2 échecs tolérés pour passer dans la classe supérieure, sinon double
-          if (failedSubjects.length > 2) {
-            category = 3; // Ont échoué (redoublent)
-          } else if (failedSubjects.length === 0) {
-            category = 1; // Réussi sans échecs
-          } else {
-            category = 2; // Réussi avec échecs (échecs tolérés)
-          }
+
+      if (palmaresMode === 'AFTER_SECOND_SESSION') {
+        // ---- MODE PALMARES FINAL ----
+        // Notes manquantes = redouble (Cat 3), pas "non classé"
+        if (!hasAllGrades || missingSubjects.length > 0) {
+          category = 3; // Doublent la classe (notes incomplètes)
+        } else if (percentage >= 50 && failedSubjects.length === 0) {
+          category = 1; // Passent en première session (≥50%, 0 échec)
+        } else if (percentage >= 50 && failedSubjects.length > 0 && failedSubjects.length <= 5) {
+          category = 2; // Passent après la 2ème session (≥50%, 1-5 échecs)
         } else {
-          // Mode brut avant délibération
+          category = 3; // Doublent la classe (<50% ou >5 échecs)
+        }
+      } else if (palmaresMode === 'AFTER_REPECHAGE') {
+        // ---- MODE APRES DELIBERATION ----
+        if (!hasAllGrades || missingSubjects.length > 0) {
+          category = 4; // Non classé (notes manquantes)
+        } else if (percentage >= 50) {
           if (failedSubjects.length === 0) {
             category = 1; // Réussi sans échecs
+          } else if (failedSubjects.length <= 5) {
+            category = 2; // Réussi avec échecs (admis à la 2ème session)
           } else {
-            category = 2; // Réussi avec échecs
+            category = 3; // Trop d'échecs → redouble
           }
+        } else {
+          category = 3; // Ont échoué (< 50%)
         }
       } else {
-        category = 3; // Ont échoué (< 50%)
+        // ---- MODE AVANT DELIBERATION ----
+        if (!hasAllGrades || missingSubjects.length > 0) {
+          category = 4; // Non classé (notes manquantes)
+        } else if (percentage >= 50) {
+          category = failedSubjects.length === 0 ? 1 : 2;
+        } else {
+          category = 3; // Ont échoué (< 50%)
+        }
       }
 
       rankings.push({
