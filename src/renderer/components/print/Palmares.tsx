@@ -72,12 +72,20 @@ interface RankedStudent {
   }[];
 }
 
-// Libellés exacts conformes à la mise en page de l'image de référence
+// Libellés pour le palmarès standard (avant/après délibération)
 const CATEGORY_LABELS: Record<StudentCategory, string> = {
   1: 'Ont Réussis sans Echecs',
   2: 'Ont Réussis avec Echecs',
   3: 'Ont Echoués',
   4: 'Non classés',
+};
+
+// Libellés officiels pour le palmarès final (après 2ème session) — conformes au document de référence
+const FINAL_CATEGORY_LABELS: Record<StudentCategory, string> = {
+  1: 'Passent en première session',
+  2: 'Passent après la 2ème session',
+  3: 'Doublent la classe',
+  4: 'Abandons',
 };
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
@@ -211,32 +219,24 @@ const StudentObservation = ({
 
   // -------------------------------------------------------------
   // MODE 3 : PALMARES FINAL APRES DEUXIEME SESSION
+  // Conforme au document officiel : colonne REPECHAGES avec matières + scores
   // -------------------------------------------------------------
   if (palmaresMode === 'AFTER_SECOND_SESSION') {
-    if (rankedStudent.category === 3) {
-      return (
-        <span className="text-red-700 font-bold text-[10px] uppercase">
-          Redouble la classe
-        </span>
-      );
+    // Cat 1 & Cat 3 : pas de détails dans la colonne repêchage
+    if (rankedStudent.category === 1 || rankedStudent.category === 3) {
+      return null;
     }
 
+    // Cat 2 (Passent après la 2ème session) : afficher les matières repêchées avec leurs scores
     if (rankedStudent.category === 2) {
+      // Afficher chaque matière en échec avec son score arrondi (ex: "PHYS 60, TEC.MEC 55")
       const failedDetails = rankedStudent.subjectDetails.filter(
         (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
       );
 
       return (
-        <span className="text-green-700 font-semibold text-[10px] uppercase">
-          Admis (avec {failedDetails.length} échec{failedDetails.length > 1 ? 's' : ''} toléré{failedDetails.length > 1 ? 's' : ''})
-        </span>
-      );
-    }
-
-    if (rankedStudent.category === 1) {
-      return (
-        <span className="text-green-700 font-semibold text-[10px] uppercase">
-          Admis
+        <span className="text-black text-[10px] font-semibold leading-tight">
+          {failedDetails.map((s) => `${s.subjectCode || s.subjectName} ${Math.round((s.points / s.maxPoints) * 100)}`).join(', ')}
         </span>
       );
     }
@@ -528,8 +528,12 @@ export default function Palmares({
   }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages, palmaresMode]);
 
   // Calcul des statistiques d'en-tête conformes au modèle textuel
+  const abandonsCount = students.filter(s => s.is_abandoned).length;
+  const participantsCount = students.length - abandonsCount;
   const stats = {
     total: students.length,
+    participants: participantsCount,
+    abandons: abandonsCount,
     cat1: rankedStudents.filter(r => r.category === 1).length,
     cat2: rankedStudents.filter(r => r.category === 2).length,
     cat3: rankedStudents.filter(r => r.category === 3).length,
@@ -616,39 +620,59 @@ export default function Palmares({
         ref={palmaresRef}
         className="print-container max-w-[210mm] mx-auto bg-white shadow-xl p-6 print:p-2 min-h-[297mm] text-black"
       >
-        {/* En-tête supérieure avec les informations de l'école et des statistiques (Classe et Effectif retirés) */}
-        <div className="flex justify-between items-start mb-4 font-bold text-[12px] text-black border-b border-black/80 pb-2">
-          <div className="space-y-0.5">
-            <p className="uppercase">École: {schoolName}</p>
-            <p className="uppercase">Ville: {schoolCity}</p>
-            {schoolPoBox && <p className="uppercase">Boîte Postale: {schoolPoBox}</p>}
+        {/* En-tête supérieure — adapté selon le mode (standard vs palmarès final) */}
+        {palmaresMode === 'AFTER_SECOND_SESSION' ? (
+          /* En-tête spécifique palmarès final conforme au document officiel */
+          <div className="flex justify-between items-start mb-4 font-bold text-[11px] text-black">
+            <div className="space-y-0.5">
+              <p>Classe : <span className="uppercase">{classInfo.level} {classInfo.option}</span></p>
+              <p>Inscrits : {stats.total}</p>
+              <p>Participants : {stats.participants}</p>
+              <p>Réussites : {stats.passed}</p>
+              <p>Échecs : {stats.failed}</p>
+              <p>Abandons : {stats.abandons}</p>
+            </div>
+            <div className="space-y-0.5 text-right">
+              <p>École: <span className="uppercase">{schoolName}</span></p>
+              <p>Ville: <span className="uppercase">{schoolCity}</span></p>
+            </div>
           </div>
-
-          <div className="space-y-0.5 text-right uppercase">
-            <p>Ont réussis: {stats.passed}</p>
-            <p>Ont échoué: {stats.failed}</p>
-            <p>Non classés: {stats.cat4}</p>
+        ) : (
+          /* En-tête standard pour les modes avant/après délibération */
+          <div className="flex justify-between items-start mb-4 font-bold text-[12px] text-black border-b border-black/80 pb-2">
+            <div className="space-y-0.5">
+              <p className="uppercase">École: {schoolName}</p>
+              <p className="uppercase">Ville: {schoolCity}</p>
+              {schoolPoBox && <p className="uppercase">Boîte Postale: {schoolPoBox}</p>}
+            </div>
+            <div className="space-y-0.5 text-right uppercase">
+              <p>Ont réussis: {stats.passed}</p>
+              <p>Ont échoué: {stats.failed}</p>
+              <p>Non classés: {stats.cat4}</p>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Titre principal centré à l'extérieur pour un rendu très professionnel */}
+        {/* Titre principal centré */}
         <div className="text-center font-black text-[14px] uppercase tracking-wider mb-5 text-black">
           <span className="border-b-2 border-black pb-0.5 px-4 inline-block">
             {palmaresMode === 'BEFORE_REPECHAGE' && 'PALMARÈS AVANT DÉLIBÉRATION'}
             {palmaresMode === 'AFTER_REPECHAGE' && 'PALMARÈS APRÈS DÉLIBÉRATION'}
-            {palmaresMode === 'AFTER_SECOND_SESSION' && 'PALMARÈS FINAL (APRÈS 2e SESSION)'}{' '}
+            {palmaresMode === 'AFTER_SECOND_SESSION' && 'PALMARÈS FINAL'}{' '}
             - {classInfo.name.toUpperCase()} - {selectedPeriod}
           </span>
         </div>
 
-        {/* Structure du tableau simplifiée à 4 colonnes conformément à l'image */}
+        {/* Tableau principal — en-tête de colonne adapté selon le mode */}
         <table className="w-full border-collapse border border-black text-[11px] text-black">
           <thead>
             <tr className="font-bold text-black border border-black">
               <th className="border border-black px-1.5 py-1 w-10 text-center">N°</th>
-              <th className="border border-black px-2.5 py-1 text-left">Nom et PostNom</th>
+              <th className="border border-black px-2.5 py-1 text-left">NOMS ET POST NOMS</th>
               <th className="border border-black px-1.5 py-1 w-12 text-center">%</th>
-              <th className="border border-black px-2.5 py-1 text-left">Observation</th>
+              <th className="border border-black px-2.5 py-1 text-left">
+                {palmaresMode === 'AFTER_SECOND_SESSION' ? 'REPECHAGES' : 'Observation'}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -657,34 +681,44 @@ export default function Palmares({
               const prev = index > 0 ? rankedStudents[index - 1] : null;
               const isNewCat = !prev || prev.category !== rankedStudent.category;
 
-              // Formatage spécifique pour le libellé de catégorie (ex : ajout de count/total pour Cat. 1)
-              const catLabel = rankedStudent.category === 1
-                ? `${CATEGORY_LABELS[1]} ${stats.cat1}/${stats.total}`
-                : CATEGORY_LABELS[rankedStudent.category];
+              // Libellés adaptés au mode : numéros romains + stats pour le palmarès final
+              const isFinalMode = palmaresMode === 'AFTER_SECOND_SESSION';
+              const labels = isFinalMode ? FINAL_CATEGORY_LABELS : CATEGORY_LABELS;
+              const romanNumerals: Record<StudentCategory, string> = { 1: 'I.', 2: 'II.', 3: 'III.', 4: 'IV.' };
+
+              // Calcul du pourcentage pour l'en-tête de catégorie (ex: 15/52 soit 28,8%)
+              const catCount = stats[`cat${rankedStudent.category}` as keyof typeof stats] as number;
+              const catPct = stats.total > 0 ? ((catCount / stats.total) * 100).toFixed(1).replace('.', ',') : '0';
+
+              const catLabel = isFinalMode
+                ? `${romanNumerals[rankedStudent.category]}   ${labels[rankedStudent.category]}  ${catCount}/${stats.total} soit ${catPct} %`
+                : (rankedStudent.category === 1
+                  ? `${CATEGORY_LABELS[1]} ${stats.cat1}/${stats.total}`
+                  : CATEGORY_LABELS[rankedStudent.category]);
 
               return (
                 <React.Fragment key={rankedStudent.student.id}>
                   {isNewCat && (
                     <tr className="bg-white border-y border-black font-bold">
-                      <td colSpan={4} className="border border-black px-2.5 py-1 text-center font-bold text-black text-[11px]">
+                      <td colSpan={4} className={`border border-black px-2.5 py-1 font-bold text-black text-[11px] ${isFinalMode ? 'text-left' : 'text-center'}`}>
                         {catLabel}
                       </td>
                     </tr>
                   )}
                   <tr className="border border-black">
-                    {/* Indexation N° (ex : 1., 2., 3.) */}
+                    {/* Numéro séquentiel (01, 02...) */}
                     <td className="border border-black px-1.5 py-1 text-center font-bold">
-                      {rankedStudent.rank}.
+                      {isFinalMode ? String(rankedStudent.rank).padStart(2, '0') : `${rankedStudent.rank}.`}
                     </td>
                     {/* Nom Complet de l'élève */}
-                    <td className="border border-black px-2.5 py-1 font-bold">
+                    <td className="border border-black px-2.5 py-1 font-bold uppercase">
                       {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
                     </td>
-                    {/* Pourcentage (vide pour la catégorie 4 Non classé d'après le modèle) */}
+                    {/* Pourcentage (vide pour la catégorie 4 Abandons) */}
                     <td className="border border-black px-1.5 py-1 text-center font-bold">
-                      {rankedStudent.category === 4 ? '' : `${Math.round(rankedStudent.percentage)}`}
+                      {rankedStudent.category === 4 ? '' : `${(rankedStudent.percentage).toFixed(1).replace('.', ',')}`}
                     </td>
-                    {/* Colonne Observation personnalisée */}
+                    {/* Colonne Observation / REPECHAGES */}
                     <td className="border border-black px-2.5 py-1">
                       <StudentObservation 
                         rankedStudent={rankedStudent} 
