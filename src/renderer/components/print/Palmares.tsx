@@ -424,78 +424,72 @@ export default function Palmares({
 
   return (
     <div className="bg-slate-100 p-8 print:p-0 print:bg-white">
-      {/* Panneau de configuration supérieur moderne et professionnel (Invisible à l'impression) */}
-      <div className="max-w-[210mm] mx-auto mb-6 bg-white border border-slate-200 shadow-sm rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
-        
-        {/* Section gauche : Bouton de retour et informations de contexte de classe */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <button
-            onClick={onClose}
-            className="flex items-center gap-2 text-slate-700 hover:text-blue-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-all duration-200 font-semibold text-sm cursor-pointer"
-          >
-            <ArrowLeft size={18} />
-            <span>Retour</span>
-          </button>
-          
-          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block"></div>
-          
-          <div className="hidden sm:flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider">
-            <span>Classe : {classInfo.name}</span>
-          </div>
-        </div>
+      {/* Barre d'outils supérieure propre et professionnelle (masquée à l'impression) */}
+      <div className="max-w-[210mm] mx-auto mb-6 bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-3 flex items-center gap-3 print:hidden">
 
-        {/* Section droite : Filtres de sélection et bouton d'impression premium */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-          
-          {/* Sélection de la Période */}
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value as Period)}
-            className="px-3 py-2 border border-slate-250 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white font-semibold text-slate-700 text-sm shadow-sm transition-all duration-150 cursor-pointer"
-          >
-            <option value="P1">1ère Période</option>
-            <option value="P2">2ème Période</option>
-            <option value="EXAM1">Examen 1er Semestre</option>
-            <option value="SEM1">Semestre 1</option>
-            <option value="P3">3ème Période</option>
-            <option value="P4">4ème Période</option>
-            <option value="EXAM2">Examen 2ème Semestre</option>
-            <option value="SEM2">Semestre 2</option>
-            <option value="ANNUAL">Annuel</option>
-          </select>
+        {/* Bouton Retour */}
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 active:scale-[0.97] transition-all duration-150 font-medium text-sm cursor-pointer"
+        >
+          <ArrowLeft size={16} />
+          Retour
+        </button>
 
-          {/* Filtre d'exclusion des Abandons */}
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors cursor-pointer select-none bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg">
-            <input
-              type="checkbox"
-              checked={onlyAbandons}
-              onChange={(e) => setOnlyAbandons(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-            />
-            <span>Sans abandons</span>
-          </label>
+        {/* Séparateur vertical */}
+        <div className="h-7 w-px bg-slate-200"></div>
 
-          {/* Mode de Délibération */}
-          <select
-            value={palmaresMode}
-            onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
-            className="px-3 py-2 border border-slate-250 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white font-semibold text-slate-700 text-sm shadow-sm transition-all duration-150 cursor-pointer"
-          >
-            <option value="BEFORE_REPECHAGE">Avant Délibération</option>
-            <option value="AFTER_REPECHAGE">Après Délibération (Repêché)</option>
-          </select>
+        {/* Sélection de la Période */}
+        <select
+          value={selectedPeriod}
+          onChange={(e) => setSelectedPeriod(e.target.value as Period)}
+          className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+        >
+          <option value="P1">1ère Période</option>
+          <option value="P2">2ème Période</option>
+          <option value="EXAM1">Examen 1er Sem.</option>
+          <option value="SEM1">Semestre 1</option>
+          <option value="P3">3ème Période</option>
+          <option value="P4">4ème Période</option>
+          <option value="EXAM2">Examen 2ème Sem.</option>
+          <option value="SEM2">Semestre 2</option>
+          <option value="ANNUAL">Annuel</option>
+        </select>
 
-          {/* Bouton d'impression premium */}
-          <PrintButton
-            targetRef={palmaresRef}
-            title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
-            extraCss={printCss}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold text-sm cursor-pointer"
-          >
-            <Printer size={18} />
-            <span>Imprimer</span>
-          </PrintButton>
-        </div>
+        {/* Sélection du mode de Délibération */}
+        <select
+          value={palmaresMode}
+          onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
+          className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+        >
+          <option value="BEFORE_REPECHAGE">Avant Délibération</option>
+          <option value="AFTER_REPECHAGE">Après Délibération</option>
+        </select>
+
+        {/* Filtre d'exclusion des Abandons */}
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none hover:text-slate-800 transition-colors">
+          <input
+            type="checkbox"
+            checked={onlyAbandons}
+            onChange={(e) => setOnlyAbandons(e.target.checked)}
+            className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+          Sans abandons
+        </label>
+
+        {/* Espacement flexible pour pousser le bouton Imprimer à droite */}
+        <div className="flex-1"></div>
+
+        {/* Bouton d'impression */}
+        <PrintButton
+          targetRef={palmaresRef}
+          title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
+          extraCss={printCss}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
+        >
+          <Printer size={16} />
+          Imprimer
+        </PrintButton>
       </div>
 
       {/* Rendu imprimable du palmarès */}
