@@ -129,7 +129,7 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       if (isMissing) {
         // Côte manquante : gras intense (font-bold)
         elements.push(
-          <span key={i} className="font-bold text-black uppercase">
+          <span key={i} className="font-medium text-black uppercase">
             {detail.subjectCode || detail.subjectName}
           </span>
         );
@@ -137,7 +137,7 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
         // Échec : semi-gras (font-semibold)
         if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
           elements.push(
-            <span key={i} className="font-medium text-black">
+            <span key={i} className="font-bold text-black">
               {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
             </span>
           );
@@ -424,20 +424,34 @@ export default function Palmares({
 
   return (
     <div className="bg-slate-100 p-8 print:p-0 print:bg-white">
-      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-3 py-1.5 rounded-lg border shadow-sm"
-        >
-          <ArrowLeft size={20} />
-          Retour à la classe
-        </button>
+      {/* Panneau de configuration supérieur moderne et professionnel (Invisible à l'impression) */}
+      <div className="max-w-[210mm] mx-auto mb-6 bg-white border border-slate-200 shadow-sm rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+        
+        {/* Section gauche : Bouton de retour et informations de contexte de classe */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-slate-700 hover:text-blue-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-sm hover:shadow transition-all duration-200 font-semibold text-sm cursor-pointer"
+          >
+            <ArrowLeft size={18} />
+            <span>Retour</span>
+          </button>
+          
+          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block"></div>
+          
+          <div className="hidden sm:flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider">
+            <span>Classe : {classInfo.name}</span>
+          </div>
+        </div>
 
-        <div className="flex items-center gap-4">
+        {/* Section droite : Filtres de sélection et bouton d'impression premium */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          
+          {/* Sélection de la Période */}
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value as Period)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+            className="px-3 py-2 border border-slate-250 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white font-semibold text-slate-700 text-sm shadow-sm transition-all duration-150 cursor-pointer"
           >
             <option value="P1">1ère Période</option>
             <option value="P2">2ème Période</option>
@@ -450,33 +464,36 @@ export default function Palmares({
             <option value="ANNUAL">Annuel</option>
           </select>
 
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          {/* Filtre d'exclusion des Abandons */}
+          <label className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors cursor-pointer select-none bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg">
             <input
               type="checkbox"
               checked={onlyAbandons}
               onChange={(e) => setOnlyAbandons(e.target.checked)}
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            <span>Exclure les abandons</span>
+            <span>Sans abandons</span>
           </label>
 
+          {/* Mode de Délibération */}
           <select
             value={palmaresMode}
             onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+            className="px-3 py-2 border border-slate-250 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white font-semibold text-slate-700 text-sm shadow-sm transition-all duration-150 cursor-pointer"
           >
             <option value="BEFORE_REPECHAGE">Avant Délibération</option>
             <option value="AFTER_REPECHAGE">Après Délibération (Repêché)</option>
           </select>
 
+          {/* Bouton d'impression premium */}
           <PrintButton
             targetRef={palmaresRef}
             title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
             extraCss={printCss}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md font-semibold text-sm cursor-pointer"
           >
-            <Printer size={20} />
-            Imprimer
+            <Printer size={18} />
+            <span>Imprimer</span>
           </PrintButton>
         </div>
       </div>
@@ -493,6 +510,12 @@ export default function Palmares({
             <p>Ville: {schoolCity}</p>
             <p>Boîte Postale: {schoolPoBox || ''}</p>
           </div>
+
+          {/* Titre principal centré */}
+        <div className="text-center font-black text-[12px] uppercase tracking-wider mt-4 text-black">
+          PALMARÈS - {classInfo.name.toUpperCase()} - {selectedPeriod}
+        </div>
+
           <div className="space-y-0.5 text-right">
             <p>Classe: {classInfo.name}</p>
             <p>Effectif: {stats.total}</p>
@@ -500,11 +523,6 @@ export default function Palmares({
             <p>Ont échoué: {stats.failed}</p>
             <p>Non classés: {stats.cat4}</p>
           </div>
-        </div>
-
-        {/* Titre principal centré */}
-        <div className="text-center font-black text-[12px] uppercase tracking-wider mb-3 text-black">
-          PALMARÈS - {classInfo.name.toUpperCase()} - {selectedPeriod}
         </div>
 
         {/* Structure du tableau simplifiée à 4 colonnes conformément à l'image */}
