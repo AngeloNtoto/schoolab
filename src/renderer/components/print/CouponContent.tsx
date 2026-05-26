@@ -6,11 +6,12 @@
  * à la fois pour un seul élève et pour l'impression en masse.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { StudentRanks } from '../../services/bulletinService';
+import { settingsService } from '../../services/settingsService';
 
 // ============================================================================
 // TYPES
@@ -57,6 +58,27 @@ export default function CouponContent({
   totalStudents
 }: CouponContentProps) {
 
+  // États de configuration d'impression dynamiques
+  const [titleSize, setTitleSize] = useState(14);
+  const [bodySize, setBodySize] = useState(8);
+  const [lineHeight, setLineHeight] = useState(1.2);
+
+  useEffect(() => {
+    const fetchPrintSettings = async () => {
+      try {
+        const t = await settingsService.get('coupon_font_size_title');
+        const b = await settingsService.get('coupon_font_size_body');
+        const l = await settingsService.get('coupon_line_height');
+        if (t) setTitleSize(parseFloat(t));
+        if (b) setBodySize(parseFloat(b));
+        if (l) setLineHeight(parseFloat(l));
+      } catch (e) {
+        console.error("Impossible de charger les préférences de police du coupon :", e);
+      }
+    };
+    fetchPrintSettings();
+  }, []);
+
   // ============================================================================
   // FONCTIONS UTILITAIRES POUR LES NOTES
   // ============================================================================
@@ -88,7 +110,7 @@ export default function CouponContent({
   };
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[8px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
       
       {/* ================================================================ */}
       {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
@@ -96,7 +118,7 @@ export default function CouponContent({
       <div className="border-2 border-black mb-0">
         <div className="flex">
           {/* Colonne gauche : Infos école */}
-          <div className="w-1/4 border-r border-black p-1 text-[7.5px]">
+          <div className="w-1/4 border-r border-black p-1" style={{ fontSize: `${Math.max(6, bodySize - 0.5)}px` }}>
             <div className="mb-0">
               <span className="font-semibold">ÉCOLE :</span> {schoolInfo.name}
             </div>
@@ -110,7 +132,7 @@ export default function CouponContent({
 
           {/* Colonne centrale : Titre du bulletin */}
           <div className="flex-1 p-1 text-center border-r border-black flex items-center justify-center">
-            <div className="font-medium text-[8px] uppercase">
+            <div className="font-medium uppercase" style={{ fontSize: `${titleSize}px` }}>
               COUPON DE L'ÉLÈVE{' '}
               <span className="border-b border-dotted border-black px-2">
                 {student.last_name} {student.post_name} {student.first_name}
@@ -123,9 +145,9 @@ export default function CouponContent({
           </div>
 
           {/* Colonne droite : Année scolaire */}
-          <div className="w-1/6 text-center text-[7px] flex flex-col justify-center">
+          <div className="w-1/6 text-center flex flex-col justify-center" style={{ fontSize: `${Math.max(5, bodySize - 1)}px` }}>
             <div className="font-medium">ANNÉE SCOLAIRE</div>
-            <div className="font-medium text-[8px]">{academicYear}</div>
+            <div className="font-medium" style={{ fontSize: `${bodySize}px` }}>{academicYear}</div>
           </div>
         </div>
       </div>
@@ -133,7 +155,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[8px]">
+      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${bodySize}px` }}>
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -382,15 +404,15 @@ export default function CouponContent({
                 {/* POURCENTAGE — affiche aussi les % des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP1}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP2}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctTot1}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP3}%</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctP4}%</td>
-                  <td className={`border border-black py-0.5 text-[9px] ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
-                  <td className="border border-black py-0.5 text-[9px]">{pctTot2}%</td>
-                  <td className="border border-black bg-slate-100 py-0.5 text-[9px]">{pctTG}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP1}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP2}%</td>
+                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${bodySize + 1}px` }}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTot1}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP3}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP4}%</td>
+                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${bodySize + 1}px` }}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTot2}%</td>
+                  <td className="border border-black bg-slate-100 py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTG}%</td>
                 </tr>
 
                 {/* PLACE — affiche aussi les places des examens */}

@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { Domain } from '../../services/domainService';
 import { StudentRanks } from '../../services/bulletinService';
+import { settingsService } from '../../services/settingsService';
 
 export interface BulletinPrimaireContentProps {
   student: Student;
@@ -49,6 +50,27 @@ export default function BulletinPrimaireContent({
   studentRanks,
   totalStudents
 }: BulletinPrimaireContentProps) {
+
+  // États locaux de mise en page dynamique (polices et interlignes)
+  const [titleSize, setTitleSize] = useState(16);
+  const [bodySize, setBodySize] = useState(9);
+  const [lineHeight, setLineHeight] = useState(1.3);
+
+  useEffect(() => {
+    const fetchPrintSettings = async () => {
+      try {
+        const t = await settingsService.get('bulletin_font_size_title');
+        const b = await settingsService.get('bulletin_font_size_body');
+        const l = await settingsService.get('bulletin_line_height');
+        if (t) setTitleSize(parseFloat(t));
+        if (b) setBodySize(parseFloat(b));
+        if (l) setLineHeight(parseFloat(l));
+      } catch (e) {
+        console.error("Impossible de charger les préférences de police du bulletin :", e);
+      }
+    };
+    fetchPrintSettings();
+  }, []);
 
   // ============================================================================
   // HELPERS
@@ -98,7 +120,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-6 min-h-[297mm] relative text-black text-[9px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-6 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
       
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
@@ -118,9 +140,9 @@ export default function BulletinPrimaireContent({
 
         {/* Center: Ministry Info */}
         <div className="flex-1 text-center px-4">
-          <h1 className="font-bold text-[13px] uppercase tracking-tight">Republique Democratique du Congo</h1>
-          <h2 className="font-bold text-[11px] uppercase mt-0.5">Ministere de l'Enseignement Primaire, Secondaire</h2>
-          <h2 className="font-bold text-[11px] uppercase mt-0.5">et Professionnel</h2>
+          <h1 className="font-bold uppercase tracking-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
+          <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Enseignement Primaire, Secondaire</h2>
+          <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>et Professionnel</h2>
         </div>
 
         {/* Right: School Logo Placeholder */}
@@ -209,12 +231,12 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="text-center font-bold py-1 text-[10px] uppercase">
+      <div className="text-center font-bold py-1 uppercase" style={{ fontSize: `${titleSize}px` }}>
         BULLETIN DE LA {classInfo.level} ANNEE CYCLE TERMINAL DE L'EDUCATION DE BASE ({classInfo.level === '7ème' ? 'CTB7' : 'CTB8'}) ANNEE SCOLAIRE 2024 - 2025
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[8px]">
+      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(6, bodySize - 1)}px` }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[18%] p-1">BRANCHE</th>

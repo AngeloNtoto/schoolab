@@ -4,13 +4,14 @@
  * Composant de présentation pure pour le bulletin des humanités.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { StudentRanks } from '../../services/bulletinService';
 
 import { Repechage } from '../../services/repechageService';
+import { settingsService } from '../../services/settingsService';
 
 export interface BulletinHumanitesContentProps {
   student: Student;
@@ -45,6 +46,27 @@ export default function BulletinHumanitesContent({
   totalStudents
 }: BulletinHumanitesContentProps) {
 
+  // États locaux de mise en page d'impression dynamique
+  const [titleSize, setTitleSize] = useState(16);
+  const [bodySize, setBodySize] = useState(10);
+  const [lineHeight, setLineHeight] = useState(1.2);
+
+  useEffect(() => {
+    const fetchPrintSettings = async () => {
+      try {
+        const t = await settingsService.get('bulletin_font_size_title');
+        const b = await settingsService.get('bulletin_font_size_body');
+        const l = await settingsService.get('bulletin_line_height');
+        if (t) setTitleSize(parseFloat(t));
+        if (b) setBodySize(parseFloat(b));
+        if (l) setLineHeight(parseFloat(l));
+      } catch (e) {
+        console.error("Erreur technique lors du chargement des tailles de polices d'impression :", e);
+      }
+    };
+    fetchPrintSettings();
+  }, []);
+
   // ============================================================================
   // FONCTIONS UTILITAIRES
   // ============================================================================
@@ -78,7 +100,7 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black text-[10px] font-serif leading-tight print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
       
       {/* Header */}
       <div className="border-2 border-black mb-0 ">
@@ -102,9 +124,9 @@ export default function BulletinHumanitesContent({
           
           {/* Title */}
           <div className="flex-1 text-center py-1">
-            <h1 className="font-medium text-[13px] uppercase">Republique Democratique du Congo</h1>
-            <h2 className="font-medium text-[13px] uppercase">Ministere de l'Education Nationale</h2>
-            <h3 className="font-medium text-[13px] uppercase">Et Nouvelle Citoyennete</h3>
+            <h1 className="font-medium uppercase" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
+            <h2 className="font-medium uppercase" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Education Nationale</h2>
+            <h3 className="font-medium uppercase" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Et Nouvelle Citoyennete</h3>
           </div>
 
           {/* Logo */}
@@ -190,12 +212,12 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6">
+      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6" style={{ fontSize: `${titleSize}px` }}>
         BULLETIN DE LA {classInfo.level} ANNEE HUMANITES / {classInfo.option} &nbsp;&nbsp;&nbsp; ANNEE SCOLAIRE 2024 - 2025
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center text-[9px]">
+      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(6, bodySize - 1)}px` }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[25%] p-0">BRANCHES</th>
@@ -445,17 +467,18 @@ export default function BulletinHumanitesContent({
                     - PASSE (1)<br/>- DOUBLE (1)<br/>LE ... / ... / 20
                   </td>
                 </tr>
+                {/* Pourcentages avec taille dynamique selon les préférences de mise en page */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2">POURCENTAGE</td>
-                  <td className="border border-black text-[9px]">{pctP1}%</td>
-                  <td className="border border-black text-[9px]">{pctP2}%</td>
-                  <td className="border border-black text-[9px]">{pctEx1}%</td>
-                  <td className="border border-black text-[9px]">{pctTot1}%</td>
-                  <td className="border border-black text-[9px]">{pctP3}%</td>
-                  <td className="border border-black text-[9px]">{pctP4}%</td>
-                  <td className="border border-black text-[9px]">{pctEx2}%</td>
-                  <td className="border border-black text-[9px]">{pctTot2}%</td>
-                  <td className="border border-black bg-slate-100 text-[9px]">{pctTG}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctP1}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctP2}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctEx1}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctTot1}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctP3}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctP4}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctEx2}%</td>
+                  <td className="border border-black" style={{ fontSize: `${bodySize}px` }}>{pctTot2}%</td>
+                  <td className="border border-black bg-slate-100" style={{ fontSize: `${bodySize}px` }}>{pctTG}%</td>
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold">PLACE / NBRE D'ELEVES</td>
