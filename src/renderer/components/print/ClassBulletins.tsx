@@ -44,6 +44,7 @@ export default function ClassBulletins({
   
   // État local pour le filtres
   const [onlyAbandons, setOnlyAbandons] = useState(false);
+  const [palmaresMode, setPalmaresMode] = useState<'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION'>('BEFORE_DELIBERATION');
 
   // État pour les repêchages
   const [repechages, setRepechages] = useState<Repechage[]>([]);
@@ -64,18 +65,26 @@ export default function ClassBulletins({
     return () => clearTimeout(timer);
   }, [classInfo.id]);
 
+  // Calcul des notes finales selon le mode de délibération sélectionné
+  const finalGrades = useMemo(() => {
+    if (palmaresMode === 'AFTER_DELIBERATION') {
+      return bulletinService.applyDeliberation(students, allGrades, subjects);
+    }
+    return allGrades;
+  }, [allGrades, palmaresMode, students, subjects]);
+
   // Calcul synchrone des rangs pour tous les élèves
   const { allRanks, totalStudents } = useMemo(() => {
     const ranksMap: Record<number, StudentRanks> = {};
     if (!students.length || !isReady) return { allRanks: ranksMap, totalStudents: 0 };
 
     students.forEach(student => {
-      const { ranks } = bulletinService.computeStudentRanks(students, allGrades, student.id);
+      const { ranks } = bulletinService.computeStudentRanks(students, finalGrades, student.id);
       ranksMap[student.id] = ranks;
     });
 
     return { allRanks: ranksMap, totalStudents: students.length };
-  }, [students, allGrades, isReady]);
+  }, [students, finalGrades, isReady]);
 
   // CSS D'IMPRESSION
   const printCss = `
@@ -155,6 +164,15 @@ export default function ClassBulletins({
             <span>Masquer les abandons</span>
           </label>
 
+          <select
+            value={palmaresMode}
+            onChange={(e) => setPalmaresMode(e.target.value as 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION')}
+            className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+          >
+            <option value="BEFORE_DELIBERATION">Avant Délibération</option>
+            <option value="AFTER_DELIBERATION">De Délibération</option>
+          </select>
+
           {/* Bouton d'impression intelligent */}
           <PrintButton
             targetRef={allBulletinsRef}
@@ -179,7 +197,7 @@ export default function ClassBulletins({
         <div ref={allBulletinsRef} className="print-reset w-full flex flex-col items-center bg-slate-100 print:bg-white">
           
           {studentsToPrint.map((student) => {
-            const studentGrades = allGrades.filter(g => g.student_id === student.id);
+            const studentGrades = finalGrades.filter(g => g.student_id === student.id);
             const ranks = allRanks[student.id] || { p1: 0, p2: 0, ex1: 0, tot1: 0, p3: 0, p4: 0, ex2: 0, tot2: 0, tg: 0 };
             
             // Détection automatique Primaire vs Humanités

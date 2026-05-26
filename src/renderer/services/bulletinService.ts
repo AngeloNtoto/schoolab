@@ -177,10 +177,144 @@ class BulletinService {
   }
 
   /**
+   * Applique l'algorithme de rachat par transfert de surplus (délibération automatisée).
+   * Renvoie un nouveau tableau de notes où les transferts invisibles ont été appliqués.
+   */
+  applyDeliberation(students: any[], allGrades: Grade[], subjects: Subject[]): Grade[] {
+    // Copie profonde pour éviter de muter les données d'origine
+    const adjustedGrades = allGrades.map(g => ({ ...g }));
+
+    students.forEach(student => {
+      let missingCount = 0;
+      const studentGrades = adjustedGrades.filter(g => g.student_id === student.id);
+      const subjectTotals: Record<number, { points: number; maxPoints: number }> = {};
+
+      subjects.forEach(subject => {
+        const subjectMax = subject.max_p1 + subject.max_p2 + subject.max_exam1 + subject.max_p3 + subject.max_p4 + subject.max_exam2;
+        if (subjectMax === 0) return;
+
+        const gradesForSubj = studentGrades.filter(g => g.subject_id === subject.id);
+        if (gradesForSubj.length === 0) {
+          missingCount++;
+          return;
+        }
+
+        let subjectPts = 0;
+        let actualMax = 0;
+        ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'].forEach(period => {
+          const gradeEntry = gradesForSubj.find(g => g.period === period);
+          let maxForPeriod = 0;
+          if (period === 'P1') maxForPeriod = subject.max_p1;
+          if (period === 'P2') maxForPeriod = subject.max_p2;
+          if (period === 'EXAM1') maxForPeriod = subject.max_exam1;
+          if (period === 'P3') maxForPeriod = subject.max_p3;
+          if (period === 'P4') maxForPeriod = subject.max_p4;
+          if (period === 'EXAM2') maxForPeriod = subject.max_exam2;
+
+          if (gradeEntry) {
+            subjectPts += gradeEntry.value;
+            actualMax += maxForPeriod;
+          }
+        });
+
+        subjectTotals[subject.id] = { points: subjectPts, maxPoints: actualMax };
+      });
+
+      // Règle 1: Pas de délibération si les vides dépassent la moitié des cours
+      if (missingCount > subjects.length / 2) return;
+
+      // Calcul du pourcentage (Option A : uniquement sur les cours cotés)
+      let totalPts = 0;
+      let totalMax = 0;
+      Object.values(subjectTotals).forEach(t => {
+        totalPts += t.points;
+        totalMax += t.maxPoints;
+      });
+
+      const percentage = totalMax > 0 ? (totalPts / totalMax) * 100 : 0;
+      if (percentage < 50) return;
+
+      const failedSubjects: Array<{ subject: Subject; missing: number }> = [];
+      const surplusSubjects: Array<{ subject: Subject; surplus: number; pct: number }> = [];
+
+      subjects.forEach(subject => {
+        const t = subjectTotals[subject.id];
+        if (!t || t.maxPoints === 0) return;
+        const moyenne = t.maxPoints / 2;
+
+        if (t.points < moyenne) {
+          const missing = moyenne - t.points;
+          let estRelevable = false;
+          if (t.maxPoints <= 80 && missing <= 6) estRelevable = true;
+          else if (t.maxPoints > 80 && t.maxPoints <= 160 && missing <= 8) estRelevable = true;
+          else if (t.maxPoints > 160 && t.maxPoints <= 300 && missing <= 10) estRelevable = true;
+          else if (t.maxPoints > 300 && t.maxPoints <= 320 && missing <= 12) estRelevable = true;
+          else if (t.maxPoints > 320 && t.maxPoints <= 500 && missing <= 15) estRelevable = true;
+
+          if (estRelevable) {
+            failedSubjects.push({ subject, missing });
+          }
+        } else if (t.points > moyenne) {
+          surplusSubjects.push({ subject, surplus: t.points - moyenne, pct: t.points / t.maxPoints });
+        }
+      });
+
+      // Trier les surplus du plus grand pourcentage au plus petit
+      surplusSubjects.sort((a, b) => b.pct - a.pct);
+
+      failedSubjects.forEach(fail => {
+        let needed = fail.missing;
+
+        for (const surp of surplusSubjects) {
+          if (needed <= 0) break;
+          if (surp.surplus <= 0) continue;
+
+          const amountToTake = Math.min(needed, surp.surplus);
+          let amountTransferred = 0;
+          
+          // Chercher la période idéale pour le transfert (de préférence EXAM2, puis P4, etc.)
+          const periods = ['EXAM2', 'P4', 'EXAM1', 'P2', 'P1', 'P3'];
+          
+          for (const period of periods) {
+            if (amountTransferred >= amountToTake) break;
+            
+            const failGrade = adjustedGrades.find(g => g.student_id === student.id && g.subject_id === fail.subject.id && g.period === period);
+            const surpGrade = adjustedGrades.find(g => g.student_id === student.id && g.subject_id === surp.subject.id && g.period === period);
+            
+            if (failGrade && surpGrade) {
+              let maxForPeriod = 0;
+              if (period === 'P1') maxForPeriod = fail.subject.max_p1;
+              if (period === 'P2') maxForPeriod = fail.subject.max_p2;
+              if (period === 'EXAM1') maxForPeriod = fail.subject.max_exam1;
+              if (period === 'P3') maxForPeriod = fail.subject.max_p3;
+              if (period === 'P4') maxForPeriod = fail.subject.max_p4;
+              if (period === 'EXAM2') maxForPeriod = fail.subject.max_exam2;
+
+              const failSpace = maxForPeriod - failGrade.value;
+              const surpAvailable = surpGrade.value; 
+
+              const transfer = Math.min(amountToTake - amountTransferred, failSpace, surpAvailable);
+              if (transfer > 0) {
+                failGrade.value += transfer;
+                surpGrade.value -= transfer;
+                amountTransferred += transfer;
+                surp.surplus -= transfer;
+                needed -= transfer;
+              }
+            }
+          }
+        }
+      });
+    });
+
+    return adjustedGrades;
+  }
+
+  /**
    * Détermine l'appréciation de l'application en fonction du pourcentage.
    */
   getApplication(percentage: number): string {
-    if (percentage >= 80) return 'Élute';
+    if (percentage >= 80) return 'Élite';
     if (percentage >= 70) return 'Très bon';
     if (percentage >= 50) return 'Bon';
     if (percentage >= 40) return 'Médiocre';

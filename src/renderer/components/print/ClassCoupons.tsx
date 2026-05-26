@@ -52,6 +52,7 @@ export default function ClassCoupons({
   // États pour la configuration d'impression
   const [showModal, setShowModal] = useState(false);
   const [printConfig, setPrintConfig] = useState<PrintConfig | null>(null);
+  const [palmaresMode, setPalmaresMode] = useState<'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION'>('BEFORE_DELIBERATION');
 
   // Attendre que l'animation du modal se termine
   React.useEffect(() => {
@@ -59,18 +60,33 @@ export default function ClassCoupons({
     return () => clearTimeout(timer);
   }, []);
 
+  // Réinitialiser le mode si la période n'est plus annuelle
+  React.useEffect(() => {
+    if (printConfig?.period !== 'YEAR') {
+      setPalmaresMode('BEFORE_DELIBERATION');
+    }
+  }, [printConfig?.period]);
+
+  // Calcul des notes finales selon le mode de délibération sélectionné
+  const finalGrades = useMemo(() => {
+    if (palmaresMode === 'AFTER_DELIBERATION' && printConfig?.period === 'YEAR') {
+      return bulletinService.applyDeliberation(students, allGrades, subjects);
+    }
+    return allGrades;
+  }, [allGrades, palmaresMode, students, subjects, printConfig?.period]);
+
   // Calcul synchrone des rangs pour tous les élèves
   const { classRanks, totalStudents } = useMemo(() => {
     const ranksMap: Record<number, StudentRanks> = {};
     if (!students.length || !isReady) return { classRanks: ranksMap, totalStudents: 0 };
 
     students.forEach(student => {
-      const { ranks } = bulletinService.computeStudentRanks(students, allGrades, student.id);
+      const { ranks } = bulletinService.computeStudentRanks(students, finalGrades, student.id);
       ranksMap[student.id] = ranks;
     });
 
     return { classRanks: ranksMap, totalStudents: students.length };
-  }, [students, allGrades, isReady]);
+  }, [students, finalGrades, isReady]);
 
   // Configuration CSS pour l'impression
   const printCss = `
@@ -144,7 +160,19 @@ export default function ClassCoupons({
                     <span className="font-bold text-slate-900">{printConfig.couponsPerPage}</span> / page
                   </span>
                 </div>
+                
                 <div className="flex items-center gap-2">
+                  {/* Sélecteur de mode de délibération (uniquement pour l'année complète) */}
+                  {printConfig.period === 'YEAR' && (
+                    <select
+                      value={palmaresMode}
+                      onChange={(e) => setPalmaresMode(e.target.value as 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION')}
+                      className="px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer animate-fade-in"
+                    >
+                      <option value="BEFORE_DELIBERATION">Avant Délibération</option>
+                      <option value="AFTER_DELIBERATION">De Délibération</option>
+                    </select>
+                  )}
                   <button
                     onClick={() => setPrintConfig(null)}
                     className="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-200 rounded-lg transition-colors border"
@@ -194,7 +222,7 @@ export default function ClassCoupons({
               students={selectedStudents}
               classInfo={classInfo}
               subjects={subjects}
-              allGrades={allGrades}
+              allGrades={finalGrades}
               schoolInfo={schoolInfo}
               academicYear={academicYear}
               period={printConfig.period}
