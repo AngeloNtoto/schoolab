@@ -220,10 +220,11 @@ class BulletinService {
         subjectTotals[subject.id] = { points: subjectPts, maxPoints: actualMax };
       });
 
-      // Règle 1: Pas de délibération si les vides dépassent la moitié des cours
-      if (missingCount > subjects.length / 2) return;
+      // Règle 1: Pas de délibération si l'élève a le moindre vide (côte manquante)
+      // Pour éviter toute confusion (Option A annulée), on exige un dossier complet.
+      if (missingCount > 0) return;
 
-      // Calcul du pourcentage (Option A : uniquement sur les cours cotés)
+      // Calcul du pourcentage global de l'élève
       let totalPts = 0;
       let totalMax = 0;
       Object.values(subjectTotals).forEach(t => {
