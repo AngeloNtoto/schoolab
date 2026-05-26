@@ -93,7 +93,7 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
   // En cas d'abandon de l'élève
   if (student.is_abandoned) {
     return (
-      <span className="inline-block bg-red-50 text-red-700 font-bold text-[8.5px] uppercase border border-red-200 px-1 py-0.5 rounded">
+      <span className="text-red-700 font-bold text-[9px] uppercase">
         Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
       </span>
     );
@@ -104,24 +104,20 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
     return null;
   }
 
-  // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous forme de badges discrets sur fond rouge clair
+  // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous forme de texte semi-gras (font-semibold)
   if (rankedStudent.category === 2) {
     const failedDetails = rankedStudent.subjectDetails.filter(
       (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
     );
 
     return (
-      <div className="flex flex-wrap gap-1">
-        {failedDetails.map((s, idx) => (
-          <span key={idx} className="inline-block bg-red-100/90 text-red-900 border border-red-300 px-1 py-0.5 rounded text-[8.5px] font-bold">
-            {s.subjectCode || s.subjectName} {Math.round(s.points)}/{s.maxPoints}
-          </span>
-        ))}
-      </div>
+      <span className="text-black text-[9px] font-semibold leading-tight">
+        {failedDetails.map((s) => `${s.subjectCode || s.subjectName} ${Math.round(s.points)}/${s.maxPoints}`).join(', ')}
+      </span>
     );
   }
 
-  // Catégorie 4 (Non classés) : Affiche des badges distincts pour les manques (gris) et les échecs (rouge clair)
+  // Catégorie 4 (Non classés) : Affiche les manques en gras (bold) et les échecs en semi-gras (semibold)
   if (rankedStudent.category === 4) {
     const elements: React.ReactNode[] = [];
 
@@ -131,17 +127,17 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       const isMissing = rankedStudent.missingSubjects.includes(detail.subjectCode || detail.subjectName);
       
       if (isMissing) {
-        // Côte manquante : fond gris neutre et texte ultra gras
+        // Côte manquante : gras intense (font-bold)
         elements.push(
-          <span key={i} className="inline-block bg-slate-100 text-black border border-slate-300 px-1 py-0.5 rounded text-[8.5px] font-extrabold uppercase">
+          <span key={i} className="font-bold text-black uppercase">
             {detail.subjectCode || detail.subjectName}
           </span>
         );
       } else {
-        // Échec : fond rouge clair très lisible
+        // Échec : semi-gras (font-semibold)
         if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
           elements.push(
-            <span key={i} className="inline-block bg-red-100/90 text-red-900 border border-red-300 px-1 py-0.5 rounded text-[8.5px] font-bold">
+            <span key={i} className="font-medium text-black">
               {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
             </span>
           );
@@ -149,7 +145,16 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       }
     }
 
-    return <div className="flex flex-wrap gap-1">{elements}</div>;
+    // Reconstruction avec des virgules de séparation textuelles simples
+    const joinedElements: React.ReactNode[] = [];
+    elements.forEach((el, idx) => {
+      joinedElements.push(el);
+      if (idx < elements.length - 1) {
+        joinedElements.push(<span key={`comma-${idx}`} className="text-black font-normal">, </span>);
+      }
+    });
+
+    return <span className="text-black text-[9px] leading-tight">{joinedElements}</span>;
   }
 
   return null;
