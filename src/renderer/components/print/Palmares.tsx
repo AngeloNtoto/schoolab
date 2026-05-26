@@ -81,71 +81,54 @@ const CATEGORY_LABELS: Record<StudentCategory, string> = {
 };
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
-type PalmaresMode = 'BEFORE_REPECHAGE' | 'AFTER_REPECHAGE';
+type PalmaresMode = 'BEFORE_REPECHAGE' | 'AFTER_REPECHAGE' | 'AFTER_SECOND_SESSION';
 
 /**
  * Composant pour afficher les observations textuelles très précises des élèves dans le palmarès.
  * Les détails respectent scrupuleusement la structure de l'image fournie par l'utilisateur.
  */
-const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent }) => {
+const StudentObservation = ({ 
+  rankedStudent, 
+  palmaresMode, 
+  classLevel 
+}: { 
+  rankedStudent: RankedStudent; 
+  palmaresMode: PalmaresMode; 
+  classLevel: string;
+}) => {
   const student = rankedStudent.student;
 
   // En cas d'abandon de l'élève
   if (student.is_abandoned) {
     return (
-      <span className="text-red-700 font-bold text-[9px] uppercase">
+      <span className="text-red-700 font-bold text-[10px] uppercase">
         Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
       </span>
     );
   }
 
-  // Catégorie 1 (Ont Réussis sans Echecs) & Catégorie 3 (Ont Echoués) : L'observation doit rester VIDE
-  if (rankedStudent.category === 1 || rankedStudent.category === 3) {
-    return null;
-  }
-
-  // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous forme de texte semi-gras (font-semibold)
-  if (rankedStudent.category === 2) {
-    const failedDetails = rankedStudent.subjectDetails.filter(
-      (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
-    );
-
-    return (
-      <span className="text-black text-[9px] font-semibold leading-tight">
-        {failedDetails.map((s) => `${s.subjectCode || s.subjectName} ${Math.round(s.points)}/${s.maxPoints}`).join(', ')}
-      </span>
-    );
-  }
-
-  // Catégorie 4 (Non classés) : Affiche les manques en gras (bold) et les échecs en semi-gras (semibold)
+  // Si des notes manquent à l'appel (Non classé - Catégorie 4)
   if (rankedStudent.category === 4) {
     const elements: React.ReactNode[] = [];
-
-    // On parcourt les matières de l'élève
     for (let i = 0; i < rankedStudent.subjectDetails.length; i++) {
       const detail = rankedStudent.subjectDetails[i];
       const isMissing = rankedStudent.missingSubjects.includes(detail.subjectCode || detail.subjectName);
       
       if (isMissing) {
-        // Côte manquante : gras intense (font-bold)
         elements.push(
-          <span key={i} className="font-medium text-black uppercase">
+          <span key={i} className="font-bold text-black uppercase">
             {detail.subjectCode || detail.subjectName}
           </span>
         );
-      } else {
-        // Échec : semi-gras (font-semibold)
-        if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
-          elements.push(
-            <span key={i} className="font-bold text-black">
-              {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
-            </span>
-          );
-        }
+      } else if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
+        elements.push(
+          <span key={i} className="font-semibold text-black">
+            {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
+          </span>
+        );
       }
     }
 
-    // Reconstruction avec des virgules de séparation textuelles simples
     const joinedElements: React.ReactNode[] = [];
     elements.forEach((el, idx) => {
       joinedElements.push(el);
@@ -154,7 +137,109 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
       }
     });
 
-    return <span className="text-black text-[9px] leading-tight">{joinedElements}</span>;
+    return <span className="text-black text-[10px] leading-tight">{joinedElements}</span>;
+  }
+
+  // -------------------------------------------------------------
+  // MODE 1 : AVANT DELIBERATION
+  // -------------------------------------------------------------
+  if (palmaresMode === 'BEFORE_REPECHAGE') {
+    if (rankedStudent.category === 1 || rankedStudent.category === 3) {
+      return null;
+    }
+
+    if (rankedStudent.category === 2) {
+      const failedDetails = rankedStudent.subjectDetails.filter(
+        (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
+      );
+
+      return (
+        <span className="text-black text-[10px] font-semibold leading-tight">
+          {failedDetails.map((s) => `${s.subjectCode || s.subjectName} ${Math.round(s.points)}/${s.maxPoints}`).join(', ')}
+        </span>
+      );
+    }
+  }
+
+  // -------------------------------------------------------------
+  // MODE 2 : APRES DELIBERATION (PREMIERE SESSION)
+  // -------------------------------------------------------------
+  if (palmaresMode === 'AFTER_REPECHAGE') {
+    // Si l'élève a échoué (Catégorie 3)
+    if (rankedStudent.category === 3) {
+      // Vérification de l'éligibilité à la deuxième session
+      const failuresCount = rankedStudent.failedSubjects.length;
+      const isEligibleForSecondSession = rankedStudent.percentage >= 50 && failuresCount > 0 && failuresCount <= 5;
+
+      if (isEligibleForSecondSession) {
+        return (
+          <span className="text-blue-700 font-semibold text-[10px] uppercase">
+            Admis à la 2e session ({failuresCount} échec{failuresCount > 1 ? 's' : ''})
+          </span>
+        );
+      } else {
+        return (
+          <span className="text-red-700 font-bold text-[10px] uppercase">
+            Redouble la classe
+          </span>
+        );
+      }
+    }
+
+    // Si réussi avec échecs (Catégorie 2)
+    if (rankedStudent.category === 2) {
+      const failedDetails = rankedStudent.subjectDetails.filter(
+        (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
+      );
+
+      return (
+        <span className="text-black text-[10px] font-semibold leading-tight">
+          Admis (échec toléré: {failedDetails.map((s) => `${s.subjectCode || s.subjectName}`).join(', ')})
+        </span>
+      );
+    }
+
+    // Réussi sans échecs (Catégorie 1)
+    if (rankedStudent.category === 1) {
+      return (
+        <span className="text-green-700 font-semibold text-[10px] uppercase">
+          Admis
+        </span>
+      );
+    }
+  }
+
+  // -------------------------------------------------------------
+  // MODE 3 : PALMARES FINAL APRES DEUXIEME SESSION
+  // -------------------------------------------------------------
+  if (palmaresMode === 'AFTER_SECOND_SESSION') {
+    if (rankedStudent.category === 3) {
+      return (
+        <span className="text-red-700 font-bold text-[10px] uppercase">
+          Redouble la classe
+        </span>
+      );
+    }
+
+    if (rankedStudent.category === 2) {
+      const failedDetails = rankedStudent.subjectDetails.filter(
+        (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
+      );
+
+      return (
+        <span className="text-green-700 font-semibold text-[10px] uppercase">
+          Admis (avec {failedDetails.length} échec{failedDetails.length > 1 ? 's' : ''} toléré{failedDetails.length > 1 ? 's' : ''})
+        </span>
+      );
+    }
+
+    if (rankedStudent.category === 1) {
+      return (
+        <span className="text-green-700 font-semibold text-[10px] uppercase">
+          Admis
+        </span>
+      );
+    }
   }
 
   return null;
@@ -194,6 +279,13 @@ export default function Palmares({
     repechageService.getRepechagesByClass(classInfo.id).then(setRepechages).catch(console.error);
   }, [classInfo.id]);
 
+  // Réinitialisation du mode de délibération quand on quitte la période Annuelle
+  React.useEffect(() => {
+    if (selectedPeriod !== 'ANNUAL') {
+      setPalmaresMode('BEFORE_REPECHAGE');
+    }
+  }, [selectedPeriod]);
+
   // CSS d'impression propre pour A4 portrait
   const printCss = `
     @page { 
@@ -216,9 +308,9 @@ export default function Palmares({
     }
     th, td {
       border: 1px solid #000000 !important;
-      padding: 2px 4px !important;
-      font-size: 10px !important;
-      line-height: 1.1 !important;
+      padding: 3px 5px !important;
+      font-size: 11px !important;
+      line-height: 1.15 !important;
       color: #000000 !important;
     }
   `;
@@ -313,30 +405,33 @@ export default function Palmares({
           subjectMaxPoints += maxForPeriod;
         }
 
+        // Vérification et application des points de repêchage dans les modes "Après Délibération" et "Après 2e Session"
+        const rep = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
+        let finalSubjectPoints = subjectPoints;
+
+        if (palmaresMode !== 'BEFORE_REPECHAGE' && rep && rep.percentage > 0) {
+          finalSubjectPoints = (rep.percentage * subjectMaxPoints) / 100;
+          repechageSubjects.push(subject.code || subject.name);
+        }
+
         // Cumul des points de l'élève
         if (!subjectHasMissingGrade) {
-          totalPoints += subjectPoints;
+          totalPoints += finalSubjectPoints;
           totalMaxPoints += subjectMaxPoints;
         }
 
         // Détection d'un échec uniquement si le cours a toutes ses notes
         if (!subjectHasMissingGrade && subjectMaxPoints > 0) {
-          const subjectPercentage = (subjectPoints / subjectMaxPoints) * 100;
+          const subjectPercentage = (finalSubjectPoints / subjectMaxPoints) * 100;
           if (subjectPercentage < 50) {
             failedSubjects.push(subject.code || subject.name);
           }
         }
 
-        // Vérification des repêchages
-        const rep = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
-        if (rep && rep.percentage > 1) {
-          repechageSubjects.push(subject.code || subject.name);
-        }
-
         subjectDetails.push({
           subjectCode: subject.code,
           subjectName: subject.name,
-          points: subjectPoints,
+          points: finalSubjectPoints,
           maxPoints: subjectMaxPoints,
         });
       }
@@ -346,15 +441,36 @@ export default function Palmares({
         ? (totalPoints / totalMaxPoints) * 100
         : 0;
 
-      // Attribution de la catégorie correspondante
+      // Attribution de la catégorie correspondante selon le mode choisi
       let category: StudentCategory = 3;
       if (!hasAllGrades || missingSubjects.length > 0) {
         category = 4; // Non classé (notes manquantes)
       } else if (percentage >= 50) {
-        if (failedSubjects.length === 0) {
-          category = 1; // Réussi sans échecs
+        if (palmaresMode === 'AFTER_REPECHAGE') {
+          // Après délibération (1ère session) : si l'élève a plus de 5 échecs restants, il ne peut pas être admis
+          if (failedSubjects.length > 5) {
+            category = 3; // Ont échoué (admis à doubler la classe)
+          } else if (failedSubjects.length === 0) {
+            category = 1; // Réussi sans échecs
+          } else {
+            category = 2; // Réussi avec échecs (tolerable ou admis à la 2ème session)
+          }
+        } else if (palmaresMode === 'AFTER_SECOND_SESSION') {
+          // Après la 2e session : maximum 2 échecs tolérés pour passer dans la classe supérieure, sinon double
+          if (failedSubjects.length > 2) {
+            category = 3; // Ont échoué (redoublent)
+          } else if (failedSubjects.length === 0) {
+            category = 1; // Réussi sans échecs
+          } else {
+            category = 2; // Réussi avec échecs (échecs tolérés)
+          }
         } else {
-          category = 2; // Réussi avec échecs
+          // Mode brut avant délibération
+          if (failedSubjects.length === 0) {
+            category = 1; // Réussi sans échecs
+          } else {
+            category = 2; // Réussi avec échecs
+          }
         }
       } else {
         category = 3; // Ont échoué (< 50%)
@@ -409,7 +525,7 @@ export default function Palmares({
     for (let i = 0; i < cat4.length; i++) cat4[i].rank = i + 1;
 
     return [...cat1, ...cat2, ...cat3, ...cat4];
-  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages]);
+  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages, palmaresMode]);
 
   // Calcul des statistiques d'en-tête conformes au modèle textuel
   const stats = {
@@ -456,15 +572,18 @@ export default function Palmares({
           <option value="ANNUAL">Annuel</option>
         </select>
 
-        {/* Sélection du mode de Délibération */}
-        <select
-          value={palmaresMode}
-          onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
-          className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
-        >
-          <option value="BEFORE_REPECHAGE">Avant Délibération</option>
-          <option value="AFTER_REPECHAGE">Après Délibération</option>
-        </select>
+        {/* Sélection du mode de Délibération — visible uniquement pour la période Annuelle */}
+        {selectedPeriod === 'ANNUAL' && (
+          <select
+            value={palmaresMode}
+            onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
+            className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+          >
+            <option value="BEFORE_REPECHAGE">Avant Délibération</option>
+            <option value="AFTER_REPECHAGE">Après Délibération</option>
+            <option value="AFTER_SECOND_SESSION">Palmarès Final (2e Session)</option>
+          </select>
+        )}
 
         {/* Filtre d'exclusion des Abandons */}
         <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none hover:text-slate-800 transition-colors">
@@ -483,7 +602,7 @@ export default function Palmares({
         {/* Bouton d'impression */}
         <PrintButton
           targetRef={palmaresRef}
-          title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
+          title={`${palmaresMode === 'BEFORE_REPECHAGE' ? 'Palmarès Avant Del.' : palmaresMode === 'AFTER_REPECHAGE' ? 'Palmarès Après Del.' : 'Palmarès Final 2e Session'} - ${classInfo.name} - ${selectedPeriod}`}
           extraCss={printCss}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
         >
@@ -497,36 +616,39 @@ export default function Palmares({
         ref={palmaresRef}
         className="print-container max-w-[210mm] mx-auto bg-white shadow-xl p-6 print:p-2 min-h-[297mm] text-black"
       >
-        {/* En-tête supérieure avec les informations de l'école et de la classe */}
-        <div className="flex justify-between items-start mb-3 font-bold text-[11px] text-black">
+        {/* En-tête supérieure avec les informations de l'école et des statistiques (Classe et Effectif retirés) */}
+        <div className="flex justify-between items-start mb-4 font-bold text-[12px] text-black border-b border-black/80 pb-2">
           <div className="space-y-0.5">
-            <p>École: {schoolName}</p>
-            <p>Ville: {schoolCity}</p>
-            <p>Boîte Postale: {schoolPoBox || ''}</p>
+            <p className="uppercase">École: {schoolName}</p>
+            <p className="uppercase">Ville: {schoolCity}</p>
+            {schoolPoBox && <p className="uppercase">Boîte Postale: {schoolPoBox}</p>}
           </div>
 
-          {/* Titre principal centré */}
-        <div className="text-center font-black text-[12px] uppercase tracking-wider mt-4 text-black">
-          PALMARÈS - {classInfo.name.toUpperCase()} - {selectedPeriod}
-        </div>
-
-          <div className="space-y-0.5 text-right">
-            <p>Classe: {classInfo.name}</p>
-            <p>Effectif: {stats.total}</p>
+          <div className="space-y-0.5 text-right uppercase">
             <p>Ont réussis: {stats.passed}</p>
             <p>Ont échoué: {stats.failed}</p>
             <p>Non classés: {stats.cat4}</p>
           </div>
         </div>
 
+        {/* Titre principal centré à l'extérieur pour un rendu très professionnel */}
+        <div className="text-center font-black text-[14px] uppercase tracking-wider mb-5 text-black">
+          <span className="border-b-2 border-black pb-0.5 px-4 inline-block">
+            {palmaresMode === 'BEFORE_REPECHAGE' && 'PALMARÈS AVANT DÉLIBÉRATION'}
+            {palmaresMode === 'AFTER_REPECHAGE' && 'PALMARÈS APRÈS DÉLIBÉRATION'}
+            {palmaresMode === 'AFTER_SECOND_SESSION' && 'PALMARÈS FINAL (APRÈS 2e SESSION)'}{' '}
+            - {classInfo.name.toUpperCase()} - {selectedPeriod}
+          </span>
+        </div>
+
         {/* Structure du tableau simplifiée à 4 colonnes conformément à l'image */}
-        <table className="w-full border-collapse border border-black text-[10px] text-black">
+        <table className="w-full border-collapse border border-black text-[11px] text-black">
           <thead>
             <tr className="font-bold text-black border border-black">
-              <th className="border border-black px-1 py-0.5 w-10 text-center">N°</th>
-              <th className="border border-black px-2 py-0.5 text-left">Nom et PostNom</th>
-              <th className="border border-black px-1 py-0.5 w-12 text-center">%</th>
-              <th className="border border-black px-2 py-0.5 text-left">Observation</th>
+              <th className="border border-black px-1.5 py-1 w-10 text-center">N°</th>
+              <th className="border border-black px-2.5 py-1 text-left">Nom et PostNom</th>
+              <th className="border border-black px-1.5 py-1 w-12 text-center">%</th>
+              <th className="border border-black px-2.5 py-1 text-left">Observation</th>
             </tr>
           </thead>
           <tbody>
@@ -544,27 +666,31 @@ export default function Palmares({
                 <React.Fragment key={rankedStudent.student.id}>
                   {isNewCat && (
                     <tr className="bg-white border-y border-black font-bold">
-                      <td colSpan={4} className="border border-black px-2 py-0.5 text-center font-bold text-black text-[10px]">
+                      <td colSpan={4} className="border border-black px-2.5 py-1 text-center font-bold text-black text-[11px]">
                         {catLabel}
                       </td>
                     </tr>
                   )}
                   <tr className="border border-black">
                     {/* Indexation N° (ex : 1., 2., 3.) */}
-                    <td className="border border-black px-1 py-0.5 text-center font-bold">
+                    <td className="border border-black px-1.5 py-1 text-center font-bold">
                       {rankedStudent.rank}.
                     </td>
                     {/* Nom Complet de l'élève */}
-                    <td className="border border-black px-2 py-0.5 font-bold">
+                    <td className="border border-black px-2.5 py-1 font-bold">
                       {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
                     </td>
                     {/* Pourcentage (vide pour la catégorie 4 Non classé d'après le modèle) */}
-                    <td className="border border-black px-1 py-0.5 text-center font-bold">
+                    <td className="border border-black px-1.5 py-1 text-center font-bold">
                       {rankedStudent.category === 4 ? '' : `${Math.round(rankedStudent.percentage)}`}
                     </td>
                     {/* Colonne Observation personnalisée */}
-                    <td className="border border-black px-2 py-0.5">
-                      <StudentObservation rankedStudent={rankedStudent} />
+                    <td className="border border-black px-2.5 py-1">
+                      <StudentObservation 
+                        rankedStudent={rankedStudent} 
+                        palmaresMode={palmaresMode}
+                        classLevel={classInfo.level}
+                      />
                     </td>
                   </tr>
                 </React.Fragment>
@@ -574,10 +700,10 @@ export default function Palmares({
         </table>
 
         {/* Bas de page pour les signatures officielles */}
-        <div className="mt-6 flex justify-between text-[11px] text-black font-bold break-inside-avoid">
+        <div className="mt-8 flex justify-between text-[12px] text-black font-bold break-inside-avoid">
           <div className="text-center">
             <p className="font-bold mb-8">Le Chef d'Établissement</p>
-            <p className="border-t border-black pt-0.5 px-2">Nom et Signature</p>
+            <p className="border-t border-black pt-1 px-4">Nom et Signature</p>
           </div>
           <div className="text-right">
             <p className="font-bold">Fait à {schoolCity}</p>
