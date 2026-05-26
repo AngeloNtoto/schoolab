@@ -106,8 +106,9 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
 
   // Catégorie 2 (Ont Réussis avec Echecs) : On liste les échecs sous forme de texte semi-gras (font-semibold)
   if (rankedStudent.category === 2) {
+    // Utiliser la liste officielle des échecs de l'élève (qui a pu être modifiée par le rachat/délibération)
     const failedDetails = rankedStudent.subjectDetails.filter(
-      (s: any) => s.maxPoints > 0 && (s.points / s.maxPoints) * 100 < 50
+      (s: any) => rankedStudent.failedSubjects.includes(s.subjectCode || s.subjectName)
     );
 
     return (
@@ -134,8 +135,8 @@ const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent })
           </span>
         );
       } else {
-        // Échec : semi-gras (font-semibold)
-        if (detail.maxPoints > 0 && (detail.points / detail.maxPoints) * 100 < 50) {
+        // Échec : on vérifie dans la liste officielle (après potentielle délibération)
+        if (rankedStudent.failedSubjects.includes(detail.subjectCode || detail.subjectName)) {
           elements.push(
             <span key={i} className="font-semibold text-black">
               {detail.subjectCode || detail.subjectName} {Math.round(detail.points)}/{detail.maxPoints}
