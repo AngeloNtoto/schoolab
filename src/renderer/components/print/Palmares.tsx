@@ -81,7 +81,7 @@ const CATEGORY_LABELS: Record<StudentCategory, string> = {
 };
 
 type Period = 'P1' | 'P2' | 'EXAM1' | 'SEM1' | 'P3' | 'P4' | 'EXAM2' | 'SEM2' | 'ANNUAL';
-type PalmaresMode = 'BEFORE_REPECHAGE' | 'AFTER_REPECHAGE';
+type PalmaresMode = 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION';
 
 /**
  * Composant pour afficher les observations textuelles très précises des élèves dans le palmarès.
@@ -186,7 +186,7 @@ export default function Palmares({
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('SEM1');
   const [onlyAbandons, setOnlyAbandons] = useState(false);
   const [sortByAbandon] = useState(false);
-  const [palmaresMode, setPalmaresMode] = useState<PalmaresMode>('BEFORE_REPECHAGE');
+  const [palmaresMode, setPalmaresMode] = useState<PalmaresMode>('BEFORE_DELIBERATION');
   const [repechages, setRepechages] = useState<Repechage[]>([]);
 
   // Chargement des points de repêchage enregistrés en base
@@ -197,7 +197,7 @@ export default function Palmares({
   // Réinitialiser le mode de délibération si la période n'est pas annuelle
   React.useEffect(() => {
     if (selectedPeriod !== 'ANNUAL') {
-      setPalmaresMode('BEFORE_REPECHAGE');
+      setPalmaresMode('BEFORE_DELIBERATION');
     }
   }, [selectedPeriod]);
 
@@ -353,6 +353,51 @@ export default function Palmares({
         ? (totalPoints / totalMaxPoints) * 100
         : 0;
 
+      // -- LOGIQUE DE RACHAT (DÉLIBÉRATION AUTOMATIQUE) --
+      if (palmaresMode === 'AFTER_DELIBERATION' && hasAllGrades && percentage >= 50 && failedSubjects.length > 0) {
+        // 1. Calcul du surplus total disponible
+        let surplusDisponible = 0;
+        subjectDetails.forEach(detail => {
+          const moyenne = detail.maxPoints / 2;
+          if (detail.points > moyenne) {
+            surplusDisponible += (detail.points - moyenne);
+          }
+        });
+
+        // 2. Traitement des échecs
+        const remainingFailedSubjects: string[] = [];
+        
+        for (const failedSubjectName of failedSubjects) {
+          const detailIndex = subjectDetails.findIndex(s => (s.subjectCode || s.subjectName) === failedSubjectName);
+          if (detailIndex === -1) {
+             remainingFailedSubjects.push(failedSubjectName);
+             continue;
+          }
+          const detail = subjectDetails[detailIndex];
+          const moyenne = detail.maxPoints / 2;
+          const missingPoints = moyenne - detail.points;
+
+          // Vérifier si l'échec est relevable selon criteres.md
+          let estRelevable = false;
+          if (detail.maxPoints <= 80 && missingPoints <= 6) estRelevable = true;
+          else if (detail.maxPoints > 80 && detail.maxPoints <= 160 && missingPoints <= 8) estRelevable = true;
+          else if (detail.maxPoints > 160 && detail.maxPoints <= 300 && missingPoints <= 10) estRelevable = true;
+          else if (detail.maxPoints > 300 && detail.maxPoints <= 320 && missingPoints <= 12) estRelevable = true;
+          else if (detail.maxPoints > 320 && detail.maxPoints <= 500 && missingPoints <= 15) estRelevable = true;
+
+          if (estRelevable && surplusDisponible >= missingPoints) {
+            // L'élève est relevé : on puise dans le surplus et l'échec disparaît
+            surplusDisponible -= missingPoints;
+          } else {
+            remainingFailedSubjects.push(failedSubjectName);
+          }
+        }
+        
+        // Mise à jour de la liste des échecs (les cours rachetés ont disparu)
+        failedSubjects.length = 0;
+        failedSubjects.push(...remainingFailedSubjects);
+      }
+
       // Attribution de la catégorie correspondante
       let category: StudentCategory = 3;
       if (!hasAllGrades || missingSubjects.length > 0) {
@@ -416,7 +461,7 @@ export default function Palmares({
     for (let i = 0; i < cat4.length; i++) cat4[i].rank = i + 1;
 
     return [...cat1, ...cat2, ...cat3, ...cat4];
-  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages]);
+  }, [students, subjects, grades, selectedPeriod, onlyAbandons, sortByAbandon, repechages, palmaresMode]);
 
   // Calcul des statistiques d'en-tête conformes au modèle textuel
   const stats = {
@@ -470,8 +515,8 @@ export default function Palmares({
             onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
             className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer animate-fade-in"
           >
-            <option value="BEFORE_REPECHAGE">Avant Délibération</option>
-            <option value="AFTER_REPECHAGE">Après Délibération</option>
+            <option value="BEFORE_DELIBERATION">Avant Délibération</option>
+            <option value="AFTER_DELIBERATION">De Délibération</option>
           </select>
         )}
 
@@ -492,7 +537,7 @@ export default function Palmares({
         {/* Bouton d'impression */}
         <PrintButton
           targetRef={palmaresRef}
-          title={`Palmarès (${palmaresMode === 'AFTER_REPECHAGE' ? 'Après Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
+          title={`Palmarès (${palmaresMode === 'AFTER_DELIBERATION' ? 'De Del.' : 'Avant Del.'}) - ${classInfo.name} - ${selectedPeriod}`}
           extraCss={printCss}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
         >
