@@ -80,67 +80,238 @@ type PalmaresMode = 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION' | 'REPECHAGE_LI
  * Composant pour afficher les observations textuelles très précises des élèves dans le palmarès.
  * Les détails respectent scrupuleusement la structure de l'image fournie par l'utilisateur.
  */
-const StudentObservation = ({ rankedStudent }: { rankedStudent: RankedStudent }) => {
+const StudentObservation = ({
+  rankedStudent,
+  selectedPeriod,
+}: {
+  rankedStudent: RankedStudent;
+  selectedPeriod: Period;
+}) => {
+
   const student = rankedStudent.student;
 
-  // En cas d'abandon de l'élève
+  // =========================
+  // ABANDON
+  // =========================
   if (student.is_abandoned) {
     return (
       <span className="text-red-700 font-bold text-[12px] uppercase">
-        Abandon {student.abandon_reason ? `: ${student.abandon_reason}` : ''}
+        Abandon{' '}
+        {student.abandon_reason
+          ? `: ${student.abandon_reason}`
+          : ''}
       </span>
     );
   }
 
-  // Catégorie 1 (Ont Réussis sans Echecs) & Catégorie 3 (Ont Echoués) : L'observation doit rester VIDE
-  if (rankedStudent.category === 1 || rankedStudent.category === 3) {
+  // =========================
+  // ANNUEL
+  // =========================
+  if (selectedPeriod === 'ANNUAL') {
+
+    // Catégorie 1 et 3 = vide
+    if (
+      rankedStudent.category === 1 ||
+      rankedStudent.category === 3
+    ) {
+      return null;
+    }
+
+    // Catégorie 2 = repêchages
+    if (rankedStudent.category === 2) {
+
+      const details =
+        rankedStudent.subjectDetails.filter(
+          (s: any) =>
+            rankedStudent.repechageSubjects.includes(
+              s.subjectCode || s.subjectName
+            )
+        );
+
+      return (
+        <div className="text-black text-[12px] font-semibold leading-tight">
+          {details
+            .map((s) => {
+              const pct = Math.round(
+                (s.points / s.maxPoints) * 100
+              );
+
+              return `${s.subjectCode || s.subjectName} ${pct}%`;
+            })
+            .join(', ')}
+        </div>
+      );
+    }
+
+    // Catégorie 5 = non classés
+    if (rankedStudent.category === 5) {
+
+      const missing: string[] = [];
+      const failed: string[] = [];
+
+      for (
+        let i = 0;
+        i < rankedStudent.subjectDetails.length;
+        i++
+      ) {
+
+        const detail =
+          rankedStudent.subjectDetails[i];
+
+        const name =
+          detail.subjectCode || detail.subjectName;
+
+        if (
+          rankedStudent.missingSubjects.includes(name)
+        ) {
+
+          missing.push(name);
+
+        } else if (
+          rankedStudent.failedSubjects.includes(name) ||
+          rankedStudent.repechageSubjects.includes(name)
+        ) {
+
+          const pct = Math.round(
+            (detail.points / detail.maxPoints) * 100
+          );
+
+          failed.push(`${name} ${pct}%`);
+        }
+      }
+
+      return (
+        <div className="flex flex-col text-black text-[12px] leading-tight space-y-0.5">
+
+          {missing.length > 0 && (
+            <span className="font-bold">
+              {missing.join(', ')}
+            </span>
+          )}
+
+          {failed.length > 0 && (
+            <span className="font-semibold">
+              {failed.join(', ')}
+            </span>
+          )}
+
+        </div>
+      );
+    }
+
     return null;
   }
 
-  // Catégorie 2 (Passent après la 2ème session)
-  if (rankedStudent.category === 2) {
-    const details = rankedStudent.subjectDetails.filter(
-      (s: any) => rankedStudent.repechageSubjects.includes(s.subjectCode || s.subjectName)
+// =========================
+// SEMESTRES / PERIODES
+// =========================
+
+// Catégorie 1 = rien
+if (rankedStudent.category === 1) {
+  return null;
+}
+
+// =========================
+// Catégorie 2 et 3
+// Affichage des échecs
+// =========================
+if (
+  rankedStudent.category === 2 ||
+  rankedStudent.category === 3
+) {
+
+  const failedDetails =
+    rankedStudent.subjectDetails.filter(
+      (s) =>
+        rankedStudent.failedSubjects.includes(
+          s.subjectCode || s.subjectName
+        )
     );
 
-    return (
-      <div className="text-black text-[12px] font-semibold leading-tight">
-        {details.map((s) => {
-          const pct = Math.round((s.points / s.maxPoints) * 100);
-          return `${s.subjectCode || s.subjectName} ${pct}`;
-        }).join(', ')}
-      </div>
-    );
-  }
+  return (
+    <div className="text-black text-[12px] font-semibold leading-tight">
 
-  // Catégorie 5 (Non classés - Avant Délibération ou Liste de Repêchage)
-  if (rankedStudent.category === 5) {
-    const missing: string[] = [];
-    const failed: string[] = [];
+      {failedDetails
+        .map((s) => {
 
-    for (let i = 0; i < rankedStudent.subjectDetails.length; i++) {
-      const detail = rankedStudent.subjectDetails[i];
-      const name = detail.subjectCode || detail.subjectName;
+          return `${s.subjectCode || s.subjectName} ${Math.round(
+            s.points
+          )}/${Math.round(s.maxPoints)}`;
 
-      if (rankedStudent.missingSubjects.includes(name)) {
-        missing.push(name);
-      } else if (rankedStudent.failedSubjects.includes(name) || rankedStudent.repechageSubjects.includes(name)) {
-        const pct = Math.round((detail.points / detail.maxPoints) * 100);
-        failed.push(`${name} ${pct}`);
-      }
+        })
+        .join(' ; ')}
+
+    </div>
+  );
+}
+
+
+// =========================
+// Catégorie 5 = non classés
+// Matières manquantes EN GRAS
+// Échecs en normal
+// =========================
+if (rankedStudent.category === 5) {
+
+  const missing: string[] = [];
+  const failed: string[] = [];
+
+  for (
+    let i = 0;
+    i < rankedStudent.subjectDetails.length;
+    i++
+  ) {
+
+    const detail =
+      rankedStudent.subjectDetails[i];
+
+    const name =
+      detail.subjectCode || detail.subjectName;
+
+    // =====================
+    // MATIERES MANQUANTES
+    // =====================
+    if (
+      rankedStudent.missingSubjects.includes(name)
+    ) {
+
+      missing.push(name);
+
     }
 
-    return (
-      <div className="flex flex-col text-black text-[12px] leading-tight space-y-0.5">
-        {missing.length > 0 && (
-          <span className="font-bold">{missing.join(', ')}</span>
-        )}
-        {failed.length > 0 && (
-          <span className="font-semibold">{failed.join(', ')}</span>
-        )}
-      </div>
-    );
+    // =====================
+    // ECHECS
+    // =====================
+    else if (
+      rankedStudent.failedSubjects.includes(name)
+    ) {
+
+      failed.push(
+        `${name} ${Math.round(detail.points)}/${Math.round(detail.maxPoints)}`
+      );
+    }
   }
+
+  return (
+    <div className="flex flex-col text-[12px] leading-tight space-y-0.5">
+
+      {/* MATIERES MANQUANTES */}
+      {missing.length > 0 && (
+        <span className="font-medium text-black">
+          {missing.join(', ')}
+        </span>
+      )}
+
+      {/* ECHECS */}
+      {failed.length > 0 && (
+        <span className="font-bold text-black">
+          {failed.join(' ; ')}
+        </span>
+      )}
+
+    </div>
+  );
+}
 
   return null;
 };
@@ -187,6 +358,27 @@ export default function Palmares({
       setPalmaresMode('BEFORE_DELIBERATION');
     }
   }, [selectedPeriod]);
+
+    const periode : (period:string) => string = (period) => {
+  switch (period) {
+    case 'SEM1':
+      return '1ère Semestre';
+    case 'SEM2':
+      return '2ème Semestre';
+    case 'ANNUAL':
+      return 'Année';
+    case 'P1':
+      return '1ère Période';
+    case 'P2':
+      return '2ème Période';
+    case 'P3':
+      return '3ème Période';
+    case 'P4':
+      return '4ème Période';
+      default:
+        return "None"
+  }
+}
 
   // CSS d'impression propre pour A4 portrait
   const printCss = `
@@ -402,14 +594,30 @@ export default function Palmares({
           category = 5;
         }
       } else if (percentage >= delibConfig.seuilReussiteGlobal) {
-        if (repechageSubjects.length > 0) {
-          category = 2; // Passent après la 2ème session
-        } else {
-          category = 1; // Passent en première session
-        }
-      } else {
-        category = 3; // Doublent la classe (< 50%)
-      }
+
+  // === ANNUEL ===
+  if (selectedPeriod === 'ANNUAL') {
+
+    if (repechageSubjects.length > 0) {
+      category = 2; // Passent après repêchage
+    } else {
+      category = 1; // Passent directement
+    }
+
+  } 
+  
+  // === SEMESTRES / PÉRIODES ===
+  else {
+
+    if (failedSubjects.length > 0) {
+      category = 2; // Réussi avec échecs
+    } else {
+      category = 1; // Réussi sans échecs
+    }
+
+  }
+
+}
 
       rankings.push({
         student,
@@ -477,14 +685,23 @@ export default function Palmares({
     participants: students.length - rankedStudents.filter(r => r.category === 4 || r.category === 5).length,
   };
 
-  // Libellés de catégorie dynamiques basés sur la configuration
-  const categoryLabels: Record<number, string> = {
-    1: delibConfig.categorie_1_label,
-    2: delibConfig.categorie_2_label,
-    3: delibConfig.categorie_3_label,
-    4: delibConfig.categorie_4_label,
-    5: delibConfig.categorie_5_label,
-  };
+  {/* Libellés dynamiques selon la période */}
+const categoryLabels: Record<number, string> =
+  selectedPeriod === 'ANNUAL'
+    ? {
+        1: delibConfig.categorie_1_label,
+        2: delibConfig.categorie_2_label,
+        3: delibConfig.categorie_3_label,
+        4: delibConfig.categorie_4_label,
+        5: delibConfig.categorie_5_label,
+      }
+    : {
+        1: 'I. Ont Réussis sans échecs',
+        2: 'II. Ont réussis avec des échecs',
+        3: 'III. Ont échoués',
+        4: 'IV. Abandons',
+        5: 'V. Non classés',
+      };
 
   // Filtrage des étudiants à afficher selon le mode
   let displayedStudents = palmaresMode === 'REPECHAGE_LIST'
@@ -500,6 +717,7 @@ export default function Palmares({
   }
 
   const documentTitle = palmaresMode === 'REPECHAGE_LIST' ? 'LISTE DE REPECHAGE' : 'PALMARÈS';
+
 
   return (
     <div className="bg-slate-100 p-8 print:p-0 print:bg-white">
@@ -565,7 +783,7 @@ export default function Palmares({
         {/* Bouton d'impression */}
         <PrintButton
           targetRef={palmaresRef}
-          title={`${documentTitle} - ${classInfo.name} - ${selectedPeriod}`}
+          title={`${documentTitle} de la ${classInfo.name} - ${periode(selectedPeriod)}`}
           extraCss={printCss}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
         >
@@ -597,108 +815,215 @@ export default function Palmares({
         {/* Titre principal centré à l'extérieur pour un rendu très professionnel */}
         <div className="text-center font-black text-[16px] uppercase tracking-wider mb-5 text-black">
           <span className="border-b-2 border-black pb-0.5 px-4 inline-block">
-            {documentTitle} - {classInfo.name.toUpperCase()} - {selectedPeriod}
+            {documentTitle} de la {classInfo.name.toUpperCase()} - {periode(selectedPeriod)}
           </span>
         </div>
 
-        {/* Rendu conditionnel du tableau selon le mode */}
-        {palmaresMode === 'REPECHAGE_LIST' ? (
-          <table className="w-full border-collapse border border-black text-[14px] text-black">
-            <thead>
-              <tr className="font-bold text-black border border-black">
-                <th className="border border-black px-1.5 py-1 w-10 text-center">N°</th>
-                <th className="border border-black px-2.5 py-1 text-left">Nom et PostNom</th>
-                <th className="border border-black px-2.5 py-1 text-center">Repêchage</th>
-                <th className="border border-black px-2.5 py-1 text-center">Session - unique</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedStudents.map((rankedStudent, index) => {
-                // Pour le mode Liste de Repêchage, on extrait les matières directement
-                const missing = rankedStudent.missingSubjects.join(', ');
-                const failed = rankedStudent.failedSubjects.join(', ');
+{/* Rendu conditionnel du tableau selon le mode */}
+{palmaresMode === 'REPECHAGE_LIST' ? (
+  <table className="w-full border-collapse border border-black text-[14px] text-black">
+    <thead>
+      <tr className="font-bold text-black border border-black">
+        <th className="border border-black px-1.5 py-1 w-10 text-center">N°</th>
+        <th className="border border-black px-2.5 py-1 text-left">Nom et PostNom</th>
+        <th className="border border-black px-2.5 py-1 text-center">Repêchage</th>
+        <th className="border border-black px-2.5 py-1 text-center">Session - unique</th>
+      </tr>
+    </thead>
 
-                return (
-                  <tr key={rankedStudent.student.id} className="border border-black font-semibold leading-none">
-                    <td className="border border-black px-1.5 py-0 text-center">
-                      {index + 1}.
-                    </td>
-                    <td className="border border-black px-2.5 py-0">
-                      {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
-                    </td>
-                    <td className="border border-black px-2.5 py-0 text-center text-black">
-                      {failed}
-                    </td>
-                    <td className="border border-black px-2.5 py-0 text-center text-black">
-                      {missing}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+    <tbody>
+      {displayedStudents.map((rankedStudent, index) => {
+        const missing = rankedStudent.missingSubjects.join(', ');
+        const failed = rankedStudent.failedSubjects.join(', ');
+
+        return (
+          <tr
+            key={rankedStudent.student.id}
+            className="border border-black font-semibold leading-none"
+          >
+            <td className="border border-black px-1.5 py-0 text-center">
+              {index + 1}.
+            </td>
+
+            <td className="border border-black px-2.5 py-0">
+              {rankedStudent.student.last_name}{' '}
+              {rankedStudent.student.post_name}{' '}
+              {rankedStudent.student.first_name}
+            </td>
+
+            <td className="border border-black px-2.5 py-0 text-center text-black">
+              {failed}
+            </td>
+
+            <td className="border border-black px-2.5 py-0 text-center text-black">
+              {missing}
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+) : (
+  <table className="w-full border-collapse border border-black text-[13px] text-black">
+    <thead>
+      <tr className="font-bold text-black border border-black uppercase text-[12px]">
+        <th className="border border-black px-1.5 py-1 w-8 text-center">
+          N°
+        </th>
+
+        <th className="border border-black px-2.5 py-1 text-left">
+          NOMS ET POST NOMS
+        </th>
+
+        <th className="border border-black px-1.5 py-1 w-12 text-center">
+          %
+        </th>
+
+        {/* === DIFFERENCE ENTRE SEMESTRE/PERIODE ET ANNUEL === */}
+        {selectedPeriod === 'ANNUAL' ? (
+          <th className="border border-black px-2.5 py-1 text-left">
+            REPECHAGES
+          </th>
         ) : (
-          <table className="w-full border-collapse border border-black text-[13px] text-black">
-            <thead>
-              <tr className="font-bold text-black border border-black uppercase text-[12px]">
-                <th className="border border-black px-1.5 py-1 w-8 text-center">N°</th>
-                <th className="border border-black px-2.5 py-1 text-left">NOMS ET POST NOMS</th>
-                <th className="border border-black px-1.5 py-1 w-12 text-center">%</th>
-                <th className="border border-black px-2.5 py-1 text-left">REPECHAGES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedStudents.map((rankedStudent, index) => {
-                // Détection du changement de catégorie pour insertion du séparateur
-                const prev = index > 0 ? displayedStudents[index - 1] : null;
-                const isNewCat = !prev || prev.category !== rankedStudent.category;
+          <>
+            <th className="border border-black px-2.5 py-1 text-center">
+              CONDUITE
+            </th>
 
-                // Calcul du nombre d'élèves pour cette catégorie
-                let catCount = 0;
-                if (rankedStudent.category === 1) catCount = stats.cat1;
-                if (rankedStudent.category === 2) catCount = stats.cat2;
-                if (rankedStudent.category === 3) catCount = stats.cat3;
-                if (rankedStudent.category === 4) catCount = stats.cat4;
-                if (rankedStudent.category === 5) catCount = stats.cat5;
-
-                const pctStr = stats.total > 0 ? ((catCount / stats.total) * 100).toFixed(1).replace('.0', '') : '0';
-
-                return (
-                  <React.Fragment key={rankedStudent.student.id}>
-                    {isNewCat && (
-                      <tr className="bg-slate-100 border-y border-black font-bold">
-                        <td colSpan={4} className="border border-black px-2 py-1 text-center font-bold text-black text-[12px] uppercase">
-                          <div className="flex w-full justify-center items-center gap-8">
-                             <span>{categoryLabels[rankedStudent.category]}</span>
-                             <span>{catCount}/{stats.total} soit {pctStr} %</span>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    <tr className="border border-black font-semibold leading-none">
-                      {/* Indexation N° */}
-                      <td className="border border-black px-1.5 py-0 text-center">
-                        {rankedStudent.rank.toString().padStart(2, '0')}
-                      </td>
-                      {/* Nom Complet de l'élève */}
-                      <td className="border border-black px-2.5 py-0 uppercase">
-                        {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
-                      </td>
-                      {/* Pourcentage */}
-                      <td className="border border-black px-1.5 py-0 text-center text-black">
-                        {rankedStudent.category === 4 || rankedStudent.category === 5 ? '' : `${rankedStudent.percentage.toFixed(1).replace('.', ',').replace(',0', '')}`}
-                      </td>
-                      {/* Colonne Observation personnalisée */}
-                      <td className="border border-black px-2.5 py-0">
-                        <StudentObservation rankedStudent={rankedStudent} />
-                      </td>
-                    </tr>
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+            <th className="border border-black px-2.5 py-1 text-left">
+              OBSERVATION
+            </th>
+          </>
         )}
+      </tr>
+    </thead>
+
+    <tbody>
+      {displayedStudents.map((rankedStudent, index) => {
+        const prev =
+          index > 0 ? displayedStudents[index - 1] : null;
+
+        const isNewCat =
+          !prev || prev.category !== rankedStudent.category;
+
+        let catCount = 0;
+
+        if (rankedStudent.category === 1) catCount = stats.cat1;
+        if (rankedStudent.category === 2) catCount = stats.cat2;
+        if (rankedStudent.category === 3) catCount = stats.cat3;
+        if (rankedStudent.category === 4) catCount = stats.cat4;
+        if (rankedStudent.category === 5) catCount = stats.cat5;
+
+        const pctStr =
+          stats.total > 0
+            ? ((catCount / stats.total) * 100)
+                .toFixed(1)
+                .replace('.0', '')
+            : '0';
+
+        // === CONDUITE SELON LA PERIODE ===
+        let conduite = '-';
+
+        if (selectedPeriod === 'P1')
+          conduite = rankedStudent.student.conduite_p1 || '-';
+
+        else if (
+          selectedPeriod === 'P2' ||
+          selectedPeriod === 'SEM1' ||
+          selectedPeriod === 'EXAM1'
+        )
+          conduite = rankedStudent.student.conduite_p2 || '-';
+
+        else if (selectedPeriod === 'P3')
+          conduite = rankedStudent.student.conduite_p3 || '-';
+
+        else if (
+          selectedPeriod === 'P4' ||
+          selectedPeriod === 'SEM2' ||
+          selectedPeriod === 'EXAM2'
+        )
+          conduite = rankedStudent.student.conduite_p4 || '-';
+
+        return (
+          <React.Fragment key={rankedStudent.student.id}>
+            {isNewCat && (
+              <tr className="bg-slate-100 border-y border-black font-bold">
+                <td
+                  colSpan={
+                    selectedPeriod === 'ANNUAL' ? 4 : 5
+                  }
+                  className="border border-black px-2 py-1 text-center font-bold text-black text-[12px] uppercase"
+                >
+                  <div className="flex w-full justify-center items-center gap-8">
+                    <span>
+                      {categoryLabels[rankedStudent.category]}
+                    </span>
+
+                    <span>
+                      {catCount}/{stats.total} soit {pctStr} %
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            <tr className="border border-black font-semibold leading-none">
+              {/* N° */}
+              <td className="border border-black px-1.5 py-0 text-center">
+                {rankedStudent.rank
+                  .toString()
+                  .padStart(2, '0')}
+              </td>
+
+              {/* Nom */}
+              <td className="border border-black px-2.5 py-0 uppercase">
+                {rankedStudent.student.last_name}{' '}
+                {rankedStudent.student.post_name}{' '}
+                {rankedStudent.student.first_name}
+              </td>
+
+              {/* Pourcentage */}
+              <td className="border border-black px-1.5 py-0 text-center text-black">
+                {rankedStudent.category === 4 ||
+                rankedStudent.category === 5
+                  ? ''
+                  : `${rankedStudent.percentage
+                      .toFixed(1)
+                      .replace('.', ',')
+                      .replace(',0', '')}`}
+              </td>
+
+              {/* === ANNUEL === */}
+              {selectedPeriod === 'ANNUAL' ? (
+                <td className="border border-black px-2.5 py-0">
+                  <StudentObservation
+  rankedStudent={rankedStudent}
+  selectedPeriod={selectedPeriod}
+/>
+                </td>
+              ) : (
+                <>
+                  {/* CONDUITE */}
+                  <td className="border border-black px-2.5 py-0 text-center uppercase">
+                    {conduite}
+                  </td>
+
+                  {/* OBSERVATION */}
+                  <td className="border border-black px-2.5 py-0">
+                   <StudentObservation
+  rankedStudent={rankedStudent}
+  selectedPeriod={selectedPeriod}
+/>
+                  </td>
+                </>
+              )}
+            </tr>
+          </React.Fragment>
+        );
+      })}
+    </tbody>
+  </table>
+)}
 
         {/* Bas de page pour les signatures officielles */}
         <div className="mt-8 flex justify-between text-[12px] text-black font-bold break-inside-avoid">
