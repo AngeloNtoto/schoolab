@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Import du contexte de thème global (Clair/Sombre)
 import { useTheme } from '../context/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 // Import du service de gestion des configurations locales (SQLite sous Tauri)
 import { settingsService } from '../services/settingsService';
 // Import du contexte de gestion des licences
@@ -35,7 +36,8 @@ import {
   Clipboard,
   Printer,
   RotateCcw,
-  GraduationCap
+  GraduationCap,
+  ChevronLeft
 } from '../components/iconsSvg';
 import DeliberationSettingsTab from '../components/settings/DeliberationSettingsTab';
 // Import du service de notifications éphémères (toasts)
@@ -102,6 +104,8 @@ export default function SettingsPage() {
   // Contrôle de l'affichage de la boîte de dialogue premium Schoolab Plus
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  const navigate = useNavigate();
+  
   // Au chargement initial, on récupère les données de configuration depuis SQLite
   useEffect(() => {
     loadSettings();
@@ -273,76 +277,59 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    <div className="h-full bg-[#f3f3f3] dark:bg-[#202020] overflow-hidden flex flex-col font-sans">
       
-      {/* 
-        En-tête principal : Style barre de titre desktop épurée
-        Affiche un en-tête sobre avec effet de flou pour s'intégrer harmonieusement
-      */}
-      <div className="bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800/80 px-8 py-6 sticky top-0 z-30 shadow-sm backdrop-blur-md">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="p-2.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-100/50 dark:border-blue-800/20 shadow-sm">
-              <Settings size={22} className="animate-spin-slow" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Préférences Système</h1>
-              <p className="text-slate-505 dark:text-slate-400 text-xs mt-0.5">Personnalisez votre espace de travail et gérez vos données académiques</p>
-            </div>
-          </div>
-          
-          {/* Badge indiquant le plan ou forfait Premium actuellement actif */}
-          {licenseStatus?.active && (
-            <span className="relative flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500/10 dark:to-indigo-500/10 text-white dark:text-blue-400 border border-blue-500/20 rounded-full text-xs font-bold tracking-wide shadow-sm shadow-blue-500/10 dark:shadow-none">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-              {licenseStatus.plan === 'PLUS' ? 'Schoolab Plus (Réseau Cloud)' : 'Schoolab Pro (Monoposte)'}
-            </span>
-          )}
-        </div>
+      {/* Barre de titre intégrée */}
+      <div className="h-12 bg-[#f3f3f3] dark:bg-[#202020] flex items-center px-5 flex-shrink-0 select-none">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+        >
+          <ChevronLeft size={20} />
+          <span className="text-[13px] font-medium">Retour</span>
+        </button>
       </div>
 
-      {/* Structure Principale en Grille Desktop à Deux Colonnes */}
-      <div className="max-w-6xl mx-auto p-6 md:p-8">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+      {/* Zone principale */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* Sidebar */}
+        <div className="w-[280px] flex-shrink-0 px-5 pb-6 flex flex-col h-full overflow-y-auto">
+          <h1 className="text-[28px] font-bold text-slate-900 dark:text-white mb-6 tracking-tight">Paramètres</h1>
           
-          {/* Colonne Gauche : Navigation latérale fixe de type macOS Preferences Panel */}
-          <div className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-6 lg:self-start">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-3 shadow-sm space-y-1.5">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-all duration-200 group ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/20'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
-                    }`}
-                  >
-                    {/* Icône du bouton avec coloration active dynamique */}
-                    <div className={`p-2 rounded-lg transition-colors ${
-                      isActive 
-                        ? 'bg-white/10 text-white' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-white dark:group-hover:bg-slate-900'
-                    }`}>
-                      <tab.icon size={20} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-semibold tracking-wide">{tab.label}</div>
-                      <div className={`text-[11px] truncate ${isActive ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'}`}>
-                        {tab.description}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <nav className="flex-1 space-y-0.5">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-[7px] rounded-md text-left transition-colors duration-100 ${
+                    isActive
+                      ? 'bg-[#e5e5e5] dark:bg-[#383838] text-slate-900 dark:text-white'
+                      : 'text-slate-700 dark:text-slate-400 hover:bg-[#eaeaea] dark:hover:bg-[#2f2f2f]'
+                  }`}
+                >
+                  <tab.icon size={16} className={isActive ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'} />
+                  <span className={`text-[13px] ${isActive ? 'font-semibold' : 'font-normal'}`}>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* Colonne Droite : Panneau de contenu principal dynamique */}
-          <div className="flex-1 w-full">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-md overflow-hidden min-h-[500px]">
+          {licenseStatus?.active && (
+            <div className="mt-auto pt-4 px-1">
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-500">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{licenseStatus.plan === 'PLUS' ? 'Schoolab Plus' : 'Schoolab Pro'} — Activé</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Panneau de contenu */}
+        <div className="flex-1 h-full overflow-y-auto bg-[#f9f9f9] dark:bg-[#2b2b2b] rounded-tl-xl border-t border-l border-slate-200/50 dark:border-slate-700/30">
+          <div className="max-w-3xl py-10 px-10 pb-24">
 
               {/* 
                 ==========================================================
@@ -350,21 +337,17 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'general' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {/* Titre et préambule */}
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Building2 size={20} className="text-blue-600 dark:text-blue-400" />
-                      Fiche d'Identité de l'Établissement
-                    </h2>
-                    <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-                      Configurez les données officielles de l'école. Ces informations figureront sur l'en-tête de vos bulletins, palmarès scolaires et documents d'impression.
+                <div className="space-y-6">
+                  {/* Titre de section */}
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Établissement</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Configurez les données officielles qui figureront sur vos bulletins et palmarès.
                     </p>
                   </div>
                   
-                  {/* Formulaire d'édition interactive */}
-                  <div className="p-6 md:p-8">
-                    <form onSubmit={handleSaveSchoolInfo} className="space-y-6">
+                  {/* Formulaire d'édition */}
+                  <form onSubmit={handleSaveSchoolInfo} className="space-y-5">
                       
                       {/* Notice sur l'origine des données */}
                       <div className="p-4 bg-blue-500/5 border border-blue-500/15 rounded-xl flex items-start gap-3">
@@ -442,8 +425,7 @@ export default function SettingsPage() {
                         </button>
                       </div>
 
-                    </form>
-                  </div>
+                  </form>
                 </div>
               )}
 
@@ -453,18 +435,15 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'appearance' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 animate-fade-in">
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Sun size={20} className="text-amber-500" />
-                      Apparence de l'Espace de Travail
-                    </h2>
-                    <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-                      Configurez l'affichage visuel global pour l'adapter au confort de votre écran et à la lumière ambiante.
+                <div className="space-y-6 animate-fade-in">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Apparence</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Configurez l'affichage visuel pour l'adapter au confort de votre écran.
                     </p>
                   </div>
                   
-                  <div className="p-6 md:p-8 space-y-6">
+                  <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       
                       {/* Carte sélective : Thème Clair */}
@@ -550,18 +529,15 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'impression' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 animate-fade-in">
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Printer size={20} className="text-blue-600 dark:text-blue-400" />
-                      Mise en Page & Impression
-                    </h2>
-                    <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-                      Ajustez finement les tailles de police (titres, corps) et les interlignes de vos coupons, palmarès et bulletins pour qu'ils s'adaptent parfaitement à vos supports d'impression.
+                <div className="space-y-6 animate-fade-in">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Impression</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Ajustez les tailles de police et interlignes pour vos coupons, palmarès et bulletins.
                     </p>
                   </div>
                   
-                  <div className="p-6 md:p-8 space-y-8">
+                  <div className="space-y-8">
                     
                     {/* Explications et conseils d'impression */}
                     <div className="p-4 bg-indigo-500/5 border border-indigo-500/15 rounded-xl flex items-start gap-3">
@@ -893,18 +869,15 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'licence' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <ShieldCheck size={20} className="text-emerald-500" />
-                      Gestion de la Licence Client
-                    </h2>
-                    <p className="text-slate-505 dark:text-slate-400 text-xs mt-1">
-                      Assurez-vous que votre poste de travail est enregistré. Les licences garantissent la maintenance logicielle et activent les modules réseau.
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Licence & Droits</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Vérifiez l'enregistrement de votre poste et gérez vos clés de licence.
                     </p>
                   </div>
                   
-                  <div className="p-6 md:p-8 space-y-8">
+                  <div className="space-y-8">
                     
                     {/* État actuel de la licence représenté sous forme de widget premium */}
                     <div className={`p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 transition-all ${
@@ -1087,18 +1060,15 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'cloud' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <RefreshCw size={20} className="text-indigo-600 dark:text-indigo-400" />
-                      Synchronisation Cloud & Collaboration
-                    </h2>
-                    <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-                      Sauvegardez vos données en lieu sûr dans le Cloud ou partagez instantanément vos modifications avec vos collègues.
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Synchronisation Cloud</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Sauvegardez vos données dans le cloud ou partagez-les avec vos collègues.
                     </p>
                   </div>
                   
-                  <div className="p-6 md:p-8 space-y-8">
+                  <div className="space-y-8">
                     
                     {/* Statut de liaison Cloud actuel */}
                     <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -1284,18 +1254,15 @@ export default function SettingsPage() {
                 ==========================================================
               */}
               {activeTab === 'about' && (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Info size={20} className="text-blue-600 dark:text-blue-400" />
-                      À Propos de Schoolab
-                    </h2>
-                    <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-                      Consultez la version de l'application et accédez directement aux outils d'assistance client.
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">À propos de Schoolab</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+                      Consultez la version de l'application et accédez aux outils d'assistance.
                     </p>
                   </div>
                   
-                  <div className="p-6 md:p-8 space-y-8">
+                  <div className="space-y-8">
                     
                     {/* Carte descriptive avec logo Schoolab et Version */}
                     <div className="flex flex-col sm:flex-row items-center gap-5 bg-slate-50/60 dark:bg-slate-950/30 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-6">
@@ -1442,6 +1409,5 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

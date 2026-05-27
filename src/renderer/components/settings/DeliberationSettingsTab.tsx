@@ -119,19 +119,15 @@ export default function DeliberationSettingsTab() {
   if (loading) return null;
 
   return (
-    <div className="divide-y divide-slate-100 dark:divide-slate-800 animate-fade-in">
-      <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/50">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <GraduationCap size={20} className="text-purple-600 dark:text-purple-400" />
-          Critères de Délibération
-        </h2>
-        <p className="text-slate-555 dark:text-slate-400 text-xs mt-1">
-          Paramétrez finement les seuils de réussite, les règles de rachat et l'échelle d'appréciation pour votre école.
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Délibération</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
+          Paramétrez les seuils de réussite, les règles de rachat et l'échelle d'appréciation.
         </p>
       </div>
 
-      <div className="p-6 md:p-8">
-        <form onSubmit={handleSave} className="space-y-8">
+      <form onSubmit={handleSave} className="space-y-8">
 
           {/* Section 1: Seuils */}
           <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-6 space-y-5">
@@ -325,7 +321,6 @@ export default function DeliberationSettingsTab() {
           </div>
 
         </form>
-      </div>
     </div>
   );
 }
