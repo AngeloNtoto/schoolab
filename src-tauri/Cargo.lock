@@ -3615,7 +3615,7 @@ dependencies = [
 
 [[package]]
 name = "schoolab"
-version = "1.4.14"
+version = "1.4.15"
 dependencies = [
  "chrono",
  "dotenv_codegen",
