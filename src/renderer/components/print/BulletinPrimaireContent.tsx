@@ -5,6 +5,7 @@ import { Grade } from '../../services/gradeService';
 import { Domain } from '../../services/domainService';
 import { StudentRanks } from '../../services/bulletinService';
 import { settingsService } from '../../services/settingsService';
+import { deliberationConfigService, DeliberationConfig, DEFAULT_DELIBERATION_CONFIG } from '../../services/deliberationConfigService';
 
 export interface BulletinPrimaireContentProps {
   student: Student;
@@ -18,13 +19,9 @@ export interface BulletinPrimaireContentProps {
   totalStudents: number;
 }
 
-const getApplication = (percentage: number | null): string => {
+const getApplication = (percentage: number | null, config: DeliberationConfig): string => {
   if (percentage === null) return '';
-  if (percentage >= 80) return 'E';
-  if (percentage >= 60) return 'TB';
-  if (percentage >= 50) return 'B';
-  if (percentage >= 30) return 'Mé';
-  return 'Ma';
+  return deliberationConfigService.getAppreciationAbrev(percentage, config);
 };
 
 const abregeConduite = (conduite: string | null) => {
@@ -55,6 +52,7 @@ export default function BulletinPrimaireContent({
   const [titleSize, setTitleSize] = useState(16);
   const [bodySize, setBodySize] = useState(9);
   const [lineHeight, setLineHeight] = useState(1.3);
+  const [delibConfig, setDelibConfig] = useState<DeliberationConfig>(DEFAULT_DELIBERATION_CONFIG);
 
   useEffect(() => {
     const fetchPrintSettings = async () => {
@@ -62,9 +60,11 @@ export default function BulletinPrimaireContent({
         const t = await settingsService.get('bulletin_font_size_title');
         const b = await settingsService.get('bulletin_font_size_body');
         const l = await settingsService.get('bulletin_line_height');
+        const config = await deliberationConfigService.load();
         if (t) setTitleSize(parseFloat(t));
         if (b) setBodySize(parseFloat(b));
         if (l) setLineHeight(parseFloat(l));
+        setDelibConfig(config);
       } catch (e) {
         console.error("Impossible de charger les préférences de police du bulletin :", e);
       }
@@ -449,6 +449,9 @@ export default function BulletinPrimaireContent({
             let maxP1 = 0, maxP2 = 0, maxEx1 = 0, maxTot1 = 0;
             let maxP3 = 0, maxP4 = 0, maxEx2 = 0, maxTot2 = 0;
             let maxTG = 0;
+
+            let hasMissingP1 = false, hasMissingP2 = false, hasMissingEx1 = false;
+            let hasMissingP3 = false, hasMissingP4 = false, hasMissingEx2 = false;
             
             subjects.forEach(subject => {
               const p1 = getGrade(subject.id, 'P1');
@@ -458,6 +461,14 @@ export default function BulletinPrimaireContent({
               const p4 = getGrade(subject.id, 'P4');
               const ex2 = getGrade(subject.id, 'EXAM2');
               
+              if (subject.max_p1 > 0 && p1 === null) hasMissingP1 = true;
+              if (subject.max_p2 > 0 && p2 === null) hasMissingP2 = true;
+              if (subject.max_exam1 > 0 && ex1 === null) hasMissingEx1 = true;
+              
+              if (subject.max_p3 > 0 && p3 === null) hasMissingP3 = true;
+              if (subject.max_p4 > 0 && p4 === null) hasMissingP4 = true;
+              if (subject.max_exam2 > 0 && ex2 === null) hasMissingEx2 = true;
+
               if (p1 !== null) totalP1 += p1;
               if (p2 !== null) totalP2 += p2;
               if (ex1 !== null) totalEx1 += ex1;
@@ -483,17 +494,21 @@ export default function BulletinPrimaireContent({
               maxTG += (subject.max_p1 * 4) + subject.max_exam1 + subject.max_exam2;
             });
             
-            const pctP1 = maxP1 > 0 ? ((totalP1 / maxP1) * 100).toFixed(1) : '0';
-            const pctP2 = maxP2 > 0 ? ((totalP2 / maxP2) * 100).toFixed(1) : '0';
-            const pctEx1 = maxEx1 > 0 ? ((totalEx1 / maxEx1) * 100).toFixed(1) : '0';
-            const pct1 = maxTot1 > 0 ? ((totalTot1 / maxTot1) * 100).toFixed(1) : '0';
+            const hasMissingTot1 = hasMissingP1 || hasMissingP2 || hasMissingEx1;
+            const hasMissingTot2 = hasMissingP3 || hasMissingP4 || hasMissingEx2;
+            const hasMissingTG = hasMissingTot1 || hasMissingTot2;
 
-            const pctP3 = maxP3 > 0 ? ((totalP3 / maxP3) * 100).toFixed(1) : '0';
-            const pctP4 = maxP4 > 0 ? ((totalP4 / maxP4) * 100).toFixed(1) : '0';
-            const pctEx2 = maxEx2 > 0 ? ((totalEx2 / maxEx2) * 100).toFixed(1) : '0';
-            const pct2 = maxTot2 > 0 ? ((totalTot2 / maxTot2) * 100).toFixed(1) : '0';
+            const pctP1 = (!hasMissingP1 && maxP1 > 0) ? ((totalP1 / maxP1) * 100).toFixed(1) : '';
+            const pctP2 = (!hasMissingP2 && maxP2 > 0) ? ((totalP2 / maxP2) * 100).toFixed(1) : '';
+            const pctEx1 = (!hasMissingEx1 && maxEx1 > 0) ? ((totalEx1 / maxEx1) * 100).toFixed(1) : '';
+            const pct1 = (!hasMissingTot1 && maxTot1 > 0) ? ((totalTot1 / maxTot1) * 100).toFixed(1) : '';
 
-            const pctG = maxTG > 0 ? ((totalTG / maxTG) * 100).toFixed(1) : '0';
+            const pctP3 = (!hasMissingP3 && maxP3 > 0) ? ((totalP3 / maxP3) * 100).toFixed(1) : '';
+            const pctP4 = (!hasMissingP4 && maxP4 > 0) ? ((totalP4 / maxP4) * 100).toFixed(1) : '';
+            const pctEx2 = (!hasMissingEx2 && maxEx2 > 0) ? ((totalEx2 / maxEx2) * 100).toFixed(1) : '';
+            const pct2 = (!hasMissingTot2 && maxTot2 > 0) ? ((totalTot2 / maxTot2) * 100).toFixed(1) : '';
+
+            const pctG = (!hasMissingTG && maxTG > 0) ? ((totalTG / maxTG) * 100).toFixed(1) : '';
 
             return (
               <>
@@ -528,21 +543,21 @@ export default function BulletinPrimaireContent({
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 uppercase">POURCENTAGE</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctP1}%</td>
-                  <td className="border border-black text-center">{pctP2}%</td>
+                  <td className="border border-black text-center">{pctP1 ? `${pctP1}%` : ''}</td>
+                  <td className="border border-black text-center">{pctP2 ? `${pctP2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctEx1}%</td>
+                  <td className="border border-black text-center">{pctEx1 ? `${pctEx1}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pct1}%</td>
+                  <td className="border border-black text-center">{pct1 ? `${pct1}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctP3}%</td>
-                  <td className="border border-black text-center">{pctP4}%</td>
+                  <td className="border border-black text-center">{pctP3 ? `${pctP3}%` : ''}</td>
+                  <td className="border border-black text-center">{pctP4 ? `${pctP4}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctEx2}%</td>
+                  <td className="border border-black text-center">{pctEx2 ? `${pctEx2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pct2}%</td>
+                  <td className="border border-black text-center">{pct2 ? `${pct2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center bg-slate-100">{pctG}%</td>
+                  <td className="border border-black text-center bg-slate-100">{pctG ? `${pctG}%` : ''}</td>
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold uppercase underline text-[8px]">PLACE/NBRE D'ELEVES</td>
@@ -566,15 +581,15 @@ export default function BulletinPrimaireContent({
                 <tr>
                   <td className="border border-black text-left px-2 font-bold uppercase underline">APPLICATION</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black">{getApplication(parseFloat(pctP1))}</td>
-                  <td className="border border-black">{getApplication(parseFloat(pctP2))}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP1), delibConfig)}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP2), delibConfig)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black">{getApplication(parseFloat(pctP3))}</td>
-                  <td className="border border-black">{getApplication(parseFloat(pctP4))}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP3), delibConfig)}</td>
+                  <td className="border border-black">{getApplication(parseFloat(pctP4), delibConfig)}</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black bg-black"></td>

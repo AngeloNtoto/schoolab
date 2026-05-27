@@ -34,8 +34,10 @@ import {
   MapPin,
   Clipboard,
   Printer,
-  RotateCcw
+  RotateCcw,
+  GraduationCap
 } from '../components/iconsSvg';
+import DeliberationSettingsTab from '../components/settings/DeliberationSettingsTab';
 // Import du service de notifications éphémères (toasts)
 import { useToast } from '../context/ToastContext';
 // Services utilitaires pour l'initialisation de test, les licences et la synchronisation
@@ -53,7 +55,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   
   // Navigation par onglets (style macOS/iPadOS Preferences)
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'impression' | 'licence' | 'cloud' | 'about'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'impression' | 'deliberation' | 'licence' | 'cloud' | 'about'>('general');
   
   // États locaux stockant les informations d'identité de l'établissement scolaire
   const [schoolName, setSchoolName] = useState('');
@@ -264,6 +266,7 @@ export default function SettingsPage() {
     { id: 'general' as const, label: 'Établissement', icon: Building2, description: 'Identité locale de l\'école' },
     { id: 'appearance' as const, label: 'Thème', icon: Sun, description: 'Affichage clair ou sombre' },
     { id: 'impression' as const, label: 'Impression', icon: Printer, description: 'Polices et interlignes' },
+    { id: 'deliberation' as const, label: 'Délibération', icon: GraduationCap, description: 'Seuils, rachats et mentions' },
     { id: 'licence' as const, label: 'Licence & Droits', icon: ShieldCheck, description: 'Statut du poste de travail' },
     { id: 'cloud' as const, label: 'Cloud & Synchro', icon: RefreshCw, description: 'Sauvegardes collaboratives' },
     { id: 'about' as const, label: 'À propos', icon: Info, description: 'Version et support technique' },
@@ -873,6 +876,15 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* 
+                ==========================================================
+                SECTION 3.5 : DÉLIBÉRATION (Critères et paramètres)
+                ==========================================================
+              */}
+              {activeTab === 'deliberation' && (
+                <DeliberationSettingsTab />
               )}
 
               {/* 

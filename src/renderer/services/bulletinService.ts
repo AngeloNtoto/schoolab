@@ -187,7 +187,7 @@ class BulletinService {
     students.forEach(student => {
       let missingCount = 0;
       const studentGrades = adjustedGrades.filter(g => g.student_id === student.id);
-      const subjectTotals: Record<number, { points: number; maxPoints: number }> = {};
+      const subjectTotals: Record<number, { points: number; maxPoints: number;isComplete:boolean }> = {};
 
       subjects.forEach(subject => {
         const subjectMax = subject.max_p1 + subject.max_p2 + subject.max_exam1 + subject.max_p3 + subject.max_p4 + subject.max_exam2;
@@ -201,30 +201,31 @@ class BulletinService {
 
         let subjectPts = 0;
         let actualMax = 0;
+        let expectedPeriods = 0;
+        if (subject.max_p1 > 0) expectedPeriods++;
+        if (subject.max_p2 > 0) expectedPeriods++;
+        if (subject.max_exam1 > 0) expectedPeriods++;
+        if (subject.max_p3 > 0) expectedPeriods++;
+        if (subject.max_p4 > 0) expectedPeriods++;
+        if (subject.max_exam2 > 0) expectedPeriods++;
+
+        const isComplete = gradesForSubj.length === expectedPeriods;
+
         ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'].forEach(period => {
           const gradeEntry = gradesForSubj.find(g => g.period === period);
-          let maxForPeriod = 0;
-          if (period === 'P1') maxForPeriod = subject.max_p1;
-          if (period === 'P2') maxForPeriod = subject.max_p2;
-          if (period === 'EXAM1') maxForPeriod = subject.max_exam1;
-          if (period === 'P3') maxForPeriod = subject.max_p3;
-          if (period === 'P4') maxForPeriod = subject.max_p4;
-          if (period === 'EXAM2') maxForPeriod = subject.max_exam2;
-
           if (gradeEntry) {
             subjectPts += gradeEntry.value;
-            actualMax += maxForPeriod;
           }
         });
 
-        subjectTotals[subject.id] = { points: subjectPts, maxPoints: actualMax };
+        subjectTotals[subject.id] = { 
+          points: subjectPts, 
+          maxPoints: subjectMax, // Option B : On utilise le vrai maximum complet
+          isComplete 
+        };
       });
 
-      // Règle 1: Pas de délibération si l'élève a le moindre vide (côte manquante)
-      // Pour éviter toute confusion (Option A annulée), on exige un dossier complet.
-      if (missingCount > 0) return;
-
-      // Calcul du pourcentage global de l'élève
+      // Calcul du pourcentage (Option B : calcul strict sur le total absolu de l'année)
       let totalPts = 0;
       let totalMax = 0;
       Object.values(subjectTotals).forEach(t => {
@@ -241,22 +242,26 @@ class BulletinService {
       subjects.forEach(subject => {
         const t = subjectTotals[subject.id];
         if (!t || t.maxPoints === 0) return;
+        
         const moyenne = t.maxPoints / 2;
 
-        if (t.points < moyenne) {
-          const missing = moyenne - t.points;
-          let estRelevable = false;
-          if (t.maxPoints <= 80 && missing <= 6) estRelevable = true;
-          else if (t.maxPoints > 80 && t.maxPoints <= 160 && missing <= 8) estRelevable = true;
-          else if (t.maxPoints > 160 && t.maxPoints <= 300 && missing <= 10) estRelevable = true;
-          else if (t.maxPoints > 300 && t.maxPoints <= 320 && missing <= 12) estRelevable = true;
-          else if (t.maxPoints > 320 && t.maxPoints <= 500 && missing <= 15) estRelevable = true;
+        // Le cours doit être à 100% complet pour participer à la délibération (donneur ou receveur)
+        if (t.isComplete) {
+          if (t.points < moyenne) {
+            const missing = moyenne - t.points;
+            let estRelevable = false;
+            if (t.maxPoints <= 80 && missing <= 6) estRelevable = true;
+            else if (t.maxPoints > 80 && t.maxPoints <= 160 && missing <= 8) estRelevable = true;
+            else if (t.maxPoints > 160 && t.maxPoints <= 300 && missing <= 10) estRelevable = true;
+            else if (t.maxPoints > 300 && t.maxPoints <= 320 && missing <= 12) estRelevable = true;
+            else if (t.maxPoints > 320 && t.maxPoints <= 500 && missing <= 15) estRelevable = true;
 
-          if (estRelevable) {
-            failedSubjects.push({ subject, missing });
+            if (estRelevable) {
+              failedSubjects.push({ subject, missing });
+            }
+          } else if (t.points > moyenne) {
+            surplusSubjects.push({ subject, surplus: t.points - moyenne, pct: t.points / t.maxPoints });
           }
-        } else if (t.points > moyenne) {
-          surplusSubjects.push({ subject, surplus: t.points - moyenne, pct: t.points / t.maxPoints });
         }
       });
 
