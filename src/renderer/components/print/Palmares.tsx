@@ -215,10 +215,11 @@ if (rankedStudent.category === 1) {
 // Catégorie 2 et 3
 // Affichage des échecs
 // =========================
-if (
-  rankedStudent.category === 2 ||
-  rankedStudent.category === 3
-) {
+// =========================
+// Catégorie 2
+// Affichage des échecs uniquement
+// =========================
+if (rankedStudent.category === 2) {
 
   const failedDetails =
     rankedStudent.subjectDetails.filter(
@@ -233,16 +234,20 @@ if (
 
       {failedDetails
         .map((s) => {
-
-          return `${s.subjectCode || s.subjectName} ${Math.round(
-            s.points
-          )}/${Math.round(s.maxPoints)}`;
-
+          return `${s.subjectCode || s.subjectName}`;
         })
         .join(' ; ')}
 
     </div>
   );
+}
+
+// =========================
+// Catégorie 3 = Ont échoués
+// Aucun cours affiché
+// =========================
+if (rankedStudent.category === 3) {
+  return null;
 }
 
 
@@ -287,7 +292,7 @@ if (rankedStudent.category === 5) {
     ) {
 
       failed.push(
-        `${name} ${Math.round(detail.points)}/${Math.round(detail.maxPoints)}`
+        `${name}`
       );
     }
   }
