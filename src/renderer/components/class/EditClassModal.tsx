@@ -94,6 +94,8 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
         if (option === 'EB' || !option) {
           const firstNonEB = optionList.find(o => o.value !== 'EB');
           if (firstNonEB) setOption(firstNonEB.value);
+          // Par défaut pour les humanités, pas de section
+          setSection('-');
         }
       }
     }

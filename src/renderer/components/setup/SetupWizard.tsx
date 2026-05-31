@@ -84,7 +84,7 @@ export default function SetupWizard() {
       if (newClass.option === 'EB') {
         const firstNonEB = OPTIONS.find(o => o.value !== 'EB');
         if (firstNonEB) {
-          setNewClass(prev => ({ ...prev, option: firstNonEB.value }));
+          setNewClass(prev => ({ ...prev, option: firstNonEB.value, section: '-' }));
         }
       }
     }
