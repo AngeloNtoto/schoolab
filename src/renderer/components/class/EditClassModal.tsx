@@ -63,12 +63,13 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     }
   }, [level, classData]);
 
-  // Auto-update name
+  // Mise à jour automatique du nom d'affichage de la classe
+  // Recalcule le nom à chaque changement de niveau, section ou option
   useEffect(() => {
     if (!classData) {
-      // Find selected option object
+      // Trouver l'objet option sélectionné dans la liste dynamique (BDD)
       const selectedOpt = optionList.find(o => o.value === option);
-      // Determine what to display: if EB level, force 'EB'. Else use selected option value/label
+      // Pour les niveaux EB (7ème/8ème), on force le code EB
       let currentOptionCode = option;
       
       if (level === '7ème' || level === '8ème') {
@@ -77,11 +78,15 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
         currentOptionCode = selectedOpt.value;
       }
 
-      // If option is empty and not EB level, don't update name yet
+      // Si aucune option n'est encore choisie pour un niveau humanités, on attend
       if (!currentOptionCode && level !== '7ème' && level !== '8ème') return;
 
-      setName(getClassDisplayName(level, currentOptionCode, section));
+      // On passe le label dynamique pour garantir un affichage correct
+      // même si l'option n'existe pas dans le catalogue statique OPTIONS
+      const dynamicLabel = selectedOpt?.label;
+      setName(getClassDisplayName(level, currentOptionCode, section, dynamicLabel));
       
+      // Forcer l'option EB pour les niveaux d'éducation de base
       if (level === '7ème' || level === '8ème') {
         if (option !== 'EB') setOption('EB');
       }
