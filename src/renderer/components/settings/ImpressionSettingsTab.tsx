@@ -4,13 +4,12 @@ import { settingsService } from '../../services/settingsService';
 // Import des toasts d'alertes
 import { useToast } from '../../context/ToastContext';
 // Import des icônes SVG nécessaires
-import { Info, Clipboard, Layers, School, RotateCcw, Check, Sparkles } from '../iconsSvg';
+import { Info, Clipboard, Layers, School, RotateCcw, Check } from '../iconsSvg';
 
 /**
  * Composant ImpressionSettingsTab
  * Permet de régler dynamiquement les tailles de polices et hauteurs de lignes 
  * des coupons de notes, palmarès et bulletins de notes imprimés.
- * Structuré en bi-colonne avec un visualiseur live interactif sur le côté droit.
  */
 export default function ImpressionSettingsTab() {
   const toast = useToast();
@@ -32,9 +31,6 @@ export default function ImpressionSettingsTab() {
   const [bulletinTitleSize, setBulletinTitleSize] = useState('16');
   const [bulletinBodySize, setBulletinBodySize] = useState('10');
   const [bulletinLineHeight, setBulletinLineHeight] = useState('1.3');
-
-  // État de l'onglet actif dans le panneau de prévisualisation live
-  const [previewMode, setPreviewMode] = useState<'coupon' | 'palmares' | 'bulletin'>('bulletin');
 
   // Au chargement initial, on récupère les configurations d'impression de la BDD
   useEffect(() => {
@@ -67,7 +63,7 @@ export default function ImpressionSettingsTab() {
     loadImpressionSettings();
   }, []);
 
-  // Enregistrement des configurations dans SQLite
+  // Enregistrement des configurations
   const handleSaveSettings = async () => {
     setLoading(true);
     try {
@@ -112,369 +108,306 @@ export default function ImpressionSettingsTab() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
-      {/* En-tête */}
+      {/* Titre et description */}
       <div>
-        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Mise en page & Typographie d'Impression</h2>
+        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Mise en page d'Impression</h2>
         <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
-          Ajustez finement les tailles de police et hauteurs de ligne pour vos documents de sortie physiques ou PDF.
+          Ajustez finement les tailles de police et hauteurs de ligne pour vos documents de sortie.
         </p>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <div className="space-y-8">
         
-        {/* Colonne Gauche : Formulaire de réglage (7/12) */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Notice d'aide à la mise en page */}
+        <div className="p-4 bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/10 dark:border-indigo-500/20 rounded-2xl flex items-start gap-3.5 shadow-sm">
+          <Info size={18} className="text-indigo-500 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
+          <div className="text-[12px] text-slate-650 dark:text-slate-400 leading-relaxed font-medium">
+            <span className="font-bold text-slate-800 dark:text-slate-200">Conseil d'ajustement :</span> Si vous constatez qu'un document (comme un bulletin) déborde de quelques lignes sur une page blanche supplémentaire, réduisez légèrement l'interligne ou la taille des textes ci-dessous pour le faire tenir sur une seule page.
+          </div>
+        </div>
+
+        <div className="space-y-6">
           
-          {/* Note explicative */}
-          <div className="p-4 bg-teal-500/5 dark:bg-teal-500/10 border border-teal-500/10 dark:border-teal-500/20 rounded-2xl flex items-start gap-3 shadow-sm">
-            <Info size={16} className="text-teal-500 mt-0.5 flex-shrink-0" />
-            <div className="text-[11px] text-slate-650 dark:text-slate-400 leading-relaxed font-semibold">
-              <span className="font-bold text-slate-800 dark:text-slate-200">Règle de page unique :</span> Si vos bulletins débordent d'une ligne sur une page supplémentaire vierge, réduisez légèrement l'interligne ou la taille des textes ci-dessous pour forcer une parfaite mise en page sur un seul feuillet.
+          {/* A. Coupons de notes élèves */}
+          <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+                <Clipboard size={16} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Coupons de notes élèves</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[11px]">Polices et hauteur de ligne des fiches de cotes semestrielles</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Taille titre */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Titres</span>
+                  <span className="text-blue-600 dark:text-blue-455">{couponTitleSize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="24"
+                  step="0.5"
+                  value={couponTitleSize}
+                  onChange={(e) => setCouponTitleSize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Taille corps */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Textes</span>
+                  <span className="text-blue-600 dark:text-blue-455">{couponBodySize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="16"
+                  step="0.5"
+                  value={couponBodySize}
+                  onChange={(e) => setCouponBodySize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Hauteur de ligne */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Interligne (Hauteur)</span>
+                  <span className="text-blue-600 dark:text-blue-455">{couponLineHeight}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.7"
+                  max="2.0"
+                  step="0.05"
+                  value={couponLineHeight}
+                  onChange={(e) => setCouponLineHeight(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Aperçu simulé interactif */}
+            <div className="border border-slate-200/60 dark:border-white/5 rounded-2xl bg-white dark:bg-slate-950 p-4 relative overflow-hidden shadow-sm">
+              <span className="absolute top-3 right-3 text-[9px] uppercase font-black tracking-wider text-slate-450 dark:text-slate-550 bg-slate-105 dark:bg-slate-900 px-2 py-1 rounded-md">Aperçu Coupon</span>
+              <div className="space-y-2.5 border-2 border-dashed border-slate-300 dark:border-slate-800 p-4 font-serif text-slate-800 dark:text-slate-200 max-w-md bg-slate-50/30 dark:bg-slate-900/10 rounded-xl">
+                <div className="uppercase font-bold tracking-tight text-center border-b border-dashed border-slate-350 dark:border-slate-700 pb-1.5" style={{ fontSize: `${couponTitleSize}px`, lineHeight: couponLineHeight }}>
+                  COUPON ÉLÈVE : MBALA KADI
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-left font-medium text-xs" style={{ fontSize: `${couponBodySize}px`, lineHeight: couponLineHeight }}>
+                  <p>Mathématiques : 18/20</p>
+                  <p>Français : 14/20</p>
+                  <p>Science : 16/20</p>
+                  <p>Histoire : 12/20</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-6">
+          {/* B. Palmarès de classe */}
+          <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                <Layers size={16} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Palmarès de classe</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[11px]">Polices et interlignes des tableaux de synthèse récapitulative</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Taille titres */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Titres</span>
+                  <span className="text-indigo-600 dark:text-indigo-455">{palmaresTitleSize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="26"
+                  step="0.5"
+                  value={palmaresTitleSize}
+                  onChange={(e) => setPalmaresTitleSize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Taille corps */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Textes</span>
+                  <span className="text-indigo-600 dark:text-indigo-455">{palmaresBodySize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="6"
+                  max="18"
+                  step="0.5"
+                  value={palmaresBodySize}
+                  onChange={(e) => setPalmaresBodySize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Interligne */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Interligne (Hauteur)</span>
+                  <span className="text-indigo-600 dark:text-indigo-455">{palmaresLineHeight}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.7"
+                  max="2.0"
+                  step="0.05"
+                  value={palmaresLineHeight}
+                  onChange={(e) => setPalmaresLineHeight(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Aperçu simulé palmarès */}
+            <div className="border border-slate-200/60 dark:border-white/5 rounded-2xl bg-white dark:bg-slate-950 p-4 relative overflow-hidden shadow-sm">
+              <span className="absolute top-3 right-3 text-[9px] uppercase font-black tracking-wider text-slate-450 dark:text-slate-550 bg-slate-105 dark:bg-slate-900 px-2 py-1 rounded-md">Aperçu Palmarès</span>
+              <div className="space-y-3 text-slate-800 dark:text-slate-200 max-w-md">
+                <div className="font-extrabold text-center" style={{ fontSize: `${palmaresTitleSize}px`, lineHeight: palmaresLineHeight }}>
+                  PALMARÈS DE LA CLASSE DE 1ère A
+                </div>
+                <table className="w-full border border-slate-350 dark:border-slate-800 border-collapse text-xs" style={{ fontSize: `${palmaresBodySize}px`, lineHeight: palmaresLineHeight }}>
+                  <thead>
+                    <tr className="bg-slate-100 dark:bg-slate-900 border-b border-slate-350 dark:border-slate-800 font-bold">
+                      <th className="border-r border-slate-300 dark:border-slate-800 p-1.5 text-left">Nom de l'élève</th>
+                      <th className="border-r border-slate-300 dark:border-slate-800 p-1.5 text-center">%</th>
+                      <th className="p-1.5 text-center">Conduite</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-200 dark:border-slate-900/50">
+                      <td className="border-r border-slate-200 dark:border-slate-900 p-1.5 font-medium">KALONJI MBIKAY</td>
+                      <td className="border-r border-slate-200 dark:border-slate-900 p-1.5 text-center font-bold">82.5%</td>
+                      <td className="p-1.5 text-center text-slate-500 font-medium">Excellente</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* C. Bulletins scolaires */}
+          <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                <School size={16} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Bulletins scolaires</h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[11px]">Polices et interlignes des bulletins officiels trimestriels et annuels</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Taille titres */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Titres</span>
+                  <span className="text-emerald-600 dark:text-emerald-455">{bulletinTitleSize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="26"
+                  step="0.5"
+                  value={bulletinTitleSize}
+                  onChange={(e) => setBulletinTitleSize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Taille corps */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Taille Textes</span>
+                  <span className="text-emerald-600 dark:text-emerald-455">{bulletinBodySize} px</span>
+                </div>
+                <input
+                  type="range"
+                  min="6"
+                  max="18"
+                  step="0.5"
+                  value={bulletinBodySize}
+                  onChange={(e) => setBulletinBodySize(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Interligne */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span>Interligne (Hauteur)</span>
+                  <span className="text-emerald-600 dark:text-emerald-455">{bulletinLineHeight}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.7"
+                  max="2.5"
+                  step="0.05"
+                  value={bulletinLineHeight}
+                  onChange={(e) => setBulletinLineHeight(e.target.value)}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Aperçu simulé bulletin */}
+            <div className="border border-slate-200/60 dark:border-white/5 rounded-2xl bg-white dark:bg-slate-950 p-4 relative overflow-hidden shadow-sm">
+              <span className="absolute top-3 right-3 text-[9px] uppercase font-black tracking-wider text-slate-450 dark:text-slate-550 bg-slate-105 dark:bg-slate-900 px-2 py-1 rounded-md">Aperçu Bulletin</span>
+              <div className="space-y-3 font-serif text-slate-850 dark:text-slate-150 max-w-md">
+                <div className="font-bold text-center border-2 border-slate-900 dark:border-slate-100 p-2.5 rounded-lg" style={{ fontSize: `${bulletinTitleSize}px`, lineHeight: bulletinLineHeight }}>
+                  BULLETIN D'ÉVALUATION SCOLAIRE
+                </div>
+                <p className="text-center font-medium" style={{ fontSize: `${bulletinBodySize}px`, lineHeight: bulletinLineHeight }}>
+                  Élève : TOKO MANZO | Sexe : M | Province : KINSHASA
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Boutons d'actions de bas de page (Restauration et Sauvegarde) */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-6 border-t border-slate-100 dark:border-white/5">
             
-            {/* A. Coupons de notes élèves */}
-            <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-5 space-y-4 shadow-sm">
-              <button 
-                type="button" 
-                onClick={() => setPreviewMode('coupon')}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
-                    <Clipboard size={14} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">Coupons de notes élèves</h3>
-                    <p className="text-slate-400 dark:text-slate-500 text-[9px] font-medium">Fiches de cotes périodiques des enseignants</p>
-                  </div>
-                </div>
-                {previewMode === 'coupon' && <span className="text-[8px] bg-blue-500/10 text-blue-600 font-bold px-2 py-0.5 rounded-full">Actif</span>}
-              </button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-200/20">
-                {/* Taille titre */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Titres</span>
-                    <span className="text-blue-500">{couponTitleSize}px</span>
-                  </div>
-                  <input
-                    type="range" min="8" max="22" step="0.5"
-                    value={couponTitleSize}
-                    onChange={(e) => { setCouponTitleSize(e.target.value); setPreviewMode('coupon'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  />
-                </div>
-
-                {/* Taille corps */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Textes</span>
-                    <span className="text-blue-500">{couponBodySize}px</span>
-                  </div>
-                  <input
-                    type="range" min="5" max="15" step="0.5"
-                    value={couponBodySize}
-                    onChange={(e) => { setCouponBodySize(e.target.value); setPreviewMode('coupon'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  />
-                </div>
-
-                {/* Interligne */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Interligne</span>
-                    <span className="text-blue-500">{couponLineHeight}</span>
-                  </div>
-                  <input
-                    type="range" min="0.7" max="2.0" step="0.05"
-                    value={couponLineHeight}
-                    onChange={(e) => { setCouponLineHeight(e.target.value); setPreviewMode('coupon'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* B. Palmarès de classe */}
-            <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-5 space-y-4 shadow-sm">
-              <button 
-                type="button" 
-                onClick={() => setPreviewMode('palmares')}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                    <Layers size={14} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">Palmarès de classe</h3>
-                    <p className="text-slate-400 dark:text-slate-500 text-[9px] font-medium">Tableaux de synthèse générale et délibération</p>
-                  </div>
-                </div>
-                {previewMode === 'palmares' && <span className="text-[8px] bg-indigo-500/10 text-indigo-600 font-bold px-2 py-0.5 rounded-full">Actif</span>}
-              </button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-200/20">
-                {/* Taille titre */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Titres</span>
-                    <span className="text-indigo-500">{palmaresTitleSize}px</span>
-                  </div>
-                  <input
-                    type="range" min="10" max="24" step="0.5"
-                    value={palmaresTitleSize}
-                    onChange={(e) => { setPalmaresTitleSize(e.target.value); setPreviewMode('palmares'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                  />
-                </div>
-
-                {/* Taille corps */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Textes</span>
-                    <span className="text-indigo-500">{palmaresBodySize}px</span>
-                  </div>
-                  <input
-                    type="range" min="6" max="16" step="0.5"
-                    value={palmaresBodySize}
-                    onChange={(e) => { setPalmaresBodySize(e.target.value); setPreviewMode('palmares'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                  />
-                </div>
-
-                {/* Interligne */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Interligne</span>
-                    <span className="text-indigo-500">{palmaresLineHeight}</span>
-                  </div>
-                  <input
-                    type="range" min="0.7" max="2.0" step="0.05"
-                    value={palmaresLineHeight}
-                    onChange={(e) => { setPalmaresLineHeight(e.target.value); setPreviewMode('palmares'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* C. Bulletins scolaires */}
-            <div className="bg-slate-50/50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-white/5 rounded-3xl p-5 space-y-4 shadow-sm">
-              <button 
-                type="button" 
-                onClick={() => setPreviewMode('bulletin')}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
-                    <School size={14} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">Bulletins officiels</h3>
-                    <p className="text-slate-400 dark:text-slate-500 text-[9px] font-medium">Relevés de fin de trimestre et fiches de réussite</p>
-                  </div>
-                </div>
-                {previewMode === 'bulletin' && <span className="text-[8px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full">Actif</span>}
-              </button>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-200/20">
-                {/* Taille titre */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Titres</span>
-                    <span className="text-emerald-500">{bulletinTitleSize}px</span>
-                  </div>
-                  <input
-                    type="range" min="10" max="26" step="0.5"
-                    value={bulletinTitleSize}
-                    onChange={(e) => { setBulletinTitleSize(e.target.value); setPreviewMode('bulletin'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  />
-                </div>
-
-                {/* Taille corps */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Textes</span>
-                    <span className="text-emerald-500">{bulletinBodySize}px</span>
-                  </div>
-                  <input
-                    type="range" min="6" max="16" step="0.5"
-                    value={bulletinBodySize}
-                    onChange={(e) => { setBulletinBodySize(e.target.value); setPreviewMode('bulletin'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  />
-                </div>
-
-                {/* Interligne */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                    <span>Interligne</span>
-                    <span className="text-emerald-500">{bulletinLineHeight}</span>
-                  </div>
-                  <input
-                    type="range" min="0.7" max="2.5" step="0.05"
-                    value={bulletinLineHeight}
-                    onChange={(e) => { setBulletinLineHeight(e.target.value); setPreviewMode('bulletin'); }}
-                    className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Boutons d'actions */}
-          <div className="flex justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+            {/* Restaurer par défaut */}
             <button
               type="button"
               onClick={handleRestoreDefaults}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-250 dark:border-slate-800 text-slate-650 dark:text-slate-455 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl text-xs font-semibold transition-all"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 border border-slate-250 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-white rounded-2xl text-xs font-bold transition-all"
             >
-              <RotateCcw size={13} />
-              Valeurs d'usine
+              <RotateCcw size={14} />
+              Restaurer les valeurs par défaut
             </button>
 
+            {/* Enregistrer les configurations */}
             <button
               type="button"
               onClick={handleSaveSettings}
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-650 hover:from-teal-700 hover:to-emerald-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-teal-500/10"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-700 hover:to-indigo-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50 shadow-md shadow-blue-500/10"
             >
-              <Check size={13} />
-              Appliquer les dimensions
+              <Check size={14} />
+              Enregistrer les réglages
             </button>
           </div>
 
         </div>
-
-        {/* Colonne Droite : Visualiseur live interactif de mise en page (5/12) */}
-        <div className="lg:col-span-5 sticky top-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Visualiseur typographique live</div>
-            
-            {/* Toggles de sélection rapide */}
-            <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200/50 dark:border-white/5">
-              {(['coupon', 'palmares', 'bulletin'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setPreviewMode(mode)}
-                  className={`px-2 py-1 text-[8px] font-extrabold uppercase rounded-md transition-all ${
-                    previewMode === mode
-                      ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200/20'
-                      : 'text-slate-400 dark:text-slate-550'
-                  }`}
-                >
-                  {mode === 'coupon' ? 'Coupon' : mode === 'palmares' ? 'Palmarès' : 'Bulletin'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-md relative overflow-hidden font-serif">
-            
-            {/* Rendu dynamique : Coupon */}
-            {previewMode === 'coupon' && (
-              <div className="space-y-4 animate-in fade-in duration-300">
-                <div 
-                  className="font-bold uppercase tracking-tight text-center border-b border-dashed border-slate-300 dark:border-slate-800 pb-2 text-slate-900 dark:text-white"
-                  style={{ fontSize: `${couponTitleSize}px`, lineHeight: couponLineHeight }}
-                >
-                  COUPON : KADIMA NGOY
-                </div>
-                <div 
-                  className="space-y-1 font-sans text-slate-700 dark:text-slate-350 text-[10px] font-medium"
-                  style={{ fontSize: `${couponBodySize}px`, lineHeight: couponLineHeight }}
-                >
-                  <div className="flex justify-between"><span>Mathématiques</span> <span className="font-bold">17.5 / 20</span></div>
-                  <div className="flex justify-between"><span>Langue Française</span> <span className="font-bold">14.0 / 20</span></div>
-                  <div className="flex justify-between"><span>Physique</span> <span className="font-bold">16.0 / 20</span></div>
-                </div>
-                <div className="text-[7px] font-mono text-center text-slate-400 border-t border-dashed border-slate-200 dark:border-slate-900 pt-2">
-                  Généré par Schoolab Pro • DRC EPST
-                </div>
-              </div>
-            )}
-
-            {/* Rendu dynamique : Palmarès */}
-            {previewMode === 'palmares' && (
-              <div className="space-y-4 animate-in fade-in duration-300">
-                <div 
-                  className="font-extrabold uppercase tracking-tight text-center text-slate-900 dark:text-white"
-                  style={{ fontSize: `${palmaresTitleSize}px`, lineHeight: palmaresLineHeight }}
-                >
-                  PALMARÈS : 8ème RÉSIDENCE A
-                </div>
-                <div className="overflow-x-auto">
-                  <table 
-                    className="w-full border border-slate-300 dark:border-slate-800 border-collapse text-left font-sans text-[10px]"
-                    style={{ fontSize: `${palmaresBodySize}px`, lineHeight: palmaresLineHeight }}
-                  >
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-350 dark:border-slate-800 font-bold text-slate-500">
-                        <th className="p-1 border-r border-slate-300 dark:border-slate-800">Élève</th>
-                        <th className="p-1 text-center">%</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-slate-800 dark:text-slate-300 font-medium">
-                      <tr className="border-b border-slate-250 dark:border-slate-850">
-                        <td className="p-1 border-r border-slate-250 dark:border-slate-850 font-bold text-slate-900 dark:text-white">MUTOMBO ILUNGA</td>
-                        <td className="p-1 text-center font-bold text-emerald-650">84.2%</td>
-                      </tr>
-                      <tr>
-                        <td className="p-1 border-r border-slate-250 dark:border-slate-850 font-bold text-slate-900 dark:text-white">KABANGE MPUNGU</td>
-                        <td className="p-1 text-center font-bold text-emerald-650">76.8%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Rendu dynamique : Bulletin */}
-            {previewMode === 'bulletin' && (
-              <div className="space-y-4 animate-in fade-in duration-300">
-                <div 
-                  className="font-black uppercase tracking-tight text-center border-2 border-slate-900 dark:border-white p-2 text-slate-900 dark:text-white"
-                  style={{ fontSize: `${bulletinTitleSize}px`, lineHeight: bulletinLineHeight }}
-                >
-                  BULLETIN D'ÉVALUATION
-                </div>
-                <div 
-                  className="space-y-1.5 text-center font-sans text-slate-700 dark:text-slate-350 text-[10px] font-semibold"
-                  style={{ fontSize: `${bulletinBodySize}px`, lineHeight: bulletinLineHeight }}
-                >
-                  <p>Nom complet : <span className="font-bold text-slate-900 dark:text-white">TSEKEDI WA TSEKEDI</span></p>
-                  <p>Classe : <span className="font-bold text-slate-900 dark:text-white">7ème Année Enseignement de Base</span></p>
-                  <p>Moyenne Générale : <span className="font-extrabold text-emerald-655">81.4% (Application)</span></p>
-                </div>
-                <div className="h-6"></div>
-              </div>
-            )}
-
-          </div>
-
-          {/* Sceau de calibrage */}
-          <div className="p-5 bg-teal-500/5 dark:bg-teal-500/10 border border-teal-500/10 dark:border-teal-500/20 rounded-2xl space-y-1.5 shadow-sm">
-            <h5 className="text-[10px] font-bold text-teal-600 dark:text-teal-455 uppercase tracking-wide flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" /> Calibrage Typographique
-            </h5>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal font-medium">
-              Notre module d'édition dynamique calcule automatiquement la densité des cotes en fonction de vos curseurs de taille afin d'équilibrer l'impression. Il évite intelligemment les retours à la ligne indésirables sur les imprimantes de bureau.
-            </p>
-          </div>
-
-        </div>
-
       </div>
-
     </div>
   );
 }
