@@ -801,7 +801,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                               // Mode normal : ouvrir l'édition
                               onSelectSubject?.(subject);
                             }}
-                            className={`group relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
+                            className={`group relative py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
                                  multiDeleteMode && deletingIds.has(subject.id)
                                     ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
                                     : draggedId === subject.id
@@ -817,10 +817,10 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             </div>
                         )}
                         
-                        <div className="relative z-10 flex items-center gap-3">
+                        <div className="relative z-10 flex items-start justify-between gap-3">
                             {/* Checkbox visible en mode multiDelete */}
                             {multiDeleteMode && (
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 self-start mt-0.5 ${
                                 deletingIds.has(subject.id)
                                   ? 'bg-red-500 border-red-500 text-white'
                                   : 'border-slate-300 dark:border-slate-600'
@@ -854,7 +854,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             </div>
                             
                             {/* Bouton de suppression */}
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 self-start mt-0.5 shrink-0">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
                                     className={`p-2 rounded-xl transition-all ${
