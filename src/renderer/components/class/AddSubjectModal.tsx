@@ -256,37 +256,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     }
   };
 
-  // ── Système de réorganisation par clic ──
-  // Double-clic sur l'icône ≡ → sélection (gros visuel orange)
-  // Puis clic sur une autre matière → déplacement à cette position
-  const [movingId, setMovingId] = React.useState<number | null>(null);
 
-  // Quand on clique sur une matière alors qu'une autre est en cours de déplacement
-  const handleReorderClick = async (targetId: number, sourceId: number | null = movingId) => {
-    // Si rien n'est sélectionné, ignorer (le clic normal d'édition s'applique)
-    if (sourceId === null) return;
-    // Clic sur la même → annuler la sélection
-    if (sourceId === targetId) {
-      setMovingId(null);
-      return;
-    }
-    // Déplacer sourceId à la position de targetId
-    const ids = subjects.map(s => s.id);
-    const fromIdx = ids.indexOf(sourceId);
-    const toIdx = ids.indexOf(targetId);
-    if (fromIdx === -1 || toIdx === -1) { setMovingId(null); return; }
-    ids.splice(fromIdx, 1);
-    ids.splice(toIdx, 0, sourceId);
-    try {
-      await classService.reorderSubjects(ids);
-      toast.success('Ordre mis à jour');
-      onSuccess();
-    } catch (error) {
-      console.error('Erreur réorganisation:', error);
-      toast.error('Erreur lors de la réorganisation');
-    }
-    setMovingId(null);
-  };
 
   // ── Auto-Trier ──
   const handleAutoSort = async () => {
@@ -781,7 +751,6 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     onClick={() => {
                       setMultiDeleteMode(!multiDeleteMode);
                       setDeletingIds(new Set());
-                      setMovingId(null);
                     }}
                     className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all ${
                       multiDeleteMode
@@ -822,19 +791,11 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                           <div
                             draggable={!multiDeleteMode}
                             onDragStart={(e) => handleDragStart(e, subject.id, subject.name)}
-                            onDragEnd={() => { setDraggedId(null); setMovingId(null); }}
+                            onDragEnd={() => { setDraggedId(null); }}
                             onClick={() => {
                               // Mode suppression multiple : toggle la sélection
                               if (multiDeleteMode) {
                                 toggleDeleteId(subject.id);
-                                return;
-                              }
-                              // Mode réorganisation par clic
-                              if (movingId !== null && movingId !== subject.id) {
-                                handleReorderClick(subject.id);
-                                return;
-                              } else if (movingId === subject.id) {
-                                setMovingId(null);
                                 return;
                               }
                               // Mode normal : ouvrir l'édition
@@ -843,7 +804,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             className={`group relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
                                  multiDeleteMode && deletingIds.has(subject.id)
                                     ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
-                                    : draggedId === subject.id || movingId === subject.id
+                                    : draggedId === subject.id
                                         ? 'bg-slate-100 dark:bg-slate-800 border-dashed border-slate-300 dark:border-slate-600 opacity-50' // Visual feedback for dragged item
                                         : isActive 
                                             ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
@@ -892,33 +853,8 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                                 )}
                             </div>
                             
-                            {/* Bouton de réorganisation + suppression */}
+                            {/* Bouton de suppression */}
                             <div className="flex items-center gap-1">
-                                {/* Indicateur si c'est l'élément sélectionné pour déplacement */}
-                                {movingId === subject.id && (
-                                    <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest animate-pulse mr-1">Déplacer...</span>
-                                )}
-                                {/* Indicateur "déposer ici" si un autre élément est en déplacement */}
-                                {movingId !== null && movingId !== subject.id && (
-                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest mr-1">→ Ici</span>
-                                )}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Double-clic ou clic sur l'icône = sélectionner/désélectionner pour déplacement
-                                        setMovingId(prev => prev === subject.id ? null : subject.id);
-                                    }}
-                                    className={`p-1.5 rounded-lg transition-all ${
-                                        movingId === subject.id
-                                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
-                                            : isActive 
-                                                ? 'text-white/40 hover:text-white/70 hover:bg-white/10' 
-                                                : 'text-slate-200 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                    }`}
-                                    title="Cliquer pour réorganiser"
-                                >
-                                    <GripVertical size={16} />
-                                </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
                                     className={`p-2 rounded-xl transition-all ${
