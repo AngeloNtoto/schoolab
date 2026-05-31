@@ -89,6 +89,12 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       // Forcer l'option EB pour les niveaux d'éducation de base
       if (level === '7ème' || level === '8ème') {
         if (option !== 'EB') setOption('EB');
+      } else {
+        // Si on passe aux humanités et que l'option est encore 'EB' ou vide
+        if (option === 'EB' || !option) {
+          const firstNonEB = optionList.find(o => o.value !== 'EB');
+          if (firstNonEB) setOption(firstNonEB.value);
+        }
       }
     }
   }, [level, section, option, classData, optionList]);
