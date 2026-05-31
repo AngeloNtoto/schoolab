@@ -41,3 +41,24 @@ export function getClassDisplayName(
   const sectionPart = section && section !== '-' ? ` ${section}` : '';
   return `${level}${optionPart}${sectionPart}`;
 }
+
+/**
+ * Retourne un rang numérique pour le tri correct des niveaux scolaires.
+ * Dans le système éducatif congolais, les classes vont du plus bas au plus haut :
+ *   7ème (EB) → 8ème (EB) → 1ère (Humanités) → 2ème → 3ème → 4ème
+ *
+ * parseInt("7ème") donnerait 7 et parseInt("1ère") donnerait 1,
+ * ce qui inverserait l'ordre attendu. Cette fonction corrige ça.
+ */
+export function getLevelRank(level: string): number {
+  // Table de correspondance : rang éducatif croissant
+  const rankMap: Record<string, number> = {
+    '7ème': 0,
+    '8ème': 1,
+    '1ère': 2,
+    '2ème': 3,
+    '3ème': 4,
+    '4ème': 5,
+  };
+  return rankMap[level] ?? 99; // Les niveaux inconnus vont à la fin
+}

@@ -8,7 +8,7 @@ import DeleteConfirmModal from '../ui/DeleteConfirmModal';
 import AddNoteModal from '../class/AddNoteModal';
 import EditClassModal from '../class/EditClassModal';
 import { useToast } from '../../context/ToastContext';
-import { getClassDisplayName } from '../../lib/classUtils';
+import { getClassDisplayName, getLevelRank } from '../../lib/classUtils';
 import ProfessionalLoader from '../ui/ProfessionalLoader';
 import { AppIcon } from '../ui/Logo';
 
@@ -32,11 +32,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [totalStudents, setTotalStudents] = useState(0);
   
-  // Filtering & Sorting State
+  // Filtering & Sorting State — on récupère les préférences depuis localStorage pour persister entre les pages
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid' as ViewMode);
-  const [sortBy, setSortBy] = useState('level' as SortOption);
-  const [sortOrder, setSortOrder] = useState('asc' as 'asc' | 'desc');
+  const [viewMode, setViewMode] = useState(() => (localStorage.getItem('dashboard_viewMode') as ViewMode) || 'grid');
+  const [sortBy, setSortBy] = useState(() => (localStorage.getItem('dashboard_sortBy') as SortOption) || 'level');
+  const [sortOrder, setSortOrder] = useState(() => (localStorage.getItem('dashboard_sortOrder') as 'asc' | 'desc') || 'asc');
   const [showFilters, setShowFilters] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(false);
 
@@ -48,6 +48,13 @@ export default function Dashboard() {
   const [addNoteModal, setAddNoteModal] = useState(null as { type: 'class' | 'student' | 'general', id?: number } | null);
   
   const toast = useToast();
+
+  // Sauvegarde des préférences d'affichage dans le localStorage pour les retrouver après navigation
+  useEffect(() => {
+    localStorage.setItem('dashboard_viewMode', viewMode);
+    localStorage.setItem('dashboard_sortBy', sortBy);
+    localStorage.setItem('dashboard_sortOrder', sortOrder);
+  }, [viewMode, sortBy, sortOrder]);
 
   useEffect(() => {
     loadData();
@@ -101,7 +108,7 @@ export default function Dashboard() {
       );
     }
 
-    // Sort
+    // Tri des classes selon le critère sélectionné par l'utilisateur
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
@@ -109,17 +116,17 @@ export default function Dashboard() {
           comparison = getClassDisplayName(a.level, a.option, a.section).localeCompare(getClassDisplayName(b.level, b.option, b.section));
           break;
         case 'level':
-          // Attempt to sort numerically if levels are numbers, otherwise alphabetically
-          const levelA = parseInt(a.level) || a.level;
-          const levelB = parseInt(b.level) || b.level;
-          if (typeof levelA === 'number' && typeof levelB === 'number') {
-            comparison = levelA - levelB;
-          } else {
-            comparison = String(levelA).localeCompare(String(levelB));
-          }
+          // On utilise le rang éducatif correct : 7ème → 8ème → 1ère → 2ème → 3ème → 4ème
+          comparison = getLevelRank(a.level) - getLevelRank(b.level);
+          // Si même niveau, on trie par option puis par section
+          if (comparison === 0) comparison = a.option.localeCompare(b.option);
+          if (comparison === 0) comparison = a.section.localeCompare(b.section);
           break;
         case 'option':
           comparison = a.option.localeCompare(b.option);
+          // Si même option, on trie par niveau puis section
+          if (comparison === 0) comparison = getLevelRank(a.level) - getLevelRank(b.level);
+          if (comparison === 0) comparison = a.section.localeCompare(b.section);
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -128,7 +135,7 @@ export default function Dashboard() {
     return result;
   }, [classes, searchQuery, sortBy, sortOrder]);
 
-  // Grouping Logic
+  // Regroupement des classes par niveau ou par option (pour la vue groupée)
   const groupedClasses = useMemo(() => {
     if (viewMode === 'grid' || viewMode === 'list') return null;
 
@@ -138,6 +145,16 @@ export default function Dashboard() {
       if (!groups[key]) groups[key] = [];
       groups[key].push(cls);
     });
+
+    // On trie les clés de groupe par rang éducatif si c'est un groupement par niveau
+    if (viewMode === 'grouped_level') {
+      const sortedGroups: Record<string, Class[]> = {};
+      Object.keys(groups)
+        .sort((a, b) => getLevelRank(a) - getLevelRank(b))
+        .forEach(key => { sortedGroups[key] = groups[key]; });
+      return sortedGroups;
+    }
+
     return groups;
   }, [filteredAndSortedClasses, viewMode]);
 

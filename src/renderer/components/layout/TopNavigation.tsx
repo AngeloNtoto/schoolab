@@ -1,7 +1,7 @@
 import { dbService } from 'src/renderer/services/databaseService';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getClassDisplayName } from 'src/renderer/lib/classUtils';
+import { getClassDisplayName, getLevelRank } from 'src/renderer/lib/classUtils';
 import { Search,User,Bell } from '../iconsSvg';
 
 
@@ -25,9 +25,14 @@ export default function TopNavigation() {
        const yearRes = await dbService.query<{name: string, id: number}>('SELECT id, name FROM academic_years WHERE is_active = 1');
        if(yearRes.length > 0) {
            setActiveYear(yearRes[0].name);
-           // Get classes for active year
-           const clsRes = await dbService.query<any>('SELECT * FROM classes WHERE academic_year_id = ? ORDER BY level, section', [yearRes[0].id]);
-           setClasses(clsRes);
+            // Récupération des classes puis tri par rang éducatif correct (7ème→8ème→1ère→2ème→3ème→4ème)
+            const clsRes = await dbService.query<any>('SELECT * FROM classes WHERE academic_year_id = ?', [yearRes[0].id]);
+            clsRes.sort((a: any, b: any) => {
+              const rankCmp = getLevelRank(a.level) - getLevelRank(b.level);
+              if (rankCmp !== 0) return rankCmp;
+              return (a.section || '').localeCompare(b.section || '');
+            });
+            setClasses(clsRes);
        }
     } catch(e) {
         console.error("Failed to load top nav data", e);

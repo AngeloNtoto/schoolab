@@ -3,6 +3,7 @@ import { X, Save, StickyNote, User, Users, FileText, ChevronDown, Tag } from '..
 import { dbService } from '../../services/databaseService';
 import { notesService, Note } from '../../services/notesService';
 import { useToast } from '../../context/ToastContext';
+import { getLevelRank } from '../../lib/classUtils';
 
 interface AddNoteModalProps {
   onClose: () => void;
@@ -59,9 +60,15 @@ export default function AddNoteModal({
         );
         setStudents(result.map(s => ({ id: s.id, label: `${s.first_name} ${s.last_name}` })));
       } else if (type === 'class') {
+        // Récupération et tri par rang éducatif correct (7ème→8ème→1ère→4ème)
         const result = await dbService.query<{id: number; level: string; option: string; section: string}>(
-          'SELECT id, level, option, section FROM classes ORDER BY level, section LIMIT 100'
+          'SELECT id, level, option, section FROM classes LIMIT 100'
         );
+        result.sort((a, b) => {
+          const rankCmp = getLevelRank(a.level) - getLevelRank(b.level);
+          if (rankCmp !== 0) return rankCmp;
+          return (a.section || '').localeCompare(b.section || '');
+        });
         setClasses(result.map(c => ({ id: c.id, label: `${c.level} ${c.option} ${c.section}` })));
       }
     } catch (error) {
