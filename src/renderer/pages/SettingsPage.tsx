@@ -11,11 +11,13 @@ import {
   RefreshCw, 
   Info, 
   GraduationCap, 
-  ChevronLeft 
+  ChevronLeft,
+  Clock
 } from '../components/iconsSvg';
 
 // Importation des sous-panneaux modulaires de configuration
 import GeneralSettingsTab from '../components/settings/GeneralSettingsTab';
+import AcademicSettingsTab from '../components/settings/AcademicSettingsTab';
 import AppearanceSettingsTab from '../components/settings/AppearanceSettingsTab';
 import ImpressionSettingsTab from '../components/settings/ImpressionSettingsTab';
 import DeliberationSettingsTab from '../components/settings/DeliberationSettingsTab';
@@ -25,7 +27,7 @@ import AboutSettingsTab from '../components/settings/AboutSettingsTab';
 
 /**
  * Page principale de configuration de Schoolab.
- * Organise les différents onglets de paramétrage (identité, apparence, impression, délibération, licence, cloud, à propos).
+ * Organise les différents onglets de paramétrage (identité, académique, apparence, impression, délibération, licence, cloud, à propos).
  */
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -33,11 +35,12 @@ export default function SettingsPage() {
   const { license: licenseStatus } = useLicense();
   
   // Onglet sélectionné par défaut
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'impression' | 'deliberation' | 'licence' | 'cloud' | 'about'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'academic' | 'appearance' | 'impression' | 'deliberation' | 'licence' | 'cloud' | 'about'>('general');
 
   // Définition de la liste des onglets (icônes, libellés et descriptions)
   const tabs = [
     { id: 'general' as const, label: 'Établissement', icon: Building2, description: 'Identité locale de l\'école' },
+    { id: 'academic' as const, label: 'Configuration Académique', icon: Clock, description: 'Cycles, maximaux et signatures' },
     { id: 'appearance' as const, label: 'Thème', icon: Sun, description: 'Affichage clair ou sombre' },
     { id: 'impression' as const, label: 'Impression', icon: Printer, description: 'Polices et interlignes' },
     { id: 'deliberation' as const, label: 'Délibération', icon: GraduationCap, description: 'Seuils, rachats et mentions' },
@@ -49,6 +52,7 @@ export default function SettingsPage() {
   // Palette de styles CSS pour l'élément actif de la barre latérale
   const tabColors: Record<string, string> = {
     general: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-l-[3px] border-blue-500 pl-3',
+    academic: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-l-[3px] border-purple-500 pl-3',
     appearance: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-l-[3px] border-amber-500 pl-3',
     impression: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-l-[3px] border-teal-500 pl-3',
     deliberation: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-l-[3px] border-purple-500 pl-3',
@@ -109,12 +113,13 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Panneau de configuration actif à droite */}
+        {/* Panneau de configuration actif à droite - max-w-5xl pour une occupation optimale de l'espace */}
         <div className="flex-1 h-full overflow-y-auto bg-white dark:bg-[#0c101d] rounded-tl-[2rem] border-t border-l border-slate-200/60 dark:border-white/5 shadow-2xl transition-colors duration-300">
-          <div className="max-w-3xl py-10 px-8 md:px-12 pb-24">
+          <div className="max-w-5xl py-10 px-8 md:px-12 pb-24">
             
             {/* Rendu conditionnel de l'onglet actif */}
             {activeTab === 'general' && <GeneralSettingsTab />}
+            {activeTab === 'academic' && <AcademicSettingsTab />}
             {activeTab === 'appearance' && <AppearanceSettingsTab />}
             {activeTab === 'impression' && <ImpressionSettingsTab />}
             {activeTab === 'deliberation' && <DeliberationSettingsTab />}
