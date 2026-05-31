@@ -1,11 +1,58 @@
 import React, { useState, useEffect, useActionState } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check, Copy } from '../iconsSvg';
 import { classService } from '../../services/classService';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
 import SubjectCatalog from './SubjectCatalog';
+import CloneSubjects from './CloneSubjects';
+
+// Définition des propriétés de notre zone d'interligne pour le dépôt
+interface DropZoneProps {
+  index: number;
+  onDrop: (sourceId: number, targetIndex: number) => void;
+}
+
+// Composant représentant l'espace entre deux cours où l'on peut glisser-déposer
+function DropZone({ index, onDrop }: DropZoneProps) {
+  // Permet de savoir si un élément survolé est actuellement au-dessus
+  const [isOver, setIsOver] = useState(false);
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsOver(true);
+      }}
+      onDragLeave={() => setIsOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsOver(false);
+        // Récupère l'ID du cours stocké dans le dataTransfer
+        const sourceIdStr = e.dataTransfer.getData('text/plain');
+        if (sourceIdStr) {
+          onDrop(Number(sourceIdStr), index);
+        }
+      }}
+      // L'interligne s'agrandit légèrement pour faciliter le dépôt quand on passe dessus
+      className={`transition-all duration-200 ${
+        isOver 
+          ? 'py-3' 
+          : 'py-1.5'
+      }`}
+    >
+      {/* Barre bleue lumineuse qui apparaît uniquement lors du survol */}
+      <div 
+        className={`h-1.5 rounded-full transition-all duration-200 ${
+          isOver 
+            ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.8)] scale-x-100' 
+            : 'bg-transparent scale-x-0'
+        }`}
+      />
+    </div>
+  );
+}
 
 interface Subject {
   id: number;
@@ -46,15 +93,20 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   
   const [loading, setLoading] = useState(false);
 
-  // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre
+  // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre, 'clone' pour cloner
   // Par défaut on affiche le catalogue sauf si on est en mode édition
-  const [activeTab, setActiveTab] = useState<'catalog' | 'manual'>(editingSubject ? 'manual' : 'catalog');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'manual' | 'clone' | 'batch'>(editingSubject ? 'manual' : 'catalog');
   
   // Domain-related state
   const [domains, setDomains] = useState<Domain[]>([]);
   const [selectedDomainId, setSelectedDomainId] = useState<number | null>(null);
   const [showDomainCreate, setShowDomainCreate] = useState(false);
   const [newDomainName, setNewDomainName] = useState('');
+  
+  // Batch Mode states
+  const [batchSubjects, setBatchSubjects] = useState<{name: string, code: string}[]>([]);
+  const [batchInputName, setBatchInputName] = useState('');
+  const [batchInputCode, setBatchInputCode] = useState('');
 
   // LOGIQUE SPÉCIALE POUR LES COURS À 100 POINTS :
   // Si maxPeriod = 100, alors c'est un cours en évaluation continue
@@ -141,22 +193,39 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
           [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, selectedDomainId, editingSubject.id]
         );
       } else {
-        await dbService.execute(
-          'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
-        );
+        // If in batch mode, we handle saving multiple
+        if (activeTab === 'batch') {
+          if (batchSubjects.length === 0) {
+            toast.warning('Ajoutez au moins un cours à la liste');
+            return { success: false };
+          }
+          let order = subjects.length + 1;
+          for (const item of batchSubjects) {
+             await dbService.execute(
+               'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+               [item.name, item.code, '', pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId, order]
+             );
+             order++;
+          }
+        } else {
+          await dbService.execute(
+            'INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [sName, sCode || '', sSubDomain, pMax, pMax, examMax, pMax, pMax, examMax, classId, selectedDomainId]
+          );
+        }
       }
       
-      // RÉINITIALISATION DU FORMULAIRE :
-      setName('');
-      setCode('');
-      setSubDomain('');
-      setMaxPeriod('10');
-      setMaxExam('20');
-      setSelectedDomainId(null);
-      
-      toast.success(editingSubject ? 'Matière mise à jour' : 'Matière ajoutée avec succès');
+      toast.success(editingSubject ? 'Matière mise à jour' : (activeTab === 'batch' ? `${batchSubjects.length} matières ajoutées` : 'Matière ajoutée'));
       onSuccess();
+      
+      if (!editingSubject && activeTab !== 'batch') {
+        setName('');
+        setCode('');
+      } else if (activeTab === 'batch') {
+        setBatchSubjects([]);
+      } else {
+        onClose();
+      }
       return { success: true };
     } catch (error) {
       console.error('Failed to save subject:', error);
@@ -193,21 +262,21 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const [movingId, setMovingId] = React.useState<number | null>(null);
 
   // Quand on clique sur une matière alors qu'une autre est en cours de déplacement
-  const handleReorderClick = async (targetId: number) => {
+  const handleReorderClick = async (targetId: number, sourceId: number | null = movingId) => {
     // Si rien n'est sélectionné, ignorer (le clic normal d'édition s'applique)
-    if (movingId === null) return;
+    if (sourceId === null) return;
     // Clic sur la même → annuler la sélection
-    if (movingId === targetId) {
+    if (sourceId === targetId) {
       setMovingId(null);
       return;
     }
-    // Déplacer movingId à la position de targetId
+    // Déplacer sourceId à la position de targetId
     const ids = subjects.map(s => s.id);
-    const fromIdx = ids.indexOf(movingId);
+    const fromIdx = ids.indexOf(sourceId);
     const toIdx = ids.indexOf(targetId);
     if (fromIdx === -1 || toIdx === -1) { setMovingId(null); return; }
     ids.splice(fromIdx, 1);
-    ids.splice(toIdx, 0, movingId);
+    ids.splice(toIdx, 0, sourceId);
     try {
       await classService.reorderSubjects(ids);
       toast.success('Ordre mis à jour');
@@ -217,6 +286,84 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       toast.error('Erreur lors de la réorganisation');
     }
     setMovingId(null);
+  };
+
+  // ── Auto-Trier ──
+  const handleAutoSort = async () => {
+    // Trier par maxima (plus petit au plus grand), puis par nom (A-Z)
+    const sorted = [...subjects].sort((a, b) => {
+      if (a.max_p1 !== b.max_p1) return a.max_p1 - b.max_p1;
+      return a.name.localeCompare(b.name);
+    });
+
+    const ids = sorted.map(s => s.id);
+    try {
+      await classService.reorderSubjects(ids);
+      toast.success('Cours triés automatiquement');
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur auto-tri:', error);
+      toast.error('Erreur lors du tri automatique');
+    }
+  };
+
+  // ── HTML5 Drag & Drop ──
+  const [draggedId, setDraggedId] = React.useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: number, name: string) => {
+    setDraggedId(id);
+    e.dataTransfer.setData('text/plain', id.toString());
+    e.dataTransfer.effectAllowed = 'move';
+    
+    // On crée un petit badge bleu flottant temporaire pour remplacer le gros pavé de base du navigateur
+    const dragGhost = document.createElement('div');
+    dragGhost.style.position = 'absolute';
+    dragGhost.style.top = '-1000px';
+    dragGhost.style.background = '#2563eb';
+    dragGhost.style.color = 'white';
+    dragGhost.style.padding = '4px 12px';
+    dragGhost.style.borderRadius = '8px';
+    dragGhost.style.fontSize = '12px';
+    dragGhost.style.fontWeight = 'bold';
+    dragGhost.textContent = `Déplacer : ${name}`;
+    document.body.appendChild(dragGhost);
+    
+    e.dataTransfer.setDragImage(dragGhost, 10, 10);
+    
+    // On nettoie le badge du DOM après un petit délai pour pas polluer la page
+    setTimeout(() => {
+      if (dragGhost.parentNode) {
+        dragGhost.parentNode.removeChild(dragGhost);
+      }
+    }, 100);
+  };
+
+  // Traitement du drop sur une interligne
+  const handleDropOnZone = async (sourceId: number, targetIndex: number) => {
+    const ids = subjects.map(s => s.id);
+    const fromIdx = ids.indexOf(sourceId);
+    if (fromIdx === -1) return;
+    
+    // On retire le cours de sa position d'origine
+    ids.splice(fromIdx, 1);
+    
+    // On calcule sa nouvelle place dans le tableau
+    let insertIdx = targetIndex;
+    if (fromIdx < targetIndex) {
+      insertIdx = targetIndex - 1;
+    }
+    
+    ids.splice(insertIdx, 0, sourceId);
+    
+    try {
+      await classService.reorderSubjects(ids);
+      toast.success('Ordre mis à jour');
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur réorganisation:', error);
+      toast.error('Erreur lors de la réorganisation');
+    }
+    setDraggedId(null);
   };
 
   // ── Mode suppression multiple ──
@@ -313,6 +460,30 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     <Plus size={14} />
                     Saisie manuelle
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('clone')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'clone'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Copy size={14} />
+                    Cloner
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('batch')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeTab === 'batch'
+                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <Sparkles size={14} />
+                    Par Maxima
+                  </button>
                 </div>
               )}
 
@@ -326,7 +497,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                 </div>
               )}
 
-              {/* CONTENU : Catalogue ou Manuel */}
+              {/* CONTENU : Catalogue, Clonage ou Manuel */}
               {activeTab === 'catalog' && !editingSubject ? (
                 <SubjectCatalog
                   classId={classId}
@@ -334,6 +505,8 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   existingSubjectNames={subjects.map(s => s.name)}
                   onSuccess={onSuccess}
                 />
+              ) : activeTab === 'clone' && !editingSubject ? (
+                <CloneSubjects classId={classId} onSuccess={onSuccess} />
               ) : (
                 <>
                   {!editingSubject && (
@@ -346,32 +519,114 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                   )}
 
               <form action={formAction} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Nom de la matière</label>
-                        <input
-                            name="name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
-                            placeholder="Ex: Mathématiques"
-                            required
-                        />
-                    </div>
-                    {/* Code disponible pour toutes les classes (y compris éducation de base) */}
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
-                        <input
-                            name="code"
-                            type="text"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
-                            placeholder="Ex: MATH"
-                        />
-                    </div>
-                </div>
+                {activeTab === 'batch' ? (
+                  <div className="space-y-4 bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                     <div className="flex flex-col sm:flex-row gap-4 items-end">
+                       <div className="space-y-2 flex-[2]">
+                          <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest px-1">Nom de la matière</label>
+                          <input 
+                              type="text" 
+                              value={batchInputName} 
+                              onChange={(e) => setBatchInputName(e.target.value)} 
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                   e.preventDefault();
+                                   if (batchInputName.trim()) {
+                                      setBatchSubjects([...batchSubjects, {name: batchInputName.trim(), code: batchInputCode.trim()}]);
+                                      setBatchInputName('');
+                                      setBatchInputCode('');
+                                   }
+                                }
+                              }}
+                              className="w-full px-6 py-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm"
+                              placeholder="Ex: Chimie"
+                          />
+                       </div>
+                       <div className="space-y-2 flex-1">
+                          <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest px-1">Code (Opt)</label>
+                          <input 
+                              type="text" 
+                              value={batchInputCode} 
+                              onChange={(e) => setBatchInputCode(e.target.value.toUpperCase())} 
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                   e.preventDefault();
+                                   if (batchInputName.trim()) {
+                                      setBatchSubjects([...batchSubjects, {name: batchInputName.trim(), code: batchInputCode.trim()}]);
+                                      setBatchInputName('');
+                                      setBatchInputCode('');
+                                   }
+                                }
+                              }}
+                              className="w-full px-6 py-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm"
+                              placeholder="CHIM"
+                          />
+                       </div>
+                       <button 
+                          type="button" 
+                          onClick={() => {
+                             if (batchInputName.trim()) {
+                                setBatchSubjects([...batchSubjects, {name: batchInputName.trim(), code: batchInputCode.trim()}]);
+                                setBatchInputName('');
+                                setBatchInputCode('');
+                             }
+                          }}
+                          className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-blue-500/30 transition-all active:scale-95 flex items-center gap-2"
+                       >
+                         <Plus size={16} />
+                       </button>
+                     </div>
+
+                     {/* Pending List */}
+                     {batchSubjects.length > 0 && (
+                        <div className="mt-4">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 mb-2 block">
+                                File d'attente ({batchSubjects.length} cours)
+                            </label>
+                            <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-white/5 p-3 space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar">
+                                {batchSubjects.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.name}</span>
+                                          {item.code && <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-md">{item.code}</span>}
+                                        </div>
+                                        <button type="button" onClick={() => setBatchSubjects(batchSubjects.filter((_, i) => i !== idx))} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                     )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Nom de la matière</label>
+                          <input
+                              name="name"
+                              type="text"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                              placeholder="Ex: Mathématiques"
+                              required={activeTab === 'manual'}
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Code</label>
+                          <input
+                              name="code"
+                              type="text"
+                              value={code}
+                              onChange={(e) => setCode(e.target.value)}
+                              className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner"
+                              placeholder="Ex: MATH"
+                          />
+                      </div>
+                  </div>
+                )}
                 
                 {isPrimaryClass && (
                     <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-white/5">
@@ -513,6 +768,14 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                     <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Matières existantes</h3>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAutoSort}
+                    className="text-[9px] font-bold px-2 py-1 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all flex items-center gap-1"
+                    title="Trier par maxima puis A-Z"
+                  >
+                    <Sparkles size={10} />
+                    Auto-trier
+                  </button>
                   {/* Bouton pour activer/désactiver le mode suppression multiple */}
                   <button
                     onClick={() => {
@@ -542,45 +805,51 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex flex-col gap-0 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                 {subjects.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
                     <BookOpen size={32} className="mx-auto text-slate-200" />
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune matière configurée</p>
                   </div>
                 ) : (
-                  subjects.map(subject => {
-                    const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
-                    const isActive = editingSubject?.id === subject.id;
-                    return (
-                      <div
-                        key={subject.id}
-                        onClick={() => {
-                          // Mode suppression multiple : toggle la sélection
-                          if (multiDeleteMode) {
-                            toggleDeleteId(subject.id);
-                            return;
-                          }
-                          // Mode réorganisation : placer la matière
-                          if (movingId !== null) {
-                            handleReorderClick(subject.id);
-                            return;
-                          }
-                          // Mode normal : ouvrir l'édition
-                          onSelectSubject?.(subject);
-                        }}
-                        className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
-                            multiDeleteMode && deletingIds.has(subject.id)
-                                ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
-                                : movingId === subject.id
-                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 scale-[1.02] shadow-lg shadow-blue-200/30'
-                                    : movingId !== null
-                                        ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 border-dashed hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:border-blue-400'
+                  <>
+                    <DropZone index={0} onDrop={handleDropOnZone} />
+                    {subjects.map((subject, idx) => {
+                      const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
+                      const isActive = editingSubject?.id === subject.id;
+                      return (
+                        <React.Fragment key={subject.id}>
+                          <div
+                            draggable={!multiDeleteMode}
+                            onDragStart={(e) => handleDragStart(e, subject.id, subject.name)}
+                            onDragEnd={() => { setDraggedId(null); setMovingId(null); }}
+                            onClick={() => {
+                              // Mode suppression multiple : toggle la sélection
+                              if (multiDeleteMode) {
+                                toggleDeleteId(subject.id);
+                                return;
+                              }
+                              // Mode réorganisation par clic
+                              if (movingId !== null && movingId !== subject.id) {
+                                handleReorderClick(subject.id);
+                                return;
+                              } else if (movingId === subject.id) {
+                                setMovingId(null);
+                                return;
+                              }
+                              // Mode normal : ouvrir l'édition
+                              onSelectSubject?.(subject);
+                            }}
+                            className={`group relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
+                                 multiDeleteMode && deletingIds.has(subject.id)
+                                    ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
+                                    : draggedId === subject.id || movingId === subject.id
+                                        ? 'bg-slate-100 dark:bg-slate-800 border-dashed border-slate-300 dark:border-slate-600 opacity-50' // Visual feedback for dragged item
                                         : isActive 
                                             ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
                                             : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
-                        }`}
-                      >
+                            }`}
+                          >
                         {isActive && !multiDeleteMode && (
                             <div className="absolute top-0 right-0 p-4 opacity-20 rotate-12">
                                 <BookOpen size={64} />
@@ -664,10 +933,13 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             </div>
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
+                      <DropZone index={idx + 1} onDrop={handleDropOnZone} />
+                    </React.Fragment>
+                  );
+                })}
+              </>
+            )}
+          </div>
             </div>
           </div>
         </div>

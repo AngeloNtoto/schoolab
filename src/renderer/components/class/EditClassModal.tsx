@@ -53,6 +53,13 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   const [newOptionName, setNewOptionName] = useState('');
   const [newOptionShort, setNewOptionShort] = useState('');
   const [loadingConfig, setLoadingConfig] = useState(false);
+  
+  // Clone features
+  const [cloneFromClassId, setCloneFromClassId] = useState<number | null>(null);
+  const [availableClasses, setAvailableClasses] = useState<{id: number, name: string, level: string, option: string}[]>([]);
+  
+  // Batch queue
+  const [creationQueue, setCreationQueue] = useState<{name: string, level: string, option: string, section: string, cloneFromClassId: number | null}[]>([]);
 
   const toast = useToast();
 
@@ -153,6 +160,11 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
       // But assuming db.ts ran.
       const opts = await dbService.query<SchoolOption>('SELECT * FROM options ORDER BY display_order ASC, label ASC');
       setOptionList(opts);
+      // Load existing classes for cloning
+      if (academicYearId) {
+        const classes = await dbService.query<{id: number, name: string, level: string, option: string}>('SELECT id, name, level, option FROM classes WHERE academic_year_id = ? ORDER BY level ASC, name ASC', [academicYearId]);
+        setAvailableClasses(classes);
+      }
     } catch (e) {
       console.error("Error fetching config", e);
     } finally {
@@ -233,55 +245,145 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
     }
   };
 
+  const handleAddToQueue = () => {
+    if (!name) {
+      toast.error("Le nom est requis");
+      return;
+    }
+    const sections = section.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+    if (sections.length === 0) sections.push('-');
+    
+    const newItems = sections.map(s => {
+      let classNameToSave = name;
+      if (sections.length > 1) {
+        const optLabel = optionList.find(o => o.value === option)?.label;
+        classNameToSave = getClassDisplayName(level, option, s, optLabel);
+      }
+      return { name: classNameToSave, level, option, section: s, cloneFromClassId };
+    });
+    
+    setCreationQueue([...creationQueue, ...newItems]);
+    toast.success(`${newItems.length} classe(s) ajoutée(s) à la liste`);
+    setSection('-');
+  };
+
   // React 19 Action for class saving
   const [state, formAction] = useActionState(async (prevState: any, formData: FormData): Promise<any> => {
     if (!academicYearId) return { success: false };
 
     try {
-      const submitData = {
-        name: formData.get('name') as string,
-        level: formData.get('level') as string,
-        option: option, // Use state option
-        section: formData.get('section') as string,
-      };
+      const baseName = formData.get('name') as string;
+      const levelVal = formData.get('level') as string;
+      const sectionRaw = formData.get('section') as string;
+      
+      const sections = sectionRaw.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+      if (sections.length === 0) sections.push('-');
 
-      if (!submitData.name) {
-         toast.error("Le nom est requis");
-         return { success: false };
+      const classesToProcess = [...creationQueue];
+      
+      // If editing or if queue is empty (user didn't click "Add to queue" and just clicked Save)
+      if (classData || classesToProcess.length === 0 || (creationQueue.length > 0 && sections[0] !== '-' && section !== '-')) {
+          for (let i = 0; i < sections.length; i++) {
+            const currentSection = sections[i];
+            let classNameToSave = baseName;
+            if (sections.length > 1) {
+              const optLabel = optionList.find(o => o.value === option)?.label;
+              classNameToSave = getClassDisplayName(levelVal, option, currentSection, optLabel);
+            }
+            // Avoid adding to process if it's already in queue (basic check by name)
+            if (!classesToProcess.find(c => c.name === classNameToSave)) {
+              classesToProcess.push({
+                  name: classNameToSave,
+                  level: levelVal,
+                  option: option,
+                  section: currentSection,
+                  cloneFromClassId: cloneFromClassId
+              });
+            }
+          }
       }
 
-      // Check duplicates
-      const query = `
-        SELECT id FROM classes 
-        WHERE name = ? AND level = ? AND option = ? AND section = ? AND academic_year_id = ?
-        ${classData ? 'AND id != ?' : ''}
-      `;
-      const params = [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId];
-      if (classData) params.push(classData.id);
+      let createdCount = 0;
 
-      const dupResult = await dbService.query<{ id: number }>(query, params);
-      if (dupResult.length > 0) {
-        toast.warning("Une classe identique existe déjà.");
-        return { success: false, error: 'duplicate' };
-      }
+      for (const item of classesToProcess) {
+        if (!item.name) {
+           toast.error("Le nom est requis");
+           continue;
+        }
 
-      // Save
-      if (classData) {
-        await dbService.execute(
-          'UPDATE classes SET name = ?, level = ?, option = ?, section = ?, is_dirty = 1 WHERE id = ?',
-          [submitData.name, submitData.level, submitData.option, submitData.section, classData.id]
-        );
-      } else {
-        await dbService.execute(
-          'INSERT INTO classes (name, level, option, section, academic_year_id, is_dirty) VALUES (?, ?, ?, ?, ?, 1)',
-          [submitData.name, submitData.level, submitData.option, submitData.section, academicYearId]
-        );
+        // Check duplicates
+        const query = `
+          SELECT id FROM classes 
+          WHERE name = ? AND level = ? AND option = ? AND section = ? AND academic_year_id = ?
+          ${classData ? 'AND id != ?' : ''}
+        `;
+        const params = [item.name, item.level, item.option, item.section, academicYearId];
+        if (classData) params.push(classData.id);
+
+        const dupResult = await dbService.query<{ id: number }>(query, params);
+        if (dupResult.length > 0) {
+          toast.warning(`La classe ${item.name} existe déjà.`);
+          continue;
+        }
+
+        // Save
+        let newClassId: number;
+        if (classData) {
+          await dbService.execute(
+            'UPDATE classes SET name = ?, level = ?, option = ?, section = ?, is_dirty = 1 WHERE id = ?',
+            [item.name, item.level, item.option, item.section, classData.id]
+          );
+          newClassId = classData.id;
+          createdCount++;
+        } else {
+          const insertResult = await dbService.execute(
+            'INSERT INTO classes (name, level, option, section, academic_year_id, is_dirty) VALUES (?, ?, ?, ?, ?, 1)',
+            [item.name, item.level, item.option, item.section, academicYearId]
+          );
+          newClassId = insertResult.insertId!;
+          createdCount++;
+        }
+
+        // Clone subjects if requested (only during creation, or if explicitly cloning)
+        if (!classData && cloneFromClassId && newClassId) {
+          const sourceSubjects = await dbService.query<any>(
+            'SELECT * FROM subjects WHERE class_id = ? ORDER BY display_order ASC', 
+            [cloneFromClassId]
+          );
+          
+          let currentOrder = 1;
+          for (const subject of sourceSubjects) {
+            await dbService.execute(
+              `INSERT INTO subjects (name, code, sub_domain, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, class_id, domain_id, display_order, is_dirty)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+              [
+                subject.name, subject.code, subject.sub_domain || '', 
+                subject.max_p1, subject.max_p2, subject.max_exam1, 
+                subject.max_p3, subject.max_p4, subject.max_exam2, 
+                newClassId, subject.domain_id, currentOrder
+              ]
+            );
+            currentOrder++;
+          }
+        }
       }
       
-      toast.success(classData ? 'Classe mise à jour' : 'Classe créée avec succès');
-      onSuccess();
-      onClose();
-      return { success: true };
+      if (createdCount > 0) {
+        toast.success(classData ? 'Classe mise à jour' : `${createdCount} classe(s) créée(s) avec succès`);
+        onSuccess();
+        
+        if (classData) {
+          onClose(); // Close only if editing
+        } else {
+          // If creating, reset name and section to allow fast creation of next classes
+          // The modal stays open!
+          setSection('-');
+          setCreationQueue([]);
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: 'duplicate' };
+      }
     } catch (error) {
       console.error('Failed to save class:', error);
       toast.error('Erreur sauvegarde');
@@ -372,17 +474,20 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                        <div className="space-y-2">
                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Section</label>
                            <div className="relative">
-                             <select 
+                             <input 
                                  name="section" 
+                                 type="text"
                                  value={section}
-                                 onChange={(e) => setSection(e.target.value)}
-                                 required
-                                 className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none"
-                             >
-                                 {(level !== '7ème' && level !== '8ème') && <option value="-">Aucune (-)</option>}
-                                 {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(s => <option key={s} value={s}>{s}</option>)}
-                             </select>
+                                 onChange={(e) => setSection(e.target.value.toUpperCase())}
+                                 placeholder="Ex: A, B, C (ou -)"
+                                 className="w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                             />
                            </div>
+                           {!classData && (
+                             <p className="text-[9px] text-slate-400 font-bold mt-2 px-1">
+                               Séparez par des virgules pour créer plusieurs classes (ex: <span className="text-blue-500">A, B, C</span>)
+                             </p>
+                           )}
                        </div>
                     </div>
 
@@ -421,6 +526,28 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
 
                     <div className="h-px bg-slate-100 dark:bg-white/5 my-6" />
 
+                    {/* Clone Subjects Row (Only for creation) */}
+                    {!classData && availableClasses.length > 0 && (
+                      <div className="space-y-2 mb-6">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cloner les cours depuis... (Optionnel)</label>
+                           <div className="relative">
+                              <select 
+                                  value={cloneFromClassId ?? ''}
+                                  onChange={(e) => setCloneFromClassId(e.target.value ? Number(e.target.value) : null)}
+                                  className="w-full px-5 py-3.5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none"
+                              >
+                                  <option value="">-- Ne pas cloner de cours --</option>
+                                  {availableClasses.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                  ))}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-blue-400">
+                                <BookOpen size={16} />
+                              </div>
+                           </div>
+                      </div>
+                    )}
+
                     {/* Name Preview */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nom final (Editable)</label>
@@ -442,12 +569,45 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
                         </p>
                     </div>
 
-                    <div className="pt-6 flex gap-4">
-                       <button type="button" onClick={onClose} className="flex-1 px-6 py-4 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-500 font-black uppercase text-[10px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                         Annuler
-                       </button>
-                       <SubmitButton />
-                    </div>
+                     {/* Batch Creation Queue rendering */}
+                     {!classData && creationQueue.length > 0 && (
+                        <div className="space-y-2 mb-6">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2 text-blue-500">
+                                <Layers size={12} />
+                                File d'attente ({creationQueue.length})
+                            </label>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-white/5 p-3 space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
+                                {creationQueue.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                        <div className="flex flex-col">
+                                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{item.name}</span>
+                                          {item.cloneFromClassId && (
+                                            <span className="text-[9px] text-blue-500 flex items-center gap-1"><BookOpen size={10} /> Cours clonés</span>
+                                          )}
+                                        </div>
+                                        <button type="button" onClick={() => setCreationQueue(creationQueue.filter((_, i) => i !== idx))} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                     )}
+
+                     <div className="pt-6 flex gap-3">
+                        <button type="button" onClick={onClose} className="px-6 py-4 rounded-2xl border border-slate-200 dark:border-white/5 text-slate-500 font-black uppercase text-[10px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                          Annuler
+                        </button>
+                        
+                        {!classData && (
+                          <button type="button" onClick={handleAddToQueue} className="flex-1 px-6 py-4 rounded-2xl border-2 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10 font-black uppercase text-[10px] hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-2">
+                            <Plus size={14} />
+                            Ajouter à la liste
+                          </button>
+                        )}
+                        
+                        <SubmitButton overrideLabel={!classData && creationQueue.length > 0 ? `Créer tout (${creationQueue.length})` : undefined} />
+                     </div>
                 </form>
               </div>
             ) : (
@@ -582,7 +742,7 @@ export default function EditClassModal({ classData, onClose, onSuccess }: EditCl
   );
 }
 
-function SubmitButton() {
+function SubmitButton({ overrideLabel }: { overrideLabel?: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -595,7 +755,7 @@ function SubmitButton() {
       ) : (
         <Save size={20} />
       )}
-      {pending ? 'Enregistrement...' : 'Enregistrer la classe'}
+      {pending ? 'Enregistrement...' : (overrideLabel || 'Enregistrer la classe')}
     </button>
   );
 }
