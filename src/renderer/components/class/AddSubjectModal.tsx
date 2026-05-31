@@ -370,7 +370,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/5 w-full max-w-3xl transform scale-100 animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 border border-slate-200 dark:border-white/5 w-full max-w-5xl transform scale-100 animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
         
         {/* Header section with blue gradient */}
         <div className="bg-blue-600 dark:bg-slate-900 px-8 py-6 relative overflow-hidden transition-colors duration-500 shrink-0">
