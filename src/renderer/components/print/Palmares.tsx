@@ -86,7 +86,7 @@ const StudentObservation = ({
 }: {
   rankedStudent: RankedStudent;
   selectedPeriod: Period;
-  palmaresMode: PalmaresMode;
+  palmaresMode?: PalmaresMode;
 }) => {
 
   const student = rankedStudent.student;
