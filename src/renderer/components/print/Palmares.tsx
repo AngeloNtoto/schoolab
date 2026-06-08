@@ -78,7 +78,6 @@ type PalmaresMode = 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION' | 'REPECHAGE_LI
 
 /**
  * Composant pour afficher les observations textuelles très précises des élèves dans le palmarès.
- * Les détails respectent scrupuleusement la structure de l'image fournie par l'utilisateur.
  */
 const StudentObservation = ({
   rankedStudent,
@@ -132,13 +131,9 @@ const StudentObservation = ({
         <div className="text-black text-[12px] font-semibold leading-tight">
           {details
             .map((s) => {
-              const pct = Math.round(
-                (s.points / s.maxPoints) * 100
-              );
-
-              return `${s.subjectCode || s.subjectName} ${pct}%`;
+              return `${s.subjectCode || s.subjectName} ${s.points/s.maxPoints}`;
             })
-            .join(', ')}
+            .join('; ')}
         </div>
       );
     }
@@ -172,11 +167,7 @@ const StudentObservation = ({
           rankedStudent.repechageSubjects.includes(name)
         ) {
 
-          const pct = Math.round(
-            (detail.points / detail.maxPoints) * 100
-          );
-
-          failed.push(`${name} ${pct}%`);
+          failed.push(`${name} ${detail.points}/${detail.maxPoints}`);
         }
       }
 
@@ -191,7 +182,7 @@ const StudentObservation = ({
 
           {failed.length > 0 && (
             <span className="font-semibold">
-              {failed.join(', ')}
+              {failed.join(';')}
             </span>
           )}
 
