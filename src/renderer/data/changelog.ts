@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.20",
+    date: "08 Juin 2026",
+    title: "Amélioration du Palmarès & Affichage des Échecs",
+    description: "Mise à jour des libellés et formatage des échecs dans les différentes catégories du palmarès.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Le libellé de la catégorie 2 annuelle a été mis à jour vers 'II. Ont réussis avec des échecs'."
+      },
+      {
+        tag: "Amélioration",
+        text: "Pour la catégorie 2, les échecs sont désormais affichés sous le format 'cours note/max'."
+      },
+      {
+        tag: "Amélioration",
+        text: "Les matières échouées des élèves non classés (catégorie 5) sont désormais affichées en italique."
+      }
+    ]
+  },
+  {
     version: "1.4.19",
     date: "08 Juin 2026",
     title: "Amélioration du Palmarès",

@@ -116,13 +116,17 @@ const StudentObservation = ({
       return null;
     }
 
-    // Catégorie 2 = repêchages
+    // =========================
+    // Catégorie 2 = Ont réussis avec des échecs
+    // On affiche les échecs (et non les repêchages) avec la notation cours note/max
+    // =========================
     if (rankedStudent.category === 2) {
 
+      // Filtrer pour obtenir uniquement les cours échoués
       const details =
         rankedStudent.subjectDetails.filter(
           (s: any) =>
-            rankedStudent.repechageSubjects.includes(
+            rankedStudent.failedSubjects.includes(
               s.subjectCode || s.subjectName
             )
         );
@@ -131,7 +135,8 @@ const StudentObservation = ({
         <div className="text-black text-[12px] font-semibold leading-tight">
           {details
             .map((s) => {
-              return `${s.subjectCode || s.subjectName} ${s.points/s.maxPoints}`;
+              // Afficher le format "Cours note/max"
+              return `${s.subjectCode || s.subjectName} ${s.points}/${s.maxPoints}`;
             })
             .join('; ')}
         </div>
@@ -180,9 +185,10 @@ const StudentObservation = ({
             </span>
           )}
 
+          {/* Échecs affichés avec une police différente (italique) mais toujours en gras */}
           {failed.length > 0 && (
-            <span className="font-semibold">
-              {failed.join(';')}
+            <span className="font-bold italic text-black">
+              {failed.join(' ; ')}
             </span>
           )}
 
@@ -208,10 +214,11 @@ if (rankedStudent.category === 1) {
 // =========================
 // =========================
 // Catégorie 2
-// Affichage des échecs uniquement
+// Affichage des échecs uniquement (avec notes)
 // =========================
 if (rankedStudent.category === 2) {
 
+  // On récupère les détails des matières échouées
   const failedDetails =
     rankedStudent.subjectDetails.filter(
       (s) =>
@@ -225,7 +232,8 @@ if (rankedStudent.category === 2) {
 
       {failedDetails
         .map((s) => {
-          return `${s.subjectCode || s.subjectName}`;
+          // Affichage au format "Cours note/max"
+          return `${s.subjectCode || s.subjectName} ${s.points}/${s.maxPoints}`;
         })
         .join(' ; ')}
 
@@ -299,8 +307,9 @@ if (rankedStudent.category === 5) {
       )}
 
       {/* ECHECS */}
+      {/* On applique un style italique et gras pour bien différencier des cours manqués */}
       {failed.length > 0 && (
-        <span className="font-bold text-black">
+        <span className="font-bold italic text-black">
           {failed.join(' ; ')}
         </span>
       )}
@@ -681,16 +690,17 @@ export default function Palmares({
     participants: students.length - rankedStudents.filter(r => r.category === 4 || r.category === 5).length,
   };
 
-  {/* Libellés dynamiques selon la période */}
-const categoryLabels: Record<number, string> =
-  selectedPeriod === 'ANNUAL'
-    ? {
-        1: delibConfig.categorie_1_label,
-        2: delibConfig.categorie_2_label,
-        3: delibConfig.categorie_3_label,
-        4: delibConfig.categorie_4_label,
-        5: delibConfig.categorie_5_label,
-      }
+  // Libellés dynamiques selon la période
+  const categoryLabels: Record<number, string> =
+    selectedPeriod === 'ANNUAL'
+      ? {
+          1: delibConfig.categorie_1_label,
+          // Remplacement explicite du label "Passe en deuxième session" par celui-ci
+          2: 'II. Ont réussis avec des échecs',
+          3: delibConfig.categorie_3_label,
+          4: delibConfig.categorie_4_label,
+          5: delibConfig.categorie_5_label,
+        }
     : {
         1: 'I. Ont Réussis sans échecs',
         2: 'II. Ont réussis avec des échecs',
