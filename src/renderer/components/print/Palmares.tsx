@@ -82,9 +82,11 @@ type PalmaresMode = 'BEFORE_DELIBERATION' | 'AFTER_DELIBERATION' | 'REPECHAGE_LI
 const StudentObservation = ({
   rankedStudent,
   selectedPeriod,
+  palmaresMode,
 }: {
   rankedStudent: RankedStudent;
   selectedPeriod: Period;
+  palmaresMode: PalmaresMode;
 }) => {
 
   const student = rankedStudent.student;
@@ -1003,9 +1005,10 @@ export default function Palmares({
               {selectedPeriod === 'ANNUAL' ? (
                 <td className="border border-black px-2.5 py-0">
                   <StudentObservation
-  rankedStudent={rankedStudent}
-  selectedPeriod={selectedPeriod}
-/>
+                    rankedStudent={rankedStudent}
+                    selectedPeriod={selectedPeriod}
+                    palmaresMode={palmaresMode}
+                  />
                 </td>
               ) : (
                 <>

@@ -20,7 +20,7 @@ export const changelog: ReleaseNote[] = [
     features: [
       {
         tag: "Amélioration",
-        text: "Le libellé de la catégorie 2 annuelle a été mis à jour vers 'II. Ont réussis avec des échecs'."
+        text: "Le libellé de la catégorie 2 annuelle a été mis à jour vers 'II. Ont réussis avec des échecs' (uniquement avant délibération). Après délibération, le libellé de configuration normal est utilisé."
       },
       {
         tag: "Amélioration",
