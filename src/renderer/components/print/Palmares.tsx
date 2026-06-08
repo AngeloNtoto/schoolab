@@ -117,30 +117,30 @@ const StudentObservation = ({
     }
 
     // =========================
-    // Catégorie 2 = Ont réussis avec des échecs
-    // On affiche les échecs (et non les repêchages) avec la notation cours note/max
+    // Catégorie 2
+    // Avant délibération : Ont réussis avec des échecs (affichage des échecs)
+    // Après délibération : Passe en deuxième session (affichage des repêchages)
     // =========================
     if (rankedStudent.category === 2) {
-
-      // Filtrer pour obtenir uniquement les cours échoués
-      const details =
-        rankedStudent.subjectDetails.filter(
-          (s: any) =>
-            rankedStudent.failedSubjects.includes(
-              s.subjectCode || s.subjectName
-            )
+      if (palmaresMode === 'BEFORE_DELIBERATION') {
+        const details = rankedStudent.subjectDetails.filter((s: any) =>
+          rankedStudent.failedSubjects.includes(s.subjectCode || s.subjectName)
         );
-
-      return (
-        <div className="text-black text-[12px] font-semibold leading-tight">
-          {details
-            .map((s) => {
-              // Afficher le format "Cours note/max"
-              return `${s.subjectCode || s.subjectName} ${s.points}/${s.maxPoints}`;
-            })
-            .join('; ')}
-        </div>
-      );
+        return (
+          <div className="text-black text-[12px] font-semibold leading-tight">
+            {details.map((s) => `${s.subjectCode || s.subjectName} ${s.points}/${s.maxPoints}`).join('; ')}
+          </div>
+        );
+      } else {
+        const details = rankedStudent.subjectDetails.filter((s: any) =>
+          rankedStudent.repechageSubjects.includes(s.subjectCode || s.subjectName)
+        );
+        return (
+          <div className="text-black text-[12px] font-semibold leading-tight">
+            {details.map((s) => `${s.subjectCode || s.subjectName} ${s.points}/${s.maxPoints}`).join('; ')}
+          </div>
+        );
+      }
     }
 
     // Catégorie 5 = non classés
@@ -695,8 +695,8 @@ export default function Palmares({
     selectedPeriod === 'ANNUAL'
       ? {
           1: delibConfig.categorie_1_label,
-          // Remplacement explicite du label "Passe en deuxième session" par celui-ci
-          2: 'II. Ont réussis avec des échecs',
+          // Label conditionnel : "Ont réussis avec des échecs" avant délibération, sinon on reprend la configuration (ex: "Passe en deuxième session")
+          2: palmaresMode === 'BEFORE_DELIBERATION' ? 'II. Ont réussis avec des échecs' : delibConfig.categorie_2_label,
           3: delibConfig.categorie_3_label,
           4: delibConfig.categorie_4_label,
           5: delibConfig.categorie_5_label,
