@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.19",
+    date: "08 Juin 2026",
+    title: "Amélioration du Palmarès",
+    description:"Utilisation de maxima à la place de pourcentages",
+    features:[
+      {
+        tag: "Amélioration",
+        text: "Remplacement de l'affichage des echecs dans le palmarès d'avant délibération par les notes/maxima."
+      },
+      {
+        tag: "Nouveau",
+        text: "Utilisation de points virgules pour separer les echecs dans le palmares"
+      }
+    ]
+  },
+  {
     version: "1.4.18",
     date: "31 Mai 2026",
     title: "Refactoring modulaire des Paramètres & améliorations visuelles",
