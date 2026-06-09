@@ -24,7 +24,7 @@ export const AnnualTable: React.FC<Props> = ({
           <th className="border border-black px-1.5 py-1 w-8 text-center">N°</th>
           <th className="border border-black px-2.5 py-1 text-left">NOMS ET POST NOMS</th>
           <th className="border border-black px-1.5 py-1 w-12 text-center">%</th>
-          <th className="border border-black px-2.5 py-1 text-left">REPECHAGES</th>
+          <th className="border border-black px-2.5 py-1 text-left">OBSERVATION</th>
         </tr>
       </thead>
       <tbody>

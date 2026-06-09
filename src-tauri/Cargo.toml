@@ -1,6 +1,6 @@
 [package]
 name = "schoolab"
-version = "1.4.25"
+version = "1.4.26"
 description = "Schoolab - Système de gestion scolaire"
 authors = ["Angelo"]
 edition = "2021"

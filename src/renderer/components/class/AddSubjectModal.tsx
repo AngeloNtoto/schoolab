@@ -93,7 +93,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   // ÉTATS POUR LES MAXIMA
   const [maxPeriod, setMaxPeriod] = useState('10');
   const [maxExam, setMaxExam] = useState('20');  // Un seul champ pour les deux examens
-  
+  const [Focus,setFocus]=useState(false)
   const [loading, setLoading] = useState(false);
 
   // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre, 'clone' pour cloner
@@ -117,7 +117,8 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   // LOGIQUE SPÉCIALE POUR LES COURS À 100 POINTS :
   // Si maxPeriod = 100, alors c'est un cours en évaluation continue
   // sans examen (max_exam = 0 et champs désactivés)
-  const is100PointCourse = Number(maxPeriod) === 100;
+  const is100PointCourse = Number(maxPeriod) === 100 || (Number(maxExam)===0 && maxExam!==null && Number(maxPeriod)!=0);
+  const diff100=Number(maxPeriod)!=100;
 
   useEffect(() => {
     loadDomains();
@@ -769,7 +770,9 @@ const handleDragEnd = () => {
                                 type="number"
                                 value={maxExam}
                                 onChange={(e) => setMaxExam(e.target.value)}
-                                disabled={is100PointCourse}
+                                disabled={is100PointCourse && !Focus}
+                                onFocus={()=>setFocus(true)}
+                                onBlur={() => setFocus(false)}
                                 className={`w-full px-4 py-2 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm ${
                                     is100PointCourse 
                                         ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-white/5 cursor-not-allowed' 

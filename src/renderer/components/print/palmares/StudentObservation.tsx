@@ -74,15 +74,15 @@ export const StudentObservation = ({
           rankedStudent.failedSubjects.includes(name) ||
           rankedStudent.repechageSubjects.includes(name)
         ) {
-          failed.push(`${name} ${detail.points} / ${detail.maxPoints}`);
+          failed.push(`${name} ${detail.points}/${detail.maxPoints}`);
         }
       }
 
       return (
         <div className="flex flex-col text-black text-[12px] leading-tight space-y-0.5">
-          {missing.length > 0 && <span className="font-bold">{missing.join(', ')}</span>}
+          {missing.length > 0 && <span>{missing.join(', ')}</span>}
           {failed.length > 0 && (
-            <span className="font-bold italic text-black">{failed.join(' ; ')}</span>
+            <span className="italic text-black">{failed.join(' ; ')}</span>
           )}
         </div>
       );
