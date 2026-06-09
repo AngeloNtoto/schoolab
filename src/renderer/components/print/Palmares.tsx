@@ -605,8 +605,8 @@ export default function Palmares({
   // === ANNUEL ===
   if (selectedPeriod === 'ANNUAL') {
 
-    if (repechageSubjects.length > 0) {
-      category = 2; // Passent après repêchage
+    if (failedSubjects.length > 0 || repechageSubjects.length > 0) {
+      category = 2; // Passent après repêchage ou réussis avec échecs
     } else {
       category = 1; // Passent directement
     }
