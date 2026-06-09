@@ -1,6 +1,6 @@
 [package]
 name = "schoolab"
-version = "1.4.23"
+version = "1.4.24"
 description = "Schoolab - Système de gestion scolaire"
 authors = ["Angelo"]
 edition = "2021"
@@ -40,4 +40,3 @@ codegen-units = 1
 panic = "abort"
 strip = false
 opt-level = "z" # Optimiser pour la taille
-

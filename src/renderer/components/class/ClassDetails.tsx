@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp, Lock, Unlock, Maximize, Minimize, Download, RefreshCw } from '../iconsSvg';
+import { ArrowLeft, Plus, Trash2, FileSpreadsheet, Award, Users, FileText, BookOpen, Printer, Search, ArrowUpDown, Edit, ChevronDown, TrendingUp, Lock, Unlock, Maximize, Minimize, Download, RefreshCw, RotateCcw } from '../iconsSvg';
 
 // Services & Hooks
 import { ClassData, Subject } from '../../services/classService';
@@ -37,6 +37,29 @@ interface ClassDetailsProps {
   onOpenRepechage: (studentId: number) => void;
 }
 
+const roundGradeValue = (value: number) => Math.round(value * 100) / 100;
+
+const convertGradeToCourseMax = (rawValue: number, courseMax: number, correctionMax: number | null) => {
+  if (!correctionMax || correctionMax <= 0 || courseMax <= 0 || correctionMax === courseMax) {
+    return roundGradeValue(rawValue);
+  }
+
+  return roundGradeValue((rawValue / correctionMax) * courseMax);
+};
+
+const convertGradeToCorrectionMax = (storedValue: number, courseMax: number, correctionMax: number | null) => {
+  if (!correctionMax || correctionMax <= 0 || courseMax <= 0 || correctionMax === courseMax) {
+    return storedValue;
+  }
+
+  return roundGradeValue((storedValue / courseMax) * correctionMax);
+};
+
+const formatGradeInputValue = (value: number | null, courseMax: number, correctionMax: number | null) => {
+  if (value === null) return '';
+  return convertGradeToCorrectionMax(value, courseMax, correctionMax).toString();
+};
+
 export default function ClassDetails({
   classInfo,
   subjects,
@@ -72,12 +95,18 @@ export default function ClassDetails({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [correctionMaxInput, setCorrectionMaxInput] = useState('');
 
   const toast = useToast();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
+
+  const correctionMax = useMemo(() => {
+    const parsed = parseFloat(correctionMaxInput);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [correctionMaxInput]);
 
   // Filter & Sort Logic
   const filteredAndSortedStudents = useMemo(() => {
@@ -424,6 +453,33 @@ export default function ClassDetails({
               </div>
             )}
 
+            <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-xl border border-white/10">
+              <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">Corrigé sur</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={correctionMaxInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
+                    setCorrectionMaxInput(raw);
+                  }
+                }}
+                placeholder="Max"
+                className="w-16 px-2 py-1 bg-white/10 border border-white/10 rounded-lg text-center text-white placeholder-white/30 outline-none focus:bg-white/15 focus:border-blue-300 font-black text-[10px]"
+                title="Maximum utilisé par le professeur pendant la correction"
+              />
+              {correctionMax && (
+                <button
+                  onClick={() => setCorrectionMaxInput('')}
+                  className="p-1 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                  title="Désactiver la conversion"
+                >
+                  <RotateCcw size={12} />
+                </button>
+              )}
+            </div>
+
             {/* Mini-barres de progression globales (mode "all") */}
             {focusedPeriod === 'all' && (
               <div className="flex items-center gap-1.5">
@@ -621,6 +677,7 @@ export default function ClassDetails({
                 onUpdateGrade={onGradeUpdate}
                 focusedPeriod={focusedPeriod}
                 lockedPeriods={lockedPeriods}
+                correctionMax={correctionMax}
               />
             ))}
           </tbody>
@@ -766,7 +823,8 @@ const StudentRow = React.memo(({
   onContextMenu, 
   onUpdateGrade,
   focusedPeriod,
-  lockedPeriods
+  lockedPeriods,
+  correctionMax
 }: { 
   student: Student; 
   subjects: Subject[]; 
@@ -776,6 +834,7 @@ const StudentRow = React.memo(({
   onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
   focusedPeriod: string;
   lockedPeriods: Set<string>;
+  correctionMax: number | null;
 }) => {
   const getGrade = (subjectId: number, period: string) => {
     return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
@@ -824,6 +883,7 @@ const StudentRow = React.memo(({
                 period="P1"
                 maxValue={subject.max_p1}
                 locked={lockedPeriods.has('P1')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} 
               />
             )}
@@ -835,6 +895,7 @@ const StudentRow = React.memo(({
                 period="P2"
                 maxValue={subject.max_p2}
                 locked={lockedPeriods.has('P2')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} 
               />
             )}
@@ -847,6 +908,7 @@ const StudentRow = React.memo(({
                 isExam disabled={!hasExam1}
                 maxValue={subject.max_exam1}
                 locked={lockedPeriods.has('EXAM1')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
               />
             )}
@@ -863,6 +925,7 @@ const StudentRow = React.memo(({
                 period="P3"
                 maxValue={subject.max_p3}
                 locked={lockedPeriods.has('P3')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} 
               />
             )}
@@ -874,6 +937,7 @@ const StudentRow = React.memo(({
                 period="P4"
                 maxValue={subject.max_p4}
                 locked={lockedPeriods.has('P4')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} 
               />
             )}
@@ -886,6 +950,7 @@ const StudentRow = React.memo(({
                 isExam disabled={!hasExam2}
                 maxValue={subject.max_exam2}
                 locked={lockedPeriods.has('EXAM2')}
+                correctionMax={correctionMax}
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
               />
             )}
@@ -901,7 +966,7 @@ const StudentRow = React.memo(({
   );
 });
 
-const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = false, disabled = false, maxValue = 0, locked = false, onChange }: { 
+const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = false, disabled = false, maxValue = 0, locked = false, correctionMax, onChange }: { 
   value: number | null; 
   studentIdx: number;
   subjectId: number;
@@ -910,18 +975,19 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
   disabled?: boolean;
   maxValue?: number;
   locked?: boolean;
+  correctionMax: number | null;
   onChange: (val: number | null) => void 
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value?.toString() || '');
+  const [editValue, setEditValue] = useState(formatGradeInputValue(value, maxValue, correctionMax));
   const [showSaved, setShowSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const tdRef = useRef<HTMLTableCellElement>(null);
 
   // Synchroniser la valeur affichée quand la prop change
   useEffect(() => {
-    setEditValue(value?.toString() || '');
-  }, [value]);
+    setEditValue(formatGradeInputValue(value, maxValue, correctionMax));
+  }, [value, maxValue, correctionMax]);
 
   // Focus et sélection automatique à l'ouverture du mode édition
   useEffect(() => {
@@ -976,12 +1042,19 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
       // "00" = vrai zéro intentionnel
       const num = finalValue === '00' ? 0 : parseFloat(finalValue);
       if (!isNaN(num) && num >= 0) {
-        if (num !== value) {
-          onChange(num);
+        const inputMax = correctionMax || maxValue;
+        if (inputMax > 0 && num > inputMax) {
+          setEditValue(formatGradeInputValue(value, maxValue, correctionMax));
+          return;
+        }
+
+        const convertedValue = convertGradeToCourseMax(num, maxValue, correctionMax);
+        if (convertedValue !== value) {
+          onChange(convertedValue);
           flashSaved();
         }
       } else {
-        setEditValue(value?.toString() || '');
+        setEditValue(formatGradeInputValue(value, maxValue, correctionMax));
       }
     }
   };
@@ -1063,10 +1136,14 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
     const text = e.clipboardData.getData('text').trim();
     const num = parseFloat(text);
     if (!isNaN(num) && num >= 0) {
-      onChange(num);
+      const inputMax = correctionMax || maxValue;
+      if (inputMax > 0 && num > inputMax) return;
+      onChange(convertGradeToCourseMax(num, maxValue, correctionMax));
       flashSaved();
     }
   };
+
+  const hasConversion = Boolean(correctionMax && maxValue > 0 && correctionMax !== maxValue);
 
   // Calcul du pourcentage pour la coloration conditionnelle
   const percentage = (value !== null && maxValue > 0) ? (value / maxValue) * 100 : null;
@@ -1098,7 +1175,15 @@ const GradeCell = React.memo(({ value, studentIdx, subjectId, period, isExam = f
       onClick={() => !disabled && !locked && !isEditing && setIsEditing(true)}
       onKeyDown={handleCellKeyDown}
       onPaste={handlePaste}
-      title={disabled ? "Pas d'examen pour ce cours" : locked ? "Période verrouillée" : ''}
+      title={
+        disabled
+          ? "Pas d'examen pour ce cours"
+          : locked
+            ? "Période verrouillée"
+            : hasConversion
+              ? `Saisie sur ${correctionMax}, enregistrée sur ${maxValue}`
+              : ''
+      }
     >
       {/* Texte affiché (toujours présent pour maintenir la taille) */}
       <span className={`${isEditing && !disabled ? 'invisible' : ''} ${conditionalColorClass}`}>

@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.24",
+    date: "09 Juin 2026",
+    title: "Conversion des notes & correctif Drag & Drop Windows",
+    description: "Ajout d'un mode de saisie sur barème de correction et stabilisation du glisser-déposer des cours sous Windows.",
+    features: [
+      {
+        tag: "Nouveau",
+        text: "Ajout du champ 'Corrigé sur' dans la grille des notes pour convertir automatiquement une note saisie sur le barème du professeur vers le maximum réel du cours."
+      },
+      {
+        tag: "Amélioration",
+        text: "La version web/mobile de saisie des notes applique aussi la conversion de barème afin de garder le même comportement que l'application desktop."
+      },
+      {
+        tag: "Correctif",
+        text: "Stabilisation du Drag & Drop des cours sous Windows/WebView2 en corrigeant l'image de glissement et le nettoyage de fin de drag."
+      }
+    ]
+  },
+  {
     version: "1.4.22",
     date: "09 Juin 2026",
     title: "Amélioration du Drag & Drop & Interface des Bulles d'aide",

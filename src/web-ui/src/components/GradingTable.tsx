@@ -20,21 +20,44 @@ interface GradingTableProps {
   statusMessage: { text: string; type: 'info' | 'error' | 'success' } | null;
 }
 
+const roundGradeValue = (value: number) => Math.round(value * 100) / 100;
+
+const convertGradeToCourseMax = (rawValue: number, courseMax: number, correctionMax: number | null) => {
+  if (!correctionMax || correctionMax <= 0 || courseMax <= 0 || correctionMax === courseMax) {
+    return roundGradeValue(rawValue);
+  }
+
+  return roundGradeValue((rawValue / correctionMax) * courseMax);
+};
+
+const convertGradeToCorrectionMax = (storedValue: number, courseMax: number, correctionMax: number | null) => {
+  if (!correctionMax || correctionMax <= 0 || courseMax <= 0 || correctionMax === courseMax) {
+    return storedValue;
+  }
+
+  return roundGradeValue((storedValue / courseMax) * correctionMax);
+};
+
+const formatGradeInputValue = (value: number | undefined, courseMax: number, correctionMax: number | null) => {
+  if (value === undefined) return '';
+  return convertGradeToCorrectionMax(value, courseMax, correctionMax).toString();
+};
+
 // ── Composant cellule de note tactile ──────────────────────
 // Gros champ adapté au doigt, inputMode decimal, coloration conditionnelle, flash ✓
 function GradeInput({ 
-  value, max, disabled, onSave 
+  value, max, correctionMax, disabled, onSave 
 }: { 
-  value: number | undefined; max: number; disabled: boolean; onSave: (val: number) => void;
+  value: number | undefined; max: number; correctionMax: number | null; disabled: boolean; onSave: (val: number) => void;
 }) {
-  const [localVal, setLocalVal] = useState(value?.toString() ?? '');
+  const [localVal, setLocalVal] = useState(formatGradeInputValue(value, max, correctionMax));
   const [showSaved, setShowSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Synchroniser quand la prop change (ex: SSE temps réel)
   useEffect(() => {
-    setLocalVal(value?.toString() ?? '');
-  }, [value]);
+    setLocalVal(formatGradeInputValue(value, max, correctionMax));
+  }, [value, max, correctionMax]);
 
   // Coloration conditionnelle : rouge < 50%, vert >= 80%, neutre sinon
   const percentage = (value !== undefined && max > 0) ? (value / max) * 100 : null;
@@ -51,12 +74,14 @@ function GradeInput({
     const trimmed = localVal.trim();
     if (trimmed === '' || disabled) return;
     const num = parseFloat(trimmed);
-    if (isNaN(num) || num < 0 || num > max) {
-      setLocalVal(value?.toString() ?? '');
+    const inputMax = correctionMax || max;
+    if (isNaN(num) || num < 0 || (inputMax > 0 && num > inputMax)) {
+      setLocalVal(formatGradeInputValue(value, max, correctionMax));
       return;
     }
-    if (num !== value) {
-      onSave(num);
+    const convertedValue = convertGradeToCourseMax(num, max, correctionMax);
+    if (convertedValue !== value) {
+      onSave(convertedValue);
       // Flash vert "✓" pendant 800ms
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 800);
@@ -126,6 +151,12 @@ export default function GradingTable({
 }: GradingTableProps) {
   // État de recherche d'élève
   const [searchQuery, setSearchQuery] = useState('');
+  const [correctionMaxInput, setCorrectionMaxInput] = useState('');
+
+  const correctionMax = useMemo(() => {
+    const parsed = parseFloat(correctionMaxInput);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [correctionMaxInput]);
 
   // Élèves filtrés par la recherche
   const filteredStudents = useMemo(() => {
@@ -203,6 +234,23 @@ export default function GradingTable({
             </button>
           ))}
         </div>
+
+        <div className="mt-2 flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Corrigé sur</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={correctionMaxInput}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
+                setCorrectionMaxInput(raw);
+              }
+            }}
+            placeholder={`${currentMax}`}
+            className="w-20 text-center text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+          />
+        </div>
       </div>
 
       {/* ── Liste des élèves avec inputs tactiles ── */}
@@ -214,6 +262,7 @@ export default function GradingTable({
           </span>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             pts / {isPeriodDisabled ? 'N/A' : currentMax}
+            {correctionMax && !isPeriodDisabled && correctionMax !== currentMax ? ` (saisie / ${correctionMax})` : ''}
           </span>
         </div>
 
@@ -247,6 +296,7 @@ export default function GradingTable({
                   <GradeInput
                     value={grade?.value}
                     max={currentMax}
+                    correctionMax={correctionMax}
                     disabled={isPeriodDisabled}
                     onSave={(val) => onGradeChange(student.id, selectedSubject.id, val)}
                   />

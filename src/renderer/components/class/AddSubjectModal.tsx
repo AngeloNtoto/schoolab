@@ -31,7 +31,9 @@ function DropZone({ index, onDrop }: DropZoneProps) {
         e.preventDefault();
         setIsOver(false);
         // Récupère l'ID du cours stocké dans le dataTransfer
-        const sourceIdStr = e.dataTransfer.getData('text/plain');
+        const sourceIdStr =
+          e.dataTransfer.getData('application/x-schoolab-subject-id') ||
+          e.dataTransfer.getData('text/plain');
         if (sourceIdStr) {
           onDrop(Number(sourceIdStr), index);
         }
@@ -288,18 +290,20 @@ const [draggedId, setDraggedId] = React.useState<number | null>(null);
 const handleDragStart = (e: React.DragEvent, id: number, name: string) => {
   setDraggedId(id);
   e.dataTransfer.setData('text/plain', id.toString());
+  e.dataTransfer.setData('application/x-schoolab-subject-id', id.toString());
   e.dataTransfer.effectAllowed = 'move';
   
   // 1. Création du badge flottant
   const dragGhost = document.createElement('div');
   
-  // FIX WINDOWS : On le place au top/left 0 pour qu'il soit dans le viewport,
-  // mais on le pousse DERRIÈRE l'application avec un z-index négatif.
+  // Windows/WebView2 exige souvent que l'image de drag soit un élément visible
+  // dans le viewport. On le rend quasi invisible sans z-index négatif.
   dragGhost.style.position = 'fixed';
   dragGhost.style.top = '0';
   dragGhost.style.left = '0';
-  dragGhost.style.zIndex = '-1000'; 
+  dragGhost.style.zIndex = '9999';
   dragGhost.style.pointerEvents = 'none'; // Évite de bloquer les interactions utilisateur
+  dragGhost.style.opacity = '0.01';
   
   // Votre style visuel
   dragGhost.style.background = '#2563eb';
@@ -810,7 +814,7 @@ const handleDragEnd = () => {
                           <div
                             draggable={!multiDeleteMode}
                             onDragStart={(e) => handleDragStart(e, subject.id, subject.name)}
-                            onDragEnd={() => { setDraggedId(null); }}
+                            onDragEnd={handleDragEnd}
                             onClick={() => {
                               // Mode suppression multiple : toggle la sélection
                               if (multiDeleteMode) {
