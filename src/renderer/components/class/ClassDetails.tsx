@@ -514,7 +514,7 @@ export default function ClassDetails({
                 <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
                   #
                 </th>
-                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px]">
+                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px] whitespace-nowrap">
                   Élèves ({filteredAndSortedStudents.length})
                 </th>
               
@@ -522,7 +522,7 @@ export default function ClassDetails({
                 <th 
                   key={subject.id} 
                   colSpan={focusedPeriod === 'all' ? 8 : 1} 
-                  className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700"
+                  className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap"
                 >
                   {subject.name}
                 </th>

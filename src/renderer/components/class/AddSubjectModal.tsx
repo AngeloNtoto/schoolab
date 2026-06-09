@@ -36,7 +36,7 @@ function DropZone({ index, onDrop }: DropZoneProps) {
         }
       }}
       // L'interligne s'agrandit légèrement pour faciliter le dépôt quand on passe dessus
-      className={`transition-all duration-200 ${
+      className={`transition-all duration-200 shrink-0 ${
         isOver 
           ? 'py-3' 
           : 'py-1.5'
@@ -801,7 +801,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                               // Mode normal : ouvrir l'édition
                               onSelectSubject?.(subject);
                             }}
-                            className={`group relative py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
+                            className={`group relative shrink-0 py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
                                  multiDeleteMode && deletingIds.has(subject.id)
                                     ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
                                     : draggedId === subject.id
