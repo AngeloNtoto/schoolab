@@ -283,8 +283,8 @@ export default function DeliberationSettingsTab() {
                     { key: 'categorie_1_label_avant', label: 'Catégorie 1 (Réussite)' },
                     { key: 'categorie_2_label_avant', label: 'Catégorie 2 (Avec Échecs)' },
                     { key: 'categorie_3_label_avant', label: 'Catégorie 3 (Échec)' },
-                    { key: 'categorie_4_label_avant', label: 'Catégorie 4 (Abandons)' },
                     { key: 'categorie_5_label_avant', label: 'Catégorie 5 (Non classés)' },
+                    { key: 'categorie_4_label_avant', label: 'Catégorie 4 (Abandons)' },
                   ].map((cat) => (
                     <div key={cat.key} className="space-y-1.5">
                       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{cat.label}</label>
@@ -306,8 +306,8 @@ export default function DeliberationSettingsTab() {
                     { key: 'categorie_1_label', label: 'Catégorie 1 (Réussite)' },
                     { key: 'categorie_2_label', label: 'Catégorie 2 (Repêchage)' },
                     { key: 'categorie_3_label', label: 'Catégorie 3 (Doublent)' },
-                    { key: 'categorie_4_label', label: 'Catégorie 4 (Abandons)' },
                     { key: 'categorie_5_label', label: 'Catégorie 5 (Non classés)' },
+                    { key: 'categorie_4_label', label: 'Catégorie 4 (Abandons)' },
                   ].map((cat) => (
                     <div key={cat.key} className="space-y-1.5">
                       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{cat.label}</label>

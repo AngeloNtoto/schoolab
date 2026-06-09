@@ -256,5 +256,5 @@ export const calculateRankings = (
   for (let i = 0; i < cat4.length; i++) cat4[i].rank = i + 1;
   for (let i = 0; i < cat5.length; i++) cat5[i].rank = i + 1;
 
-  return [...cat1, ...cat2, ...cat3, ...cat4, ...cat5];
+  return [...cat1, ...cat2, ...cat3, ...cat5, ...cat4];
 };

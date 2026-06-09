@@ -23,6 +23,7 @@ function DropZone({ index, onDrop }: DropZoneProps) {
     <div
       onDragOver={(e) => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
         setIsOver(true);
       }}
       onDragLeave={() => setIsOver(false)}
@@ -819,7 +820,7 @@ const handleDragEnd = () => {
                               // Mode normal : ouvrir l'édition
                               onSelectSubject?.(subject);
                             }}
-                            className={`group relative shrink-0 py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer overflow-hidden ${
+                            className={`group relative shrink-0 py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden ${
                                  multiDeleteMode && deletingIds.has(subject.id)
                                     ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
                                     : draggedId === subject.id
