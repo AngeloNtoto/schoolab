@@ -19,20 +19,16 @@ export const changelog: ReleaseNote[] = [
     description: "Refactorisation complète du composant Palmarès en modules indépendants, avec configuration distincte des libellés avant/après délibération et optimisation de l'affichage pour les classes avec beaucoup de cours.",
     features: [
       {
-        tag: "Amélioration",
-        text: "Refactorisation du Palmarès en composants modulaires dédiés : PeriodTable, AnnualTable, RepechageListTable et StudentObservation."
-      },
-      {
-        tag: "Amélioration",
-        text: "Extraction de la logique métier (classement, calculs) dans un fichier utilitaire dédié (palmaresLogic.ts) et centralisation des types (palmares.ts)."
-      },
-      {
         tag: "Nouveau",
-        text: "Configuration indépendante des libellés de catégories 'Avant Délibération' et 'Après Délibération' dans les paramètres."
+        text: "Vous pouvez désormais configurer séparément les libellés des catégories du palmarès pour 'Avant Délibération' et 'Après Délibération' dans les paramètres."
       },
       {
         tag: "Amélioration",
-        text: "Affichage des pourcentages au lieu des notes/max dans les observations du palmarès pour optimiser l'espace avec beaucoup de cours."
+        text: "Les échecs et repêchages dans le palmarès sont maintenant affichés en pourcentages au lieu de notes/max, pour un affichage plus compact et lisible."
+      },
+      {
+        tag: "Amélioration",
+        text: "Meilleure stabilité et réactivité du palmarès grâce à une optimisation interne du code."
       },
       {
         tag: "Correctif",
