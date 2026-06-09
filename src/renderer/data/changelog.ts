@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.22",
+    date: "09 Juin 2026",
+    title: "Amélioration du Drag & Drop & Interface des Bulles d'aide",
+    description: "Correction du problème d'affichage du ghost de drag & drop sous Windows et refonte esthétique des bulles d'aide.",
+    features: [
+      {
+        tag: "Correctif",
+        text: "Correction du problème d'affichage du ghost de drag & drop sous Windows."
+      },
+      {
+        tag: "Amélioration",
+        text: "Refonte complète de l'esthétique des bulles d'aide avec un nouveau design moderne et contrasté."
+      }
+    ]
+  },
+  {
     version: "1.4.21",
     date: "09 Juin 2026",
     title: "Modularisation du Palmarès & Optimisations d'affichage",

@@ -277,36 +277,54 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     }
   };
 
-  // ── HTML5 Drag & Drop ──
-  const [draggedId, setDraggedId] = React.useState<number | null>(null);
+  // // ── HTML5 Drag & Drop ──
+  // const [draggedId, setDraggedId] = React.useState<number | null>(null);
 
-  const handleDragStart = (e: React.DragEvent, id: number, name: string) => {
-    setDraggedId(id);
-    e.dataTransfer.setData('text/plain', id.toString());
-    e.dataTransfer.effectAllowed = 'move';
-    
-    // On crée un petit badge bleu flottant temporaire pour remplacer le gros pavé de base du navigateur
-    const dragGhost = document.createElement('div');
-    dragGhost.style.position = 'absolute';
-    dragGhost.style.top = '-1000px';
-    dragGhost.style.background = '#2563eb';
-    dragGhost.style.color = 'white';
-    dragGhost.style.padding = '4px 12px';
-    dragGhost.style.borderRadius = '8px';
-    dragGhost.style.fontSize = '12px';
-    dragGhost.style.fontWeight = 'bold';
-    dragGhost.textContent = `Déplacer : ${name}`;
-    document.body.appendChild(dragGhost);
-    
-    e.dataTransfer.setDragImage(dragGhost, 10, 10);
-    
-    // On nettoie le badge du DOM après un petit délai pour pas polluer la page
-    setTimeout(() => {
-      if (dragGhost.parentNode) {
-        dragGhost.parentNode.removeChild(dragGhost);
-      }
-    }, 100);
-  };
+// On utilise une référence pour garder la trace du ghost en mémoire
+const ghostRef = React.useRef<HTMLDivElement | null>(null);
+const [draggedId, setDraggedId] = React.useState<number | null>(null);
+
+const handleDragStart = (e: React.DragEvent, id: number, name: string) => {
+  setDraggedId(id);
+  e.dataTransfer.setData('text/plain', id.toString());
+  e.dataTransfer.effectAllowed = 'move';
+  
+  // 1. Création du badge flottant
+  const dragGhost = document.createElement('div');
+  
+  // FIX WINDOWS : On le place au top/left 0 pour qu'il soit dans le viewport,
+  // mais on le pousse DERRIÈRE l'application avec un z-index négatif.
+  dragGhost.style.position = 'fixed';
+  dragGhost.style.top = '0';
+  dragGhost.style.left = '0';
+  dragGhost.style.zIndex = '-1000'; 
+  dragGhost.style.pointerEvents = 'none'; // Évite de bloquer les interactions utilisateur
+  
+  // Votre style visuel
+  dragGhost.style.background = '#2563eb';
+  dragGhost.style.color = 'white';
+  dragGhost.style.padding = '4px 12px';
+  dragGhost.style.borderRadius = '8px';
+  dragGhost.style.fontSize = '12px';
+  dragGhost.style.fontWeight = 'bold';
+  dragGhost.textContent = `Déplacer : ${name}`;
+  
+  document.body.appendChild(dragGhost);
+  ghostRef.current = dragGhost; // On stocke l'élément pour le nettoyer plus tard
+  
+  // Assigne le ghost (décalage de 10px par rapport au curseur)
+  e.dataTransfer.setDragImage(dragGhost, 10, 10);
+};
+
+// 2. Le nettoyeur officiel
+const handleDragEnd = () => {
+  // On retire le ghost du DOM dès que l'utilisateur lâche la souris
+  if (ghostRef.current && ghostRef.current.parentNode) {
+    ghostRef.current.parentNode.removeChild(ghostRef.current);
+    ghostRef.current = null;
+  }
+  setDraggedId(null);
+};
 
   // Traitement du drop sur une interligne
   const handleDropOnZone = async (sourceId: number, targetIndex: number) => {
