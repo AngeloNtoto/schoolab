@@ -13,6 +13,34 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.21",
+    date: "09 Juin 2026",
+    title: "Modularisation du Palmarès & Optimisations d'affichage",
+    description: "Refactorisation complète du composant Palmarès en modules indépendants, avec configuration distincte des libellés avant/après délibération et optimisation de l'affichage pour les classes avec beaucoup de cours.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Refactorisation du Palmarès en composants modulaires dédiés : PeriodTable, AnnualTable, RepechageListTable et StudentObservation."
+      },
+      {
+        tag: "Amélioration",
+        text: "Extraction de la logique métier (classement, calculs) dans un fichier utilitaire dédié (palmaresLogic.ts) et centralisation des types (palmares.ts)."
+      },
+      {
+        tag: "Nouveau",
+        text: "Configuration indépendante des libellés de catégories 'Avant Délibération' et 'Après Délibération' dans les paramètres."
+      },
+      {
+        tag: "Amélioration",
+        text: "Affichage des pourcentages au lieu des notes/max dans les observations du palmarès pour optimiser l'espace avec beaucoup de cours."
+      },
+      {
+        tag: "Correctif",
+        text: "Correction de l'entassement des noms de matières dans le tableau des notes lorsque la classe contient de nombreux cours."
+      }
+    ]
+  },
+  {
     version: "1.4.20",
     date: "08 Juin 2026",
     title: "Amélioration du Palmarès & Affichage des Échecs",
