@@ -27,10 +27,6 @@ export const changelog: ReleaseNote[] = [
         text: "Les échecs et repêchages dans le palmarès sont maintenant affichés en pourcentages au lieu de notes/max, pour un affichage plus compact et lisible."
       },
       {
-        tag: "Amélioration",
-        text: "Meilleure stabilité et réactivité du palmarès grâce à une optimisation interne du code."
-      },
-      {
         tag: "Correctif",
         text: "Correction de l'entassement des noms de matières dans le tableau des notes lorsque la classe contient de nombreux cours."
       }
