@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.25",
+    date: "09 Juin 2026",
+    title: "Mode Réorganiser pour les cours",
+    description: "Ajout d'un mode de réorganisation fiable pour remplacer le Drag & Drop lorsque Windows ou le tactile le rendent instable.",
+    features: [
+      {
+        tag: "Nouveau",
+        text: "Ajout d'un mode Réorganiser dans la gestion des cours avec boutons monter/descendre, compatible Windows et écrans tactiles."
+      },
+      {
+        tag: "Amélioration",
+        text: "L'ordre des cours peut être préparé localement puis enregistré en une seule action, avec possibilité d'annuler."
+      },
+      {
+        tag: "Correctif",
+        text: "Conservation de l'arrondi des notes converties à deux décimales dans la grille de saisie."
+      }
+    ]
+  },
+  {
     version: "1.4.24",
     date: "09 Juin 2026",
     title: "Conversion des notes & correctif Drag & Drop Windows",

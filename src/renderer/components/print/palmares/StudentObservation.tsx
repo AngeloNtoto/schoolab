@@ -74,7 +74,7 @@ export const StudentObservation = ({
           rankedStudent.failedSubjects.includes(name) ||
           rankedStudent.repechageSubjects.includes(name)
         ) {
-          failed.push(`${name} ${((detail.points / detail.maxPoints) * 100).toFixed(1).replace('.0', '')}%`);
+          failed.push(`${name} ${detail.points} / ${detail.maxPoints}`);
         }
       }
 

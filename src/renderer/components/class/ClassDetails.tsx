@@ -37,7 +37,7 @@ interface ClassDetailsProps {
   onOpenRepechage: (studentId: number) => void;
 }
 
-const roundGradeValue = (value: number) => Math.round(value * 100) / 100;
+const roundGradeValue = (value: number) => Math.round((value));
 
 const convertGradeToCourseMax = (rawValue: number, courseMax: number, correctionMax: number | null) => {
   if (!correctionMax || correctionMax <= 0 || courseMax <= 0 || correctionMax === courseMax) {

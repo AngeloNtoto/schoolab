@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useActionState } from 'react';
+import React, { useState, useEffect, useActionState, useMemo } from 'react';
 import { dbService } from '../../services/databaseService';
 import { useFormStatus } from 'react-dom';
-import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check, Copy } from '../iconsSvg';
+import { X, BookOpen, Plus, Trash2, Sparkles, Layers, GripVertical, Check, Copy, ArrowUp, ArrowDown, Save, RotateCcw } from '../iconsSvg';
 import { classService } from '../../services/classService';
 import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
@@ -110,6 +110,9 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const [batchSubjects, setBatchSubjects] = useState<{name: string, code: string}[]>([]);
   const [batchInputName, setBatchInputName] = useState('');
   const [batchInputCode, setBatchInputCode] = useState('');
+  const [reorderMode, setReorderMode] = useState(false);
+  const [reorderSaving, setReorderSaving] = useState(false);
+  const [draftSubjects, setDraftSubjects] = useState<Subject[]>([]);
 
   // LOGIQUE SPÉCIALE POUR LES COURS À 100 POINTS :
   // Si maxPeriod = 100, alors c'est un cours en évaluation continue
@@ -119,6 +122,18 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   useEffect(() => {
     loadDomains();
   }, []);
+
+  useEffect(() => {
+    if (!reorderMode) {
+      setDraftSubjects(subjects);
+    }
+  }, [subjects, reorderMode]);
+
+  const displayedSubjects = reorderMode ? draftSubjects : subjects;
+  const hasReorderChanges = useMemo(() => {
+    if (!reorderMode || draftSubjects.length !== subjects.length) return false;
+    return draftSubjects.some((subject, index) => subject.id !== subjects[index]?.id);
+  }, [draftSubjects, reorderMode, subjects]);
 
   // If editingSubject is provided, prefill the form
   useEffect(() => {
@@ -277,6 +292,50 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     } catch (error) {
       console.error('Erreur auto-tri:', error);
       toast.error('Erreur lors du tri automatique');
+    }
+  };
+
+  const startReorderMode = () => {
+    setMultiDeleteMode(false);
+    setDeletingIds(new Set());
+    setDraftSubjects(subjects);
+    setReorderMode(true);
+  };
+
+  const cancelReorderMode = () => {
+    setDraftSubjects(subjects);
+    setReorderMode(false);
+  };
+
+  const moveDraftSubject = (fromIndex: number, direction: -1 | 1) => {
+    setDraftSubjects(prev => {
+      const toIndex = fromIndex + direction;
+      if (toIndex < 0 || toIndex >= prev.length) return prev;
+
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const saveReorderMode = async () => {
+    if (!hasReorderChanges) {
+      setReorderMode(false);
+      return;
+    }
+
+    setReorderSaving(true);
+    try {
+      await classService.reorderSubjects(draftSubjects.map(subject => subject.id));
+      toast.success('Ordre des cours enregistré');
+      setReorderMode(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur sauvegarde réorganisation:', error);
+      toast.error('Erreur lors de l\'enregistrement de l\'ordre');
+    } finally {
+      setReorderSaving(false);
     }
   };
 
@@ -760,22 +819,53 @@ const handleDragEnd = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                     <h3 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Matières existantes</h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <button
                     onClick={handleAutoSort}
+                    disabled={reorderMode}
                     className="text-[9px] font-bold px-2 py-1 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all flex items-center gap-1"
                     title="Trier par maxima puis A-Z"
                   >
                     <Sparkles size={10} />
                     Auto-trier
                   </button>
+                  {reorderMode ? (
+                    <>
+                      <button
+                        onClick={saveReorderMode}
+                        disabled={reorderSaving}
+                        className="text-[9px] font-black px-2 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition-all flex items-center gap-1"
+                      >
+                        <Save size={10} />
+                        {reorderSaving ? 'Enregistrement...' : 'Enregistrer'}
+                      </button>
+                      <button
+                        onClick={cancelReorderMode}
+                        disabled={reorderSaving}
+                        className="text-[9px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-700 dark:bg-slate-800 dark:text-slate-400 transition-all flex items-center gap-1 disabled:opacity-60"
+                      >
+                        <RotateCcw size={10} />
+                        Annuler
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={startReorderMode}
+                      className="text-[9px] font-bold px-2 py-1 rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-all flex items-center gap-1"
+                    >
+                      <GripVertical size={10} />
+                      Réorganiser
+                    </button>
+                  )}
                   {/* Bouton pour activer/désactiver le mode suppression multiple */}
                   <button
                     onClick={() => {
+                      if (reorderMode) return;
                       setMultiDeleteMode(!multiDeleteMode);
                       setDeletingIds(new Set());
                     }}
-                    className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all ${
+                    disabled={reorderMode}
+                    className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all disabled:opacity-40 ${
                       multiDeleteMode
                         ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                         : 'bg-slate-100 text-slate-500 hover:text-red-500 dark:bg-slate-800 dark:text-slate-400'
@@ -798,24 +888,25 @@ const handleDragEnd = () => {
               </div>
 
               <div className="flex flex-col gap-0 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                {subjects.length === 0 ? (
+                {displayedSubjects.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
                     <BookOpen size={32} className="mx-auto text-slate-200" />
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aucune matière configurée</p>
                   </div>
                 ) : (
                   <>
-                    <DropZone index={0} onDrop={handleDropOnZone} />
-                    {subjects.map((subject, idx) => {
+                    {!reorderMode && <DropZone index={0} onDrop={handleDropOnZone} />}
+                    {displayedSubjects.map((subject, idx) => {
                       const domain = subject.domain_id ? domains.find(d => d.id === subject.domain_id) : null;
                       const isActive = editingSubject?.id === subject.id;
                       return (
                         <React.Fragment key={subject.id}>
                           <div
-                            draggable={!multiDeleteMode}
+                            draggable={!multiDeleteMode && !reorderMode}
                             onDragStart={(e) => handleDragStart(e, subject.id, subject.name)}
                             onDragEnd={handleDragEnd}
                             onClick={() => {
+                              if (reorderMode) return;
                               // Mode suppression multiple : toggle la sélection
                               if (multiDeleteMode) {
                                 toggleDeleteId(subject.id);
@@ -824,17 +915,19 @@ const handleDragEnd = () => {
                               // Mode normal : ouvrir l'édition
                               onSelectSubject?.(subject);
                             }}
-                            className={`group relative shrink-0 py-3 px-4 rounded-2xl border-2 transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden ${
-                                 multiDeleteMode && deletingIds.has(subject.id)
+                            className={`group relative shrink-0 py-3 px-4 rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
+                                 reorderMode
+                                    ? 'cursor-default bg-indigo-50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-500/30'
+                                 : multiDeleteMode && deletingIds.has(subject.id)
                                     ? 'bg-red-50 dark:bg-red-900/10 border-red-400 dark:border-red-500 ring-2 ring-red-200 dark:ring-red-800'
                                     : draggedId === subject.id
                                         ? 'bg-slate-100 dark:bg-slate-800 border-dashed border-slate-300 dark:border-slate-600 opacity-50' // Visual feedback for dragged item
                                         : isActive 
                                             ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' 
-                                            : 'bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+                                            : 'cursor-grab active:cursor-grabbing bg-white dark:bg-slate-900/40 border-slate-100 dark:border-white/5 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
                             }`}
                           >
-                        {isActive && !multiDeleteMode && (
+                        {isActive && !multiDeleteMode && !reorderMode && (
                             <div className="absolute top-0 right-0 p-4 opacity-20 rotate-12">
                                 <BookOpen size={64} />
                             </div>
@@ -842,6 +935,11 @@ const handleDragEnd = () => {
                         
                         <div className="relative z-10 flex items-start justify-between gap-3">
                             {/* Checkbox visible en mode multiDelete */}
+                            {reorderMode && (
+                              <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-[10px] shrink-0 self-start">
+                                {idx + 1}
+                              </div>
+                            )}
                             {multiDeleteMode && (
                               <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 self-start mt-0.5 ${
                                 deletingIds.has(subject.id)
@@ -876,8 +974,35 @@ const handleDragEnd = () => {
                                 )}
                             </div>
                             
-                            {/* Bouton de suppression */}
                             <div className="flex items-center gap-1 self-start mt-0.5 shrink-0">
+                              {reorderMode ? (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      moveDraftSubject(idx, -1);
+                                    }}
+                                    disabled={idx === 0}
+                                    className="p-2 rounded-xl bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+                                    title="Monter"
+                                  >
+                                    <ArrowUp size={16} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      moveDraftSubject(idx, 1);
+                                    }}
+                                    disabled={idx === displayedSubjects.length - 1}
+                                    className="p-2 rounded-xl bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+                                    title="Descendre"
+                                  >
+                                    <ArrowDown size={16} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                {/* Bouton de suppression */}
                                 <button
                                     onClick={(e) => { e.stopPropagation(); handleDelete(subject.id); }}
                                     className={`p-2 rounded-xl transition-all ${
@@ -889,10 +1014,12 @@ const handleDragEnd = () => {
                                 >
                                     <Trash2 size={16} />
                                 </button>
+                                </>
+                              )}
                             </div>
                         </div>
                       </div>
-                      <DropZone index={idx + 1} onDrop={handleDropOnZone} />
+                      {!reorderMode && <DropZone index={idx + 1} onDrop={handleDropOnZone} />}
                     </React.Fragment>
                   );
                 })}
