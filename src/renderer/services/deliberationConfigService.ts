@@ -33,7 +33,14 @@ export interface DeliberationConfig {
   // --- Échelle des appréciations dynamique ---
   appreciationRules: AppreciationRule[];
 
-  // --- Libellés des catégories du palmarès ---
+  // --- Libellés des catégories du palmarès (Avant Délibération) ---
+  categorie_1_label_avant: string;
+  categorie_2_label_avant: string;
+  categorie_3_label_avant: string;
+  categorie_4_label_avant: string;
+  categorie_5_label_avant: string;
+
+  // --- Libellés des catégories du palmarès (Après Délibération / Final) ---
   categorie_1_label: string;
   categorie_2_label: string;
   categorie_3_label: string;
@@ -68,11 +75,17 @@ export const DEFAULT_DELIBERATION_CONFIG: DeliberationConfig = {
     { id: 'a5', seuilMin: 0, label: 'Mauvais', abrev: 'Ma' },
   ],
 
+  categorie_1_label_avant: 'I. Ont réussis sans échecs',
+  categorie_2_label_avant: 'II. Ont réussis avec des échecs',
+  categorie_3_label_avant: 'III. Ont échoués',
+  categorie_4_label_avant: 'IV. Abandons',
+  categorie_5_label_avant: 'V. Non classés',
+
   categorie_1_label: 'I. Passent en première session',
   categorie_2_label: 'II. Passent après la 2ème session',
   categorie_3_label: 'III. Doublent la classe',
   categorie_4_label: 'IV. Abandons',
-  categorie_5_label: 'Non classés',
+  categorie_5_label: 'V. Non classés',
 
   maxEchecsRepechage: 5,
   coursCompletObligatoire: true,

@@ -694,22 +694,21 @@ export default function Palmares({
 
   // Libellés dynamiques selon la période
   const categoryLabels: Record<number, string> =
-    selectedPeriod === 'ANNUAL'
+    selectedPeriod === 'ANNUAL' && palmaresMode !== 'BEFORE_DELIBERATION'
       ? {
           1: delibConfig.categorie_1_label,
-          // Label conditionnel : "Ont réussis avec des échecs" avant délibération, sinon on reprend la configuration (ex: "Passe en deuxième session")
-          2: palmaresMode === 'BEFORE_DELIBERATION' ? 'II. Ont réussis avec des échecs' : delibConfig.categorie_2_label,
+          2: delibConfig.categorie_2_label,
           3: delibConfig.categorie_3_label,
           4: delibConfig.categorie_4_label,
           5: delibConfig.categorie_5_label,
         }
-    : {
-        1: 'I. Ont Réussis sans échecs',
-        2: 'II. Ont réussis avec des échecs',
-        3: 'III. Ont échoués',
-        4: 'IV. Abandons',
-        5: 'V. Non classés',
-      };
+      : {
+          1: delibConfig.categorie_1_label_avant,
+          2: delibConfig.categorie_2_label_avant,
+          3: delibConfig.categorie_3_label_avant,
+          4: delibConfig.categorie_4_label_avant,
+          5: delibConfig.categorie_5_label_avant,
+        };
 
   // Filtrage des étudiants à afficher selon le mode
   let displayedStudents = palmaresMode === 'REPECHAGE_LIST'

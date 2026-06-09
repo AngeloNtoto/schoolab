@@ -274,24 +274,53 @@ export default function DeliberationSettingsTab() {
           {/* Section 4: Palmarès */}
           <div className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 rounded-2xl p-6 space-y-5">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">4. Libellés du Palmarès</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { key: 'categorie_1_label', label: 'Catégorie 1 (Réussite)' },
-                { key: 'categorie_2_label', label: 'Catégorie 2 (Repêchage)' },
-                { key: 'categorie_3_label', label: 'Catégorie 3 (Échec)' },
-                { key: 'categorie_4_label', label: 'Catégorie 4 (Abandons)' },
-                { key: 'categorie_5_label', label: 'Catégorie 5 (Non classés)' },
-              ].map((cat) => (
-                <div key={cat.key} className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{cat.label}</label>
-                  <input 
-                    type="text" 
-                    value={(config as any)[cat.key]} 
-                    onChange={(e) => setConfig({...config, [cat.key]: e.target.value})} 
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm" 
-                  />
+            
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Avant Délibération</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'categorie_1_label_avant', label: 'Catégorie 1 (Réussite)' },
+                    { key: 'categorie_2_label_avant', label: 'Catégorie 2 (Avec Échecs)' },
+                    { key: 'categorie_3_label_avant', label: 'Catégorie 3 (Échec)' },
+                    { key: 'categorie_4_label_avant', label: 'Catégorie 4 (Abandons)' },
+                    { key: 'categorie_5_label_avant', label: 'Catégorie 5 (Non classés)' },
+                  ].map((cat) => (
+                    <div key={cat.key} className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{cat.label}</label>
+                      <input 
+                        type="text" 
+                        value={(config as any)[cat.key]} 
+                        onChange={(e) => setConfig({...config, [cat.key]: e.target.value})} 
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm" 
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Après Délibération (Palmarès Final)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'categorie_1_label', label: 'Catégorie 1 (Réussite)' },
+                    { key: 'categorie_2_label', label: 'Catégorie 2 (Repêchage)' },
+                    { key: 'categorie_3_label', label: 'Catégorie 3 (Doublent)' },
+                    { key: 'categorie_4_label', label: 'Catégorie 4 (Abandons)' },
+                    { key: 'categorie_5_label', label: 'Catégorie 5 (Non classés)' },
+                  ].map((cat) => (
+                    <div key={cat.key} className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{cat.label}</label>
+                      <input 
+                        type="text" 
+                        value={(config as any)[cat.key]} 
+                        onChange={(e) => setConfig({...config, [cat.key]: e.target.value})} 
+                        className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all text-sm" 
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
