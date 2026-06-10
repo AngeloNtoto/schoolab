@@ -159,7 +159,7 @@ export async function printElement(element: HTMLElement, options: PrintOptions =
 // ---------- Hook utilitaire et composant bouton réutilisable ----------
 
 type PrintButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  targetRef: React.RefObject<HTMLElement>;
+  targetRef: { current: HTMLElement | null };
   title?: string;
   extraCss?: string;
   className?: string;

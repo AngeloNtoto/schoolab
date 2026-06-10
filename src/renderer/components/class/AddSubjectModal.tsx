@@ -93,7 +93,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   // ÉTATS POUR LES MAXIMA
   const [maxPeriod, setMaxPeriod] = useState('10');
   const [maxExam, setMaxExam] = useState('20');  // Un seul champ pour les deux examens
-  const [Focus,setFocus]=useState(false)
+  const [hasExam, setHasExam] = useState(true);
   const [loading, setLoading] = useState(false);
 
   // Onglet actif : 'catalog' pour parcourir le catalogue, 'manual' pour saisie libre, 'clone' pour cloner
@@ -114,11 +114,7 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
   const [reorderSaving, setReorderSaving] = useState(false);
   const [draftSubjects, setDraftSubjects] = useState<Subject[]>([]);
 
-  // LOGIQUE SPÉCIALE POUR LES COURS À 100 POINTS :
-  // Si maxPeriod = 100, alors c'est un cours en évaluation continue
-  // sans examen (max_exam = 0 et champs désactivés)
-  const is100PointCourse = Number(maxPeriod) === 100 || (Number(maxExam)===0 && maxExam!==null && Number(maxPeriod)!=0);
-  const diff100=Number(maxPeriod)!=100;
+  const isNoExamCourse = !hasExam;
 
   useEffect(() => {
     loadDomains();
@@ -145,24 +141,24 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       setMaxPeriod(String(editingSubject.max_p1 ?? '10'));
       // assume exam1 and exam2 are same
       setMaxExam(String(editingSubject.max_exam1 ?? '20'));
+      setHasExam((editingSubject.max_exam1 ?? 0) > 0);
       setSelectedDomainId(editingSubject.domain_id ?? null);
     }
   }, [editingSubject]);
 
-  // EFFET : Mise à jour automatique des examens quand la période change
-  // Si période = 100 → examen = 0 (bloqué)
-  // Sinon → examen = période * 2 (suggéré, mais modifiable)
+  // EFFET : Mise à jour automatique du maxima d'examen quand la période change
+  // Si le cours est marqué sans examen, on force 0.
   useEffect(() => {
-    const pMax = Number(maxPeriod);
-    if (pMax === 100) {
-      // CAS SPÉCIAL : Évaluation continue, pas d'examen
+    if (!hasExam) {
       setMaxExam('0');
-    } else {
-      // CAS NORMAL : Suggestion du double de la période
-      // L'utilisateur peut toujours modifier cette valeur
-      setMaxExam((pMax * 2).toString());
+      return;
     }
-  }, [maxPeriod]);
+
+    const pMax = Number(maxPeriod);
+    // CAS NORMAL : Suggestion du double de la période
+    // L'utilisateur peut toujours modifier cette valeur
+    setMaxExam((pMax * 2).toString());
+  }, [maxPeriod, hasExam]);
 
   const loadDomains = async () => {
     try {
@@ -203,8 +199,8 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
       const pMax = Number(formData.get('max_period'));
       
       // RÉCUPÉRATION DU MAXIMA D'EXAMEN :
-      // Si période = 100 : forcer exam = 0 (sécurité)
-      const examMax = pMax === 100 ? 0 : Number(formData.get('max_exam'));
+      // Si le cours est marqué sans examen, forcer exam = 0 (sécurité)
+      const examMax = hasExam ? Number(formData.get('max_exam')) : 0;
 
       if (editingSubject) {
         await dbService.execute(
@@ -764,17 +760,28 @@ const handleDragEnd = () => {
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Maxima Examen</label>
+                          <div className="flex items-center justify-between gap-2 px-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Maxima Examen</label>
+                            <button
+                              type="button"
+                              onClick={() => setHasExam(prev => !prev)}
+                              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${
+                                hasExam
+                                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-100 dark:border-blue-500/20'
+                                  : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-100 dark:border-amber-500/20'
+                              }`}
+                            >
+                              {hasExam ? 'Avec examen' : 'Sans examen'}
+                            </button>
+                          </div>
                             <input
                                 name="max_exam"
                                 type="number"
                                 value={maxExam}
                                 onChange={(e) => setMaxExam(e.target.value)}
-                                disabled={is100PointCourse && !Focus}
-                                onFocus={()=>setFocus(true)}
-                                onBlur={() => setFocus(false)}
+                            disabled={isNoExamCourse}
                                 className={`w-full px-4 py-2 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm ${
-                                    is100PointCourse 
+                              isNoExamCourse 
                                         ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-white/5 cursor-not-allowed' 
                                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-white/5'
                                 }`}
@@ -783,16 +790,16 @@ const handleDragEnd = () => {
                         </div>
                     </div>
 
-                    <div className={`p-3 rounded-xl border transition-all duration-500 flex items-center justify-between ${is100PointCourse ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' : 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20'}`}>
+                    <div className={`p-3 rounded-xl border transition-all duration-500 flex items-center justify-between ${isNoExamCourse ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/20' : 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20'}`}>
                         <div>
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Total Semestriel</p>
-                            <p className={`text-lg font-black ${is100PointCourse ? 'text-amber-600' : 'text-blue-600 dark:text-blue-400'}`}>
+                        <p className={`text-lg font-black ${isNoExamCourse ? 'text-amber-600' : 'text-blue-600 dark:text-blue-400'}`}>
                                 {Number(maxPeriod) * 2 + Number(maxExam)} <span className="text-[9px] uppercase">pts</span>
                             </p>
                         </div>
                         <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 text-right max-w-[120px]">
-                            {is100PointCourse 
-                                ? "Évaluation continue (sans examen)"
+                        {isNoExamCourse 
+                          ? "Cours sans examen"
                                 : `Calcul: ${maxPeriod} + ${maxPeriod} + ${maxExam}`}
                         </p>
                     </div>

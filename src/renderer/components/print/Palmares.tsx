@@ -225,15 +225,15 @@ export default function Palmares({
         {/* En-tête supérieure avec les informations de l'école et des statistiques (Classe et Effectif retirés) */}
         <div className="flex justify-between items-start mb-4 font-bold text-[14px] text-black border-b border-black/80 pb-2">
           <div className="space-y-0.5">
-            <p className="uppercase">École: {schoolName}</p>
-            <p className="uppercase">Ville: {schoolCity}</p>
-            {schoolPoBox && <p className="uppercase">Boîte Postale: {schoolPoBox}</p>}
+            <p className="uppercase">{schoolName}</p>
+            {schoolPoBox && <p className="uppercase">B.P : {schoolPoBox}</p>}
+            <p className="uppercase">{schoolCity}</p>
           </div>
 
           <div className="space-y-0.5 text-right uppercase">
             <p>Ont réussis: {stats.passed}</p>
             <p>Ont échoué: {stats.failed}</p>
-            <p>Non classés: {stats.cat4}</p>
+            <p>Non classés: {stats.cat5}</p>
           </div>
         </div>
 

@@ -6,6 +6,8 @@ import { Domain } from '../../services/domainService';
 import { StudentRanks } from '../../services/bulletinService';
 import { settingsService } from '../../services/settingsService';
 import { deliberationConfigService, DeliberationConfig, DEFAULT_DELIBERATION_CONFIG } from '../../services/deliberationConfigService';
+import drapeauUrl from '../../../../assets/drapeau.svg';
+import armoirieUrl from '../../../../assets/armoirie.svg';
 
 export interface BulletinPrimaireContentProps {
   student: Student;
@@ -24,7 +26,7 @@ const getApplication = (percentage: number | null, config: DeliberationConfig): 
   return deliberationConfigService.getAppreciationAbrev(percentage, config);
 };
 
-const abregeConduite = (conduite: string | null) => {
+const abregeConduite = (conduite?: string | null) => {
   if (!conduite) return '-';
   switch(conduite.toUpperCase()){ 
     case 'ÉLUTE': return 'E';
@@ -123,73 +125,65 @@ export default function BulletinPrimaireContent({
     <div className="max-w-[210mm] mx-auto bg-white p-6 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
-        {/* Left: Flag */}
-        <div className="w-32 flex items-center justify-center">
-          <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-[#007FFF]">
-            <svg viewBox="0 0 400 300" className="w-full h-full">
-              <path d="M400 0 L400 60 L60 300 L0 300 L0 240 L340 0 Z" fill="#FAD02E" />
-              <path d="M400 15 L400 45 L45 300 L15 300 L0 285 L0 255 Z" fill="#CE1126" />
-              <path 
-                d="M50 20 L58.5 45 L85 45 L63.5 60 L71.5 85 L50 70 L28.5 85 L36.5 60 L15 45 L41.5 45 Z" 
-                fill="#FAD02E" 
-              />
-            </svg>
+      <div className="border-2 border-black mb-0">
+        <div className="flex border-b border-black">
+          {/* Left: Flag */}
+          <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+            <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
+              <img src={drapeauUrl} alt="Drapeau de la RDC" className="w-full h-full object-cover" />
+            </div>
+          </div>
+
+          {/* Center: Ministry Info */}
+          <div className="flex-1 text-center py-1 px-4">
+            <h1 className="font-bold uppercase tracking-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
+            <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>MINISTERE DE L'EDUCATION NATIONALE</h2>
+            <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>ET NOUVELLE CITOYENNETE</h2>
+          </div>
+
+          {/* Right: Coat of arms */}
+          <div className="w-24 border-l border-black p-2 flex items-center justify-center">
+            <div className="w-16 h-16 overflow-hidden">
+              <img src={armoirieUrl} alt="Armoiries de la RDC" className="w-full h-full object-contain" />
+            </div>
           </div>
         </div>
 
-        {/* Center: Ministry Info */}
-        <div className="flex-1 text-center px-4">
-          <h1 className="font-bold uppercase tracking-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
-          <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Enseignement Primaire, Secondaire</h2>
-          <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>et Professionnel</h2>
-        </div>
-
-        {/* Right: School Logo Placeholder */}
-        <div className="w-32 p-1 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full border border-black flex items-center justify-center overflow-hidden">
-             <div className="bg-[#00008B] w-full h-full flex flex-col items-center justify-center p-1 text-white text-[7px] font-bold">
-                <span className="text-[14px]">🐆</span>
-                <span className="leading-tight text-center">RDC<br/>LOGO</span>
-             </div>
+        {/* ID Row */}
+        <div className="flex border border-black mb-1">
+          <div className="w-16 font-bold p-0.5 border-r border-black flex items-center">N° ID</div>
+          <div className="flex-1 flex h-5">
+            {Array(25).fill(0).map((_, i) => (
+              <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* ID Row */}
-      <div className="flex border border-black mb-1">
-        <div className="w-16 font-bold p-0.5 border-r border-black flex items-center">N° ID</div>
-        <div className="flex-1 flex h-5">
-          {Array(25).fill(0).map((_, i) => (
-            <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
-          ))}
+        {/* Province */}
+        <div className="flex items-baseline mb-1">
+          <span className="font-bold">PROVINCE :</span>
+          <span className="border-b border-dotted border-black flex-1 ml-1"></span>
         </div>
-      </div>
-
-      {/* Province */}
-      <div className="flex items-baseline mb-1">
-        <span className="font-bold">PROVINCE :</span>
-        <span className="border-b border-dotted border-black flex-1 ml-1"></span>
       </div>
 
       {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-1 border-b border-black pb-1">
+      <div className="border-1 border-black mb-0 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
         <div className="space-y-1">
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">VILLE :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">VILLE :</span>
             <span className="border-b border-dotted border-black flex-1 text-center uppercase">{schoolCity}</span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">COMMUNE / TER (1) :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">COMMUNE / TER (1) :</span>
             <span className="border-b border-dotted border-black flex-1"></span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">ECOLE :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">ECOLE :</span>
             <span className="border-b border-dotted border-black flex-1 text-center font-bold uppercase">{schoolName}</span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">CODE :</span>
-            <div className="flex border border-black h-5 flex-1 ml-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">CODE :</span>
+            <div className="flex border border-black h-6 w-48">
               {Array(10).fill(0).map((_, i) => (
                 <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
               ))}
@@ -197,31 +191,31 @@ export default function BulletinPrimaireContent({
           </div>
         </div>
         <div className="space-y-1">
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">ELEVE :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">ELEVE :</span>
             <span className="border-b border-dotted border-black flex-1 font-bold text-center uppercase">
                {student.last_name} {student.post_name} {student.first_name}
             </span>
-            <span className="font-bold ml-1">SEXE :</span>
+            <span className="font-bold">SEXE :</span>
             <span className="border-b border-dotted border-black w-8 text-center">{student.gender}</span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">NE (E) A :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">NE (E) A :</span>
             <span className="border-b border-dotted border-black flex-1 text-center">{student.birthplace}</span>
-            <span className="font-bold ml-1">Le</span>
+            <span className="font-bold">Le</span>
             <span className="border-b border-dotted border-black w-24 text-center">
               {new Date(student.birth_date).toLocaleDateString('fr-FR')}
             </span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">CLASSE :</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">CLASSE :</span>
             <span className="border-b border-dotted border-black flex-1 font-bold text-center">
               {classInfo.level} {classInfo.option}
             </span>
           </div>
-          <div className="flex items-baseline">
-            <span className="font-bold min-w-[70px]">N° PERM. :</span>
-             <div className="flex border border-black h-5 flex-1 ml-1">
+          <div className="flex items-baseline gap-2">
+            <span className="font-bold min-w-[60px]">N° PERM. :</span>
+             <div className="flex border border-black h-6 w-64">
               {Array(14).fill(0).map((_, i) => (
                 <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
               ))}
@@ -231,7 +225,7 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="text-center font-bold py-1 uppercase" style={{ fontSize: `${titleSize}px` }}>
+      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6" style={{ fontSize: `${titleSize}px` }}>
         BULLETIN DE LA {classInfo.level} ANNEE CYCLE TERMINAL DE L'EDUCATION DE BASE ({classInfo.level === '7ème' ? 'CTB7' : 'CTB8'}) ANNEE SCOLAIRE 2024 - 2025
       </div>
 

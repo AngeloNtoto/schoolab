@@ -120,13 +120,13 @@ export default function CouponContent({
           {/* Colonne gauche : Infos école */}
           <div className="w-1/4 border-r border-black p-1" style={{ fontSize: `${Math.max(6, bodySize - 0.5)}px` }}>
             <div className="mb-0">
-              <span className="font-semibold">ÉCOLE :</span> {schoolInfo.name}
+              <span className="font-semibold">{schoolInfo.name}</span>
             </div>
             <div className="mb-0">
-              <span className="font-semibold">VILLE :</span> {schoolInfo.city}
+              <span className="font-semibold">B.P : {schoolInfo.pobox}</span>
             </div>
             <div className="mb-0">
-              <span className="font-semibold">B.P. :</span> {schoolInfo.pobox}
+              <span className="font-semibold">{schoolInfo.city}</span> 
             </div>
           </div>
 

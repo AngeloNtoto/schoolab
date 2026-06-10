@@ -13,6 +13,8 @@ import { StudentRanks } from '../../services/bulletinService';
 import { Repechage } from '../../services/repechageService';
 import { settingsService } from '../../services/settingsService';
 import { deliberationConfigService, DeliberationConfig, DEFAULT_DELIBERATION_CONFIG } from '../../services/deliberationConfigService';
+import drapeauUrl from '../../../../assets/drapeau.svg';
+import armoirieUrl from '../../../../assets/armoirie.svg';
 
 export interface BulletinHumanitesContentProps {
   student: Student;
@@ -90,8 +92,8 @@ export default function BulletinHumanitesContent({
     return count > 0 ? total : null;
   };
 
-  const abregeConduite = (conduite: string) => {
-    switch(conduite.toUpperCase()){ 
+  const abregeConduite = (conduite?: string | null) => {
+    switch(conduite?.toUpperCase()){ 
       case 'ELUTE': return 'E';
       case 'TRES BON': return 'TB';
       case 'BON': return 'B';
@@ -108,18 +110,8 @@ export default function BulletinHumanitesContent({
         <div className="flex border-b border-black">
           {/* Flag */}
           <div className="w-24 border-r border-black p-2 flex items-center justify-center">
-            <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-[#007FFF]">
-              <svg viewBox="0 0 400 300" className="w-full h-full">
-                {/* Diagonal stripe (red with yellow borders) */}
-                <path d="M400 0 L400 60 L60 300 L0 300 L0 240 L340 0 Z" fill="#FAD02E" />
-                <path d="M400 15 L400 45 L45 300 L15 300 L0 285 L0 255 Z" fill="#CE1126" />
-                
-                {/* Yellow star in the top left */}
-                <path 
-                  d="M50 20 L58.5 45 L85 45 L63.5 60 L71.5 85 L50 70 L28.5 85 L36.5 60 L15 45 L41.5 45 Z" 
-                  fill="#FAD02E" 
-                />
-              </svg>
+            <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
+              <img src={drapeauUrl} alt="Drapeau de la RDC" className="w-full h-full object-cover" />
             </div>
           </div>
           
@@ -130,10 +122,10 @@ export default function BulletinHumanitesContent({
             <h3 className="font-medium uppercase" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Et Nouvelle Citoyennete</h3>
           </div>
 
-          {/* Logo */}
+          {/* Coat of arms */}
           <div className="w-24 border-l border-black p-2 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full border border-black flex items-center justify-center">
-              <span className="text-[8px] text-center">LOGO<br/>ECOLE</span>
+            <div className="w-16 h-16 overflow-hidden">
+              <img src={armoirieUrl} alt="Armoiries de la RDC" className="w-full h-full object-contain" />
             </div>
           </div>
         </div>
