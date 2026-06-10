@@ -205,14 +205,13 @@ export default function EditEleve({ studentId, initialData, onClose}: EditEleveP
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Prénom</label>
+                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Post-nom</label>
                             <div className="relative group">
-                                <input 
-                                    name="first_name" 
-                                    value={formData.first_name || ''} 
-                                    onChange={handleChange} 
-                                    required 
-                                    className="w-full pl-11 pr-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
+                                <input
+                                    name="post_name"
+                                    value={formData.post_name || ''}
+                                    onChange={handleChange}
+                                    className="w-full pl-11 pr-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm"
                                 />
                                 <CheckCircle2 size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                             </div>
@@ -221,12 +220,13 @@ export default function EditEleve({ studentId, initialData, onClose}: EditEleveP
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Post-nom</label>
-                            <input 
-                                name="post_name" 
-                                value={formData.post_name || ''} 
-                                onChange={handleChange} 
-                                className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm" 
+                            <label className="text-[9px] font-black text-slate-500 dark:text-slate-500 uppercase tracking-widest px-1">Prénom</label>
+                            <input
+                                name="first_name"
+                                value={formData.first_name || ''}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-inner text-sm"
                             />
                         </div>
                         <div className="space-y-1.5">

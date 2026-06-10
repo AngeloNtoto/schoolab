@@ -13,10 +13,18 @@ export interface MappedStudent {
   birthplace?: string;
 }
 
+function normalizeHeaderValue(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
 const FIELD_MAPPING = {
   last_name: ['NOM', 'NAME', 'NOM DE FAMILLE', 'FAMILLE'],
   post_name: ['POSTNOM', 'POST-NOM', 'SECOND NOM', 'POST NAME'],
-  first_name: ['PRENOM', 'PRÉNOM', 'FIRST NAME', 'GIVEN NAME'],
+  first_name: ['PRENOM', 'PRÉNOM', 'FIRST NAME', 'FIRSTNAME', 'FIRST_NAME', 'FIRST-NAME', 'GIVEN NAME', 'FORENAME'],
   gender: ['SEXE', 'GENDER', 'GENRE', 'S'],
   birthplace: ['LIEU DE NAISSANCE', 'LIEU', 'PLACE OF BIRTH', 'BIRTHPLACE', 'ORIGINE'],
   birth_date: ['DATE DE NAISSANCE', 'DATE', 'NÉ LE', 'NE LE', 'DOB', 'BIRTHDAY', 'DATE NAISSANCE'],
@@ -95,19 +103,31 @@ function findBestMatch(target: string, candidates: string[], threshold = 0.4): {
 export function mapHeaders(headers: string[]): Record<string, string> {
   const mapping: Record<string, string> = {};
   const usedHeaders = new Set<string>();
+  const normalizedHeaders = headers.map((header) => ({
+    original: header,
+    normalized: normalizeHeaderValue(header),
+  }));
   
   // Sort target fields by priority/uniqueness if needed, here just keys
   const targetFields = Object.keys(FIELD_MAPPING);
   
   targetFields.forEach((field) => {
     const aliases = (FIELD_MAPPING as any)[field];
-    const availableHeaders = headers.filter(h => !usedHeaders.has(h));
+    const availableHeaders = normalizedHeaders.filter(({ original }) => !usedHeaders.has(original));
     
     let bestMatch: { item: string, score: number } | null = null;
     
     aliases.forEach((alias: string) => {
+      const normalizedAlias = normalizeHeaderValue(alias);
+
+      const exactNormalizedMatch = availableHeaders.find(({ normalized }) => normalized === normalizedAlias);
+      if (exactNormalizedMatch) {
+        bestMatch = { item: exactNormalizedMatch.original, score: 0 };
+        return;
+      }
+
       // Find best match for this alias among available headers
-      const match = findBestMatch(alias, availableHeaders);
+      const match = findBestMatch(alias, availableHeaders.map(({ original }) => original));
       
       if (match) {
         if (!bestMatch || match.score < bestMatch.score) {

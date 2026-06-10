@@ -182,6 +182,12 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         [],
     );
 
+    // Normalize legacy NULL text values so older databases can sync cleanly.
+    let _ = conn.execute(
+        "UPDATE students SET first_name = COALESCE(first_name, ''), last_name = COALESCE(last_name, ''), post_name = COALESCE(post_name, ''), gender = COALESCE(gender, ''), birth_date = birth_date, birthplace = COALESCE(birthplace, ''), conduite = COALESCE(conduite, ''), conduite_p1 = COALESCE(conduite_p1, ''), conduite_p2 = COALESCE(conduite_p2, ''), conduite_p3 = COALESCE(conduite_p3, ''), conduite_p4 = COALESCE(conduite_p4, ''), abandon_reason = COALESCE(abandon_reason, '')",
+        [],
+    );
+
     let sync_tables = vec![
         "academic_years",
         "classes",

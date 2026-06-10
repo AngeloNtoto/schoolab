@@ -211,7 +211,7 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
         <div className="flex-1 overflow-y-auto p-8 pt-4 custom-scrollbar">
           {activeTab === 'manual' ? (
             <form action={formAction} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Nom</label>
                         <input name="last_name" required className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
@@ -220,8 +220,6 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Post-nom</label>
                         <input name="post_name" className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
                     </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Prénom</label>
                         <input name="first_name" className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
@@ -233,9 +231,8 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                             <option value="F">Féminin</option>
                         </select>
                     </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Date de naissance</label>
                         <input 
                           name="birth_date" 
@@ -245,10 +242,11 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                             if (e.target.value) e.target.blur();
                           }}
                         />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Lieu de naissance</label>
-                        <input name="birthplace" className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Lieu de naissance</label>
+                            <input name="birthplace" className="w-full px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all" />
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-3 pt-2">
@@ -314,7 +312,8 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0">
                                     <tr className="text-[9px] font-black uppercase text-slate-400 border-b border-slate-100 dark:border-white/5">
-                                        <th className="px-4 py-2">Nom Complet</th>
+                                        <th className="px-4 py-2">Nom</th>
+                                        <th className="px-4 py-2">Post-nom</th>
                                         <th className="px-4 py-2">Prénom</th>
                                         <th className="px-4 py-2">Sexe</th>
                                         <th className="px-4 py-2">Statut</th>
@@ -323,7 +322,8 @@ export default function AddStudentModal({ isOpen, onClose, onAddStudent, onImpor
                                 <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                                     {parsedStudents.map((s, i) => (
                                         <tr key={i} className="text-xs font-bold">
-                                            <td className="px-4 py-3 text-slate-900 dark:text-white">{s.last_name} {s.post_name}</td>
+                                            <td className="px-4 py-3 text-slate-900 dark:text-white">{s.last_name}</td>
+                                            <td className="px-4 py-3 text-slate-500">{s.post_name || '-'}</td>
                                             <td className="px-4 py-3 text-slate-500">{s.first_name}</td>
                                             <td className="px-4 py-3 text-slate-500">{s.gender}</td>
                                             <td className="px-4 py-3">{s.last_name && s.first_name ? <Check size={14} className="text-green-500" /> : <AlertCircle size={14} className="text-red-500" />}</td>

@@ -33,6 +33,13 @@ const getApplication = (percentage: number | null, config: DeliberationConfig): 
   return deliberationConfigService.getAppreciationAbrev(percentage, config);
 };
 
+const getSubjectToneClass = (percentage: number | null, threshold: number) => {
+  if (percentage === null) return '';
+  return percentage < threshold
+    ? 'subject-failed'
+    : 'subject-passed';
+};
+
 export default function BulletinHumanitesContent({
   student,
   classInfo,
@@ -269,7 +276,7 @@ export default function BulletinHumanitesContent({
               return (
                 <React.Fragment key={key}>
                   {/* MAXIMA row for this group */}
-                  <tr className="font-bold bg-slate-100">
+                  <tr className="font-bold bg-slate-300">
                     <td className="border border-black text-left px-2 py-0.5">MAXIMA</td>
                     <td className="border border-black py-0.5">{firstSubject.max_p1}</td>
                     <td className="border border-black py-0.5">{firstSubject.max_p2}</td>
@@ -296,23 +303,26 @@ export default function BulletinHumanitesContent({
                     const ex2 = getGrade(subject.id, 'EXAM2');
                     const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
 
-                    const tg = (tot1 || 0) + (tot2 || 0);
+                    const tg = (tot1 !== null || tot2 !== null) ? (tot1 || 0) + (tot2 || 0) : null;
+                    const totalMax = firstSubject.max_p1 + firstSubject.max_p2 + firstSubject.max_exam1 + firstSubject.max_p3 + firstSubject.max_p4 + firstSubject.max_exam2;
+                    const subjectPct = tg !== null && totalMax > 0 ? (tg / totalMax) * 100 : null;
+                    const subjectToneClass = getSubjectToneClass(subjectPct, delibConfig.seuilEchecMatiere);
 
                     const repechage = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
 
                     return (
                       <tr key={subject.id}>
                         <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
-                        <td className="border border-black py-0.5">{p1 ?? ''}</td>
-                        <td className="border border-black py-0.5">{p2 ?? ''}</td>
-                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex1 ?? ''}</td>)}
-                        <td className="border border-black font-bold py-0.5">{tot1 ?? ''}</td>
-                        <td className="border border-black py-0.5">{p3 ?? ''}</td>
-                        <td className="border border-black py-0.5">{p4 ?? ''}</td>
-                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className="border border-black py-0.5">{ex2 ?? ''}</td>)}
-                        <td className="border border-black font-bold py-0.5">{tot2 ?? ''}</td>
-                        <td className="border border-black font-bold bg-slate-50 py-0.5">{tg || ''}</td>
-                        <td className="border border-black py-0.5">{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p1 ?? ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p2 ?? ''}</td>
+                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{ex1 ?? ''}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{tot1 ?? ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p3 ?? ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p4 ?? ''}</td>
+                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{ex2 ?? ''}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{tot2 ?? ''}</td>
+                        <td className={`border border-black font-bold bg-slate-50 py-0.5 ${subjectToneClass}`}>{tg ?? ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
                         <td className="border border-black py-0.5"></td>
                       </tr>
                     );
@@ -583,9 +593,34 @@ export default function BulletinHumanitesContent({
       </div>
 
       <style>{`
+        .subject-passed {
+          color: #b91c1c;
+          font-weight: 650;
+          font-style: italic;
+        }
+
+        .subject-failed {
+          color: #047857;
+          font-weight: 200;
+        }
+
         @media print {
           .page-break-after-always {
             page-break-after: always;
+          }
+
+          .subject-passed,
+          .subject-failed {
+            color: #000 !important;
+          }
+
+          .subject-passed {
+            font-weight: 650 !important;
+            font-style: italic;
+          }
+
+          .subject-failed {
+            font-weight: 200 !important;
           }
         }
       `}</style>

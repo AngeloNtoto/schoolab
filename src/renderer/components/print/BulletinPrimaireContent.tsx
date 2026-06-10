@@ -26,6 +26,13 @@ const getApplication = (percentage: number | null, config: DeliberationConfig): 
   return deliberationConfigService.getAppreciationAbrev(percentage, config);
 };
 
+const getSubjectToneClass = (percentage: number | null, threshold: number) => {
+  if (percentage === null) return '';
+  return percentage < threshold
+    ? 'subject-failed'
+    : 'subject-passed';
+};
+
 const abregeConduite = (conduite?: string | null) => {
   if (!conduite) return '-';
   switch(conduite.toUpperCase()){ 
@@ -293,6 +300,8 @@ export default function BulletinPrimaireContent({
                   const maxTot1Val = (maxP * 2) + maxEx1Val;
                   const maxTot2Val = (maxP * 2) + maxEx2Val;
                   const maxTGVal = maxTot1Val + maxTot2Val;
+                  const subjectPct = tg !== null && maxTGVal > 0 ? (tg / maxTGVal) * 100 : null;
+                  const subjectToneClass = getSubjectToneClass(subjectPct, delibConfig.seuilEchecMatiere);
 
                   // Accumuler les totaux du domaine
                   domainMaxP += maxP;
@@ -315,21 +324,21 @@ export default function BulletinPrimaireContent({
                     <tr key={subject.id}>
                       <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
-                      <td className="border border-black">{formatValue(p1)}</td>
-                      <td className="border border-black">{formatValue(p2)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p1)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p2)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx1Val)}</td>
-                      <td className="border border-black">{formatValue(ex1)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(ex1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot1Val)}</td>
-                      <td className="border border-black font-bold">{formatValue(tot1)}</td>
+                      <td className={`border border-black font-bold ${subjectToneClass}`}>{formatValue(tot1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
-                      <td className="border border-black">{formatValue(p3)}</td>
-                      <td className="border border-black">{formatValue(p4)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p3)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p4)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx2Val)}</td>
-                      <td className="border border-black">{formatValue(ex2)}</td>
+                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(ex2)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot2Val)}</td>
-                      <td className="border border-black font-bold">{formatValue(tot2)}</td>
+                      <td className={`border border-black font-bold ${subjectToneClass}`}>{formatValue(tot2)}</td>
                       <td className="border border-black font-bold bg-slate-100">{formatValue(maxTGVal)}</td>
-                      <td className="border border-black font-bold bg-slate-100">{formatValue(tg)}</td>
+                      <td className={`border border-black font-bold bg-slate-100 ${subjectToneClass}`}>{formatValue(tg)}</td>
                       <td className="border border-black"></td>
                       <td className="border border-black"></td>
                     </tr>
@@ -655,10 +664,35 @@ export default function BulletinPrimaireContent({
         </div>
       </div>
 
-      <style>{`
+       <style>{`
+        .subject-passed {
+          color: #b91c1c;
+          font-weight: 650;
+          font-style: italic;
+        }
+
+        .subject-failed {
+          color: #047857;
+          font-weight: 200;
+        }
+
         @media print {
           .page-break-after-always {
             page-break-after: always;
+          }
+
+          .subject-passed,
+          .subject-failed {
+            color: #000 !important;
+          }
+
+          .subject-passed {
+            font-weight: 650 !important;
+            font-style: italic;
+          }
+
+          .subject-failed {
+            font-weight: 200 !important;
           }
         }
       `}</style>

@@ -61,12 +61,12 @@ class StudentService {
     const result = await dbService.execute(
       `${insertKeyword} INTO students (first_name, last_name, post_name, gender, birth_date, birthplace, conduite, conduite_p1, conduite_p2, conduite_p3, conduite_p4, class_id, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, (datetime('now')))`,
       [
-        student.first_name,
-        student.last_name,
-        student.post_name,
-        student.gender,
+        student.first_name ?? '',
+        student.last_name ?? '',
+        student.post_name ?? '',
+        student.gender ?? '',
         student.birth_date,
-        student.birthplace,
+        student.birthplace ?? '',
         student.conduite ?? '',
         (student.conduite_p1 ?? ''),
         (student.conduite_p2 ?? ''),
@@ -89,19 +89,19 @@ class StudentService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const values: any[] = [];
 
-    if (student.first_name !== undefined) { fields.push('first_name = ?'); values.push(student.first_name); }
-    if (student.last_name !== undefined) { fields.push('last_name = ?'); values.push(student.last_name); }
-    if (student.post_name !== undefined) { fields.push('post_name = ?'); values.push(student.post_name); }
-    if (student.gender !== undefined) { fields.push('gender = ?'); values.push(student.gender); }
+    if (student.first_name !== undefined) { fields.push('first_name = ?'); values.push(student.first_name ?? ''); }
+    if (student.last_name !== undefined) { fields.push('last_name = ?'); values.push(student.last_name ?? ''); }
+    if (student.post_name !== undefined) { fields.push('post_name = ?'); values.push(student.post_name ?? ''); }
+    if (student.gender !== undefined) { fields.push('gender = ?'); values.push(student.gender ?? ''); }
     if (student.birth_date !== undefined) { fields.push('birth_date = ?'); values.push(student.birth_date); }
-    if (student.birthplace !== undefined) { fields.push('birthplace = ?'); values.push(student.birthplace); }
-    if (student.conduite !== undefined) { fields.push('conduite = ?'); values.push(student.conduite); }
-    if (student.conduite_p1 !== undefined) { fields.push('conduite_p1 = ?'); values.push(student.conduite_p1); }
-    if (student.conduite_p2 !== undefined) { fields.push('conduite_p2 = ?'); values.push(student.conduite_p2); }
-    if (student.conduite_p3 !== undefined) { fields.push('conduite_p3 = ?'); values.push(student.conduite_p3); }
-    if (student.conduite_p4 !== undefined) { fields.push('conduite_p4 = ?'); values.push(student.conduite_p4); }
+    if (student.birthplace !== undefined) { fields.push('birthplace = ?'); values.push(student.birthplace ?? ''); }
+    if (student.conduite !== undefined) { fields.push('conduite = ?'); values.push(student.conduite ?? ''); }
+    if (student.conduite_p1 !== undefined) { fields.push('conduite_p1 = ?'); values.push(student.conduite_p1 ?? ''); }
+    if (student.conduite_p2 !== undefined) { fields.push('conduite_p2 = ?'); values.push(student.conduite_p2 ?? ''); }
+    if (student.conduite_p3 !== undefined) { fields.push('conduite_p3 = ?'); values.push(student.conduite_p3 ?? ''); }
+    if (student.conduite_p4 !== undefined) { fields.push('conduite_p4 = ?'); values.push(student.conduite_p4 ?? ''); }
     if (student.is_abandoned !== undefined) { fields.push('is_abandoned = ?'); values.push(student.is_abandoned ? 1 : 0); }
-    if (student.abandon_reason !== undefined) { fields.push('abandon_reason = ?'); values.push(student.abandon_reason); }
+    if (student.abandon_reason !== undefined) { fields.push('abandon_reason = ?'); values.push(student.abandon_reason ?? ''); }
     
     if (fields.length === 0) return;
 

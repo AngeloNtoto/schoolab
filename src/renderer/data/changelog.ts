@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.27",
+    date: "10 Juin 2026",
+    title: "Uniformisation des champs élève",
+    description: "Harmonisation des libellés et de l'importation des élèves, avec une meilleure tolérance pour les anciennes données locales.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Le champ prénom est désormais reconnu de façon robuste sous les variantes 'firstname', 'first_name', 'prenom' et 'prénom' dans les imports."
+      },
+      {
+        tag: "Amélioration",
+        text: "L'ordre d'affichage des grilles élève a été aligné sur Nom, Post-nom, puis Prénom pour la saisie et l'aperçu."
+      },
+      {
+        tag: "Correctif",
+        text: "Les anciennes données locales contenant des valeurs NULL dans les champs texte élèves sont désormais normalisées avant l'envoi vers le cloud."
+      }
+    ]
+  },
+  {
     version: "1.4.25",
     date: "09 Juin 2026",
     title: "Mode Réorganiser pour les cours",

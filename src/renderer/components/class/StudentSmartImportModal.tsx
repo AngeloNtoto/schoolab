@@ -352,7 +352,9 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
                                 <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-white/5">
-                                    <th className="px-8 py-4">Nom Complet</th>
+                                    <th className="px-8 py-4">Nom</th>
+                                    <th className="px-8 py-4">Post-nom</th>
+                                    <th className="px-8 py-4">Prénom</th>
                                     <th className="px-8 py-4">Genre</th>
                                     <th className="px-8 py-4">Naissance</th>
                                     <th className="px-8 py-4">Lieu</th>
@@ -367,12 +369,22 @@ export default function StudentSmartImportModal({ isOpen, onClose, onImport, cla
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 bg-blue-100 dark:bg-blue-600/20 text-blue-600 rounded-full flex items-center justify-center font-black text-xs">
-                                                        {s.last_name?.[0]}{s.first_name?.[0]}
+                                                        {s.last_name?.[0]}{s.post_name?.[0] || s.first_name?.[0]}
                                                     </div>
                                                     <span className="font-bold text-slate-900 dark:text-white">
-                                                        {s.last_name} {s.post_name} {s.first_name}
+                                                        {s.last_name}
                                                     </span>
                                                 </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <span className="font-bold text-slate-600 dark:text-slate-400">
+                                                    {s.post_name || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <span className="font-bold text-slate-900 dark:text-white">
+                                                    {s.first_name}
+                                                </span>
                                             </td>
                                             <td className="px-8 py-5">
                                                 <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${s.gender === 'M' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
