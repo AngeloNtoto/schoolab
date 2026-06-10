@@ -122,6 +122,7 @@ export default function CouponEleve({
             academicYear={academicYear}
             ranks={ranks}
             totalStudents={totalStudents}
+            forcePageBreak={true}
           />
         </div>
       </div>

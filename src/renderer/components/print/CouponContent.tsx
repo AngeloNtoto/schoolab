@@ -32,6 +32,8 @@ export interface CouponContentProps {
   academicYear: string;
   ranks?: StudentRanks;
   totalStudents?: number;
+  compact?: boolean;
+  forcePageBreak?: boolean;
 }
 
 // ============================================================================
@@ -55,13 +57,19 @@ export default function CouponContent({
   schoolInfo,
   academicYear,
   ranks,
-  totalStudents
+  totalStudents,
+  compact = false,
+  forcePageBreak = true
 }: CouponContentProps) {
 
   // États de configuration d'impression dynamiques
   const [titleSize, setTitleSize] = useState(14);
   const [bodySize, setBodySize] = useState(8);
   const [lineHeight, setLineHeight] = useState(1.2);
+  const compactScale = 1.08;
+  const annualTableFontSize = compact ? Math.round((bodySize + 4) * compactScale) : bodySize + 1;
+  const annualSummaryFontSize = compact ? Math.round((bodySize + 5) * compactScale) : bodySize + 5;
+  const annualCellPaddingY = compact ? '1.5px' : '2px';
 
   useEffect(() => {
     const fetchPrintSettings = async () => {
@@ -110,7 +118,12 @@ export default function CouponContent({
   };
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
+    <div
+      className={`max-w-[210mm] mx-auto bg-white relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none ${
+        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-8 min-h-[297mm]'
+      } ${forcePageBreak ? 'page-break-after-always' : ''}`}
+      style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${compact ? Math.round((bodySize + 4) * compactScale) : bodySize}px`, lineHeight: compact ? Math.max(1.1, lineHeight * compactScale) : lineHeight } as any}
+    >
       
       {/* ================================================================ */}
       {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
@@ -118,7 +131,7 @@ export default function CouponContent({
       <div className="border-2 border-black mb-0">
         <div className="flex">
           {/* Colonne gauche : Infos école */}
-          <div className="w-1/4 border-r border-black p-1" style={{ fontSize: `${Math.max(6, bodySize - 0.5)}px` }}>
+          <div className="w-1/4 border-r border-black p-1" style={{ fontSize: `${compact ? Math.round(Math.max(8, bodySize + 1) * compactScale) : Math.max(6, bodySize - 0.5)}px` }}>
             <div className="mb-0">
               <span className="font-semibold">{schoolInfo.name}</span>
             </div>
@@ -132,7 +145,7 @@ export default function CouponContent({
 
           {/* Colonne centrale : Titre du bulletin */}
           <div className="flex-1 p-1 text-center border-r border-black flex items-center justify-center">
-            <div className="font-medium uppercase" style={{ fontSize: `${titleSize}px` }}>
+            <div className="font-medium uppercase leading-tight" style={{ fontSize: `${compact ? Math.round((titleSize + 5) * compactScale) : titleSize}px` }}>
               COUPON DE L'ÉLÈVE{' '}
               <span className="border-b border-dotted border-black px-2">
                 {student.last_name} {student.post_name} {student.first_name}
@@ -145,9 +158,9 @@ export default function CouponContent({
           </div>
 
           {/* Colonne droite : Année scolaire */}
-          <div className="w-1/6 text-center flex flex-col justify-center" style={{ fontSize: `${Math.max(5, bodySize - 1)}px` }}>
+          <div className="w-1/6 text-center flex flex-col justify-center" style={{ fontSize: `${compact ? Math.round(Math.max(7, bodySize) * compactScale) : Math.max(5, bodySize - 1)}px` }}>
             <div className="font-medium">ANNÉE SCOLAIRE</div>
-            <div className="font-medium" style={{ fontSize: `${bodySize}px` }}>{academicYear}</div>
+            <div className="font-medium" style={{ fontSize: `${compact ? Math.round((bodySize + 2) * compactScale) : bodySize}px` }}>{academicYear}</div>
           </div>
         </div>
       </div>
@@ -155,7 +168,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${bodySize}px` }}>
+      <table className={`annual-coupon-table w-full border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${annualTableFontSize}px` }}>
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -163,7 +176,7 @@ export default function CouponContent({
         <thead>
           {/* Ligne 1 : Semestres */}
           <tr>
-            <th rowSpan={3} className="border border-black w-[22%] p-0">Branches</th>
+            <th rowSpan={3} className="border border-black w-[22%] p-0">{compact ? 'Branches' : 'Branches'}</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">PREMIER SEMESTRE</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">SECOND SEMESTRE</th>
             <th rowSpan={3} className="border border-black w-[5%] p-0">TOTAL<br/>GÉNÉR.</th>
@@ -186,7 +199,7 @@ export default function CouponContent({
           </tr>
           {/* Ligne MAXIMA (en-tête) */}
           <tr className="font-bold bg-slate-100">
-            <td className="border border-black text-left px-2 py-0">MAXIMA</td>
+            <td className="border border-black text-left px-2 py-0.5">MAXIMA</td>
             <td className="border border-black py-0"></td>
             <td className="border border-black py-0"></td>
             <td className="border border-black py-0"></td>
@@ -237,7 +250,7 @@ export default function CouponContent({
               return (
                 <React.Fragment key={key}>
                   {/* Ligne MAXIMA pour ce groupe */}
-                  <tr className="font-bold bg-slate-100">
+                  <tr className="font-bold bg-slate-100 text-[13px]">
                     <td className="border border-black text-left px-2 py-0">MAXIMA</td>
                     <td className="border border-black py-0">{firstSubject.max_p1}</td>
                     <td className="border border-black py-0">{firstSubject.max_p2}</td>
@@ -268,9 +281,9 @@ export default function CouponContent({
                     const tg = (tot1 || 0) + (tot2 || 0);
 
                     return (
-                      <tr key={subject.id}>
+                      <tr key={subject.id} className="text-[13px]">
                         <td className="border border-black text-left px-2 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
-                        <td className="border border-black py-0">{p1 ?? ''}</td>
+                        <td className="border border-black">{p1 ?? ''}</td>
                         <td className="border border-black py-0">{p2 ?? ''}</td>
                         <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? (ex1 ?? '') : ''}</td>
                         <td className="border border-black font-bold py-0">{tot1 ?? ''}</td>
@@ -292,7 +305,7 @@ export default function CouponContent({
           {/* ============================================================ */}
           {Array(Math.max(0, 18 - subjects.length)).fill(0).map((_, i) => (
             <tr key={`empty-${i}`}>
-              <td className="border border-black text-left px-2 py-0.5">&nbsp;</td>
+              <td className="border border-black text-[13px] text-left px-2 py-0.5">&nbsp;</td>
               <td className="border border-black"></td>
               <td className="border border-black"></td>
               <td className="border border-black"></td>
@@ -404,15 +417,15 @@ export default function CouponContent({
                 {/* POURCENTAGE — affiche aussi les % des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 py-0.5">POURCENTAGE</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP1}%</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP2}%</td>
-                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${bodySize + 1}px` }}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTot1}%</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP3}%</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctP4}%</td>
-                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${bodySize + 1}px` }}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
-                  <td className="border border-black py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTot2}%</td>
-                  <td className="border border-black bg-slate-100 py-0.5" style={{ fontSize: `${bodySize + 1}px` }}>{pctTG}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctP1}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctP2}%</td>
+                  <td className={`border border-black py-0.5 ${maxEx1 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${annualSummaryFontSize}px` }}>{maxEx1 > 0 ? `${pctEx1}%` : ''}</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctTot1}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctP3}%</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctP4}%</td>
+                  <td className={`border border-black py-0.5 ${maxEx2 === 0 ? 'bg-black' : ''}`} style={{ fontSize: `${annualSummaryFontSize}px` }}>{maxEx2 > 0 ? `${pctEx2}%` : ''}</td>
+                  <td className="border border-black py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctTot2}%</td>
+                  <td className="border border-black bg-slate-100 py-0.5" style={{ fontSize: `${annualSummaryFontSize}px` }}>{pctTG}%</td>
                 </tr>
 
                 {/* PLACE — affiche aussi les places des examens */}
@@ -467,6 +480,14 @@ export default function CouponContent({
           .page-break-after-always {
             page-break-after: always;
           }
+          .page-break-after-always:last-child {
+            page-break-after: auto;
+          }
+        }
+        .annual-coupon-table th,
+        .annual-coupon-table td {
+          padding-top: ${annualCellPaddingY} !important;
+          padding-bottom: ${annualCellPaddingY} !important;
         }
       `}</style>
     </div>

@@ -34,7 +34,7 @@ const PERIODS = [
   { value: 'P4' as PeriodType, label: 'Période 4', couponsPerPage: 4 as const },
   { value: 'S1' as PeriodType, label: 'Semestre 1 (P1 + P2 + Exam)', couponsPerPage: 2 as const },
   { value: 'S2' as PeriodType, label: 'Semestre 2 (P3 + P4 + Exam)', couponsPerPage: 2 as const },
-  { value: 'YEAR' as PeriodType, label: 'Année complète', couponsPerPage: 1 as const },
+  { value: 'YEAR' as PeriodType, label: 'Année complète', couponsPerPage: 2 as const },
 ];
 
 export default function BatchPrintModal({
@@ -167,9 +167,9 @@ export default function BatchPrintModal({
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              {period === 'YEAR' && couponsPerPage > 1 && (
+              {period === 'YEAR' && couponsPerPage > 2 && (
                 <span className="text-amber-600">
-                  ⚠️ Les coupons année complète sont grands, 1 par page est recommandé.
+                  ⚠️ Les coupons année complète sont grands, 2 par page est recommandé.
                 </span>
               )}
               {(period === 'S1' || period === 'S2') && couponsPerPage > 2 && (

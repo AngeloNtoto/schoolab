@@ -89,10 +89,11 @@ export default function ClassCoupons({
   }, [students, finalGrades, isReady]);
 
   // Configuration CSS pour l'impression
+  const annualTwoUp = printConfig?.period === 'YEAR' && printConfig?.couponsPerPage === 2;
   const printCss = `
     @page { 
       size: A4; 
-      margin: 5mm; 
+      margin: ${annualTwoUp ? '0' : '5mm'};
     }
     * {
       -webkit-print-color-adjust: exact !important;
@@ -100,7 +101,9 @@ export default function ClassCoupons({
     }
     body { 
       background: white; 
-      font-size: 10px;
+      font-size: ${annualTwoUp ? '9px' : '10px'};
+      margin: 0;
+      padding: 0;
     }
     table {
       font-size: 9px !important;

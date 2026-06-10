@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.28",
+    date: "10 Juin 2026",
+    title: "Coupons annuels plus lisibles",
+    description: "Amélioration de l'impression des coupons de fin d'année pour mieux utiliser la feuille et rendre les résultats plus confortables à lire.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Les coupons de fin d'année peuvent maintenant être imprimés à deux par page avec moins d'espaces vides."
+      },
+      {
+        tag: "Amélioration",
+        text: "Les lignes et les textes du tableau annuel sont plus grands pour une lecture plus nette sur papier."
+      },
+      {
+        tag: "Amélioration",
+        text: "La présentation des coupons annuels garde un rendu plus équilibré entre les marges, les tableaux et les informations de l'élève."
+      }
+    ]
+  },
+  {
     version: "1.4.27",
     date: "10 Juin 2026",
     title: "Uniformisation des champs élève",
