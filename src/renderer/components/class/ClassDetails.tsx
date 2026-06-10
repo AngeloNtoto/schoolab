@@ -128,8 +128,8 @@ export default function ClassDetails({
 
     // Sort
     result.sort((a, b) => {
-      const nameA = `${a.last_name} ${a.first_name}`;
-      const nameB = `${b.last_name} ${b.first_name}`;
+      const nameA = `${a.last_name} ${a.post_name}`;
+      const nameB = `${b.last_name} ${b.post_name}`;
       return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
 
@@ -865,7 +865,7 @@ const StudentRow = React.memo(({
         className="sticky left-[40px] bg-inherit px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600"
         onContextMenu={(e) => onContextMenu(e, student)}
       >
-        {student.last_name} {student.first_name}
+        {student.last_name} {student.post_name}
       </td>
       {subjects.map(subject => {
         const sem1Total = calculateSemesterTotal(subject.id, 1);
