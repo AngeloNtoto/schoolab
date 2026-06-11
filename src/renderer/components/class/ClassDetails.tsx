@@ -93,7 +93,8 @@ export default function ClassDetails({
   const [showCustomSortModal, setShowCustomSortModal] = useState(false);
   const [editingCustomSort, setEditingCustomSort] = useState<CustomSort | null>(null);
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
-  const [focusedPeriod, setFocusedPeriod] = useState<string>('all');
+  const ALL_PERIODS = ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'];
+  const [selectedPeriods, setSelectedPeriods] = useState<Set<string>>(new Set(ALL_PERIODS));
   // Nouveaux états pour les améliorations du mark board
   const [lockedPeriods, setLockedPeriods] = useState<Set<string>>(new Set());
   const [focusedSubject, setFocusedSubject] = useState<number | 'all'>('all');
@@ -206,7 +207,7 @@ export default function ClassDetails({
   // Stats par colonne (moyenne, min, max) pour la période active
   const columnStats = useMemo(() => {
     const stats: Record<string, { avg: number; min: number; max: number; count: number }> = {};
-    const targetPeriods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
+    const targetPeriods = Array.from(selectedPeriods);
     for (const subject of displayedSubjects) {
       for (const p of targetPeriods) {
         const key = `${subject.id}-${p}`;
@@ -241,7 +242,7 @@ export default function ClassDetails({
   // Export CSV rapide de la grille visible
   const handleExportCSV = () => {
     if (!classInfo) return;
-    const periods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
+    const periods = ALL_PERIODS.filter(p => selectedPeriods.has(p));
     // En-tête CSV
     let csv = 'N°,Nom,Prénom';
     for (const sub of displayedSubjects) {
@@ -472,21 +473,31 @@ export default function ClassDetails({
                 Abandons ({students.filter(s => Boolean((s as Student).is_abandoned)).length})
               </button>
 
-              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 ml-2">
-                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest pl-2">Vue:</span>
-                <select 
-                  value={focusedPeriod}
-                  onChange={(e) => setFocusedPeriod(e.target.value)}
-                  className="border-none  text-blue-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-blue-300 transition-colors"
-                >
-                  <option value="all" className="bg-slate-900 text-white">Tout</option>
-                  <option value="P1" className="bg-slate-900 text-white">P1 uniquement</option>
-                  <option value="P2" className="bg-slate-900 text-white">P2 uniquement</option>
-                  <option value="EXAM1" className="bg-slate-900 text-white">Examen S1</option>
-                  <option value="P3" className="bg-slate-900 text-white">P3 uniquement</option>
-                  <option value="P4" className="bg-slate-900 text-white">P4 uniquement</option>
-                  <option value="EXAM2" className="bg-slate-900 text-white">Examen S2</option>
-                </select>
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 ml-2">
+                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest px-2">Vue:</span>
+                {ALL_PERIODS.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => {
+                      setSelectedPeriods(prev => {
+                        const next = new Set(prev);
+                        if (next.has(p)) {
+                          if (next.size > 1) next.delete(p);
+                        } else {
+                          next.add(p);
+                        }
+                        return next;
+                      });
+                    }}
+                    className={`px-2 py-1 text-[9px] font-black uppercase tracking-widest rounded transition-all ${
+                      selectedPeriods.has(p)
+                        ? 'bg-blue-500 text-white shadow'
+                        : 'text-white/40 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {p.replace('EXAM', 'Ex')}
+                  </button>
+                ))}
               </div>
             </div>
             
@@ -533,21 +544,22 @@ export default function ClassDetails({
               </select>
             </div>
 
-            {/* Barres de progression par période */}
-            {focusedPeriod !== 'all' && progressData[focusedPeriod] && (
-              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                <span className="text-[9px] font-black text-white/50 uppercase tracking-widest">{focusedPeriod}:</span>
-                <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                    style={{ width: `${progressData[focusedPeriod].total > 0 ? (progressData[focusedPeriod].filled / progressData[focusedPeriod].total * 100) : 0}%` }}
-                  />
-                </div>
-                <span className="text-[9px] font-black text-emerald-400">
-                  {progressData[focusedPeriod].filled}/{progressData[focusedPeriod].total}
-                </span>
-              </div>
-            )}
+            {/* Barres de progression par période active */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {ALL_PERIODS.filter(p => selectedPeriods.has(p)).map(p => {
+                const d = progressData[p];
+                if (!d || d.total === 0) return null;
+                const pct = Math.round((d.filled / d.total) * 100);
+                return (
+                  <div key={p} className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg border border-white/10" title={`${d.filled}/${d.total} notes remplies`}>
+                    <span className="text-[8px] font-black text-white/40 uppercase">{p.replace('EXAM', 'Ex')}</span>
+                    <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-400' : pct > 50 ? 'bg-blue-400' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-xl border border-white/10">
               <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">Corrigé sur</span>
@@ -576,42 +588,25 @@ export default function ClassDetails({
               )}
             </div>
 
-            {/* Mini-barres de progression globales (mode "all") */}
-            {focusedPeriod === 'all' && (
-              <div className="flex items-center gap-1.5">
-                {['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'].map(p => {
-                  const d = progressData[p];
-                  if (!d || d.total === 0) return null;
-                  const pct = Math.round((d.filled / d.total) * 100);
-                  return (
-                    <div key={p} className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg border border-white/10" title={`${d.filled}/${d.total} notes remplies`}>
-                      <span className="text-[8px] font-black text-white/40 uppercase">{p.replace('EXAM', 'Ex')}</span>
-                      <div className="w-8 h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-emerald-400' : pct > 50 ? 'bg-blue-400' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
             <div className="flex-1" />
 
-            {/* Verrouillage de la période active */}
-            {focusedPeriod !== 'all' && (
-              <button
-                onClick={() => toggleLockPeriod(focusedPeriod)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
-                  lockedPeriods.has(focusedPeriod)
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10'
-                }`}
-                title={lockedPeriods.has(focusedPeriod) ? 'Déverrouiller' : 'Verrouiller'}
-              >
-                {lockedPeriods.has(focusedPeriod) ? <Lock size={12} /> : <Unlock size={12} />}
-                {lockedPeriods.has(focusedPeriod) ? 'Verrouillé' : 'Verrouiller'}
-              </button>
-            )}
+            {/* Verrouillage des périodes actives */}
+            <div className="flex items-center gap-1">
+              {ALL_PERIODS.filter(p => selectedPeriods.has(p)).map(p => (
+                <button
+                  key={`lock_${p}`}
+                  onClick={() => toggleLockPeriod(p)}
+                  className={`flex items-center justify-center p-1.5 rounded-lg transition-all border ${
+                    lockedPeriods.has(p)
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      : 'bg-white/5 text-white/50 border-white/10 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={lockedPeriods.has(p) ? `Déverrouiller ${p}` : `Verrouiller ${p}`}
+                >
+                  {lockedPeriods.has(p) ? <Lock size={10} /> : <Unlock size={10} />}
+                </button>
+              ))}
+            </div>
 
             {/* Export CSV */}
             <button
@@ -673,7 +668,16 @@ export default function ClassDetails({
               {displayedSubjects.map(subject => (
                 <th 
                   key={subject.id} 
-                  colSpan={focusedPeriod === 'all' ? 8 : 1} 
+                  colSpan={
+                    (selectedPeriods.has('P1') ? 1 : 0) +
+                    (selectedPeriods.has('P2') ? 1 : 0) +
+                    (selectedPeriods.has('EXAM1') ? 1 : 0) +
+                    (selectedPeriods.has('P1') && selectedPeriods.has('P2') && selectedPeriods.has('EXAM1') ? 1 : 0) +
+                    (selectedPeriods.has('P3') ? 1 : 0) +
+                    (selectedPeriods.has('P4') ? 1 : 0) +
+                    (selectedPeriods.has('EXAM2') ? 1 : 0) +
+                    (selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2') ? 1 : 0)
+                  } 
                   className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap"
                 >
                   {subject.name}
@@ -696,19 +700,19 @@ export default function ClassDetails({
                 
                 return (
                 <React.Fragment key={subject.id}>
-                  {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+                  {selectedPeriods.has('P1') && (
                     <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
                       P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
                     </th>
                   )}
                   
-                  {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+                  {selectedPeriods.has('P2') && (
                     <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
                       P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
                     </th>
                   )}
                   
-                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+                  {selectedPeriods.has('EXAM1') && (
                     <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                       hasExam1 
                         ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30' 
@@ -720,25 +724,25 @@ export default function ClassDetails({
                     </th>
                   )}
                   
-                  {focusedPeriod === 'all' && (
+                  {(selectedPeriods.has('P1') && selectedPeriods.has('P2') && selectedPeriods.has('EXAM1')) && (
                     <th className="px-2 py-2 text-xs font-semibold text-blue-700 dark:text-blue-400 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-100 dark:bg-blue-900/40 min-w-[60px]">
                       Sem1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1 + subject.max_p2 + subject.max_exam1}</span>
                     </th>
                   )}
                   
-                  {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+                  {selectedPeriods.has('P3') && (
                     <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
                       P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
                     </th>
                   )}
                   
-                  {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+                  {selectedPeriods.has('P4') && (
                     <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
                       P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
                     </th>
                   )}
                   
-                  {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+                  {selectedPeriods.has('EXAM2') && (
                     <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                       hasExam2 
                         ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30' 
@@ -750,7 +754,7 @@ export default function ClassDetails({
                     </th>
                   )}
                   
-                  {focusedPeriod === 'all' && (
+                  {(selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2')) && (
                     <th className="px-2 py-2 text-xs font-semibold text-green-700 dark:text-green-400 border-r-2 border-slate-400 dark:border-slate-500 bg-green-100 dark:bg-green-900/40 min-w-[60px]">
                       Sem2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3 + subject.max_p4 + subject.max_exam2}</span>
                     </th>
@@ -784,7 +788,7 @@ export default function ClassDetails({
                       gradesMap={gradesMap}
                       onContextMenu={onContextMenu}
                       onUpdateGrade={onGradeUpdate}
-                      focusedPeriod={focusedPeriod}
+                      selectedPeriods={selectedPeriods}
                       lockedPeriods={lockedPeriods}
                       correctionMax={correctionMax}
                     />
@@ -792,7 +796,16 @@ export default function ClassDetails({
                   {withdrawnStudents.length > 0 && (
                     <>
                       <tr>
-                        <td colSpan={2 + displayedSubjects.length * (focusedPeriod === 'all' ? 8 : 1)} className="bg-red-50/50 dark:bg-red-900/10 px-4 py-2 border-y border-red-200 dark:border-red-900/30">
+                        <td colSpan={2 + displayedSubjects.length * (
+                          (selectedPeriods.has('P1') ? 1 : 0) +
+                          (selectedPeriods.has('P2') ? 1 : 0) +
+                          (selectedPeriods.has('EXAM1') ? 1 : 0) +
+                          (selectedPeriods.has('P1') && selectedPeriods.has('P2') && selectedPeriods.has('EXAM1') ? 1 : 0) +
+                          (selectedPeriods.has('P3') ? 1 : 0) +
+                          (selectedPeriods.has('P4') ? 1 : 0) +
+                          (selectedPeriods.has('EXAM2') ? 1 : 0) +
+                          (selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2') ? 1 : 0)
+                        )} className="bg-red-50/50 dark:bg-red-900/10 px-4 py-2 border-y border-red-200 dark:border-red-900/30">
                           <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-red-400"></span>
                             <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">
@@ -810,7 +823,7 @@ export default function ClassDetails({
                           gradesMap={gradesMap}
                           onContextMenu={onContextMenu}
                           onUpdateGrade={onGradeUpdate}
-                          focusedPeriod={focusedPeriod}
+                          selectedPeriods={selectedPeriods}
                           lockedPeriods={lockedPeriods}
                           correctionMax={correctionMax}
                           // Note: We could pass a prop to StudentRow to make it visually faded, but this is good enough for now.
@@ -833,32 +846,80 @@ export default function ClassDetails({
                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Moy / Min / Max</span>
               </td>
               {displayedSubjects.map(subject => {
-                const periods = focusedPeriod === 'all' ? ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'] : [focusedPeriod];
                 return (
                   <React.Fragment key={subject.id}>
-                    {periods.map(p => {
-                      const stat = columnStats[`${subject.id}-${p}`];
-                      const isExamCol = p.startsWith('EXAM');
-
-                      return (
-                        <td key={p} className={`px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 ${isExamCol ? 'border-r-slate-300 dark:border-r-slate-600' : ''}`}>
-                          {stat ? (
-                            <div className="flex flex-col items-center gap-0.5">
-                              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{stat.avg.toFixed(1)}</span>
-                              <span className="text-[8px] font-black text-slate-400">{stat.min}–{stat.max}</span>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-slate-300">-</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                    {focusedPeriod === 'all' && (
-                      <>
-                        {/* Cellule vide pour Sem1 */}
-                        <td className="px-1 py-2 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-50/50 dark:bg-blue-900/20" />
-                        {/* Les périodes P3, P4, EXAM2 sont déjà dans le map ci-dessus */}
-                      </>
+                    {selectedPeriods.has('P1') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                        {columnStats[`${subject.id}-P1`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-P1`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-P1`].min}–{columnStats[`${subject.id}-P1`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {selectedPeriods.has('P2') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                        {columnStats[`${subject.id}-P2`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-P2`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-P2`].min}–{columnStats[`${subject.id}-P2`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {selectedPeriods.has('EXAM1') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-300 dark:border-slate-600 min-w-[50px]">
+                        {columnStats[`${subject.id}-EXAM1`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-EXAM1`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-EXAM1`].min}–{columnStats[`${subject.id}-EXAM1`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {(selectedPeriods.has('P1') && selectedPeriods.has('P2') && selectedPeriods.has('EXAM1')) && (
+                      <td className="px-1 py-2 border-r-2 border-slate-400 dark:border-slate-500 bg-blue-50/50 dark:bg-blue-900/20 min-w-[60px]" />
+                    )}
+                    
+                    {selectedPeriods.has('P3') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                        {columnStats[`${subject.id}-P3`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-P3`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-P3`].min}–{columnStats[`${subject.id}-P3`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {selectedPeriods.has('P4') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                        {columnStats[`${subject.id}-P4`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-P4`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-P4`].min}–{columnStats[`${subject.id}-P4`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {selectedPeriods.has('EXAM2') && (
+                      <td className="px-1 py-2 text-center border-r border-slate-300 dark:border-slate-600 min-w-[50px]">
+                        {columnStats[`${subject.id}-EXAM2`] ? (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{columnStats[`${subject.id}-EXAM2`].avg.toFixed(1)}</span>
+                            <span className="text-[8px] font-black text-slate-400">{columnStats[`${subject.id}-EXAM2`].min}–{columnStats[`${subject.id}-EXAM2`].max}</span>
+                          </div>
+                        ) : <span className="text-[10px] text-slate-300">-</span>}
+                      </td>
+                    )}
+                    
+                    {(selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2')) && (
+                      <td className="px-1 py-2 border-r-2 border-slate-400 dark:border-slate-500 bg-green-50/50 dark:bg-green-900/20 min-w-[60px]" />
                     )}
                   </React.Fragment>
                 );
@@ -1038,7 +1099,7 @@ const StudentRow = React.memo(({
 
         return (
           <React.Fragment key={subject.id}>
-            {(focusedPeriod === 'all' || focusedPeriod === 'P1') && (
+            {selectedPeriods.has('P1') && (
               <GradeCell 
                 value={getGrade(subject.id, 'P1')} 
                 studentIdx={idx}
@@ -1050,7 +1111,7 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P1', val)} 
               />
             )}
-            {(focusedPeriod === 'all' || focusedPeriod === 'P2') && (
+            {selectedPeriods.has('P2') && (
               <GradeCell 
                 value={getGrade(subject.id, 'P2')} 
                 studentIdx={idx}
@@ -1062,7 +1123,7 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P2', val)} 
               />
             )}
-            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM1') && (
+            {selectedPeriods.has('EXAM1') && (
               <GradeCell 
                 value={getGrade(subject.id, 'EXAM1')} 
                 studentIdx={idx}
@@ -1075,12 +1136,12 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM1', val)} 
               />
             )}
-            {focusedPeriod === 'all' && (
+            {(selectedPeriods.has('P1') && selectedPeriods.has('P2') && selectedPeriods.has('EXAM1')) && (
               <td className="px-2 py-3 text-center font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-r-2 border-slate-400 dark:border-slate-500">
                 {sem1Total !== null ? sem1Total.toFixed(1) : '-'}
               </td>
             )}
-            {(focusedPeriod === 'all' || focusedPeriod === 'P3') && (
+            {selectedPeriods.has('P3') && (
               <GradeCell 
                 value={getGrade(subject.id, 'P3')} 
                 studentIdx={idx}
@@ -1092,7 +1153,7 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P3', val)} 
               />
             )}
-            {(focusedPeriod === 'all' || focusedPeriod === 'P4') && (
+            {selectedPeriods.has('P4') && (
               <GradeCell 
                 value={getGrade(subject.id, 'P4')} 
                 studentIdx={idx}
@@ -1104,7 +1165,7 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'P4', val)} 
               />
             )}
-            {(focusedPeriod === 'all' || focusedPeriod === 'EXAM2') && (
+            {selectedPeriods.has('EXAM2') && (
               <GradeCell 
                 value={getGrade(subject.id, 'EXAM2')} 
                 studentIdx={idx}
@@ -1117,7 +1178,7 @@ const StudentRow = React.memo(({
                 onChange={(val) => onUpdateGrade(student.id, subject.id, 'EXAM2', val)} 
               />
             )}
-            {focusedPeriod === 'all' && (
+            {(selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2')) && (
               <td className="px-2 py-3 text-center font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-r-2 border-slate-400 dark:border-slate-500">
                 {sem2Total !== null ? sem2Total.toFixed(1) : '-'}
               </td>
