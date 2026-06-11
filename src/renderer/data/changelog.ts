@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.30",
+    date: "11 Juin 2026",
+    title: "Grille de classe mieux organisée",
+    description: "Amélioration interne de l'écran de classe afin de faciliter son évolution et de garder une saisie des notes stable.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "L'écran de classe a été réorganisé pour rendre la gestion des élèves, des cours, des filtres et des notes plus facile à maintenir."
+      },
+      {
+        tag: "Amélioration",
+        text: "La saisie des notes conserve les mêmes raccourcis et comportements tout en reposant sur une structure plus claire."
+      },
+      {
+        tag: "Amélioration",
+        text: "Les actions de l'écran de classe, comme les filtres, les statistiques, l'export et le menu élève, restent regroupées de manière plus stable."
+      }
+    ]
+  },
+  {
     version: "1.4.28",
     date: "10 Juin 2026",
     title: "Coupons annuels plus lisibles",
