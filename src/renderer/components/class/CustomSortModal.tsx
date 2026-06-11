@@ -2,6 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, RotateCcw } from '../iconsSvg';
 import { Student } from '../../services/studentService';
 
+function SortInput({ value, max, onChange }: { value: number; max: number; onChange: (newVal: number) => void }) {
+  const [localVal, setLocalVal] = useState(value.toString());
+
+  useEffect(() => {
+    setLocalVal(value.toString());
+  }, [value]);
+
+  const apply = () => {
+    const num = parseInt(localVal, 10);
+    if (!isNaN(num) && num !== value) {
+      onChange(num);
+    } else {
+      setLocalVal(value.toString());
+    }
+  };
+
+  return (
+    <input
+      type="number"
+      value={localVal}
+      onChange={(e) => setLocalVal(e.target.value)}
+      onBlur={apply}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.currentTarget.blur();
+        }
+      }}
+      min={1}
+      max={max}
+      className="w-16 px-2 py-1 text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+    />
+  );
+}
+
 interface CustomSortModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,9 +69,7 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
 
   if (!isOpen) return null;
 
-  const handlePositionChange = (studentId: number, newPosStr: string) => {
-    let newPos = parseInt(newPosStr, 10);
-    if (isNaN(newPos)) return; // Allow empty string while typing, but don't apply yet
+  const handlePositionChange = (studentId: number, newPos: number) => {
     if (newPos < 1) newPos = 1;
     if (newPos > students.length) newPos = students.length;
 
@@ -115,7 +147,7 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-4 rounded-xl mb-6 text-sm">
-            <strong>Comment ça marche ?</strong> Modifiez le numéro de position d'un élève. Les autres élèves seront automatiquement décalés pour faire de la place.
+            <strong>Comment ça marche ?</strong> Modifiez le numéro de position d'un élève puis appuyez sur <strong>Entrée</strong>. Les autres élèves seront automatiquement décalés pour faire de la place.
           </div>
 
           <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
@@ -130,13 +162,10 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
                 {studentOrder.map((item) => (
                   <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-2 text-center">
-                      <input 
-                        type="number" 
+                      <SortInput
                         value={item.pos}
-                        onChange={(e) => handlePositionChange(item.id, e.target.value)}
-                        min={1}
                         max={students.length}
-                        className="w-16 px-2 py-1 text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                        onChange={(newVal) => handlePositionChange(item.id, newVal)}
                       />
                     </td>
                     <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-200">
