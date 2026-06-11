@@ -402,8 +402,8 @@ export default function ClassDetails({
           </div>
 
           {/* Row 2: Search, Sort & Major Actions (Permanent) */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-t border-white/10 pt-3">
-            <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-start border-t border-white/10 pt-3">
+            <div className="flex items-center gap-3 w-full xl:w-auto flex-wrap">
               <div className="relative group flex-1 md:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors" size={16} />
                 <input 
@@ -414,13 +414,6 @@ export default function ClassDetails({
                   className="w-full pl-11 pr-4 py-2.5 bg-white/10 dark:bg-black/20 border border-white/10 rounded-xl text-white placeholder-white/30 focus:bg-white/15 outline-none font-bold text-xs transition-all"
                 />
               </div>
-
-              <button
-                onClick={() => setShowOnlyAbandons(prev => !prev)}
-                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${showOnlyAbandons ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-white/5 text-red-300 border border-white/10 hover:bg-white/10'}`}
-              >
-                Abandons ({students.filter(s => Boolean((s as Student).is_abandoned)).length})
-              </button>
 
               {/* Popover Filtres & Affichage */}
               <div className="relative" ref={popoverRef}>
@@ -604,15 +597,27 @@ export default function ClassDetails({
                       </div>
                     </div>
 
-                    {/* Statistiques (Option 5) */}
-                    <div className="flex items-center justify-between border-t border-white/10 pt-4 pb-1">
-                      <span className="text-white/70 text-[10px] font-black uppercase tracking-widest">Afficher les statistiques de classe</span>
-                      <button 
-                        onClick={() => setShowStats(!showStats)}
-                        className={`w-10 h-5 rounded-full relative transition-colors ${showStats ? 'bg-blue-500' : 'bg-slate-600'}`}
-                      >
-                        <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all ${showStats ? 'left-6' : 'left-1'}`} />
-                      </button>
+                    {/* Affichage & Options avancées */}
+                    <div className="flex flex-col gap-4 border-t border-white/10 pt-4 pb-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">N'afficher que les abandons ({students.filter(s => Boolean((s as Student).is_abandoned)).length})</span>
+                        <button 
+                          onClick={() => setShowOnlyAbandons(prev => !prev)}
+                          className={`w-10 h-5 rounded-full relative transition-colors ${showOnlyAbandons ? 'bg-red-500' : 'bg-slate-600'}`}
+                        >
+                          <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all ${showOnlyAbandons ? 'left-6' : 'left-1'}`} />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/70 text-[10px] font-black uppercase tracking-widest">Afficher les statistiques de classe</span>
+                        <button 
+                          onClick={() => setShowStats(!showStats)}
+                          className={`w-10 h-5 rounded-full relative transition-colors ${showStats ? 'bg-blue-500' : 'bg-slate-600'}`}
+                        >
+                          <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all ${showStats ? 'left-6' : 'left-1'}`} />
+                        </button>
+                      </div>
                     </div>
 
                   </div>
@@ -620,7 +625,7 @@ export default function ClassDetails({
               </div>
             </div>
             
-            <div className="flex items-center gap-2 w-full md:w-auto justify-start md:justify-end flex-wrap mt-2 md:mt-0">
+            <div className="flex items-center gap-2 w-full xl:w-auto justify-start flex-wrap mt-2 xl:mt-0 border-l-0 xl:border-l xl:border-white/10 xl:pl-4">
               <button onClick={handleExportCSV} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title="Exporter en CSV"><Download size={16} /></button>
               <button onClick={() => setIsFullscreen(prev => !prev)} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title={isFullscreen ? 'Quitter le plein écran' : 'Mode Focus'}>
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
