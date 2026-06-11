@@ -227,7 +227,7 @@ export default function ClassDetails({
       }
     }
     return stats;
-  }, [displayedSubjects, filteredAndSortedStudents, gradesMap, focusedPeriod]);
+  }, [displayedSubjects, filteredAndSortedStudents, gradesMap, selectedPeriods]);
 
   // Basculer le verrouillage d'une période
   const toggleLockPeriod = (period: string) => {
@@ -1046,9 +1046,9 @@ const StudentRow = React.memo(({
   gradesMap, 
   onContextMenu, 
   onUpdateGrade,
-  focusedPeriod,
   lockedPeriods,
-  correctionMax
+  correctionMax,
+  selectedPeriods,
 }: { 
   student: Student; 
   subjects: Subject[]; 
@@ -1056,9 +1056,9 @@ const StudentRow = React.memo(({
   gradesMap: Map<string, number>;
   onContextMenu: (e: React.MouseEvent, student: Student) => void;
   onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
-  focusedPeriod: string;
   lockedPeriods: Set<string>;
   correctionMax: number | null;
+  selectedPeriods: Set<string>;
 }) => {
   const getGrade = (subjectId: number, period: string) => {
     return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
