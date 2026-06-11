@@ -1117,12 +1117,12 @@ const StudentRow = React.memo(({
   };
 
   return (
-    <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
-      <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px]">
+    <tr className={`group border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
+      <td className={`sticky left-0 z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}>
         {idx + 1}
       </td>
       <td 
-        className="sticky left-[40px] bg-inherit px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600"
+        className={`sticky left-[40px] z-10 px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
         onContextMenu={(e) => onContextMenu(e, student)}
       >
         {student.last_name} {student.post_name}
