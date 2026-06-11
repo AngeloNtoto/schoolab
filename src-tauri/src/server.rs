@@ -99,10 +99,10 @@ fn serve_static_file(
     app_handle: &tauri::AppHandle,
 ) -> Response<Box<dyn io::Read + Send>> {
     // En production, les ressources sont copiées dans le resource_dir avec la structure dist-web/
-    // En développement, on utilise le chemin relatif ../dist-web
-    // En production, les ressources sont copiées dans le resource_dir.
+    // En développement, le binaire est dans src-tauri/target/debug/ donc dist-web est à ../../../dist-web
     // On essaie plusieurs chemins possibles pour plus de robustesse.
     let candidates = [
+        // Production : résolu via le resource_dir de Tauri
         app_handle
             .path()
             .resolve("dist-web", BaseDirectory::Resource)
@@ -111,13 +111,15 @@ fn serve_static_file(
             .path()
             .resolve("_up_/dist-web", BaseDirectory::Resource)
             .ok(),
+        // Développement : chemin relatif depuis le binaire (src-tauri/target/debug/) vers la racine du projet
+        Some(PathBuf::from("../../../dist-web")),
     ];
 
     let root_path = candidates
         .into_iter()
         .flatten()
         .find(|p| p.exists())
-        .unwrap_or_else(|| PathBuf::from("../dist-web"));
+        .unwrap_or_else(|| PathBuf::from("../../../dist-web"));
 
     println!("[Server] Resolved root_path: {:?}", root_path);
     // Gestion du path et assets

@@ -1,9 +1,11 @@
-import { Class, Grade, Subject, Student } from '../types';
+import { Class, Grade, Subject, Student, CustomSort } from '../types';
 
+// Structure complète des données d'une classe retournée par l'API
 interface FullClassData {
   students: Student[];
   subjects: Subject[];
   grades: Grade[];
+  custom_sorts: CustomSort[];
 }
 
 export const api = {
