@@ -46,7 +46,7 @@ interface CustomSortModalProps {
 
 export default function CustomSortModal({ isOpen, onClose, students, onSave, existingSorts }: CustomSortModalProps) {
   const [profileName, setProfileName] = useState('');
-  const [studentOrder, setStudentOrder] = useState<{ id: number; student: Student; pos: number }[]>([]);
+  const [studentOrder, setStudentOrder] = useState<{ id: number; student: Student; pos: number; isWithdrawn?: boolean }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -70,25 +70,74 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
   if (!isOpen) return null;
 
   const handlePositionChange = (studentId: number, newPos: number) => {
-    if (newPos < 1) newPos = 1;
-    if (newPos > students.length) newPos = students.length;
-
     setStudentOrder(prev => {
-      const copy = [...prev];
+      const activeCount = prev.filter(s => !s.isWithdrawn).length;
+      if (newPos < 1) newPos = 1;
+      if (newPos > activeCount) newPos = activeCount;
+
+      const copy = prev.map(s => ({...s}));
       const oldIndex = copy.findIndex(item => item.id === studentId);
-      if (oldIndex === -1) return prev;
+      if (oldIndex === -1 || copy[oldIndex].isWithdrawn) return prev;
       
       const item = copy[oldIndex];
-      const targetPos = newPos;
       
-      // Remove item
       copy.splice(oldIndex, 1);
       
-      // Insert item at new index (targetPos - 1)
-      copy.splice(targetPos - 1, 0, item);
+      let activeSeen = 0;
+      let insertIndex = copy.length;
+      for (let i = 0; i < copy.length; i++) {
+        if (!copy[i].isWithdrawn) {
+          activeSeen++;
+          if (activeSeen === newPos) {
+            insertIndex = i;
+            break;
+          }
+        }
+      }
       
-      // Re-assign positions based on new array order
-      return copy.map((st, idx) => ({ ...st, pos: idx + 1 }));
+      copy.splice(insertIndex, 0, item);
+      
+      let posCounter = 1;
+      copy.forEach(item => {
+        if (!item.isWithdrawn) {
+          item.pos = posCounter++;
+        }
+      });
+      return copy;
+    });
+  };
+
+  const handleWithdraw = (studentId: number) => {
+    setStudentOrder(prev => {
+      const copy = prev.map(s => ({...s}));
+      const index = copy.findIndex(item => item.id === studentId);
+      if (index === -1) return prev;
+
+      copy[index].isWithdrawn = true;
+      let posCounter = 1;
+      copy.forEach(item => {
+        if (!item.isWithdrawn) {
+          item.pos = posCounter++;
+        }
+      });
+      return copy;
+    });
+  };
+
+  const handleRestore = (studentId: number) => {
+    setStudentOrder(prev => {
+      const copy = prev.map(s => ({...s}));
+      const index = copy.findIndex(item => item.id === studentId);
+      if (index === -1) return prev;
+
+      copy[index].isWithdrawn = false;
+      let posCounter = 1;
+      copy.forEach(item => {
+        if (!item.isWithdrawn) {
+          item.pos = posCounter++;
+        }
+      });
+      return copy;
     });
   };
 
@@ -103,7 +152,7 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
       // Create a map of studentId -> position
       const sortMap: Record<number, number> = {};
       studentOrder.forEach(item => {
-        sortMap[item.id] = item.pos;
+        sortMap[item.id] = item.isWithdrawn ? -1 : item.pos;
       });
       
       await onSave(profileName, sortMap);
@@ -147,35 +196,74 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-4 rounded-xl mb-6 text-sm">
-            <strong>Comment ça marche ?</strong> Modifiez le numéro de position d'un élève puis appuyez sur <strong>Entrée</strong>. Les autres élèves seront automatiquement décalés pour faire de la place.
+            <strong>Comment ça marche ?</strong> Modifiez le numéro de position d'un élève puis appuyez sur <strong>Entrée</strong>. Vous pouvez aussi <strong>retirer temporairement</strong> des élèves de ce tri, ils apparaîtront dans une section dédiée en bas de la liste.
           </div>
 
-          <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden mb-6">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24 text-center">Position</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Élève</th>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {studentOrder.map((item) => (
+                {studentOrder.filter(s => !s.isWithdrawn).map((item) => (
                   <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-2 text-center">
                       <SortInput
                         value={item.pos}
-                        max={students.length}
+                        max={studentOrder.filter(s => !s.isWithdrawn).length}
                         onChange={(newVal) => handlePositionChange(item.id, newVal)}
                       />
                     </td>
                     <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-200">
                       {item.student.last_name} {item.student.post_name} {item.student.first_name}
                     </td>
+                    <td className="px-4 py-2 text-right">
+                      <button 
+                        onClick={() => handleWithdraw(item.id)}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors"
+                      >
+                        Retirer
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {studentOrder.filter(s => s.isWithdrawn).length > 0 && (
+            <div className="border border-red-200 dark:border-red-900/30 rounded-xl overflow-hidden mb-6">
+              <div className="bg-red-50 dark:bg-red-900/20 px-4 py-3 border-b border-red-200 dark:border-red-900/30">
+                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">Élèves Retirés</h3>
+              </div>
+              <table className="w-full text-left border-collapse">
+                <tbody>
+                  {studentOrder.filter(s => s.isWithdrawn).map((item) => (
+                    <tr key={item.id} className="border-b border-red-100 dark:border-red-900/10 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors opacity-75">
+                      <td className="px-4 py-2 text-center w-24">
+                        <span className="text-red-400 font-bold text-sm">-</span>
+                      </td>
+                      <td className="px-4 py-2 font-medium text-red-700 dark:text-red-300">
+                        {item.student.last_name} {item.student.post_name} {item.student.first_name}
+                      </td>
+                      <td className="px-4 py-2 text-right w-24">
+                        <button 
+                          onClick={() => handleRestore(item.id)}
+                          className="text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors"
+                        >
+                          Restaurer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

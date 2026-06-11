@@ -155,6 +155,12 @@ export default function ClassDetails({
             const orderMap = JSON.parse(sortProfile.student_order);
             const posA = orderMap[a.id] ?? 9999;
             const posB = orderMap[b.id] ?? 9999;
+            
+            const isWithdrawnA = posA === -1;
+            const isWithdrawnB = posB === -1;
+
+            if (isWithdrawnA && !isWithdrawnB) return 1;
+            if (!isWithdrawnA && isWithdrawnB) return -1;
             if (posA !== posB) return posA - posB;
           } catch (e) {}
         }
@@ -718,20 +724,65 @@ export default function ClassDetails({
           </thead>
 
           <tbody>
-            {filteredAndSortedStudents.map((student, idx) => (
-              <StudentRow 
-                key={student.id}
-                student={student}
-                idx={idx}
-                subjects={displayedSubjects}
-                gradesMap={gradesMap}
-                onContextMenu={onContextMenu}
-                onUpdateGrade={onGradeUpdate}
-                focusedPeriod={focusedPeriod}
-                lockedPeriods={lockedPeriods}
-                correctionMax={correctionMax}
-              />
-            ))}
+            {(() => {
+              const orderMap = sortOrder.startsWith('custom_') 
+                ? (() => {
+                    const profile = customSorts.find(s => s.id === parseInt(sortOrder.replace('custom_', ''), 10));
+                    return profile ? JSON.parse(profile.student_order) : {};
+                  })()
+                : {};
+
+              const activeStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] !== -1);
+              const withdrawnStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] === -1);
+
+              return (
+                <>
+                  {activeStudents.map((student, idx) => (
+                    <StudentRow 
+                      key={student.id}
+                      student={student}
+                      idx={idx}
+                      subjects={displayedSubjects}
+                      gradesMap={gradesMap}
+                      onContextMenu={onContextMenu}
+                      onUpdateGrade={onGradeUpdate}
+                      focusedPeriod={focusedPeriod}
+                      lockedPeriods={lockedPeriods}
+                      correctionMax={correctionMax}
+                    />
+                  ))}
+                  {withdrawnStudents.length > 0 && (
+                    <>
+                      <tr>
+                        <td colSpan={2 + displayedSubjects.length * (focusedPeriod === 'all' ? 8 : 1)} className="bg-red-50/50 dark:bg-red-900/10 px-4 py-2 border-y border-red-200 dark:border-red-900/30">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                              Retrait temporaire ({withdrawnStudents.length})
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      {withdrawnStudents.map((student, idx) => (
+                        <StudentRow 
+                          key={student.id}
+                          student={student}
+                          idx={activeStudents.length + idx}
+                          subjects={displayedSubjects}
+                          gradesMap={gradesMap}
+                          onContextMenu={onContextMenu}
+                          onUpdateGrade={onGradeUpdate}
+                          focusedPeriod={focusedPeriod}
+                          lockedPeriods={lockedPeriods}
+                          correctionMax={correctionMax}
+                          // Note: We could pass a prop to StudentRow to make it visually faded, but this is good enough for now.
+                        />
+                      ))}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </tbody>
 
           {/* Footer statistique : moyenne, min, max par colonne */}

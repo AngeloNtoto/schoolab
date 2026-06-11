@@ -180,6 +180,12 @@ export default function GradingTable({
             const orderMap = JSON.parse(sortProfile.student_order);
             const posA = orderMap[a.id] ?? 9999;
             const posB = orderMap[b.id] ?? 9999;
+            
+            const isWithdrawnA = posA === -1;
+            const isWithdrawnB = posB === -1;
+
+            if (isWithdrawnA && !isWithdrawnB) return 1;
+            if (!isWithdrawnA && isWithdrawnB) return -1;
             if (posA !== posB) return posA - posB;
           } catch (e) {}
         }
@@ -312,36 +318,97 @@ export default function GradingTable({
               {searchQuery ? 'Aucun élève trouvé' : 'Aucun élève dans cette classe'}
             </div>
           ) : (
-            filteredStudents.map(student => {
-              const grade = grades.find(
-                (g: Grade) => g.student_id === student.id && g.subject_id === selectedSubject.id && g.period === period
-              );
-              return (
-                <div 
-                  key={student.id} 
-                  className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
-                >
-                  {/* Nom de l'élève */}
-                  <div className="min-w-0 flex-1 mr-3">
-                    <div className="font-bold text-sm text-slate-800 truncate">
-                      {student.last_name} {student.post_name}
-                    </div>
-                    <div className="text-[11px] text-slate-400 truncate">
-                      {student.first_name}
-                    </div>
-                  </div>
+            (() => {
+              const orderMap = useMemo(() => {
+                if (sortOrder.startsWith('custom_')) {
+                  const customId = parseInt(sortOrder.replace('custom_', ''), 10);
+                  const profile = customSorts.find(p => p.id === customId);
+                  if (profile) {
+                    try {
+                      return JSON.parse(profile.student_order);
+                    } catch(e) {}
+                  }
+                }
+                return {};
+              }, [sortOrder, customSorts]);
 
-                  {/* Input de note tactile avec coloration et flash */}
-                  <GradeInput
-                    value={grade?.value}
-                    max={currentMax}
-                    correctionMax={correctionMax}
-                    disabled={isPeriodDisabled}
-                    onSave={(val) => onGradeChange(student.id, selectedSubject.id, val)}
-                  />
-                </div>
+              const activeStudents = filteredStudents.filter(s => orderMap[s.id] !== -1);
+              const withdrawnStudents = filteredStudents.filter(s => orderMap[s.id] === -1);
+
+              return (
+                <>
+                  {activeStudents.map(student => {
+                    const grade = grades.find(
+                      (g: Grade) => g.student_id === student.id && g.subject_id === selectedSubject.id && g.period === period
+                    );
+                    return (
+                      <div 
+                        key={student.id} 
+                        className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
+                      >
+                        {/* Nom de l'élève */}
+                        <div className="min-w-0 flex-1 mr-3">
+                          <div className="font-bold text-sm text-slate-800 truncate">
+                            {student.last_name} {student.post_name}
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate">
+                            {student.first_name}
+                          </div>
+                        </div>
+
+                        {/* Input de note tactile avec coloration et flash */}
+                        <GradeInput
+                          value={grade?.value}
+                          max={currentMax}
+                          correctionMax={correctionMax}
+                          disabled={isPeriodDisabled}
+                          onSave={(val) => onGradeChange(student.id, selectedSubject.id, val)}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  {withdrawnStudents.length > 0 && (
+                    <>
+                      <div className="px-4 py-2 bg-red-50/50 border-t border-b border-red-100 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                          Retrait temporaire ({withdrawnStudents.length})
+                        </span>
+                      </div>
+                      {withdrawnStudents.map(student => {
+                        const grade = grades.find(
+                          (g: Grade) => g.student_id === student.id && g.subject_id === selectedSubject.id && g.period === period
+                        );
+                        return (
+                          <div 
+                            key={student.id} 
+                            className="flex items-center justify-between px-4 py-3 bg-red-50/10 hover:bg-red-50/30 transition-colors opacity-75"
+                          >
+                            <div className="min-w-0 flex-1 mr-3">
+                              <div className="font-bold text-sm text-slate-800 truncate line-through decoration-red-300">
+                                {student.last_name} {student.post_name}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate">
+                                {student.first_name}
+                              </div>
+                            </div>
+
+                            <GradeInput
+                              value={grade?.value}
+                              max={currentMax}
+                              correctionMax={correctionMax}
+                              disabled={isPeriodDisabled}
+                              onSave={(val) => onGradeChange(student.id, selectedSubject.id, val)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
               );
-            })
+            })()
           )}
         </div>
       </div>
