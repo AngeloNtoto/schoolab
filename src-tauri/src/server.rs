@@ -320,10 +320,27 @@ fn handle_get_class_full(id: i64, state: &AppState) -> Response<io::Cursor<Vec<u
         Err(_) => Vec::new(),
     };
 
+    // Custom Sorts
+    let mut stmt = match conn.prepare(
+        "SELECT id, name, student_order FROM custom_sorts WHERE class_id = ?"
+    ) { Ok(s) => s, Err(_) => return error_response(500, "Failed prep custom_sorts") };
+
+    let custom_sorts: Vec<CustomSortResponse> = match stmt.query_map([id], |row| {
+        Ok(CustomSortResponse {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            student_order: row.get(2)?,
+        })
+    }) {
+        Ok(iter) => iter.filter_map(Result::ok).collect(),
+        Err(_) => Vec::new(),
+    };
+
     json_response(ClassFullResponse {
         students,
         subjects,
         grades,
+        custom_sorts,
     })
 }
 
@@ -632,10 +649,18 @@ struct GradeResponse {
 }
 
 #[derive(Serialize)]
+struct CustomSortResponse {
+    id: i64,
+    name: String,
+    student_order: String,
+}
+
+#[derive(Serialize)]
 struct ClassFullResponse {
     students: Vec<StudentResponse>,
     subjects: Vec<SubjectResponse>,
     grades: Vec<GradeResponse>,
+    custom_sorts: Vec<CustomSortResponse>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

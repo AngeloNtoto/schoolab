@@ -171,6 +171,19 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             server_id TEXT NOT NULL,
             deleted_at TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS custom_sorts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            student_order TEXT NOT NULL DEFAULT '[]',
+            server_id TEXT,
+            is_dirty INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT '1970-01-01 00:00:00',
+            updated_at TEXT DEFAULT '1970-01-01 00:00:00',
+            last_modified_at TEXT DEFAULT '1970-01-01 00:00:00',
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+        );
     ",
     )
     .map_err(|e| e.to_string())?;
@@ -198,6 +211,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         "domains",
         "repechages",
         "options",
+        "custom_sorts",
     ];
 
     for table in sync_tables {
@@ -254,6 +268,7 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
         "domains",
         "repechages",
         "options",
+        "custom_sorts",
     ];
 
     for table in sync_tables {

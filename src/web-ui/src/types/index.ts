@@ -31,3 +31,9 @@ export interface Grade {
   period: string;
   value: number;
 }
+
+export interface CustomSort {
+  id: number;
+  name: string;
+  student_order: string;
+}

@@ -10,6 +10,8 @@ import { useToast } from '../../context/ToastContext';
 // Composants
 import AddStudentModal from './AddStudentModal';
 import AddSubjectModal from './AddSubjectModal';
+import CustomSortModal from './CustomSortModal';
+import { customSortService, CustomSort } from '../../services/customSortService';
 
 // Interface pour les props
 interface ClassDetailsProps {
@@ -86,7 +88,9 @@ export default function ClassDetails({
 
   // Search & Sort State
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<string>('asc');
+  const [customSorts, setCustomSorts] = useState<CustomSort[]>([]);
+  const [showCustomSortModal, setShowCustomSortModal] = useState(false);
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
   const [focusedPeriod, setFocusedPeriod] = useState<string>('all');
   // Nouveaux états pour les améliorations du mark board
@@ -102,6 +106,21 @@ export default function ClassDetails({
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
+
+  const loadCustomSorts = useCallback(async () => {
+    if (classInfo) {
+      try {
+        const sorts = await customSortService.getByClass(classInfo.id);
+        setCustomSorts(sorts);
+      } catch (err) {
+        console.error("Failed to load custom sorts", err);
+      }
+    }
+  }, [classInfo]);
+
+  useEffect(() => {
+    loadCustomSorts();
+  }, [loadCustomSorts]);
 
   const correctionMax = useMemo(() => {
     const parsed = parseFloat(correctionMaxInput);
@@ -128,13 +147,26 @@ export default function ClassDetails({
 
     // Sort
     result.sort((a, b) => {
+      if (sortOrder.startsWith('custom_')) {
+        const customId = parseInt(sortOrder.replace('custom_', ''), 10);
+        const sortProfile = customSorts.find(s => s.id === customId);
+        if (sortProfile) {
+          try {
+            const orderMap = JSON.parse(sortProfile.student_order);
+            const posA = orderMap[a.id] ?? 9999;
+            const posB = orderMap[b.id] ?? 9999;
+            if (posA !== posB) return posA - posB;
+          } catch (e) {}
+        }
+      }
+
       const nameA = `${a.last_name} ${a.post_name}`;
       const nameB = `${b.last_name} ${b.post_name}`;
-      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      return sortOrder === 'desc' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
     });
 
     return result;
-  }, [students, searchQuery, sortOrder]);
+  }, [students, searchQuery, sortOrder, customSorts]);
 
   // Sujets filtrés par le sélecteur de matière
   const displayedSubjects = useMemo(() => {
@@ -362,13 +394,33 @@ export default function ClassDetails({
                   className="w-full pl-11 pr-4 py-2.5 bg-white/10 dark:bg-black/20 border border-white/10 rounded-xl text-white placeholder-white/30 focus:bg-white/15 outline-none font-bold text-xs transition-all"
                 />
               </div>
-              <button 
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="p-2.5 bg-white/10 hover:bg-white hover:text-blue-600 text-white rounded-xl border border-white/10 transition-all active:scale-95"
-                title="Trier la liste"
-              >
-                <ArrowUpDown size={18} className={`transition-transform duration-500 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
-              </button>
+              <div className="flex items-center gap-2 bg-white/10 rounded-xl border border-white/10 pr-2">
+                <button 
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2.5 hover:text-blue-400 text-white transition-all active:scale-95 border-r border-white/10"
+                  title="Trier la liste (A-Z / Z-A)"
+                >
+                  <ArrowUpDown size={18} className={`transition-transform duration-500 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                </button>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="bg-transparent text-[10px] font-black uppercase tracking-widest text-white outline-none cursor-pointer p-1"
+                >
+                  <option value="asc" className="bg-slate-900">Alpha (A-Z)</option>
+                  <option value="desc" className="bg-slate-900">Alpha (Z-A)</option>
+                  {customSorts.map(sort => (
+                    <option key={`custom_${sort.id}`} value={`custom_${sort.id}`} className="bg-slate-900">{sort.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowCustomSortModal(true)}
+                  className="ml-1 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-all"
+                  title="Créer un nouveau tri personnalisé"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
               <button
                 onClick={() => setShowOnlyAbandons(prev => !prev)}
                 className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${showOnlyAbandons ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-white/5 text-red-300 border border-white/10 hover:bg-white/10'}`}
@@ -761,6 +813,21 @@ export default function ClassDetails({
         />
       )}
 
+      {showCustomSortModal && (
+        <CustomSortModal
+          isOpen={showCustomSortModal}
+          onClose={() => setShowCustomSortModal(false)}
+          students={students}
+          existingSorts={customSorts}
+          onSave={async (name, sortMap) => {
+            if (classInfo) {
+              const newId = await customSortService.create(classInfo.id, name, sortMap);
+              await loadCustomSorts();
+              setSortOrder(`custom_${newId}`);
+            }
+          }}
+        />
+      )}
 
       {/* Context Menu */}
       {contextMenu && (

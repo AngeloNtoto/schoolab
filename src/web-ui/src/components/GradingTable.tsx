@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, CheckCircle2, Search } from './iconsSvg';
-import { Class, Subject, Student, Grade } from '../types';
+import { Class, Subject, Student, Grade, CustomSort } from '../types';
 
 interface GradingTableProps {
   selectedClass: Class;
@@ -11,6 +11,7 @@ interface GradingTableProps {
   setPeriod: (period: string) => void;
   students: Student[];
   grades: Grade[];
+  customSorts: CustomSort[];
   isPeriodDisabled: boolean;
   currentMax: number;
   onGradeChange: (studentId: number, subjectId: number, value: number) => void;
@@ -142,6 +143,7 @@ export default function GradingTable({
   setPeriod,
   students,
   grades,
+  customSorts,
   isPeriodDisabled,
   currentMax,
   onGradeChange,
@@ -152,20 +154,44 @@ export default function GradingTable({
   // État de recherche d'élève
   const [searchQuery, setSearchQuery] = useState('');
   const [correctionMaxInput, setCorrectionMaxInput] = useState('');
+  const [sortOrder, setSortOrder] = useState<string>('asc');
 
   const correctionMax = useMemo(() => {
     const parsed = parseFloat(correctionMaxInput);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [correctionMaxInput]);
 
-  // Élèves filtrés par la recherche
+  // Élèves filtrés par la recherche et triés
   const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) return students;
-    const q = searchQuery.toLowerCase();
-    return students.filter(s => 
-      `${s.last_name} ${s.post_name} ${s.first_name}`.toLowerCase().includes(q)
-    );
-  }, [students, searchQuery]);
+    let result = [...students];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        `${s.last_name} ${s.post_name} ${s.first_name}`.toLowerCase().includes(q)
+      );
+    }
+
+    result.sort((a, b) => {
+      if (sortOrder.startsWith('custom_')) {
+        const customId = parseInt(sortOrder.replace('custom_', ''), 10);
+        const sortProfile = customSorts.find(s => s.id === customId);
+        if (sortProfile) {
+          try {
+            const orderMap = JSON.parse(sortProfile.student_order);
+            const posA = orderMap[a.id] ?? 9999;
+            const posB = orderMap[b.id] ?? 9999;
+            if (posA !== posB) return posA - posB;
+          } catch (e) {}
+        }
+      }
+
+      const nameA = `${a.last_name} ${a.post_name}`;
+      const nameB = `${b.last_name} ${b.post_name}`;
+      return sortOrder === 'desc' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
+    });
+
+    return result;
+  }, [students, searchQuery, sortOrder, customSorts]);
 
   return (
     <div className="space-y-4">
@@ -188,16 +214,29 @@ export default function GradingTable({
             </div>
           </div>
 
-          {/* Barre de recherche compacte */}
-          <div className="relative shrink-0">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Chercher..."
-              className="pl-8 pr-3 py-2 w-36 text-sm bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-            />
+          {/* Barre de recherche et Tri */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative shrink-0 hidden md:block">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Chercher..."
+                className="pl-8 pr-3 py-2 w-32 text-sm bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+              />
+            </div>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="py-2 pl-2 pr-6 text-sm font-bold bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-slate-600 appearance-none"
+            >
+              <option value="asc">A-Z</option>
+              <option value="desc">Z-A</option>
+              {customSorts.map(sort => (
+                <option key={`custom_${sort.id}`} value={`custom_${sort.id}`}>{sort.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -4,7 +4,7 @@ import ClassSelector from './components/ClassSelector';
 import SubjectSelector from './components/SubjectSelector';
 import GradingTable from './components/GradingTable';
 import { api } from './services/api';
-import { Class, Subject, Student, Grade } from './types';
+import { Class, Subject, Student, Grade, CustomSort } from './types';
 
 export default function App() {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -19,6 +19,7 @@ export default function App() {
   const [students, setStudents] = useState<Student[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
+  const [customSorts, setCustomSorts] = useState<CustomSort[]>([]);
 
   const [statusMessage, setStatusMessage] = useState<{ text: string, type: 'info' | 'error' | 'success' } | null>(null);
 
@@ -28,6 +29,7 @@ export default function App() {
       setStudents(data.students);
       setSubjects(data.subjects);
       setGrades(data.grades);
+      setCustomSorts(data.custom_sorts || []);
     } catch (e) {
       console.error('Échec du chargement des données de la classe', e);
     }
@@ -156,6 +158,7 @@ export default function App() {
             setPeriod={setPeriod}
             students={students}
             grades={grades}
+            customSorts={customSorts}
             isPeriodDisabled={getCurrentMax() === 0}
             currentMax={getCurrentMax()}
             onGradeChange={handleGradeChange}
