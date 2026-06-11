@@ -91,6 +91,7 @@ export default function ClassDetails({
   const [sortOrder, setSortOrder] = useState<string>('asc');
   const [customSorts, setCustomSorts] = useState<CustomSort[]>([]);
   const [showCustomSortModal, setShowCustomSortModal] = useState(false);
+  const [editingCustomSort, setEditingCustomSort] = useState<CustomSort | null>(null);
   const [showOnlyAbandons, setShowOnlyAbandons] = useState(false);
   const [focusedPeriod, setFocusedPeriod] = useState<string>('all');
   // Nouveaux états pour les améliorations du mark board
@@ -419,8 +420,45 @@ export default function ClassDetails({
                     <option key={`custom_${sort.id}`} value={`custom_${sort.id}`} className="bg-slate-900">{sort.name}</option>
                   ))}
                 </select>
+                {sortOrder.startsWith('custom_') && (
+                  <div className="flex items-center gap-1 ml-1 border-l border-white/10 pl-1">
+                    <button
+                      onClick={() => {
+                        const sort = customSorts.find(s => s.id === parseInt(sortOrder.replace('custom_', ''), 10));
+                        if (sort) {
+                          setEditingCustomSort(sort);
+                          setShowCustomSortModal(true);
+                        }
+                      }}
+                      className="p-1.5 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-all"
+                      title="Modifier ce tri"
+                    >
+                      <Edit size={12} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const customId = parseInt(sortOrder.replace('custom_', ''), 10);
+                        if (await toast.confirm({
+                          title: 'Supprimer le tri',
+                          message: 'Êtes-vous sûr de vouloir supprimer ce profil de tri ?',
+                          confirmLabel: 'Supprimer',
+                          cancelLabel: 'Annuler',
+                          variant: 'danger'
+                        })) {
+                          await customSortService.delete(customId);
+                          await loadCustomSorts();
+                          setSortOrder('asc');
+                        }
+                      }}
+                      className="p-1.5 hover:bg-red-500/20 rounded-lg text-white/70 hover:text-red-400 transition-all"
+                      title="Supprimer ce tri"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
                 <button
-                  onClick={() => setShowCustomSortModal(true)}
+                  onClick={() => { setEditingCustomSort(null); setShowCustomSortModal(true); }}
                   className="ml-1 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-all"
                   title="Créer un nouveau tri personnalisé"
                 >
@@ -870,11 +908,18 @@ export default function ClassDetails({
           onClose={() => setShowCustomSortModal(false)}
           students={students}
           existingSorts={customSorts}
+          initialProfile={editingCustomSort}
           onSave={async (name, sortMap) => {
             if (classInfo) {
-              const newId = await customSortService.create(classInfo.id, name, sortMap);
-              await loadCustomSorts();
-              setSortOrder(`custom_${newId}`);
+              if (editingCustomSort) {
+                await customSortService.update(editingCustomSort.id, name, sortMap);
+                await loadCustomSorts();
+                setSortOrder(`custom_${editingCustomSort.id}`);
+              } else {
+                const newId = await customSortService.create(classInfo.id, name, sortMap);
+                await loadCustomSorts();
+                setSortOrder(`custom_${newId}`);
+              }
             }
           }}
         />

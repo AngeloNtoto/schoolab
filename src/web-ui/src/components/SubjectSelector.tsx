@@ -20,7 +20,7 @@ export default function SubjectSelector({ selectedClass, subjects, isLoading, on
         >
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-2xl font-bold text-slate-800">{selectedClass.name} - Matières</h1>
+        <h1 className="text-2xl font-bold text-slate-800">{selectedClass.name} - Matièress</h1>
       </div>
       {isLoading ? (
         <div className="flex items-center gap-3 text-blue-600 font-medium py-10">

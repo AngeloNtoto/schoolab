@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, RotateCcw } from '../iconsSvg';
 import { Student } from '../../services/studentService';
+import { CustomSort } from '../../services/customSortService';
 
 function SortInput({ value, max, onChange }: { value: number; max: number; onChange: (newVal: number) => void }) {
   const [localVal, setLocalVal] = useState(value.toString());
@@ -42,30 +43,69 @@ interface CustomSortModalProps {
   students: Student[];
   onSave: (name: string, sortMap: Record<number, number>) => Promise<void>;
   existingSorts: { id: number; name: string }[];
+  initialProfile?: CustomSort | null;
 }
 
-export default function CustomSortModal({ isOpen, onClose, students, onSave, existingSorts }: CustomSortModalProps) {
+export default function CustomSortModal({ isOpen, onClose, students, onSave, existingSorts, initialProfile }: CustomSortModalProps) {
   const [profileName, setProfileName] = useState('');
   const [studentOrder, setStudentOrder] = useState<{ id: number; student: Student; pos: number; isWithdrawn?: boolean }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // Initialize with alphabetical order
-      const sorted = [...students].sort((a, b) => {
-        const nameA = `${a.last_name} ${a.post_name}`;
-        const nameB = `${b.last_name} ${b.post_name}`;
-        return nameA.localeCompare(nameB);
-      });
-      
-      setStudentOrder(sorted.map((student, index) => ({
-        id: student.id,
-        student,
-        pos: index + 1
-      })));
-      setProfileName(`Liste Personnalisée ${existingSorts.length + 1}`);
+      if (initialProfile) {
+        setProfileName(initialProfile.name);
+        try {
+          const map = JSON.parse(initialProfile.student_order);
+          const ordered = [...students].sort((a, b) => {
+            const posA = map[a.id] ?? 9999;
+            const posB = map[b.id] ?? 9999;
+            if (posA === -1 && posB !== -1) return 1;
+            if (posA !== -1 && posB === -1) return -1;
+            if (posA !== posB) return posA - posB;
+            const nameA = `${a.last_name} ${a.post_name}`;
+            const nameB = `${b.last_name} ${b.post_name}`;
+            return nameA.localeCompare(nameB);
+          });
+          
+          setStudentOrder(ordered.map((student) => {
+            const isWithdrawn = map[student.id] === -1;
+            return {
+              id: student.id,
+              student,
+              pos: isWithdrawn ? -1 : 9999, // Will be recalculated below
+              isWithdrawn
+            };
+          }));
+          
+          setStudentOrder(prev => {
+            const copy = prev.map(s => ({...s}));
+            let posCounter = 1;
+            copy.forEach(item => {
+              if (!item.isWithdrawn) item.pos = posCounter++;
+            });
+            return copy;
+          });
+        } catch (e) {
+          console.error("Failed to parse initial profile", e);
+        }
+      } else {
+        // Initialize with alphabetical order
+        const sorted = [...students].sort((a, b) => {
+          const nameA = `${a.last_name} ${a.post_name}`;
+          const nameB = `${b.last_name} ${b.post_name}`;
+          return nameA.localeCompare(nameB);
+        });
+        
+        setStudentOrder(sorted.map((student, index) => ({
+          id: student.id,
+          student,
+          pos: index + 1
+        })));
+        setProfileName(`Liste Personnalisée ${existingSorts.length + 1}`);
+      }
     }
-  }, [isOpen, students, existingSorts.length]);
+  }, [isOpen, students, existingSorts.length, initialProfile]);
 
   if (!isOpen) return null;
 
@@ -171,7 +211,9 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Nouveau Profil de Tri</h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+            {initialProfile ? 'Modifier le Profil de Tri' : 'Nouveau Profil de Tri'}
+          </h2>
           <button 
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
