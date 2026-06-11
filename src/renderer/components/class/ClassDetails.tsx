@@ -330,7 +330,7 @@ export default function ClassDetails({
   };
 
   return (
-    <div className={`flex-1 flex flex-col h-full bg-slate-50/50 dark:bg-[#020617] min-h-0 transition-colors duration-500 ${isFullscreen ? 'fixed inset-0 z-90' : ''}`}>
+    <div className={`flex-1 flex flex-col h-full bg-slate-50/50 dark:bg-[#020617] min-h-0 transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-[100]' : ''}`}>
       {/* En-tête Unifié */}
       <header className="bg-blue-600 dark:bg-slate-900 border-b border-white/5 sticky top-0 z-30 shadow-lg">
         <div className="px-6 py-3">
@@ -413,7 +413,6 @@ export default function ClassDetails({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-11 pr-4 py-2.5 bg-white/10 dark:bg-black/20 border border-white/10 rounded-xl text-white placeholder-white/30 focus:bg-white/15 outline-none font-bold text-xs transition-all"
                 />
-              </div>
               </div>
 
               <button
