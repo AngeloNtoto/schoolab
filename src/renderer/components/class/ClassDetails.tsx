@@ -402,9 +402,11 @@ export default function ClassDetails({
           </div>
 
           {/* Row 2: Search, Sort & Major Actions (Permanent) */}
-          <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-start border-t border-white/10 pt-3">
-            <div className="flex items-center gap-3 w-full xl:w-auto flex-wrap">
-              <div className="relative group flex-1 md:w-80">
+          <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between border-t border-white/10 pt-3">
+            
+            {/* Left Group: Search, Filters, Small Actions */}
+            <div className="flex items-center gap-3 w-full xl:w-auto flex-wrap flex-1">
+              <div className="relative group flex-1 min-w-[200px] md:max-w-xs">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors" size={16} />
                 <input 
                   type="text" 
@@ -623,13 +625,19 @@ export default function ClassDetails({
                   </div>
                 )}
               </div>
+              </div>
+              
+              {/* Separator and Small Action Icons */}
+              <div className="flex items-center gap-2 border-l border-white/10 pl-3 shrink-0">
+                <button onClick={handleExportCSV} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title="Exporter en CSV"><Download size={16} /></button>
+                <button onClick={() => setIsFullscreen(prev => !prev)} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title={isFullscreen ? 'Quitter le plein écran' : 'Mode Focus'}>
+                  {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                </button>
+              </div>
             </div>
             
-            <div className="flex items-center gap-2 w-full xl:w-auto justify-start flex-wrap mt-2 xl:mt-0 border-l-0 xl:border-l xl:border-white/10 xl:pl-4">
-              <button onClick={handleExportCSV} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title="Exporter en CSV"><Download size={16} /></button>
-              <button onClick={() => setIsFullscreen(prev => !prev)} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title={isFullscreen ? 'Quitter le plein écran' : 'Mode Focus'}>
-                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              </button>
+            {/* Right Group: Major Actions */}
+            <div className="flex items-center gap-2 w-full xl:w-auto justify-start xl:justify-end flex-wrap mt-2 xl:mt-0 shrink-0">
               <button 
                 onClick={() => setShowAddSubjectModal(true)}
                 className="flex items-center gap-2 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-100 px-4 py-2.5 rounded-xl border border-indigo-500/30 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
