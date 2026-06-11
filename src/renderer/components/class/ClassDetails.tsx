@@ -630,14 +630,14 @@ export default function ClassDetails({
                 className="flex items-center gap-2 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-100 px-4 py-2.5 rounded-xl border border-indigo-500/30 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
               >
                 <BookOpen size={14} />
-                <span className="hidden md:inline">Gérer les cours</span>
+                <span>Gérer les cours</span>
               </button>
               <button 
                 onClick={() => setShowAddModal(true)}
                 className="flex items-center gap-2 bg-white text-blue-600 dark:bg-blue-600 dark:text-white px-4 py-2.5 rounded-xl hover:bg-blue-50 transition-all font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95"
               >
                 <Plus size={14} />
-                <span className="hidden md:inline">Ajouter un élève</span>
+                <span>Ajouter un élève</span>
               </button>
             </div>
           </div>
@@ -691,11 +691,11 @@ export default function ClassDetails({
             
             <table className="w-full border-collapse min-w-max">
           <thead className="sticky top-0 z-20 shadow-sm">
-            <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-300 dark:border-slate-700">
-                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
+            <tr className="bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700">
+                <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
                   #
                 </th>
-                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800/80 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px] whitespace-nowrap">
+                <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px] whitespace-nowrap">
                   Élèves ({filteredAndSortedStudents.length})
                 </th>
               
@@ -712,7 +712,7 @@ export default function ClassDetails({
                     (selectedPeriods.has('EXAM2') ? 1 : 0) +
                     (selectedPeriods.has('P3') && selectedPeriods.has('P4') && selectedPeriods.has('EXAM2') ? 1 : 0)
                   } 
-                  className="bg-slate-100 dark:bg-slate-800/80 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap"
+                  className="bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap"
                 >
                   {subject.name}
                 </th>
@@ -720,11 +720,11 @@ export default function ClassDetails({
             </tr>
 
             {/* Ligne de sous-en-tête avec les Maxima */}
-            <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/80">
-              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]'>
+            <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+              <th className='sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]'>
                 #
               </th>
-              <th className='sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900/80 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
+              <th className='sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400'>
                 Nom et PostNom
               </th>
               {displayedSubjects.map(subject => {
@@ -1117,7 +1117,7 @@ const StudentRow = React.memo(({
   };
 
   return (
-    <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/50 dark:bg-slate-800/30'}`}>
+    <tr className={`border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
       <td className="sticky left-0 bg-inherit px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px]">
         {idx + 1}
       </td>
