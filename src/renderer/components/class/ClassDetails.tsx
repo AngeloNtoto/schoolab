@@ -335,7 +335,7 @@ export default function ClassDetails({
       <header className="bg-blue-600 dark:bg-slate-900 border-b border-white/5 sticky top-0 z-30 shadow-lg">
         <div className="px-6 py-3">
           {/* Static Header: Row 1 */}
-          <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
             <div className="flex items-center gap-3 min-w-0">
               <button 
                 onClick={() => navigate('/dashboard')}
@@ -361,7 +361,7 @@ export default function ClassDetails({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap w-full md:w-auto">
                 {/* Bouton d'actualisation — rafraîchit matières, élèves et notes sans redemander le mdp */}
               <button 
                 onClick={async () => {
@@ -403,7 +403,7 @@ export default function ClassDetails({
 
           {/* Row 2: Search, Sort & Major Actions (Permanent) */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between border-t border-white/10 pt-3">
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
               <div className="relative group flex-1 md:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-white transition-colors" size={16} />
                 <input 
@@ -620,7 +620,7 @@ export default function ClassDetails({
               </div>
             </div>
             
-            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <div className="flex items-center gap-2 w-full md:w-auto justify-start md:justify-end flex-wrap mt-2 md:mt-0">
               <button onClick={handleExportCSV} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title="Exporter en CSV"><Download size={16} /></button>
               <button onClick={() => setIsFullscreen(prev => !prev)} className="p-2.5 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl border border-white/10 transition-all active:scale-95" title={isFullscreen ? 'Quitter le plein écran' : 'Mode Focus'}>
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
