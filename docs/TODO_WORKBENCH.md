@@ -66,10 +66,10 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [ ] Ajouter un mode visuel "erreurs de saisie"
 
 ## Phase 7 : Menus Contextuels et Drag & Drop
-- [ ] Créer un composant global `ContextMenuLayer.tsx`
-- [ ] Brancher les menus contextuels sur les commandes du `commandRegistry`
-- [ ] Remplacer les menus contextuels locaux (ex: `StudentContextMenu`) par le menu global
-- [ ] Créer le moteur personnalisé `dragManager.ts` pour gérer les glisser-déposer sans passer par l'API HTML5 standard (souvent capricieuse sur Windows/Webview)
+- [x] Créer un composant global `ContextMenuLayer.tsx`
+- [x] Brancher les menus contextuels sur les commandes du `commandRegistry`
+- [x] Remplacer les menus contextuels locaux (ex: `StudentContextMenu`) par le menu global
+- [x] Créer le moteur personnalisé `dragManager.ts` pour gérer les glisser-déposer sans passer par l'API HTML5 standard (souvent capricieuse sur Windows/Webview)
 - [ ] Migrer la réorganisation des cours sur le nouveau Drag & Drop
 - [ ] Migrer le tri personnalisé des élèves
 - [ ] Désactiver les sélections de texte parasites lors des glisser-déposer

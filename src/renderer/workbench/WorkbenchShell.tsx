@@ -6,6 +6,22 @@ import SplitView from './SplitView';
 import { useWorkbench } from './WorkbenchProvider';
 import { documentRegistry } from './documentRegistry';
 import { undoRedoService } from '../services/undoRedoService';
+import { useDragState } from './dragManager';
+
+function DragGhost() {
+  const { isDragging, currentX, currentY, item } = useDragState();
+  if (!isDragging || !item) return null;
+
+  return (
+    <div 
+      className="fixed pointer-events-none z-[9999] bg-blue-500/90 text-white px-3 py-1.5 rounded shadow-lg text-sm font-medium flex items-center gap-2 transform -translate-x-1/2 -translate-y-1/2 opacity-80"
+      style={{ left: currentX, top: currentY }}
+    >
+      <span className="w-4 h-4 opacity-50">☰</span>
+      {item.data?.title || item.id}
+    </div>
+  );
+}
 
 function PanelContent({ panel }: { panel: any }) {
   const doc = documentRegistry.get(panel.type);
@@ -102,6 +118,7 @@ export default function WorkbenchShell() {
             <span>Schoolab Workbench</span>
           </div>
         </div>
+        <DragGhost />
       </main>
     </div>
   );

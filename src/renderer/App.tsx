@@ -29,6 +29,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import LicenseGuard from './components/setup/LicenseGuard';
 import { LicenseProvider } from './context/LicenseContext';
 import { WorkbenchProvider } from './workbench/WorkbenchProvider';
+import { ContextMenuProvider } from './workbench/ContextMenuLayer';
 import CommandPalette from './workbench/CommandPalette';
 
 
@@ -170,19 +171,21 @@ export default function App() {
             <div className="min-h-screen flex items-center justify-center">Chargement…</div>
           ) : (
             <WorkbenchProvider>
-              <Routes>
-              <Route path="/setup" element={<SetupWizard />} />
-              <Route element={<LicenseGuard><WorkbenchShell /></LicenseGuard>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/class/:id" element={<Class/>} />
-                <Route path="/network" element={<NetworkDashboard />} />
-                <Route path="/academic-years" element={<AcademicYearsManager />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/notes" element={<NotesPage />} />
-              </Route>
-              <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
-              </Routes>
-              <CommandPalette />
+              <ContextMenuProvider>
+                <Routes>
+                <Route path="/setup" element={<SetupWizard />} />
+                <Route element={<LicenseGuard><WorkbenchShell /></LicenseGuard>}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/class/:id" element={<Class/>} />
+                  <Route path="/network" element={<NetworkDashboard />} />
+                  <Route path="/academic-years" element={<AcademicYearsManager />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/notes" element={<NotesPage />} />
+                </Route>
+                <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
+                </Routes>
+                <CommandPalette />
+              </ContextMenuProvider>
             </WorkbenchProvider>
           )}
         </ToastProvider>

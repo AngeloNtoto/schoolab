@@ -10,8 +10,8 @@ import CustomSortModal from './CustomSortModal';
 import { CustomSort, customSortService } from '../../services/customSortService';
 import ClassDetailsHeader from './classDetails/ClassDetailsHeader';
 import ClassGradeTable from './classDetails/ClassGradeTable';
-import StudentContextMenu from './classDetails/StudentContextMenu';
 import { ALL_PERIODS } from './classDetails/gradeUtils';
+import { useContextMenu } from '../../workbench/ContextMenuLayer';
 
 interface ClassDetailsProps {
   classInfo: ClassData;
@@ -77,7 +77,7 @@ export default function ClassDetails({
   const [correctionMaxInput, setCorrectionMaxInput] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
+  const { showContextMenu } = useContextMenu();
 
   const loadCustomSorts = useCallback(async () => {
     if (!classInfo) return;
@@ -104,9 +104,13 @@ export default function ClassDetails({
   }, []);
 
   useEffect(() => {
-    const handleClick = () => setContextMenu(null);
-    window.addEventListener('click', handleClick);
-    return () => window.removeEventListener('click', handleClick);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setShowFiltersPopover(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const correctionMax = useMemo(() => {
@@ -269,22 +273,41 @@ export default function ClassDetails({
 
   const handleContextMenu = useCallback((e: React.MouseEvent, student: Student) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, student });
-  }, []);
-
-  const handleDeleteStudent = async () => {
-    if (!contextMenu) return;
-    const confirmed = await toast.confirm({
-      title: 'Supprimer l\'élève',
-      message: `Êtes-vous sûr de vouloir supprimer l'élève ${contextMenu.student.last_name} ? Cette action est irréversible.`,
-      confirmLabel: 'Supprimer',
-      cancelLabel: 'Annuler',
-      variant: 'danger'
-    });
-    if (confirmed) {
-      await onDeleteStudent(contextMenu.student.id);
-    }
-  };
+    showContextMenu(e, [
+      {
+        label: `Modifier ${student.first_name} ${student.last_name}`,
+        action: () => onEditStudent(student.id)
+      },
+      {
+        label: 'Voir le bulletin',
+        action: () => onOpenBulletin(student.id)
+      },
+      {
+        label: 'Examen de repêchage',
+        action: () => onOpenRepechage(student.id)
+      },
+      {
+        separator: true,
+        label: ''
+      },
+      {
+        label: 'Supprimer l\'élève',
+        danger: true,
+        action: async () => {
+          const confirmed = await toast.confirm({
+            title: 'Supprimer l\'élève',
+            message: `Êtes-vous sûr de vouloir supprimer l'élève ${student.last_name} ? Cette action est irréversible.`,
+            confirmLabel: 'Supprimer',
+            cancelLabel: 'Annuler',
+            variant: 'danger'
+          });
+          if (confirmed) {
+            await onDeleteStudent(student.id);
+          }
+        }
+      }
+    ]);
+  }, [showContextMenu, onEditStudent, onOpenBulletin, onOpenRepechage, onDeleteStudent, toast]);
 
   const handleCreateCustomSort = () => {
     setEditingCustomSort(null);
@@ -445,17 +468,6 @@ export default function ClassDetails({
               setSortOrder(`custom_${newId}`);
             }
           }}
-        />
-      )}
-
-      {contextMenu && (
-        <StudentContextMenu
-          contextMenu={contextMenu}
-          onClose={() => setContextMenu(null)}
-          onEditStudent={onEditStudent}
-          onOpenBulletin={onOpenBulletin}
-          onOpenRepechage={onOpenRepechage}
-          onDeleteStudent={handleDeleteStudent}
         />
       )}
     </div>
