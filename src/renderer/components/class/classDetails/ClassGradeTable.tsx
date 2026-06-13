@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { gradebookStore, getCellKey } from '../../../context/gradebookSelection';
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
@@ -58,6 +58,8 @@ export default function ClassGradeTable({
       })()
     : {};
 
+  const [pasteIntent, setPasteIntent] = useState<{ values: string[], cells: string[] } | null>(null);
+
   const activeStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] !== -1);
   const withdrawnStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] === -1);
 
@@ -95,18 +97,19 @@ export default function ClassGradeTable({
             const text = await navigator.clipboard.readText();
             if (!text) return;
 
-            // Détection du séparateur (tabulation pour Excel/Copie web, ou nouvelle ligne)
             const values = text.split(/[\t\n\r]+/).filter(v => v !== '');
             const cells = state.selectedCells.size > 0 ? Array.from(state.selectedCells) : [getCellKey(state.activeCell!)];
 
-            // Appliquer les valeurs sur les cellules sélectionnées
-            for (let i = 0; i < Math.min(values.length, cells.length); i++) {
-              const cellKey = cells[i];
+            if (values.length > 1) {
+              setPasteIntent({ values, cells });
+            } else {
+              // Appliquer une seule valeur
+              const cellKey = cells[0];
               const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
-              const valNum = parseFloat(values[i].replace(',', '.'));
+              const valNum = parseFloat(values[0].replace(',', '.'));
               if (!isNaN(valNum)) {
                 onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, valNum);
-              } else if (values[i].trim() === '-' || values[i].trim() === '') {
+              } else if (values[0].trim() === '-' || values[0].trim() === '') {
                 onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, null);
               }
             }
@@ -165,8 +168,32 @@ export default function ClassGradeTable({
     };
   }, [onGradeUpdate, displayedSubjects]);
 
+  const executePaste = (overwrite: boolean) => {
+    if (!pasteIntent) return;
+    const { values, cells } = pasteIntent;
+
+    for (let i = 0; i < Math.min(values.length, cells.length); i++) {
+      const cellKey = cells[i];
+      const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
+      
+      // Si on ne doit pas écraser, on vérifie si la cellule a déjà une valeur
+      if (!overwrite && gradesMap.has(cellKey)) {
+        continue;
+      }
+
+      const valNum = parseFloat(values[i].replace(',', '.'));
+      if (!isNaN(valNum)) {
+        onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, valNum);
+      } else if (values[i].trim() === '-' || values[i].trim() === '') {
+        onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, null);
+      }
+    }
+    setPasteIntent(null);
+  };
+
   return (
-    <table className="w-full border-collapse min-w-max">
+    <>
+      <table className="w-full border-collapse min-w-max">
       <thead className="sticky top-0 z-20 shadow-sm">
         <tr className="bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700">
           <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
@@ -367,5 +394,43 @@ export default function ClassGradeTable({
         </tfoot>
       )}
     </table>
+      {pasteIntent && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200]">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full animate-in fade-in zoom-in-95">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Options de collage</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Vous êtes sur le point de coller {Math.min(pasteIntent.values.length, pasteIntent.cells.length)} valeur(s). Comment souhaitez-vous procéder ?
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => executePaste(true)}
+                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <span>Tout écraser</span>
+                <span className="text-blue-200 text-xs font-normal group-hover:text-blue-100">Remplace les notes existantes</span>
+              </button>
+              
+              <button
+                onClick={() => executePaste(false)}
+                className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-lg font-medium transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <span>Remplir les vides uniquement</span>
+                <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Ignore les cases déjà remplies</span>
+              </button>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setPasteIntent(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
