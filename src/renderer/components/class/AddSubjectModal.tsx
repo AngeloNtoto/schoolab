@@ -7,6 +7,7 @@ import { domainService, Domain } from '../../services/domainService';
 import { useToast } from '../../context/ToastContext';
 import SubjectCatalog from './SubjectCatalog';
 import CloneSubjects from './CloneSubjects';
+import { useDraggable, useDroppable, dragManager } from '../../workbench/dragManager';
 
 // Définition des propriétés de notre zone d'interligne pour le dépôt
 interface DropZoneProps {
@@ -14,45 +15,44 @@ interface DropZoneProps {
   onDrop: (sourceId: number, targetIndex: number) => void;
 }
 
-// Composant représentant l'espace entre deux cours où l'on peut glisser-déposer
 function DropZone({ index, onDrop }: DropZoneProps) {
-  // Permet de savoir si un élément survolé est actuellement au-dessus
-  const [isOver, setIsOver] = useState(false);
+  const { isDroppable, isHovered, droppableProps } = useDroppable('subject', (item) => {
+    onDrop(item.id as number, index);
+  });
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        setIsOver(true);
-      }}
-      onDragLeave={() => setIsOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsOver(false);
-        // Récupère l'ID du cours stocké dans le dataTransfer
-        const sourceIdStr =
-          e.dataTransfer.getData('application/x-schoolab-subject-id') ||
-          e.dataTransfer.getData('text/plain');
-        if (sourceIdStr) {
-          onDrop(Number(sourceIdStr), index);
-        }
-      }}
-      // L'interligne s'agrandit légèrement pour faciliter le dépôt quand on passe dessus
+      {...droppableProps}
       className={`transition-all duration-200 shrink-0 ${
-        isOver 
+        isHovered 
           ? 'py-3' 
-          : 'py-1.5'
+          : isDroppable ? 'py-1.5' : 'py-1'
       }`}
     >
-      {/* Barre bleue lumineuse qui apparaît uniquement lors du survol */}
       <div 
         className={`h-1.5 rounded-full transition-all duration-200 ${
-          isOver 
+          isHovered 
             ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.8)] scale-x-100' 
-            : 'bg-transparent scale-x-0'
+            : isDroppable
+              ? 'bg-slate-200 dark:bg-slate-800 scale-x-100'
+              : 'bg-transparent scale-x-0'
         }`}
       />
+    </div>
+  );
+}
+
+// Wrapper pour utiliser le hook useDraggable dans la boucle
+function DraggableSubject({ subject, children, disabled }: { subject: Subject, children: React.ReactNode, disabled: boolean }) {
+  const { onMouseDown } = useDraggable({
+    id: subject.id,
+    type: 'subject',
+    data: { title: `Déplacer : ${subject.name}` }
+  });
+
+  return (
+    <div onMouseDown={disabled ? undefined : onMouseDown}>
+      {children}
     </div>
   );
 }
@@ -336,56 +336,9 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
     }
   };
 
-  // // ── HTML5 Drag & Drop ──
-  // const [draggedId, setDraggedId] = React.useState<number | null>(null);
-
-// On utilise une référence pour garder la trace du ghost en mémoire
-const ghostRef = React.useRef<HTMLDivElement | null>(null);
-const [draggedId, setDraggedId] = React.useState<number | null>(null);
-
-const handleDragStart = (e: React.DragEvent, id: number, name: string) => {
-  setDraggedId(id);
-  e.dataTransfer.setData('text/plain', id.toString());
-  e.dataTransfer.setData('application/x-schoolab-subject-id', id.toString());
-  e.dataTransfer.effectAllowed = 'move';
-  
-  // 1. Création du badge flottant
-  const dragGhost = document.createElement('div');
-  
-  // Windows/WebView2 exige souvent que l'image de drag soit un élément visible
-  // dans le viewport. On le rend quasi invisible sans z-index négatif.
-  dragGhost.style.position = 'fixed';
-  dragGhost.style.top = '0';
-  dragGhost.style.left = '0';
-  dragGhost.style.zIndex = '9999';
-  dragGhost.style.pointerEvents = 'none'; // Évite de bloquer les interactions utilisateur
-  dragGhost.style.opacity = '0.01';
-  
-  // Votre style visuel
-  dragGhost.style.background = '#2563eb';
-  dragGhost.style.color = 'white';
-  dragGhost.style.padding = '4px 12px';
-  dragGhost.style.borderRadius = '8px';
-  dragGhost.style.fontSize = '12px';
-  dragGhost.style.fontWeight = 'bold';
-  dragGhost.textContent = `Déplacer : ${name}`;
-  
-  document.body.appendChild(dragGhost);
-  ghostRef.current = dragGhost; // On stocke l'élément pour le nettoyer plus tard
-  
-  // Assigne le ghost (décalage de 10px par rapport au curseur)
-  e.dataTransfer.setDragImage(dragGhost, 10, 10);
-};
-
-// 2. Le nettoyeur officiel
-const handleDragEnd = () => {
-  // On retire le ghost du DOM dès que l'utilisateur lâche la souris
-  if (ghostRef.current && ghostRef.current.parentNode) {
-    ghostRef.current.parentNode.removeChild(ghostRef.current);
-    ghostRef.current = null;
-  }
-  setDraggedId(null);
-};
+  // ── Drag & Drop Manager ──
+  // Le glisser-déposer est maintenant géré par dragManager.ts (via DraggableSubject et DropZone)
+  const draggedId:null | number  = null; // Obsolète avec le nouveau dragManager, mais on le garde pour ne pas casser le ternaire de style
 
   // Traitement du drop sur une interligne
   const handleDropOnZone = async (sourceId: number, targetIndex: number) => {
@@ -403,7 +356,6 @@ const handleDragEnd = () => {
     }
     
     ids.splice(insertIdx, 0, sourceId);
-    
     try {
       await classService.reorderSubjects(ids);
       toast.success('Ordre mis à jour');
@@ -412,7 +364,6 @@ const handleDragEnd = () => {
       console.error('Erreur réorganisation:', error);
       toast.error('Erreur lors de la réorganisation');
     }
-    setDraggedId(null);
   };
 
   // ── Mode suppression multiple ──
@@ -911,11 +862,9 @@ const handleDragEnd = () => {
                       const isActive = editingSubject?.id === subject.id;
                       return (
                         <React.Fragment key={subject.id}>
-                          <div
-                            draggable={!multiDeleteMode && !reorderMode}
-                            onDragStart={(e) => handleDragStart(e, subject.id, subject.name)}
-                            onDragEnd={handleDragEnd}
-                            onClick={() => {
+                          <DraggableSubject subject={subject} disabled={multiDeleteMode || reorderMode}>
+                            <div
+                              onClick={() => {
                               if (reorderMode) return;
                               // Mode suppression multiple : toggle la sélection
                               if (multiDeleteMode) {
@@ -1027,8 +976,10 @@ const handleDragEnd = () => {
                                 </>
                               )}
                             </div>
+                            </div>
                         </div>
                       </div>
+                      </DraggableSubject>
                       {!reorderMode && <DropZone index={idx + 1} onDrop={handleDropOnZone} />}
                     </React.Fragment>
                   );

@@ -70,9 +70,9 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Brancher les menus contextuels sur les commandes du `commandRegistry`
 - [x] Remplacer les menus contextuels locaux (ex: `StudentContextMenu`) par le menu global
 - [x] Créer le moteur personnalisé `dragManager.ts` pour gérer les glisser-déposer sans passer par l'API HTML5 standard (souvent capricieuse sur Windows/Webview)
-- [ ] Migrer la réorganisation des cours sur le nouveau Drag & Drop
-- [ ] Migrer le tri personnalisé des élèves
-- [ ] Désactiver les sélections de texte parasites lors des glisser-déposer
+- [x] Migrer la réorganisation des cours sur le nouveau Drag & Drop
+- [x] Migrer le tri personnalisé des élèves
+- [x] Désactiver les sélections de texte parasites lors des glisser-déposer
 
 ## Phase 8 : Local History et Checkpoints (Restauration)
 - [ ] Créer un Checkpoint automatique avant chaque import massif

@@ -51,3 +51,9 @@
 .dark ::-webkit-scrollbar-thumb {
   background: var(--border-color);
 }
+
+/* Drag & Drop */
+body.dragging * {
+  user-select: none !important;
+  cursor: grabbing !important;
+}

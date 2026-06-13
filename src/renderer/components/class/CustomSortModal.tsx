@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, RotateCcw } from '../iconsSvg';
 import { Student } from '../../services/studentService';
 import { CustomSort } from '../../services/customSortService';
+import { useDraggable, useDroppable } from '../../workbench/dragManager';
+import { GripVertical } from '../iconsSvg';
 
 function SortInput({ value, max, onChange }: { value: number; max: number; onChange: (newVal: number) => void }) {
   const [localVal, setLocalVal] = useState(value.toString());
@@ -34,6 +36,65 @@ function SortInput({ value, max, onChange }: { value: number; max: number; onCha
       max={max}
       className="w-16 px-2 py-1 text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500 outline-none"
     />
+  );
+}
+
+function DropZone({ index, onDrop }: { index: number, onDrop: (sourceId: number, targetIndex: number) => void }) {
+  const { isDroppable, isHovered, droppableProps } = useDroppable('student-sort', (item) => {
+    onDrop(item.id as number, index);
+  });
+
+  return (
+    <tr {...droppableProps}>
+      <td colSpan={4} className="p-0">
+        <div 
+          className={`h-1.5 transition-all duration-200 ${
+            isHovered 
+              ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.8)] scale-y-100' 
+              : isDroppable
+                ? 'bg-slate-200 dark:bg-slate-800 scale-y-100'
+                : 'bg-transparent scale-y-0 h-0'
+          }`}
+        />
+      </td>
+    </tr>
+  );
+}
+
+function DraggableStudentRow({ item, index, activeCount, handlePositionChange, handleWithdraw, onDrop }: any) {
+  const { onMouseDown } = useDraggable({
+    id: item.id,
+    type: 'student-sort',
+    data: { title: `Déplacer : ${item.student.last_name}` }
+  });
+
+  return (
+    <>
+      <DropZone index={index} onDrop={onDrop} />
+      <tr className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors bg-white dark:bg-slate-900">
+        <td className="px-4 py-2 w-10 text-center text-slate-400 cursor-grab active:cursor-grabbing hover:text-blue-500 transition-colors" onMouseDown={onMouseDown}>
+          <GripVertical size={16} />
+        </td>
+        <td className="px-4 py-2 text-center w-24">
+          <SortInput
+            value={item.pos}
+            max={activeCount}
+            onChange={(newVal) => handlePositionChange(item.id, newVal)}
+          />
+        </td>
+        <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-200">
+          {item.student.last_name} {item.student.post_name} {item.student.first_name}
+        </td>
+        <td className="px-4 py-2 text-right">
+          <button 
+            onClick={() => handleWithdraw(item.id)}
+            className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors"
+          >
+            Retirer
+          </button>
+        </td>
+      </tr>
+    </>
   );
 }
 
@@ -147,6 +208,41 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
     });
   };
 
+  const handleDrop = (sourceId: number, targetIndex: number) => {
+    setStudentOrder(prev => {
+      const copy = prev.map(s => ({...s}));
+      const sourceIndex = copy.findIndex(item => item.id === sourceId);
+      if (sourceIndex === -1 || copy[sourceIndex].isWithdrawn) return prev;
+      
+      const item = copy[sourceIndex];
+      copy.splice(sourceIndex, 1);
+      
+      // Calculate where to insert
+      let activeSeen = 0;
+      let insertIndex = copy.length;
+      for (let i = 0; i < copy.length; i++) {
+        if (!copy[i].isWithdrawn) {
+          if (activeSeen === targetIndex) {
+            insertIndex = i;
+            break;
+          }
+          activeSeen++;
+        }
+      }
+      
+      copy.splice(insertIndex, 0, item);
+      
+      // Recalculate positions
+      let posCounter = 1;
+      copy.forEach(item => {
+        if (!item.isWithdrawn) {
+          item.pos = posCounter++;
+        }
+      });
+      return copy;
+    });
+  };
+
   const handleWithdraw = (studentId: number) => {
     setStudentOrder(prev => {
       const copy = prev.map(s => ({...s}));
@@ -245,34 +341,26 @@ export default function CustomSortModal({ isOpen, onClose, students, onSave, exi
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
+                  <th className="px-4 py-3 text-xs font-bold text-slate-500 w-10"></th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24 text-center">Position</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Élève</th>
                   <th className="px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-24 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {studentOrder.filter(s => !s.isWithdrawn).map((item) => (
-                  <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-2 text-center">
-                      <SortInput
-                        value={item.pos}
-                        max={studentOrder.filter(s => !s.isWithdrawn).length}
-                        onChange={(newVal) => handlePositionChange(item.id, newVal)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-200">
-                      {item.student.last_name} {item.student.post_name} {item.student.first_name}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <button 
-                        onClick={() => handleWithdraw(item.id)}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors"
-                      >
-                        Retirer
-                      </button>
-                    </td>
-                  </tr>
+                {studentOrder.filter(s => !s.isWithdrawn).map((item, idx) => (
+                  <DraggableStudentRow
+                    key={item.id}
+                    item={item}
+                    index={idx}
+                    activeCount={studentOrder.filter(s => !s.isWithdrawn).length}
+                    handlePositionChange={handlePositionChange}
+                    handleWithdraw={handleWithdraw}
+                    onDrop={handleDrop}
+                  />
                 ))}
+                {/* Last DropZone */}
+                <DropZone index={studentOrder.filter(s => !s.isWithdrawn).length} onDrop={handleDrop} />
               </tbody>
             </table>
           </div>
