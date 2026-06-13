@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { gradebookStore, getCellKey } from '../../../context/gradebookSelection';
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
@@ -59,6 +60,75 @@ export default function ClassGradeTable({
 
   const activeStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] !== -1);
   const withdrawnStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] === -1);
+
+  // Copier-coller global pour le Gradebook
+  useEffect(() => {
+    const handleGlobalCopy = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'c') {
+        // Ne pas intercepter si on est en train d'éditer ou de sélectionner du texte normal
+        if (gradebookStore.getState().isEditing) return;
+        
+        const state = gradebookStore.getState();
+        const active = state.activeCell;
+        
+        if (state.selectedCells.size > 0 || active) {
+          e.preventDefault();
+          const cells = state.selectedCells.size > 0 ? Array.from(state.selectedCells) : [getCellKey(active!)];
+          
+          const exportData = cells.map(key => {
+             const val = gradesMap.get(key);
+             return val !== undefined ? val : '';
+          }).join('\t');
+          
+          navigator.clipboard.writeText(exportData);
+          // Petite notification ou indication visuelle (idéalement via Toast)
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleGlobalCopy);
+    return () => window.removeEventListener('keydown', handleGlobalCopy);
+  }, [gradesMap]);
+
+  // Écoute des commandes venant de la Command Palette
+  useEffect(() => {
+    const handleClearCell = () => {
+      const state = gradebookStore.getState();
+      if (state.activeCell) {
+        onGradeUpdate(state.activeCell.studentId, state.activeCell.subjectId, state.activeCell.period, null);
+      }
+    };
+
+    const handleMaxCell = () => {
+      const state = gradebookStore.getState();
+      if (state.activeCell) {
+        // Trouver la matière pour obtenir le max
+        const subject = displayedSubjects.find(s => s.id === state.activeCell!.subjectId);
+        if (subject) {
+          let max = 0;
+          switch (state.activeCell.period) {
+            case 'P1': max = subject.max_p1; break;
+            case 'P2': max = subject.max_p2; break;
+            case 'P3': max = subject.max_p3; break;
+            case 'P4': max = subject.max_p4; break;
+            case 'EXAM1': max = subject.max_exam1; break;
+            case 'EXAM2': max = subject.max_exam2; break;
+          }
+          if (max > 0) {
+            onGradeUpdate(state.activeCell.studentId, state.activeCell.subjectId, state.activeCell.period, max);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('gradebook:clearCell', handleClearCell);
+    window.addEventListener('gradebook:maxCell', handleMaxCell);
+    
+    return () => {
+      window.removeEventListener('gradebook:clearCell', handleClearCell);
+      window.removeEventListener('gradebook:maxCell', handleMaxCell);
+    };
+  }, [onGradeUpdate, displayedSubjects]);
 
   return (
     <table className="w-full border-collapse min-w-max">

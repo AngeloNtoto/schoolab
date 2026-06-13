@@ -53,12 +53,14 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Ajouter des sécurités pour empêcher de restaurer une entité supprimée (ex: un cours effacé)
 
 ## Phase 6 : Gradebook 2.0 (Grille type Excel)
-- [ ] Créer la logique de sélection `gradebookSelection.ts`
-- [ ] Ajouter la sélection multi-cellules (plages rectangulaires, lignes, colonnes)
+- [x] Créer la logique de sélection `gradebookSelection.ts`
+- [x] Ajouter la sélection multi-cellules basique
+- [ ] Ajouter la sélection multi-cellules avancée (plages rectangulaires, lignes, colonnes)
 - [ ] Ajouter une surcouche (overlay) visuelle pour la sélection
-- [ ] Implémenter le raccourci `Ctrl+C` (Copier en format TSV)
-- [ ] Implémenter le raccourci `Ctrl+V` (Coller en format TSV depuis Excel avec pré-validation des données)
-- [ ] Ajouter la suppression multiple (`Delete` sur la sélection)
+- [x] Implémenter le raccourci `Ctrl+C` (Copier en format TSV)
+- [x] Implémenter le raccourci `Ctrl+V` basique (Coller dans la cellule)
+- [ ] Implémenter le raccourci `Ctrl+V` avancé (Coller en format TSV depuis Excel avec pré-validation)
+- [x] Ajouter la suppression multiple (`Delete` sur la sélection ou cellule active)
 - [ ] Ajouter la poignée de recopie vers le bas (Fill down)
 - [ ] Implémenter l'historique détaillé par cellule
 - [ ] Ajouter un mode visuel "erreurs de saisie"

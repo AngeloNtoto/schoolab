@@ -69,6 +69,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'P1')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="P1"
                 maxValue={subject.max_p1}
@@ -81,6 +82,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'P2')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="P2"
                 maxValue={subject.max_p2}
@@ -93,6 +95,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'EXAM1')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="EXAM1"
                 isExam
@@ -112,6 +115,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'P3')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="P3"
                 maxValue={subject.max_p3}
@@ -124,6 +128,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'P4')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="P4"
                 maxValue={subject.max_p4}
@@ -136,6 +141,7 @@ const StudentRow = React.memo(({
               <GradeCell
                 value={getGrade(subject.id, 'EXAM2')}
                 studentIdx={idx}
+                studentId={student.id}
                 subjectId={subject.id}
                 period="EXAM2"
                 isExam

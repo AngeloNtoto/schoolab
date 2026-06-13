@@ -219,6 +219,18 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
           type: 'history.recentChanges',
           title: 'Historique & Checkpoints'
         })
+      },
+      {
+        id: 'gradebook.action.clearCell',
+        title: 'Effacer la cellule active',
+        category: 'Grille de points',
+        run: () => window.dispatchEvent(new CustomEvent('gradebook:clearCell'))
+      },
+      {
+        id: 'gradebook.action.maxCell',
+        title: 'Mettre la note au maximum (Cellule active)',
+        category: 'Grille de points',
+        run: () => window.dispatchEvent(new CustomEvent('gradebook:maxCell'))
       }
     ];
 
