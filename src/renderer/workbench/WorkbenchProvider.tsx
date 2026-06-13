@@ -30,6 +30,7 @@ interface WorkbenchContextType {
   panels: Panel[];
   activePanelId: string | null;
   openPanel: (panel: Panel) => void;
+  updatePanelProps: (id: string, props: any) => void;
   closePanel: (id: string) => void;
   closeAllPanels: () => void;
 }
@@ -110,6 +111,18 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
       return [...current, panel];
     });
     setActivePanelId(panel.id);
+  };
+
+  const updatePanelProps = (id: string, props: any) => {
+    setPanels(current => {
+      const panelIndex = current.findIndex(p => p.id === id);
+      if (panelIndex >= 0) {
+        const newPanels = [...current];
+        newPanels[panelIndex] = { ...newPanels[panelIndex], props: { ...newPanels[panelIndex].props, ...props } };
+        return newPanels;
+      }
+      return current;
+    });
   };
 
   const closePanel = (id: string) => {
@@ -279,7 +292,7 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
     <WorkbenchReactContext.Provider value={{ 
       executeCommand, commands, 
       tabs, activeTabId, openTab, closeTab, setActiveTab,
-      panels, activePanelId, openPanel, closePanel, closeAllPanels
+      panels, activePanelId, openPanel, updatePanelProps, closePanel, closeAllPanels
     }}>
       {children}
     </WorkbenchReactContext.Provider>

@@ -56,14 +56,14 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Créer la logique de sélection `gradebookSelection.ts`
 - [x] Ajouter la sélection multi-cellules basique
 - [x] Ajouter la sélection multi-cellules avancée (plages rectangulaires, lignes, colonnes)
-- [ ] Ajouter une surcouche (overlay) visuelle pour la sélection
+- [x] Ajouter une surcouche (overlay) visuelle pour la sélection
 - [x] Implémenter le raccourci `Ctrl+C` (Copier en format TSV)
 - [x] Implémenter le raccourci `Ctrl+V` basique (Coller dans la cellule)
 - [x] Implémenter le raccourci `Ctrl+V` avancé (Coller en format TSV depuis Excel avec pré-validation)
 - [x] Ajouter la suppression multiple (`Delete` sur la sélection ou cellule active)
-- [ ] Ajouter la poignée de recopie vers le bas (Fill down)
+- [x] Ajouter la poignée de recopie vers le bas (Fill down)
 - [ ] Implémenter l'historique détaillé par cellule
-- [ ] Ajouter un mode visuel "erreurs de saisie"
+- [x] Ajouter un mode visuel "erreurs de saisie"
 
 ## Phase 7 : Menus Contextuels et Drag & Drop
 - [x] Créer un composant global `ContextMenuLayer.tsx`

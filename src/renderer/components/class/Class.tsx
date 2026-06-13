@@ -28,7 +28,7 @@ import { useWorkbench } from "../../workbench/WorkbenchProvider";
  */
 export default function Class() {
     const { id } = useParams<{ id: string }>();
-    const { openPanel } = useWorkbench();
+    const { openPanel, updatePanelProps, panels } = useWorkbench();
     
     const [editModal, setEditModal] = useState(false);
     const [repechageModal, setRepechageModal] = useState(false);
@@ -98,11 +98,38 @@ export default function Class() {
     // Callback pour tout rafraîchir d'un coup (matières + élèves + notes) sans redemander le mdp
     const refreshAll = useCallback(async () => {
         await Promise.all([
-            refreshSubjects(),
             refreshStudents(),
-            refreshGrades()
+            refreshGrades(),
+            refreshSubjects()
         ]);
-    }, [refreshSubjects, refreshStudents, refreshGrades]);
+    }, [refreshStudents, refreshGrades, refreshSubjects]);
+
+    // Hot-reload synchronization with side panels
+    useEffect(() => {
+        if (!id) return;
+        panels.forEach(p => {
+            if (
+                p.id.startsWith('bulletin-') || 
+                p.id === `class-bulletins-${id}` || 
+                p.id === `class-coupons-${id}` || 
+                p.id === `palmares-${id}`
+            ) {
+                updatePanelProps(p.id, {
+                    classInfo,
+                    students,
+                    subjects,
+                    domains,
+                    grades,
+                    allGrades: grades, // ClassCoupons uses allGrades
+                    schoolInfo: schoolSettings,
+                    schoolName: schoolSettings.name,
+                    schoolCity: schoolSettings.city,
+                    academicYear
+                });
+            }
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [grades, students, subjects]);
 
     // Callback pour ouvrir le modal d'édition avec un élève spécifique
     const handleEditStudent = useCallback((studentId: number) => {

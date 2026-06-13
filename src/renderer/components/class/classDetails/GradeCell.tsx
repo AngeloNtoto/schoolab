@@ -282,6 +282,13 @@ const GradeCell = React.memo(({
         </span>
       )}
 
+      {isActive && !isEditing && !disabled && !locked && (
+        <div 
+           className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-600 border border-white cursor-crosshair z-30 shadow-sm" 
+           title="Poignée de recopie (Bientôt disponible)"
+        />
+      )}
+
       {isEditing && !disabled && !locked && (
         <input
           ref={inputRef}
