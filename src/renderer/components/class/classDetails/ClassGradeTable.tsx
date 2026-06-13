@@ -85,10 +85,45 @@ export default function ClassGradeTable({
         }
       }
     };
+    const handleGlobalPaste = async (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'v') {
+        if (gradebookStore.getState().isEditing) return;
+        
+        const state = gradebookStore.getState();
+        if (state.selectedCells.size > 0 || state.activeCell) {
+          try {
+            const text = await navigator.clipboard.readText();
+            if (!text) return;
+
+            // Détection du séparateur (tabulation pour Excel/Copie web, ou nouvelle ligne)
+            const values = text.split(/[\t\n\r]+/).filter(v => v !== '');
+            const cells = state.selectedCells.size > 0 ? Array.from(state.selectedCells) : [getCellKey(state.activeCell!)];
+
+            // Appliquer les valeurs sur les cellules sélectionnées
+            for (let i = 0; i < Math.min(values.length, cells.length); i++) {
+              const cellKey = cells[i];
+              const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
+              const valNum = parseFloat(values[i].replace(',', '.'));
+              if (!isNaN(valNum)) {
+                onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, valNum);
+              } else if (values[i].trim() === '-' || values[i].trim() === '') {
+                onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, null);
+              }
+            }
+          } catch (err) {
+            console.error('Erreur de collage', err);
+          }
+        }
+      }
+    };
     
     window.addEventListener('keydown', handleGlobalCopy);
-    return () => window.removeEventListener('keydown', handleGlobalCopy);
-  }, [gradesMap]);
+    window.addEventListener('keydown', handleGlobalPaste);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalCopy);
+      window.removeEventListener('keydown', handleGlobalPaste);
+    };
+  }, [gradesMap, onGradeUpdate]);
 
   // Écoute des commandes venant de la Command Palette
   useEffect(() => {
@@ -166,21 +201,29 @@ export default function ClassGradeTable({
             return (
               <React.Fragment key={subject.id}>
                 {selectedPeriods.has('P1') && (
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                  <th 
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P1', activeStudents.map(s => s.id), e.shiftKey)}
+                    className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
                     P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
                   </th>
                 )}
 
                 {selectedPeriods.has('P2') && (
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                  <th 
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P2', activeStudents.map(s => s.id), e.shiftKey)}
+                    className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
                     P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
                   </th>
                 )}
 
                 {selectedPeriods.has('EXAM1') && (
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                  <th 
+                    onClick={(e) => hasExam1 && gradebookStore.selectColumn(subject.id, 'EXAM1', activeStudents.map(s => s.id), e.shiftKey)}
+                    className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam1
-                      ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30'
+                      ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors'
                       : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
                   }`}>
                     Ex1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">
@@ -196,21 +239,29 @@ export default function ClassGradeTable({
                 )}
 
                 {selectedPeriods.has('P3') && (
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                  <th 
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P3', activeStudents.map(s => s.id), e.shiftKey)}
+                    className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
                     P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
                   </th>
                 )}
 
                 {selectedPeriods.has('P4') && (
-                  <th className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px]">
+                  <th 
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P4', activeStudents.map(s => s.id), e.shiftKey)}
+                    className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
                     P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
                   </th>
                 )}
 
                 {selectedPeriods.has('EXAM2') && (
-                  <th className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
+                  <th 
+                    onClick={(e) => hasExam2 && gradebookStore.selectColumn(subject.id, 'EXAM2', activeStudents.map(s => s.id), e.shiftKey)}
+                    className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam2
-                      ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30'
+                      ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors'
                       : 'text-slate-400 dark:text-slate-600 bg-slate-100 dark:bg-slate-800 opacity-60'
                   }`}>
                     Ex2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">

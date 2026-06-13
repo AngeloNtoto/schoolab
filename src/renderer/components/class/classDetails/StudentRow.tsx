@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { gradebookStore } from '../../../context/gradebookSelection';
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import GradeCell from './GradeCell';
@@ -46,14 +47,31 @@ const StudentRow = React.memo(({
     return (p3 || 0) + (p4 || 0) + (ex2 || 0);
   };
 
+  const availableColumns = useMemo(() => {
+    const cols: {subjectId: number, period: string}[] = [];
+    subjects.forEach(subject => {
+      if (selectedPeriods.has('P1')) cols.push({subjectId: subject.id, period: 'P1'});
+      if (selectedPeriods.has('P2')) cols.push({subjectId: subject.id, period: 'P2'});
+      if (selectedPeriods.has('EXAM1') && subject.max_exam1 > 0) cols.push({subjectId: subject.id, period: 'EXAM1'});
+      if (selectedPeriods.has('P3')) cols.push({subjectId: subject.id, period: 'P3'});
+      if (selectedPeriods.has('P4')) cols.push({subjectId: subject.id, period: 'P4'});
+      if (selectedPeriods.has('EXAM2') && subject.max_exam2 > 0) cols.push({subjectId: subject.id, period: 'EXAM2'});
+    });
+    return cols;
+  }, [subjects, selectedPeriods]);
+
   return (
     <tr className={`group border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
-      <td className={`sticky left-0 z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}>
+      <td 
+        onClick={(e) => gradebookStore.selectRow(student.id, availableColumns, e.shiftKey)}
+        className={`sticky left-0 z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
+      >
         {idx + 1}
       </td>
       <td
-        className={`sticky left-[40px] z-10 px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
+        className={`sticky left-[40px] z-10 px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
         onContextMenu={(e) => onContextMenu(e, student)}
+        onClick={(e) => gradebookStore.selectRow(student.id, availableColumns, e.shiftKey)}
       >
         {student.last_name} {student.post_name}
       </td>

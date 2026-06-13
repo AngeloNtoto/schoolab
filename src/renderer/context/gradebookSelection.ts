@@ -63,6 +63,30 @@ class GradebookStore {
     this.notify();
   }
 
+  selectColumn(subjectId: number, period: string, studentIds: number[], keepSelection: boolean = false) {
+    const newSelected = keepSelection ? new Set(this.state.selectedCells) : new Set<string>();
+    studentIds.forEach(id => {
+      newSelected.add(getCellKey({ studentId: id, subjectId, period }));
+    });
+    this.state = { ...this.state, selectedCells: newSelected, isEditing: false };
+    if (!this.state.activeCell && studentIds.length > 0) {
+      this.state.activeCell = { studentId: studentIds[0], subjectId, period };
+    }
+    this.notify();
+  }
+
+  selectRow(studentId: number, columns: {subjectId: number, period: string}[], keepSelection: boolean = false) {
+    const newSelected = keepSelection ? new Set(this.state.selectedCells) : new Set<string>();
+    columns.forEach(col => {
+      newSelected.add(getCellKey({ studentId, subjectId: col.subjectId, period: col.period }));
+    });
+    this.state = { ...this.state, selectedCells: newSelected, isEditing: false };
+    if (!this.state.activeCell && columns.length > 0) {
+      this.state.activeCell = { studentId, subjectId: columns[0].subjectId, period: columns[0].period };
+    }
+    this.notify();
+  }
+
   clearSelection() {
     this.state = { ...this.state, selectedCells: new Set(), activeCell: null, isEditing: false };
     this.notify();

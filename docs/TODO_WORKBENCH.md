@@ -55,11 +55,11 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 ## Phase 6 : Gradebook 2.0 (Grille type Excel)
 - [x] Créer la logique de sélection `gradebookSelection.ts`
 - [x] Ajouter la sélection multi-cellules basique
-- [ ] Ajouter la sélection multi-cellules avancée (plages rectangulaires, lignes, colonnes)
+- [x] Ajouter la sélection multi-cellules avancée (plages rectangulaires, lignes, colonnes)
 - [ ] Ajouter une surcouche (overlay) visuelle pour la sélection
 - [x] Implémenter le raccourci `Ctrl+C` (Copier en format TSV)
 - [x] Implémenter le raccourci `Ctrl+V` basique (Coller dans la cellule)
-- [ ] Implémenter le raccourci `Ctrl+V` avancé (Coller en format TSV depuis Excel avec pré-validation)
+- [x] Implémenter le raccourci `Ctrl+V` avancé (Coller en format TSV depuis Excel avec pré-validation)
 - [x] Ajouter la suppression multiple (`Delete` sur la sélection ou cellule active)
 - [ ] Ajouter la poignée de recopie vers le bas (Fill down)
 - [ ] Implémenter l'historique détaillé par cellule
