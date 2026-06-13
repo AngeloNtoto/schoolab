@@ -3,6 +3,7 @@ import Bulletin from '../components/print/Bulletin';
 import ClassBulletins from '../components/print/ClassBulletins';
 import ClassCoupons from '../components/print/ClassCoupons';
 import Palmares from '../components/print/Palmares';
+import RecentChanges from './RecentChanges';
 
 export interface DocumentRegistration {
   type: string;
@@ -37,3 +38,4 @@ documentRegistry.register('print.bulletin', 'Bulletin', Bulletin);
 documentRegistry.register('print.classBulletins', 'Bulletins de Classe', ClassBulletins);
 documentRegistry.register('print.classCoupons', 'Coupons', ClassCoupons);
 documentRegistry.register('print.palmares', 'Palmarès', Palmares);
+documentRegistry.register('history.recentChanges', 'Historique & Checkpoints', RecentChanges);

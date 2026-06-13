@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { gradeService, Grade } from '../services/gradeService';
+import { gradeActions } from '../services/gradeActions';
 import { useCache } from '../context/CacheContext';
 import { networkService } from '../services/networkService';
 
@@ -103,7 +104,7 @@ export function useGrades(classId: number) {
   // Helper pour mettre à jour une note localement et dans la BDD
   const updateGrade = async (studentId: number, subjectId: number, period: string, value: number | null) => {
     try {
-      await gradeService.updateGrade(studentId, subjectId, period, value);
+      await gradeActions.updateGrade(studentId, subjectId, period, value);
       
       // Mettre à jour l'état local pour une réactivité immédiate
       setGrades(prev => {

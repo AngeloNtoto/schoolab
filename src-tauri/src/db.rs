@@ -184,6 +184,31 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             last_modified_at TEXT DEFAULT '1970-01-01 00:00:00',
             FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
         );
+        CREATE TABLE IF NOT EXISTS checkpoints (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS operation_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity_type TEXT NOT NULL,
+            entity_id INTEGER NOT NULL,
+            action_type TEXT NOT NULL,
+            previous_state TEXT,
+            new_state TEXT,
+            description TEXT DEFAULT '',
+            checkpoint_id INTEGER REFERENCES checkpoints(id) ON DELETE SET NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS workspace_state (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT UNIQUE NOT NULL,
+            state_json TEXT NOT NULL,
+            updated_at TEXT DEFAULT (datetime('now'))
+        );
     ",
     )
     .map_err(|e| e.to_string())?;

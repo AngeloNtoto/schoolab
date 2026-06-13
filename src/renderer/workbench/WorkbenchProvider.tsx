@@ -209,6 +209,16 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
         title: 'Fermer le panneau latéral',
         category: 'Affichage',
         run: () => closeAllPanels()
+      },
+      {
+        id: 'workbench.action.openHistory',
+        title: 'Voir l\'historique',
+        category: 'Historique',
+        run: () => openPanel({
+          id: 'history',
+          type: 'history.recentChanges',
+          title: 'Historique & Checkpoints'
+        })
       }
     ];
 

@@ -37,12 +37,12 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Sauvegarder et restaurer les tailles des différents panneaux du Workbench
 
 ## Phase 4 : History Engine V1 (Historique)
-- [ ] Ajouter les migrations SQLite pour `operation_log`, `checkpoints` et `workspace_state`
-- [ ] Créer le service `historyService.ts`
-- [ ] Créer le fichier `gradeActions.ts` (actions métier pour les notes)
-- [ ] Brancher l'action `updateGrade` sur le système d'historique (Journaliser chaque création, modification ou suppression de note)
-- [ ] Créer un panneau latéral "Modifications récentes"
-- [ ] Ajouter la fonctionnalité de création de "Checkpoints" manuels
+- [x] Ajouter les migrations SQLite pour `operation_log`, `checkpoints` et `workspace_state`
+- [x] Créer le service `historyService.ts`
+- [x] Créer le fichier `gradeActions.ts` (actions métier pour les notes)
+- [x] Brancher l'action `updateGrade` sur le système d'historique (Journaliser chaque création, modification ou suppression de note)
+- [x] Créer un panneau latéral "Modifications récentes"
+- [x] Ajouter la fonctionnalité de création de "Checkpoints" manuels
 
 ## Phase 5 : Undo / Redo V1
 - [ ] Créer le service `undoRedoService.ts`
