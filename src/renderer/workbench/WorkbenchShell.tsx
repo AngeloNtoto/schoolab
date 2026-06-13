@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import TabBar from './TabBar';
 import SplitView from './SplitView';
 import { useWorkbench } from './WorkbenchProvider';
 import { documentRegistry } from './documentRegistry';
+import { undoRedoService } from '../services/undoRedoService';
 
 function PanelContent({ panel }: { panel: any }) {
   const doc = documentRegistry.get(panel.type);
@@ -17,10 +18,45 @@ function PanelContent({ panel }: { panel: any }) {
 
 export default function WorkbenchShell() {
   const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [statusMessage, setStatusMessage] = useState('Prêt');
   const location = useLocation();
   const isSettings = location.pathname === '/settings';
   
   const { panels, activePanelId, closePanel } = useWorkbench();
+
+  // Écoute des raccourcis claviers globaux pour Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Ignore if typing in an input or textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        const success = await undoRedoService.undo();
+        if (success) {
+          setStatusMessage('Dernière action annulée (Undo)');
+          setTimeout(() => setStatusMessage('Prêt'), 3000);
+        } else {
+          setStatusMessage('Rien à annuler');
+          setTimeout(() => setStatusMessage('Prêt'), 3000);
+        }
+      }
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        const success = await undoRedoService.redo();
+        if (success) {
+          setStatusMessage('Action rétablie (Redo)');
+          setTimeout(() => setStatusMessage('Prêt'), 3000);
+        } else {
+          setStatusMessage('Rien à rétablir');
+          setTimeout(() => setStatusMessage('Prêt'), 3000);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const activePanel = panels.find(p => p.id === activePanelId) || panels[panels.length - 1];
 
@@ -57,6 +93,15 @@ export default function WorkbenchShell() {
           showRight={panels.length > 0} 
           initialLeftWidth={800}
         />
+        {/* Status Bar */}
+        <div className="h-6 bg-blue-600 text-white flex items-center px-3 text-xs shrink-0 select-none">
+          <div className="flex-1 flex items-center gap-4">
+            <span>{statusMessage}</span>
+          </div>
+          <div className="flex items-center gap-4 text-blue-100">
+            <span>Schoolab Workbench</span>
+          </div>
+        </div>
       </main>
     </div>
   );

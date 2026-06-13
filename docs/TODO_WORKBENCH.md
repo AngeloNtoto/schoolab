@@ -45,12 +45,12 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Ajouter la fonctionnalité de création de "Checkpoints" manuels
 
 ## Phase 5 : Undo / Redo V1
-- [ ] Créer le service `undoRedoService.ts`
-- [ ] Définir les "opérations inverses" pour les modifications de notes
-- [ ] Implémenter le Undo/Redo pour les actions : `grade.update`, `grade.delete`, `grade.bulkUpdate`, et `student.update`
-- [ ] Ajouter les raccourcis globaux `Ctrl+Z` (Undo) et `Ctrl+Y` (Redo)
-- [ ] Ajouter des indicateurs visuels (Status bar ou Toast) pour l'état du Undo/Redo
-- [ ] Ajouter des sécurités pour empêcher de restaurer une entité supprimée (ex: un cours effacé)
+- [x] Créer le service `undoRedoService.ts`
+- [x] Définir les "opérations inverses" pour les modifications de notes
+- [x] Implémenter le Undo/Redo pour les actions : `grade.update`, `grade.delete`, `grade.bulkUpdate`, et `student.update`
+- [x] Ajouter les raccourcis globaux `Ctrl+Z` (Undo) et `Ctrl+Y` (Redo)
+- [x] Ajouter des indicateurs visuels (Status bar ou Toast) pour l'état du Undo/Redo
+- [x] Ajouter des sécurités pour empêcher de restaurer une entité supprimée (ex: un cours effacé)
 
 ## Phase 6 : Gradebook 2.0 (Grille type Excel)
 - [ ] Créer la logique de sélection `gradebookSelection.ts`
