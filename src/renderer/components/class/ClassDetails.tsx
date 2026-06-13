@@ -28,6 +28,7 @@ interface ClassDetailsProps {
   onUpdateGrade: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
   onAddStudent: (student: Partial<Student>) => Promise<void>;
   onDeleteStudent: (studentId: number) => Promise<void>;
+  onDeleteMultipleStudents: (studentIds: number[]) => Promise<void>;
   onImportStudents: (students: Partial<Student>[]) => Promise<void>;
   onRefreshSubjects: () => Promise<void>;
   onRefreshAll: () => Promise<void>;
@@ -50,6 +51,7 @@ export default function ClassDetails({
   onUpdateGrade,
   onAddStudent,
   onDeleteStudent,
+  onDeleteMultipleStudents,
   onImportStudents,
   onRefreshSubjects,
   onRefreshAll,
@@ -75,6 +77,7 @@ export default function ClassDetails({
   const [showStats, setShowStats] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [correctionMaxInput, setCorrectionMaxInput] = useState('');
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; student: Student } | null>(null);
@@ -283,6 +286,26 @@ export default function ClassDetails({
     });
     if (confirmed) {
       await onDeleteStudent(contextMenu.student.id);
+      setSelectedStudentIds(prev => {
+        const next = new Set(prev);
+        next.delete(contextMenu.student.id);
+        return next;
+      });
+    }
+  };
+
+  const handleDeleteMultipleStudents = async () => {
+    if (selectedStudentIds.size === 0) return;
+    const confirmed = await toast.confirm({
+      title: 'Supprimer les élèves',
+      message: `Êtes-vous sûr de vouloir supprimer ${selectedStudentIds.size} élève(s) ? Cette action est irréversible.`,
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger'
+    });
+    if (confirmed) {
+      await onDeleteMultipleStudents(Array.from(selectedStudentIds));
+      setSelectedStudentIds(new Set());
     }
   };
 
@@ -351,6 +374,8 @@ export default function ClassDetails({
           onToggleFullscreen={() => setIsFullscreen(prev => !prev)}
           onShowAddSubject={() => setShowAddSubjectModal(true)}
           onShowAddStudent={() => setShowAddModal(true)}
+          selectedStudentIds={selectedStudentIds}
+          onDeleteSelected={handleDeleteMultipleStudents}
           onCreateCustomSort={handleCreateCustomSort}
           onEditCustomSort={handleEditCustomSort}
           onDeleteCustomSort={handleDeleteCustomSort}
@@ -387,6 +412,22 @@ export default function ClassDetails({
               correctionMax={correctionMax}
               showStats={showStats}
               columnStats={columnStats}
+              selectedStudentIds={selectedStudentIds}
+              onToggleStudentSelection={(id) => {
+                setSelectedStudentIds(prev => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                });
+              }}
+              onSelectAll={(selectAll) => {
+                if (selectAll) {
+                  setSelectedStudentIds(new Set(filteredAndSortedStudents.map(s => s.id)));
+                } else {
+                  setSelectedStudentIds(new Set());
+                }
+              }}
               onContextMenu={handleContextMenu}
               onGradeUpdate={onGradeUpdate}
             />

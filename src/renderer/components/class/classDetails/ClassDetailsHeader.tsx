@@ -62,6 +62,8 @@ interface ClassDetailsHeaderProps {
   onToggleFullscreen: () => void;
   onShowAddSubject: () => void;
   onShowAddStudent: () => void;
+  selectedStudentIds: Set<number>;
+  onDeleteSelected: () => void;
   onCreateCustomSort: () => void;
   onEditCustomSort: (sort: CustomSort) => void;
   onDeleteCustomSort: (sortId: number) => Promise<void>;
@@ -104,6 +106,8 @@ export default function ClassDetailsHeader({
   onToggleFullscreen,
   onShowAddSubject,
   onShowAddStudent,
+  selectedStudentIds,
+  onDeleteSelected,
   onCreateCustomSort,
   onEditCustomSort,
   onDeleteCustomSort
@@ -382,6 +386,15 @@ export default function ClassDetailsHeader({
               <Plus size={14} />
               <span>Ajouter un élève</span>
             </button>
+            {selectedStudentIds.size > 0 && (
+              <button
+                onClick={onDeleteSelected}
+                className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white px-4 py-2.5 rounded-xl border border-red-500/30 font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95"
+              >
+                <Trash2 size={14} />
+                <span>Supprimer ({selectedStudentIds.size})</span>
+              </button>
+            )}
           </div>
         </div>
 

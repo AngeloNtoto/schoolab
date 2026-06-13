@@ -47,7 +47,7 @@ export default function Class() {
     const [academicYear, setAcademicYear] = useState<string>('');
     
     // Hooks personnalisés pour les élèves et notes (avec cache)
-    const { students, loading: studentsLoading, addStudent, deleteStudent, importStudents, updateStudent, refresh: refreshStudents } = useStudents(Number(id));
+    const { students, loading: studentsLoading, addStudent, deleteStudent, deleteMultipleStudents, importStudents, updateStudent, refresh: refreshStudents } = useStudents(Number(id));
     const { grades, gradesMap, loading: gradesLoading, updateGrade, refresh: refreshGrades } = useGrades(Number(id));
     
     // Chargement initial des données de la classe et paramètres école
@@ -277,6 +277,7 @@ export default function Class() {
                     onUpdateGrade={updateGrade}
                     onAddStudent={addStudent}
                     onDeleteStudent={deleteStudent}
+                    onDeleteMultipleStudents={deleteMultipleStudents}
                     onImportStudents={importStudents}
                     onRefreshSubjects={refreshSubjects}
                     onRefreshAll={refreshAll}

@@ -208,6 +208,27 @@ export function useStudents(classId: number) {
   };
 
   /**
+   * Wrapper autour de studentService.deleteMultipleStudents avec gestion du cache.
+   */
+  const deleteMultipleStudents = async (ids: number[]): Promise<void> => {
+    await studentService.deleteMultipleStudents(ids);
+
+    cache.invalidate(cacheKey);
+
+    try { 
+      window.dispatchEvent(new CustomEvent('db:changed', { detail: { classId, type: 'student_update' } })); 
+      await networkService.broadcastDbChange({
+        type: 'student_update',
+        classId: classId,
+        senderId: 'desktop'
+      });
+    } catch (e) { 
+      console.error('dispatch student_update failed', e); 
+    }
+    await loadStudents(true);
+  };
+
+  /**
    * Met à jour un élève spécifique dans le state local et le cache
    * SANS recharger tous les élèves depuis la base de données.
    * 
@@ -238,6 +259,7 @@ export function useStudents(classId: number) {
   // Cela garantit que l'UI est toujours à jour après chaque opération
   return { 
     deleteStudent,      // Fonction wrappée avec gestion du cache
+    deleteMultipleStudents,
     addStudent,         // Fonction wrappée avec gestion du cache
     importStudents,     // Fonction wrappée avec gestion du cache
     updateStudent,      // Fonction pour mettre à jour un élève sans tout recharger

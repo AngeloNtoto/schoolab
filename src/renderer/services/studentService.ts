@@ -121,6 +121,16 @@ class StudentService {
   }
 
   /**
+   * Supprime plusieurs élèves.
+   * @param ids Les identifiants des élèves à supprimer
+   */
+  async deleteMultipleStudents(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    const placeholders = ids.map(() => '?').join(',');
+    await dbService.execute(`DELETE FROM students WHERE id IN (${placeholders})`, ids);
+  }
+
+  /**
    * Importe plusieurs élèves en une seule fois.
    * Cette fonction est conçue pour gérer l'importation en masse depuis des fichiers Excel.
    * 

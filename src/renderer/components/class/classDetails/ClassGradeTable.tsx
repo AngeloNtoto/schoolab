@@ -18,6 +18,9 @@ interface ClassGradeTableProps {
   columnStats: ColumnStats;
   onContextMenu: (e: React.MouseEvent, student: Student) => void;
   onGradeUpdate: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  selectedStudentIds: Set<number>;
+  onToggleStudentSelection: (studentId: number) => void;
+  onSelectAll: (selectAll: boolean) => void;
 }
 
 const GradeStatCell = ({ statKey, columnStats, borderClass = 'border-r border-slate-200 dark:border-slate-700' }: {
@@ -47,7 +50,10 @@ export default function ClassGradeTable({
   showStats,
   columnStats,
   onContextMenu,
-  onGradeUpdate
+  onGradeUpdate,
+  selectedStudentIds,
+  onToggleStudentSelection,
+  onSelectAll
 }: ClassGradeTableProps) {
   const visibleGradeColumnCount = getVisibleGradeColumnCount(selectedPeriods);
   const orderMap = sortOrder.startsWith('custom_')
@@ -64,10 +70,23 @@ export default function ClassGradeTable({
     <table className="w-full border-collapse min-w-max">
       <thead className="sticky top-0 z-20 shadow-sm">
         <tr className="bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700">
-          <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
+          <th className="sticky left-0 z-40 bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center border-r border-slate-200 dark:border-slate-700 min-w-[30px] w-[30px]">
+            <input
+              type="checkbox"
+              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              checked={selectedStudentIds.size === filteredAndSortedStudents.length && filteredAndSortedStudents.length > 0}
+              ref={input => {
+                if (input) {
+                  input.indeterminate = selectedStudentIds.size > 0 && selectedStudentIds.size < filteredAndSortedStudents.length;
+                }
+              }}
+              onChange={(e) => onSelectAll(e.target.checked)}
+            />
+          </th>
+          <th className="sticky left-[30px] z-40 bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-black uppercase tracking-widest text-[9px] text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[40px] w-[40px]">
             #
           </th>
-          <th className="sticky left-[40px] z-40 bg-slate-100 dark:bg-slate-800 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px] whitespace-nowrap">
+          <th className="sticky left-[70px] z-40 bg-slate-100 dark:bg-slate-800 px-4 py-3 text-left font-bold text-slate-700 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 min-w-[200px] whitespace-nowrap">
             Élèves ({filteredAndSortedStudents.length})
           </th>
 
@@ -83,10 +102,11 @@ export default function ClassGradeTable({
         </tr>
 
         <tr className="border-b-2 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
-          <th className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]">
+          <th className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 min-w-[30px] w-[30px]" />
+          <th className="sticky left-[30px] z-30 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 text-center px-1 font-black text-slate-400 text-[9px] min-w-[40px] w-[40px]">
             #
           </th>
-          <th className="sticky left-[40px] z-30 bg-slate-50 dark:bg-slate-900 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400">
+          <th className="sticky left-[70px] z-30 bg-slate-50 dark:bg-slate-900 border-r-2 border-slate-300 dark:border-slate-600 text-left px-4 py-3 font-bold text-blue-700 dark:text-blue-400">
             Nom et PostNom
           </th>
           {displayedSubjects.map(subject => {
@@ -173,12 +193,14 @@ export default function ClassGradeTable({
             selectedPeriods={selectedPeriods}
             lockedPeriods={lockedPeriods}
             correctionMax={correctionMax}
+            isSelected={selectedStudentIds.has(student.id)}
+            onToggleSelection={() => onToggleStudentSelection(student.id)}
           />
         ))}
         {withdrawnStudents.length > 0 && (
           <>
             <tr>
-              <td colSpan={2 + displayedSubjects.length * visibleGradeColumnCount} className="bg-red-50/50 dark:bg-red-900/10 px-4 py-2 border-y border-red-200 dark:border-red-900/30">
+              <td colSpan={3 + displayedSubjects.length * visibleGradeColumnCount} className="bg-red-50/50 dark:bg-red-900/10 px-4 py-2 border-y border-red-200 dark:border-red-900/30">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-red-400"></span>
                   <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">
@@ -199,6 +221,8 @@ export default function ClassGradeTable({
                 selectedPeriods={selectedPeriods}
                 lockedPeriods={lockedPeriods}
                 correctionMax={correctionMax}
+                isSelected={selectedStudentIds.has(student.id)}
+                onToggleSelection={() => onToggleStudentSelection(student.id)}
               />
             ))}
           </>
@@ -208,10 +232,11 @@ export default function ClassGradeTable({
       {showStats && (
         <tfoot className="sticky bottom-0 z-10 bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-600 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <tr>
-            <td className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700">
+            <td className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700" />
+            <td className="sticky left-[30px] z-20 bg-slate-100 dark:bg-slate-800 px-1 py-2 text-center border-r border-slate-200 dark:border-slate-700">
               <span className="text-[9px] font-black text-slate-400 uppercase">Σ</span>
             </td>
-            <td className="sticky left-[40px] z-20 bg-slate-100 dark:bg-slate-800 px-4 py-2 border-r-2 border-slate-300 dark:border-slate-600">
+            <td className="sticky left-[70px] z-20 bg-slate-100 dark:bg-slate-800 px-4 py-2 border-r-2 border-slate-300 dark:border-slate-600">
               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Moy / Min / Max</span>
             </td>
             {displayedSubjects.map(subject => (
