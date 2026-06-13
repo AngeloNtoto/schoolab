@@ -12,6 +12,13 @@ export interface Tab {
   path: string;
 }
 
+export interface Panel {
+  id: string;
+  type: string;
+  title: string;
+  props?: any;
+}
+
 interface WorkbenchContextType {
   executeCommand: (id: string, payload?: any) => Promise<void>;
   commands: Command<any>[];
@@ -20,6 +27,11 @@ interface WorkbenchContextType {
   openTab: (tab: Tab) => void;
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
+  panels: Panel[];
+  activePanelId: string | null;
+  openPanel: (panel: Panel) => void;
+  closePanel: (id: string) => void;
+  closeAllPanels: () => void;
 }
 
 const WorkbenchReactContext = createContext<WorkbenchContextType | undefined>(undefined);
@@ -36,6 +48,10 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
     return [];
   });
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+
+  // Nouvel état pour les panneaux secondaires (Split View)
+  const [panels, setPanels] = useState<Panel[]>([]);
+  const [activePanelId, setActivePanelId] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,6 +97,34 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
       setActiveTabId(id);
       navigate(tab.path);
     }
+  };
+
+  // Gestion des panneaux secondaires
+  const openPanel = (panel: Panel) => {
+    setPanels(current => {
+      // Remplacer si un panel du même ID existe, sinon ajouter
+      const exists = current.find(p => p.id === panel.id);
+      if (exists) {
+        return current.map(p => p.id === panel.id ? panel : p);
+      }
+      return [...current, panel];
+    });
+    setActivePanelId(panel.id);
+  };
+
+  const closePanel = (id: string) => {
+    setPanels(current => {
+      const newPanels = current.filter(p => p.id !== id);
+      if (activePanelId === id) {
+        setActivePanelId(newPanels.length > 0 ? newPanels[newPanels.length - 1].id : null);
+      }
+      return newPanels;
+    });
+  };
+
+  const closeAllPanels = () => {
+    setPanels([]);
+    setActivePanelId(null);
   };
 
   // Sync l'URL avec l'onglet actif si la navigation provient d'ailleurs (ex: Sidebar, boutons)
@@ -159,6 +203,12 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
         title: 'Années Académiques',
         category: 'Navigation',
         run: () => navigate('/academic-years')
+      },
+      {
+        id: 'workbench.action.closeAllPanels',
+        title: 'Fermer le panneau latéral',
+        category: 'Affichage',
+        run: () => closeAllPanels()
       }
     ];
 
@@ -204,7 +254,11 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
   }, [navigate]);
 
   return (
-    <WorkbenchReactContext.Provider value={{ executeCommand, commands, tabs, activeTabId, openTab, closeTab, setActiveTab }}>
+    <WorkbenchReactContext.Provider value={{ 
+      executeCommand, commands, 
+      tabs, activeTabId, openTab, closeTab, setActiveTab,
+      panels, activePanelId, openPanel, closePanel, closeAllPanels
+    }}>
       {children}
     </WorkbenchReactContext.Provider>
   );

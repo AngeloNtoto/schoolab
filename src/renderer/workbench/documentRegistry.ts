@@ -1,16 +1,20 @@
 import React from 'react';
+import Bulletin from '../components/print/Bulletin';
+import ClassBulletins from '../components/print/ClassBulletins';
+import ClassCoupons from '../components/print/ClassCoupons';
+import Palmares from '../components/print/Palmares';
 
 export interface DocumentRegistration {
   type: string;
   title: string;
-  // Options futures: icônes, règles de persistance, etc.
+  component?: React.ComponentType<any>;
 }
 
 class DocumentRegistry {
   private docs = new Map<string, DocumentRegistration>();
 
-  register(type: string, title: string) {
-    this.docs.set(type, { type, title });
+  register(type: string, title: string, component?: React.ComponentType<any>) {
+    this.docs.set(type, { type, title, component });
   }
 
   get(type: string): DocumentRegistration | undefined {
@@ -27,3 +31,9 @@ documentRegistry.register('academic-years', 'Années Académiques');
 documentRegistry.register('notes', 'Notes & Mémos');
 documentRegistry.register('settings', 'Paramètres');
 documentRegistry.register('class', 'Classe');
+
+// Enregistrement des documents imprimables (pour ouverture dans SplitView)
+documentRegistry.register('print.bulletin', 'Bulletin', Bulletin);
+documentRegistry.register('print.classBulletins', 'Bulletins de Classe', ClassBulletins);
+documentRegistry.register('print.classCoupons', 'Coupons', ClassCoupons);
+documentRegistry.register('print.palmares', 'Palmarès', Palmares);

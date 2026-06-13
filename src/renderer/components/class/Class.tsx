@@ -13,6 +13,7 @@ import ClassBulletins from "../print/ClassBulletins";
 import ClassCoupons from "../print/ClassCoupons";
 import Palmares from "../print/Palmares";
 import RepechageModal from "./RepechageModal";
+import { useWorkbench } from "../../workbench/WorkbenchProvider";
 
 // Animations CSS gérées par classes animate-in
 
@@ -27,11 +28,9 @@ import RepechageModal from "./RepechageModal";
  */
 export default function Class() {
     const { id } = useParams<{ id: string }>();
+    const { openPanel } = useWorkbench();
+    
     const [editModal, setEditModal] = useState(false);
-    const [bulletinModal, setBulletinModal] = useState(false);
-    const [bulkPrintModal, setBulkPrintModal] = useState(false);
-    const [couponsModal, setCouponsModal] = useState(false);
-    const [palmaresModal, setPalmaresModal] = useState(false);
     const [repechageModal, setRepechageModal] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
     
@@ -126,15 +125,23 @@ export default function Class() {
 
     // Callback pour ouvrir le bulletin d'un élève
     const handleOpenBulletin = useCallback((studentId: number) => {
-        setSelectedStudentId(studentId);
-        setBulletinModal(true);
-    }, []);
-
-    // Callback pour fermer le bulletin
-    const handleCloseBulletin = useCallback(() => {
-        setBulletinModal(false);
-        setSelectedStudentId(null);
-    }, []);
+        const student = students.find(s => s.id === studentId);
+        openPanel({
+            id: `bulletin-${studentId}`,
+            type: 'print.bulletin',
+            title: `Bulletin - ${student?.first_name}`,
+            props: {
+                studentId,
+                classInfo,
+                students,
+                subjects,
+                domains,
+                grades,
+                schoolName: schoolSettings.name,
+                schoolCity: schoolSettings.city
+            }
+        });
+    }, [students, classInfo, subjects, domains, grades, schoolSettings, openPanel]);
 
     // Callback pour ouvrir le repêchage
     const handleOpenRepechage = useCallback((studentId: number) => {
@@ -149,28 +156,54 @@ export default function Class() {
 
     // Callbacks pour l'impression en masse
     const handleOpenBulkPrint = useCallback(() => {
-        setBulkPrintModal(true);
-    }, []);
-
-    const handleCloseBulkPrint = useCallback(() => {
-        setBulkPrintModal(false);
-    }, []);
+        openPanel({
+            id: `class-bulletins-${id}`,
+            type: 'print.classBulletins',
+            title: `Bulletins Classe`,
+            props: {
+                classInfo,
+                students,
+                subjects,
+                domains,
+                grades,
+                schoolName: schoolSettings.name,
+                schoolCity: schoolSettings.city
+            }
+        });
+    }, [id, classInfo, students, subjects, domains, grades, schoolSettings, openPanel]);
 
     const handleOpenCoupons = useCallback(() => {
-        setCouponsModal(true);
-    }, []);
-
-    const handleCloseCoupons = useCallback(() => {
-        setCouponsModal(false);
-    }, []);
+        openPanel({
+            id: `class-coupons-${id}`,
+            type: 'print.classCoupons',
+            title: `Coupons Classe`,
+            props: {
+                classInfo,
+                students,
+                subjects,
+                allGrades: grades,
+                schoolInfo: schoolSettings,
+                academicYear
+            }
+        });
+    }, [id, classInfo, students, subjects, grades, schoolSettings, academicYear, openPanel]);
 
     const handleOpenPalmares = useCallback(() => {
-        setPalmaresModal(true);
-    }, []);
-
-    const handleClosePalmares = useCallback(() => {
-        setPalmaresModal(false);
-    }, []);
+        openPanel({
+            id: `palmares-${id}`,
+            type: 'print.palmares',
+            title: `Palmarès`,
+            props: {
+                classInfo,
+                students,
+                subjects,
+                grades,
+                schoolName: schoolSettings.name,
+                schoolCity: schoolSettings.city,
+                schoolPoBox: schoolSettings.pobox
+            }
+        });
+    }, [id, classInfo, students, subjects, grades, schoolSettings, openPanel]);
 
     const loading = classLoading || gradesLoading || studentsLoading;
 
@@ -189,66 +222,6 @@ export default function Class() {
                 </div>
             )}
 
-            {bulletinModal && (
-                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
-                    <Bulletin 
-                        studentId={selectedStudentId}
-                        classInfo={classInfo}
-                        students={students}
-                        subjects={subjects}
-                        domains={domains}
-                        grades={grades}
-                        schoolName={schoolSettings.name}
-                        schoolCity={schoolSettings.city}
-                        onClose={handleCloseBulletin}
-                    />
-                </div>
-            )}
-
-            {bulkPrintModal && (
-                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
-                    <ClassBulletins
-                        classInfo={classInfo}
-                        students={students}
-                        subjects={subjects}
-                        domains={domains}
-                        grades={grades}
-                        schoolName={schoolSettings.name}
-                        schoolCity={schoolSettings.city}
-                        onClose={handleCloseBulkPrint}
-                    />
-                </div>
-            )}
-
-            {couponsModal && (
-                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
-                    <ClassCoupons
-                        classInfo={classInfo}
-                        students={students}
-                        subjects={subjects}
-                        allGrades={grades}
-                        schoolInfo={schoolSettings}
-                        academicYear={academicYear}
-                        onClose={handleCloseCoupons}
-                    />
-                </div>
-            )}
-
-            {palmaresModal && (
-                <div className="fixed inset-0 z-[80] overflow-y-auto bg-slate-100 animate-in fade-in duration-300">
-                    <Palmares
-                        classInfo={classInfo}
-                        students={students}
-                        subjects={subjects}
-                        grades={grades}
-                        schoolName={schoolSettings.name}
-                        schoolCity={schoolSettings.city}
-                        schoolPoBox={schoolSettings.pobox}
-                        onClose={handleClosePalmares}
-                    />
-                </div>
-            )}
-
             {repechageModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <RepechageModal
@@ -260,7 +233,7 @@ export default function Class() {
                 </div>
             )}
 
-            <div className={`h-full ${(editModal || bulletinModal || bulkPrintModal || couponsModal || palmaresModal || repechageModal) ? 'opacity-30 scale-98 pointer-events-none' : ''} transition-all duration-500`}>
+            <div className={`h-full ${(editModal || repechageModal) ? 'opacity-30 scale-98 pointer-events-none' : ''} transition-all duration-500`}>
                 <ClassDetails 
                     classInfo={classInfo}
                     subjects={subjects}

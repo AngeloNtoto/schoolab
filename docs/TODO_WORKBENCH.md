@@ -31,10 +31,10 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Gérer la fermeture et l'épinglage des onglets
 
 ## Phase 3 : Layout Desktop et Split Views
-- [ ] Créer un composant `SplitView.tsx` pour diviser l'écran
-- [ ] Ajouter les commandes de fenêtrage (ouvrir à droite, ouvrir en bas, fermer un groupe)
-- [ ] Convertir les modales pleines (Bulletins, Palmarès, Coupons) en documents ouvrables dans un panneau
-- [ ] Sauvegarder et restaurer les tailles des différents panneaux du Workbench
+- [x] Créer un composant `SplitView.tsx` pour diviser l'écran
+- [x] Ajouter les commandes de fenêtrage (ouvrir à droite, ouvrir en bas, fermer un groupe)
+- [x] Convertir les modales pleines (Bulletins, Palmarès, Coupons) en documents ouvrables dans un panneau
+- [x] Sauvegarder et restaurer les tailles des différents panneaux du Workbench
 
 ## Phase 4 : History Engine V1 (Historique)
 - [ ] Ajouter les migrations SQLite pour `operation_log`, `checkpoints` et `workspace_state`
