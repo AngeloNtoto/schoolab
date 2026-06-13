@@ -158,21 +158,18 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
 
   const toggleFolder = (id: string) => {
     setNodes(prevNodes => {
-      const newNodes = [...prevNodes];
-      const toggleNode = (list: TreeNode[]) => {
-        for (const node of list) {
+      const toggleNode = (list: TreeNode[]): TreeNode[] => {
+        return list.map(node => {
           if (node.id === id) {
-            node.isOpen = !node.isOpen;
-            return true;
+            return { ...node, isOpen: !node.isOpen };
           }
-          if (node.children && toggleNode(node.children)) {
-            return true;
+          if (node.children) {
+            return { ...node, children: toggleNode(node.children) };
           }
-        }
-        return false;
+          return node;
+        });
       };
-      toggleNode(newNodes);
-      return newNodes;
+      return toggleNode(prevNodes);
     });
   };
 
@@ -222,7 +219,10 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
           <div 
             className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors"
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
-            onClick={() => toggleFolder(node.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFolder(node.id);
+            }}
           >
             <div className="w-4 flex justify-center text-slate-400">
               {node.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
