@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.4.31",
+    date: "13 Juin 2026",
+    title: "Suppression multiple d'élèves",
+    description: "Possibilité de sélectionner et de supprimer plusieurs élèves simultanément.",
+    features: [
+      {
+        tag: "Nouveau",
+        text: "Ajout de cases à cocher dans la grille pour sélectionner facilement plusieurs élèves à la fois."
+      },
+      {
+        tag: "Amélioration",
+        text: "Suppression en masse optimisée via la base de données, accélérant le nettoyage des listes d'élèves."
+      },
+      {
+        tag: "Amélioration",
+        text: "Amélioration visuelle des cases à cocher avec un rendu de style bureau plus élégant et professionnel."
+      }
+    ]
+  },
+  {
     version: "1.4.30",
     date: "11 Juin 2026",
     title: "Grille de classe mieux organisée",

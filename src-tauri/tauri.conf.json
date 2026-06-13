@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Schoolab",
-  "version": "1.4.30",
+  "version": "1.4.31",
   "identifier": "com.schoolab.desktop",
   
   "build": {
