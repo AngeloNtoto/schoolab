@@ -978,7 +978,6 @@ export default function AddSubjectModal({ classId, classLevel, subjects, onClose
                             </div>
                             </div>
                         </div>
-                      </div>
                       </DraggableSubject>
                       {!reorderMode && <DropZone index={idx + 1} onDrop={handleDropOnZone} />}
                     </React.Fragment>
