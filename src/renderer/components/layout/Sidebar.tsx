@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useWorkbench } from '../../workbench/WorkbenchProvider';
 import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote } from '../iconsSvg';
 import { SchoolabSymbol, LogoFull } from '../ui/Logo';
 
@@ -11,6 +12,7 @@ interface SidebarProps {
 export default function Sidebar({ width, setWidth }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { executeCommand } = useWorkbench();
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -43,9 +45,9 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
     };
   }, [resize, stopResizing]);
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
-    { path: '/network', icon: Network, label: 'Réseau' },
-    { path: '/academic-years', icon: CalendarRange, label: 'Années Académiques' },
+    { path: '/dashboard', commandId: 'schoolab.openDashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
+    { path: '/network', commandId: 'schoolab.openNetwork', icon: Network, label: 'Réseau' },
+    { path: '/academic-years', commandId: 'schoolab.openAcademicYears', icon: CalendarRange, label: 'Années Académiques' },
   ];
 
   const isCollapsed = width < 150;
@@ -77,7 +79,7 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
             return (
               <button
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={() => executeCommand(item.commandId)}
                 className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all relative group/item ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 ring-1 ring-blue-500'
@@ -95,7 +97,7 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
           })}
 
           <button
-            onClick={() => navigate('/notes')}
+            onClick={() => executeCommand('schoolab.openNotes')}
             className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all relative group/item ${
               location.pathname === '/notes' 
                 ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 ring-1 ring-blue-500' 
@@ -116,7 +118,7 @@ export default function Sidebar({ width, setWidth }: SidebarProps) {
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-black/20">
          <button
-            onClick={() => navigate('/settings')}
+            onClick={() => executeCommand('schoolab.openSettings')}
             className={`flex items-center gap-3 p-3.5 rounded-2xl w-full transition-all group/settings ${
               location.pathname === '/settings'
                 ? 'bg-slate-900 dark:bg-blue-600 text-white shadow-xl'

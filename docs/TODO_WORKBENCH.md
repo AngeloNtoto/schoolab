@@ -17,8 +17,8 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Créer le composant `CommandPalette.tsx`
 - [x] Ajouter le raccourci global `Ctrl+K` pour ouvrir la palette
 - [x] Enregistrer les commandes de base (ouvrir le dashboard, les notes, les paramètres, etc.)
-- [ ] Remplacer les boutons d'actions principaux dans l'UI par des appels à `runCommand`
-- [ ] Implémenter la recherche rapide de classes et d'élèves dans la palette
+- [x] Remplacer les boutons d'actions principaux dans l'UI par des appels à `runCommand`
+- [x] Implémenter la recherche rapide de classes et d'élèves dans la palette
 
 ## Phase 2 : Workbench Shell
 - [ ] Créer le composant global `WorkbenchShell.tsx`

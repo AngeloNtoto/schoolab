@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { commandRegistry } from './commandRegistry';
 import { Command, WorkbenchContext } from './workbenchTypes';
 import { useNavigate } from 'react-router-dom';
+import { dbService } from '../services/databaseService';
+
 
 interface WorkbenchContextType {
   executeCommand: (id: string, payload?: any) => Promise<void>;
@@ -57,8 +59,43 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
 
     baseCommands.forEach(cmd => commandRegistry.registerCommand(cmd));
     
-    // Mettre à jour l'état avec toutes les commandes (base + autres)
-    setCommands(commandRegistry.getAllCommands());
+    // Fonction pour charger dynamiquement classes et élèves
+    const loadDynamicCommands = async () => {
+      try {
+        const classes = await dbService.query<{id: number, name: string}>('SELECT id, name FROM classes');
+        classes.forEach(c => {
+          commandRegistry.registerCommand({
+            id: `schoolab.openClass.${c.id}`,
+            title: `Ouvrir la classe : ${c.name}`,
+            category: 'Classes',
+            run: () => navigate(`/class/${c.id}`)
+          });
+        });
+
+        const students = await dbService.query<{id: number, first_name: string, last_name: string, class_id: number}>('SELECT id, first_name, last_name, class_id FROM students WHERE status = "active" OR status IS NULL');
+        students.forEach(s => {
+          commandRegistry.registerCommand({
+            id: `schoolab.openStudent.${s.id}`,
+            title: `Élève : ${s.first_name} ${s.last_name}`,
+            category: 'Élèves',
+            // Pour l'instant, navigue vers la classe de l'élève (TODO: ouvrir le modal de l'élève si supporté)
+            run: () => navigate(`/class/${s.class_id}?studentId=${s.id}`) 
+          });
+        });
+
+        setCommands(commandRegistry.getAllCommands());
+      } catch (err) {
+        console.error('Failed to load dynamic commands:', err);
+      }
+    };
+
+    loadDynamicCommands();
+
+    // Recharger lors d'un changement de la DB
+    const handleDbChange = () => loadDynamicCommands();
+    window.addEventListener('db:changed', handleDbChange);
+
+    return () => window.removeEventListener('db:changed', handleDbChange);
   }, [navigate]);
 
   return (
