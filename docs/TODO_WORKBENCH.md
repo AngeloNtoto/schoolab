@@ -12,11 +12,11 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [ ] Nettoyer le `README` (ou séparer le contenu non lié à Schoolab)
 
 ## Phase 1 : Command Registry et Palette (Sprint 1)
-- [ ] Créer le fichier `src/renderer/workbench/commandRegistry.ts`
-- [ ] Créer `WorkbenchProvider.tsx` et l'ajouter dans `App.tsx`
-- [ ] Créer le composant `CommandPalette.tsx`
-- [ ] Ajouter le raccourci global `Ctrl+K` pour ouvrir la palette
-- [ ] Enregistrer les commandes de base (ouvrir le dashboard, les notes, les paramètres, etc.)
+- [x] Créer le fichier `src/renderer/workbench/commandRegistry.ts`
+- [x] Créer `WorkbenchProvider.tsx` et l'ajouter dans `App.tsx`
+- [x] Créer le composant `CommandPalette.tsx`
+- [x] Ajouter le raccourci global `Ctrl+K` pour ouvrir la palette
+- [x] Enregistrer les commandes de base (ouvrir le dashboard, les notes, les paramètres, etc.)
 - [ ] Remplacer les boutons d'actions principaux dans l'UI par des appels à `runCommand`
 - [ ] Implémenter la recherche rapide de classes et d'élèves dans la palette
 

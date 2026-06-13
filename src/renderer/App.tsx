@@ -28,6 +28,8 @@ import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import LicenseGuard from './components/setup/LicenseGuard';
 import { LicenseProvider } from './context/LicenseContext';
+import { WorkbenchProvider } from './workbench/WorkbenchProvider';
+import CommandPalette from './workbench/CommandPalette';
 
 
 import { invoke } from '@tauri-apps/api/core';
@@ -167,18 +169,21 @@ export default function App() {
           {isSetupComplete === null ? (
             <div className="min-h-screen flex items-center justify-center">Chargement…</div>
           ) : (
-            <Routes>
-            <Route path="/setup" element={<SetupWizard />} />
-            <Route element={<LicenseGuard><Layout /></LicenseGuard>}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/class/:id" element={<Class/>} />
-              <Route path="/network" element={<NetworkDashboard />} />
-              <Route path="/academic-years" element={<AcademicYearsManager />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/notes" element={<NotesPage />} />
-            </Route>
-            <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
-            </Routes>
+            <WorkbenchProvider>
+              <Routes>
+              <Route path="/setup" element={<SetupWizard />} />
+              <Route element={<LicenseGuard><Layout /></LicenseGuard>}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/class/:id" element={<Class/>} />
+                <Route path="/network" element={<NetworkDashboard />} />
+                <Route path="/academic-years" element={<AcademicYearsManager />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/notes" element={<NotesPage />} />
+              </Route>
+              <Route path="/" element={<Navigate to={isSetupComplete === true ? "/dashboard" : "/setup"} replace />} />
+              </Routes>
+              <CommandPalette />
+            </WorkbenchProvider>
           )}
         </ToastProvider>
       </CacheProvider>
