@@ -28,13 +28,11 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
   const loadClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const [classes, activeYear] = await Promise.all([
+      const [classes, academicYears] = await Promise.all([
         classService.getAllClasses(),
-        academicYearService.getActive()
+        academicYearService.getAll()
       ]);
       
-      const yearName = activeYear ? activeYear.name : 'Année Scolaire Active';
-
       // Custom sort for DRC levels: 7ème, 8ème, 1ère, 2ème, 3ème, 4ème
       const levelOrder: Record<string, number> = {
         '7ème': 1,
@@ -53,96 +51,132 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
         return isNaN(num) ? 99 : num;
       };
 
-      // 1. Group by Option
-      const optionMap = new Map<string, TreeNode>();
-      // 2. Group by Level
-      const levelMap = new Map<string, TreeNode>();
+      const rootNodes: TreeNode[] = [];
 
-      classes.forEach((cls: ClassData) => {
-        // --- Group by Option ---
-        const optionName = cls.option || 'Générale';
-        if (!optionMap.has(optionName)) {
-          optionMap.set(optionName, {
-            id: `opt_${optionName}`,
-            name: optionName,
-            type: 'folder',
-            isOpen: false,
-            children: []
-          });
-        }
-        optionMap.get(optionName)!.children!.push({
-          id: `opt_class_${cls.id}`,
-          name: `${cls.level} ${cls.option || ''}`.trim(),
-          type: 'class',
-          classData: cls
-        });
+      // Create a fallback year for classes without an academic_year_id
+      const unassignedYear = { id: 0, name: 'Classes Non Assignées', is_active: false, start_date: '', end_date: '' };
+      const allYears = [...academicYears];
 
-        // --- Group by Level ---
-        const levelName = cls.level || 'Non défini';
-        if (!levelMap.has(levelName)) {
-          levelMap.set(levelName, {
-            id: `lvl_${levelName}`,
-            name: levelName,
-            type: 'folder',
-            isOpen: false,
-            children: []
-          });
+      // Distribute classes by academic year
+      const classesByYear = new Map<number, ClassData[]>();
+      classes.forEach(cls => {
+        const yearId = cls.academic_year_id || 0;
+        if (!classesByYear.has(yearId)) {
+          classesByYear.set(yearId, []);
         }
-        levelMap.get(levelName)!.children!.push({
-          id: `lvl_class_${cls.id}`,
-          name: `${cls.level} ${cls.option || ''}`.trim(),
-          type: 'class',
-          classData: cls
-        });
+        classesByYear.get(yearId)!.push(cls);
       });
 
-      // Sort classes inside Options by Level
-      const optionFolders = Array.from(optionMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-      optionFolders.forEach(folder => {
-        folder.children!.sort((a, b) => {
-          const lA = getLevelValue(a.classData!.level);
-          const lB = getLevelValue(b.classData!.level);
+      // If there are unassigned classes, add the fallback year to the list
+      if (classesByYear.has(0)) {
+        allYears.push(unassignedYear);
+      }
+
+      // Process each academic year
+      allYears.forEach(year => {
+        const yearClasses = classesByYear.get(year.id) || [];
+        if (yearClasses.length === 0 && !year.is_active) return; // Skip empty inactive years
+        
+        // 1. Group by Option
+        const optionMap = new Map<string, TreeNode>();
+        // 2. Group by Level
+        const levelMap = new Map<string, TreeNode>();
+
+        yearClasses.forEach((cls: ClassData) => {
+          // --- Group by Option ---
+          const optionName = cls.option || 'Générale';
+          if (!optionMap.has(optionName)) {
+            optionMap.set(optionName, {
+              id: `y${year.id}_opt_${optionName}`,
+              name: optionName,
+              type: 'folder',
+              isOpen: false,
+              children: []
+            });
+          }
+          optionMap.get(optionName)!.children!.push({
+            id: `y${year.id}_opt_class_${cls.id}`,
+            name: `${cls.level} ${cls.option || ''}`.trim(),
+            type: 'class',
+            classData: cls
+          });
+
+          // --- Group by Level ---
+          const levelName = cls.level || 'Non défini';
+          if (!levelMap.has(levelName)) {
+            levelMap.set(levelName, {
+              id: `y${year.id}_lvl_${levelName}`,
+              name: levelName,
+              type: 'folder',
+              isOpen: false,
+              children: []
+            });
+          }
+          levelMap.get(levelName)!.children!.push({
+            id: `y${year.id}_lvl_class_${cls.id}`,
+            name: `${cls.level} ${cls.option || ''}`.trim(),
+            type: 'class',
+            classData: cls
+          });
+        });
+
+        // Sort classes inside Options by Level
+        const optionFolders = Array.from(optionMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        optionFolders.forEach(folder => {
+          folder.children!.sort((a, b) => {
+            const lA = getLevelValue(a.classData!.level);
+            const lB = getLevelValue(b.classData!.level);
+            if (lA !== lB) return lA - lB;
+            return a.name.localeCompare(b.name);
+          });
+        });
+
+        // Sort Level folders by custom level order
+        const levelFolders = Array.from(levelMap.values()).sort((a, b) => {
+          const lA = getLevelValue(a.name);
+          const lB = getLevelValue(b.name);
           if (lA !== lB) return lA - lB;
           return a.name.localeCompare(b.name);
         });
+        // Sort classes inside Levels by Option
+        levelFolders.forEach(folder => {
+          folder.children!.sort((a, b) => (a.classData!.option || '').localeCompare(b.classData!.option || ''));
+        });
+
+        const yearNode: TreeNode = {
+          id: `root_year_${year.id}`,
+          name: year.name + (year.is_active ? ' (Active)' : ''),
+          type: 'folder',
+          isOpen: year.is_active, // Open by default if it's the active year
+          children: [
+            {
+              id: `y${year.id}_by_option`,
+              name: 'Par Option',
+              type: 'folder',
+              isOpen: true,
+              children: optionFolders
+            },
+            {
+              id: `y${year.id}_by_level`,
+              name: 'Par Niveau',
+              type: 'folder',
+              isOpen: false,
+              children: levelFolders
+            }
+          ]
+        };
+
+        rootNodes.push(yearNode);
       });
 
-      // Sort Level folders by custom level order
-      const levelFolders = Array.from(levelMap.values()).sort((a, b) => {
-        const lA = getLevelValue(a.name);
-        const lB = getLevelValue(b.name);
-        if (lA !== lB) return lA - lB;
-        return a.name.localeCompare(b.name);
-      });
-      // Sort classes inside Levels by Option
-      levelFolders.forEach(folder => {
-        folder.children!.sort((a, b) => (a.classData!.option || '').localeCompare(b.classData!.option || ''));
+      // Sort root nodes (Active year first, then by name descending)
+      rootNodes.sort((a, b) => {
+        if (a.isOpen && !b.isOpen) return -1;
+        if (!a.isOpen && b.isOpen) return 1;
+        return b.name.localeCompare(a.name);
       });
 
-      const rootNode: TreeNode = {
-        id: 'root_year',
-        name: yearName,
-        type: 'folder',
-        isOpen: true,
-        children: [
-          {
-            id: 'by_option',
-            name: 'Par Option',
-            type: 'folder',
-            isOpen: true,
-            children: optionFolders
-          },
-          {
-            id: 'by_level',
-            name: 'Par Niveau',
-            type: 'folder',
-            isOpen: false,
-            children: levelFolders
-          }
-        ]
-      };
-
-      setNodes([rootNode]);
+      setNodes(rootNodes);
     } catch (err) {
       console.error('Failed to load classes for explorer', err);
     } finally {

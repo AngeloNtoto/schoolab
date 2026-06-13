@@ -6,6 +6,7 @@ export interface ClassData {
   level: string;
   option: string;
   section: string;
+  academic_year_id?: number;
 }
 
 export interface Subject {
