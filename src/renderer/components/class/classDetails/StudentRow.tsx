@@ -2,6 +2,7 @@ import React from 'react';
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import GradeCell from './GradeCell';
+import { Check } from '../../iconsSvg';
 
 interface StudentRowProps {
   student: Student;
@@ -50,21 +51,28 @@ const StudentRow = React.memo(({
     return (p3 || 0) + (p4 || 0) + (ex2 || 0);
   };
 
+  const bgClass = isSelected 
+    ? 'bg-blue-50/80 dark:bg-blue-900/30' 
+    : (idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800');
+  const hoverBgClass = isSelected
+    ? 'hover:bg-blue-100/80 dark:hover:bg-blue-900/40 group-hover:bg-blue-100/80 dark:group-hover:bg-blue-900/40'
+    : 'hover:bg-slate-100 dark:hover:bg-slate-700 group-hover:bg-slate-100 dark:group-hover:bg-slate-700';
+
   return (
-    <tr className={`group border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
-      <td className={`sticky left-0 z-10 px-2 py-3 text-center border-r border-slate-200 dark:border-slate-700 min-w-[30px] w-[30px] ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}>
-        <input
-          type="checkbox"
-          className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-          checked={isSelected}
-          onChange={onToggleSelection}
-        />
+    <tr className={`group border-b border-slate-200 dark:border-slate-700 transition-colors duration-200 ${bgClass}`}>
+      <td className={`sticky left-0 z-10 px-2 py-3 text-center border-r border-slate-200 dark:border-slate-700 min-w-[30px] w-[30px] transition-colors duration-200 ${bgClass} ${hoverBgClass}`}>
+        <div 
+          onClick={onToggleSelection}
+          className={`w-[14px] h-[14px] rounded-[4px] mx-auto flex items-center justify-center cursor-pointer transition-all duration-200 border ${isSelected ? 'bg-blue-600 border-blue-600 shadow-sm shadow-blue-500/30' : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-blue-400'}`}
+        >
+          {isSelected && <Check size={10} className="text-white" strokeWidth={4} />}
+        </div>
       </td>
-      <td className={`sticky left-[30px] z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}>
+      <td className={`sticky left-[30px] z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] transition-colors duration-200 ${bgClass} ${hoverBgClass}`}>
         {idx + 1}
       </td>
       <td
-        className={`sticky left-[70px] z-10 px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
+        className={`sticky left-[70px] z-10 px-4 py-3 font-medium border-r-2 border-slate-300 dark:border-slate-600 transition-colors duration-200 ${isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-slate-800 dark:text-slate-200'} ${bgClass} ${hoverBgClass}`}
         onContextMenu={(e) => onContextMenu(e, student)}
       >
         {student.last_name} {student.post_name}
