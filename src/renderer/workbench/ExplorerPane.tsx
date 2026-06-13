@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { classService, ClassData } from '../services/classService';
+import { academicYearService } from '../services/academicYearService';
 import { useWorkbench } from './WorkbenchProvider';
 import { ChevronRight, ChevronDown, Archive as Folder, FileText, Search } from '../components/iconsSvg';
 
@@ -27,10 +28,12 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
   const loadClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const classes = await classService.getAllClasses();
+      const [classes, activeYear] = await Promise.all([
+        classService.getAllClasses(),
+        academicYearService.getActive()
+      ]);
       
-      // Group classes by Section -> Level
-      const sectionMap = new Map<string, TreeNode>();
+      const yearName = activeYear ? activeYear.name : 'Année Scolaire Active';
 
       // Custom sort for DRC levels: 7ème, 8ème, 1ère, 2ème, 3ème, 4ème
       const levelOrder: Record<string, number> = {
@@ -46,42 +49,100 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
         for (const [key, val] of Object.entries(levelOrder)) {
           if (level.includes(key) || level.includes(key.replace('ème', ''))) return val;
         }
-        // Fallback for numeric if possible
         const num = parseInt(level);
         return isNaN(num) ? 99 : num;
       };
 
-      // Sort classes by custom level, then option
-      classes.sort((a, b) => {
-        const levelA = getLevelValue(a.level);
-        const levelB = getLevelValue(b.level);
-        if (levelA !== levelB) return levelA - levelB;
-        
-        return (a.option || '').localeCompare(b.option || '');
-      });
+      // 1. Group by Option
+      const optionMap = new Map<string, TreeNode>();
+      // 2. Group by Level
+      const levelMap = new Map<string, TreeNode>();
 
       classes.forEach((cls: ClassData) => {
-        const sectionName = cls.section || 'Général';
-        if (!sectionMap.has(sectionName)) {
-          sectionMap.set(sectionName, {
-            id: `sec_${sectionName}`,
-            name: sectionName,
+        // --- Group by Option ---
+        const optionName = cls.option || 'Générale';
+        if (!optionMap.has(optionName)) {
+          optionMap.set(optionName, {
+            id: `opt_${optionName}`,
+            name: optionName,
             type: 'folder',
-            isOpen: true,
+            isOpen: false,
             children: []
           });
         }
-        
-        const sectionNode = sectionMap.get(sectionName)!;
-        sectionNode.children!.push({
-          id: `class_${cls.id}`,
-          name: `${cls.level} ${cls.option}`,
+        optionMap.get(optionName)!.children!.push({
+          id: `opt_class_${cls.id}`,
+          name: `${cls.level} ${cls.option || ''}`.trim(),
+          type: 'class',
+          classData: cls
+        });
+
+        // --- Group by Level ---
+        const levelName = cls.level || 'Non défini';
+        if (!levelMap.has(levelName)) {
+          levelMap.set(levelName, {
+            id: `lvl_${levelName}`,
+            name: levelName,
+            type: 'folder',
+            isOpen: false,
+            children: []
+          });
+        }
+        levelMap.get(levelName)!.children!.push({
+          id: `lvl_class_${cls.id}`,
+          name: `${cls.level} ${cls.option || ''}`.trim(),
           type: 'class',
           classData: cls
         });
       });
 
-      setNodes(Array.from(sectionMap.values()));
+      // Sort classes inside Options by Level
+      const optionFolders = Array.from(optionMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      optionFolders.forEach(folder => {
+        folder.children!.sort((a, b) => {
+          const lA = getLevelValue(a.classData!.level);
+          const lB = getLevelValue(b.classData!.level);
+          if (lA !== lB) return lA - lB;
+          return a.name.localeCompare(b.name);
+        });
+      });
+
+      // Sort Level folders by custom level order
+      const levelFolders = Array.from(levelMap.values()).sort((a, b) => {
+        const lA = getLevelValue(a.name);
+        const lB = getLevelValue(b.name);
+        if (lA !== lB) return lA - lB;
+        return a.name.localeCompare(b.name);
+      });
+      // Sort classes inside Levels by Option
+      levelFolders.forEach(folder => {
+        folder.children!.sort((a, b) => (a.classData!.option || '').localeCompare(b.classData!.option || ''));
+      });
+
+      const rootNode: TreeNode = {
+        id: 'root_year',
+        name: yearName,
+        type: 'folder',
+        isOpen: true,
+        children: [
+          {
+            id: 'by_option',
+            name: 'Par Option',
+            type: 'folder',
+            isOpen: true,
+            children: optionFolders
+          },
+          {
+            id: 'by_level',
+            name: 'Par Niveau',
+            type: 'folder',
+            isOpen: false,
+            children: levelFolders
+          }
+        ]
+      };
+
+      setNodes([rootNode]);
     } catch (err) {
       console.error('Failed to load classes for explorer', err);
     } finally {
