@@ -32,6 +32,34 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
       // Group classes by Section -> Level
       const sectionMap = new Map<string, TreeNode>();
 
+      // Custom sort for DRC levels: 7ème, 8ème, 1ère, 2ème, 3ème, 4ème
+      const levelOrder: Record<string, number> = {
+        '7ème': 1,
+        '8ème': 2,
+        '1ère': 3,
+        '2ème': 4,
+        '3ème': 5,
+        '4ème': 6
+      };
+
+      const getLevelValue = (level: string) => {
+        for (const [key, val] of Object.entries(levelOrder)) {
+          if (level.includes(key) || level.includes(key.replace('ème', ''))) return val;
+        }
+        // Fallback for numeric if possible
+        const num = parseInt(level);
+        return isNaN(num) ? 99 : num;
+      };
+
+      // Sort classes by custom level, then option
+      classes.sort((a, b) => {
+        const levelA = getLevelValue(a.level);
+        const levelB = getLevelValue(b.level);
+        if (levelA !== levelB) return levelA - levelB;
+        
+        return (a.option || '').localeCompare(b.option || '');
+      });
+
       classes.forEach((cls: ClassData) => {
         const sectionName = cls.section || 'Général';
         if (!sectionMap.has(sectionName)) {
@@ -88,7 +116,7 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
   };
 
   const handleClassClick = (classId: number) => {
-    executeCommand('schoolab.openClass', { classId: String(classId) });
+    executeCommand(`schoolab.openClass.${classId}`);
   };
 
   // Resizing logic
