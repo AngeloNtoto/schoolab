@@ -3,13 +3,13 @@
 Ce document suit les étapes du `plan-transformation-workbench.md` pour transformer Schoolab en un véritable éditeur Desktop.
 
 ## Phase 0 : Fondations et sécurisation
-- [ ] Créer `docs/architecture.md`
-- [ ] Créer `docs/workbench-rfc.md`
-- [ ] Lister les actions métier existantes
-- [ ] Lister les écrans convertibles en documents (onglets)
-- [ ] Ajouter des tests minimaux sur les services critiques (ex: `gradeService.updateGrade`, `studentService.importStudents`, etc.)
-- [ ] Implémenter les conventions (tout changement passe par une action, pas de SQL direct dans les composants)
-- [ ] Nettoyer le `README` (ou séparer le contenu non lié à Schoolab)
+- [x] Créer `docs/architecture.md`
+- [x] Créer `docs/workbench-rfc.md`
+- [x] Lister les actions métier existantes
+- [x] Lister les écrans convertibles en documents (onglets)
+- [x] Ajouter des tests minimaux sur les services critiques (ex: `gradeService.updateGrade`, `studentService.importStudents`, etc.)
+- [x] Implémenter les conventions (tout changement passe par une action, pas de SQL direct dans les composants)
+- [x] Nettoyer le `README` (ou séparer le contenu non lié à Schoolab)
 
 ## Phase 1 : Command Registry et Palette (Sprint 1)
 - [x] Créer le fichier `src/renderer/workbench/commandRegistry.ts`
