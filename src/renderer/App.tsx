@@ -18,7 +18,7 @@ import SetupWizard from './components/setup/SetupWizard';
 import Dashboard from './components/dashboard/Dashboard';
 import Class from './components/class/Class';
 import NetworkDashboard from './pages/Network/NetworkDashboard';
-import Layout from './components/layout/Layout';
+import WorkbenchShell from './workbench/WorkbenchShell';
 import AcademicYearsManager from './components/setup/AcademicYearsManager';
 import SettingsPage from './pages/SettingsPage';
 import NotesPage from './pages/NotesPage';
@@ -172,7 +172,7 @@ export default function App() {
             <WorkbenchProvider>
               <Routes>
               <Route path="/setup" element={<SetupWizard />} />
-              <Route element={<LicenseGuard><Layout /></LicenseGuard>}>
+              <Route element={<LicenseGuard><WorkbenchShell /></LicenseGuard>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/class/:id" element={<Class/>} />
                 <Route path="/network" element={<NetworkDashboard />} />

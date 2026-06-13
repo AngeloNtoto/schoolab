@@ -21,14 +21,14 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Implémenter la recherche rapide de classes et d'élèves dans la palette
 
 ## Phase 2 : Workbench Shell
-- [ ] Créer le composant global `WorkbenchShell.tsx`
-- [ ] Ajouter la barre d'onglets (`TabBar.tsx`)
-- [ ] Créer le gestionnaire de documents (Document Registry)
-- [ ] Convertir les pages actuelles en "Documents" ouvrables dans des onglets (`ClassDocument`, `NotesDocument`, `SettingsDocument`, etc.)
-- [ ] Conserver temporairement le routage existant pour assurer la compatibilité initiale
-- [ ] Sauvegarder les onglets ouverts dans `workspace_state` (persistance locale)
-- [ ] Restaurer les onglets ouverts au démarrage de l'application
-- [ ] Gérer la fermeture et l'épinglage des onglets
+- [x] Créer le composant global `WorkbenchShell.tsx`
+- [x] Ajouter la barre d'onglets (`TabBar.tsx`)
+- [x] Créer le gestionnaire de documents (Document Registry)
+- [x] Convertir les pages actuelles en "Documents" ouvrables dans des onglets (`ClassDocument`, `NotesDocument`, `SettingsDocument`, etc.)
+- [x] Conserver temporairement le routage existant pour assurer la compatibilité initiale
+- [x] Sauvegarder les onglets ouverts dans `workspace_state` (persistance locale)
+- [x] Restaurer les onglets ouverts au démarrage de l'application
+- [x] Gérer la fermeture et l'épinglage des onglets
 
 ## Phase 3 : Layout Desktop et Split Views
 - [ ] Créer un composant `SplitView.tsx` pour diviser l'écran
