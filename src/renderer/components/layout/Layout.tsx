@@ -8,7 +8,7 @@ export default function Layout() {
 
   return (
     <div className="flex bg-white h-screen overflow-hidden">
-      {!isSettings && <Sidebar />}
+      {!isSettings && <Sidebar activeView={null} onToggleView={() => {}} />}
       <main className="flex-1 flex flex-col min-w-0 relative">
         <Outlet />
       </main>

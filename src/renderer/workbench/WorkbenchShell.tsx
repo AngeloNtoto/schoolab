@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
+import Sidebar from '../components/layout/Sidebar'; // C'est maintenant ActivityBar
+import ExplorerPane from './ExplorerPane';
 import TabBar from './TabBar';
 import SplitView from './SplitView';
 import { useWorkbench } from './WorkbenchProvider';
@@ -33,7 +34,8 @@ function PanelContent({ panel }: { panel: any }) {
 }
 
 export default function WorkbenchShell() {
-  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [activeView, setActiveView] = useState<string | null>('explorer');
+  const [explorerWidth, setExplorerWidth] = useState(240);
   const [statusMessage, setStatusMessage] = useState('Prêt');
   const location = useLocation();
   const isSettings = location.pathname === '/settings';
@@ -101,7 +103,17 @@ export default function WorkbenchShell() {
 
   return (
     <div className="flex bg-white h-screen overflow-hidden">
-      {!isSettings && <Sidebar />}
+      {!isSettings && (
+        <>
+          <Sidebar 
+            activeView={activeView} 
+            onToggleView={(view) => setActiveView(v => v === view ? null : view)} 
+          />
+          {activeView === 'explorer' && (
+            <ExplorerPane width={explorerWidth} setWidth={setExplorerWidth} />
+          )}
+        </>
+      )}
       <main className="flex-1 flex flex-col min-w-0 relative">
         <SplitView 
           left={primaryContent} 

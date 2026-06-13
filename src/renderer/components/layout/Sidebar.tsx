@@ -1,10 +1,15 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useWorkbench } from '../../workbench/WorkbenchProvider';
-import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote } from '../iconsSvg';
-import { SchoolabSymbol, LogoFull } from '../ui/Logo';
+import { LayoutDashboard, CalendarRange, Settings, GraduationCap, Network, StickyNote, FileSpreadsheet } from '../iconsSvg';
+import { SchoolabSymbol } from '../ui/Logo';
 
-export default function ActivityBar() {
+interface ActivityBarProps {
+  activeView: string | null;
+  onToggleView: (view: string) => void;
+}
+
+export default function ActivityBar({ activeView, onToggleView }: ActivityBarProps) {
   const location = useLocation();
   const { executeCommand } = useWorkbench();
 
@@ -22,6 +27,24 @@ export default function ActivityBar() {
         </div>
 
         <div className="flex flex-col gap-2 w-full px-2">
+          {/* Explorer View Toggle */}
+          <button
+            onClick={() => onToggleView('explorer')}
+            className={`w-10 h-10 mx-auto flex items-center justify-center rounded-xl transition-all relative group/item ${
+              activeView === 'explorer'
+                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                : 'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+            }`}
+            title="Explorateur de classes"
+          >
+            <FileSpreadsheet size={20} className={`shrink-0 transition-transform group-hover/item:scale-110`} />
+            {activeView === 'explorer' && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-600 rounded-r-full" />
+            )}
+          </button>
+
+          <div className="my-2 border-t border-slate-200 dark:border-slate-800 mx-2"></div>
+
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (

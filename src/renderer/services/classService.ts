@@ -41,6 +41,13 @@ class ClassService {
   }
 
   /**
+   * Récupère toutes les classes.
+   */
+  async getAllClasses(): Promise<ClassData[]> {
+    return await dbService.query<ClassData>('SELECT * FROM classes ORDER BY level ASC, option ASC, section ASC');
+  }
+
+  /**
    * Récupère toutes les matières d'une classe, triées par date de création et nom.
    * @param classId L'identifiant de la classe
    */
