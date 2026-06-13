@@ -165,10 +165,11 @@ export default function Class() {
                 domains,
                 grades,
                 schoolName: schoolSettings.name,
-                schoolCity: schoolSettings.city
+                schoolCity: schoolSettings.city,
+                academicYear
             }
         });
-    }, [students, classInfo, subjects, domains, grades, schoolSettings, openPanel]);
+    }, [students, classInfo, subjects, domains, grades, schoolSettings, academicYear, openPanel]);
 
     // Callback pour ouvrir le repêchage
     const handleOpenRepechage = useCallback((studentId: number) => {
@@ -194,10 +195,11 @@ export default function Class() {
                 domains,
                 grades,
                 schoolName: schoolSettings.name,
-                schoolCity: schoolSettings.city
+                schoolCity: schoolSettings.city,
+                academicYear
             }
         });
-    }, [id, classInfo, students, subjects, domains, grades, schoolSettings, openPanel]);
+    }, [id, classInfo, students, subjects, domains, grades, schoolSettings, academicYear, openPanel]);
 
     const handleOpenCoupons = useCallback(() => {
         openPanel({

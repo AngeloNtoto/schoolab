@@ -100,12 +100,12 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [ ] Créer une interface pour la résolution manuelle des conflits
 
 ## Phase 11 : Native Desktop Layer (Optimisation Tauri)
-- [ ] Implémenter la sauvegarde et restauration de l'état de la fenêtre (Window state)
-- [ ] Ajouter un menu natif à l'application via Tauri (Fichier, Édition, Affichage, Aide, etc.)
-- [ ] Configurer les raccourcis globaux natifs
-- [ ] Activer le mode "Single instance" (empêcher d'ouvrir Schoolab plusieurs fois en même temps)
-- [ ] Brancher les notifications natives de synchronisation
-- [ ] Utiliser les fenêtres de dialogue (Dialogs) natives pour les imports/exports de fichiers
+- [x] Implémenter la sauvegarde et restauration de l'état de la fenêtre (Window state)
+- [x] Ajouter un menu natif à l'application via Tauri (Fichier, Édition, Affichage, Aide, etc.)
+- [x] Configurer les raccourcis globaux natifs
+- [x] Activer le mode "Single instance" (empêcher d'ouvrir Schoolab plusieurs fois en même temps)
+- [x] Brancher les notifications natives de synchronisation
+- [x] Utiliser les fenêtres de dialogue (Dialogs) natives pour les imports/exports de fichiers
 
 ## Phase 12 : Automatisations et Macros
 - [ ] Permettre l'enregistrement d'une suite de commandes exécutées

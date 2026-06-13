@@ -14,7 +14,6 @@ export default function ActivityBar({ activeView, onToggleView }: ActivityBarPro
   const { executeCommand } = useWorkbench();
 
   const navItems = [
-    { path: '/dashboard', commandId: 'schoolab.openDashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
     { path: '/network', commandId: 'schoolab.openNetwork', icon: Network, label: 'Réseau' },
     { path: '/academic-years', commandId: 'schoolab.openAcademicYears', icon: CalendarRange, label: 'Années Académiques' },
   ];

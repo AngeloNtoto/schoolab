@@ -4,6 +4,7 @@ import ClassBulletins from '../components/print/ClassBulletins';
 import ClassCoupons from '../components/print/ClassCoupons';
 import Palmares from '../components/print/Palmares';
 import RecentChanges from './RecentChanges';
+import MacrosManager from './MacrosManager';
 
 export interface DocumentRegistration {
   type: string;
@@ -39,3 +40,4 @@ documentRegistry.register('print.classBulletins', 'Bulletins de Classe', ClassBu
 documentRegistry.register('print.classCoupons', 'Coupons', ClassCoupons);
 documentRegistry.register('print.palmares', 'Palmarès', Palmares);
 documentRegistry.register('history.recentChanges', 'Historique & Checkpoints', RecentChanges);
+documentRegistry.register('macros.manage', 'Gestion des Macros', MacrosManager);

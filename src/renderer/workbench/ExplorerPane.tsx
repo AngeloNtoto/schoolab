@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { classService, ClassData } from '../services/classService';
 import { academicYearService } from '../services/academicYearService';
 import { useWorkbench } from './WorkbenchProvider';
-import { ChevronRight, ChevronDown, Archive as Folder, FileText, Search } from '../components/iconsSvg';
+import { ChevronRight, ChevronDown, Archive as Folder, FileText, Search, Plus } from '../components/iconsSvg';
+import EditClassModal from '../components/class/EditClassModal';
 
 interface ExplorerPaneProps {
   width: number;
@@ -23,6 +24,7 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isResizing, setIsResizing] = useState(false);
+  const [showCreateClassModal, setShowCreateClassModal] = useState(false);
   const { executeCommand, activeTabId } = useWorkbench();
 
   const loadClasses = useCallback(async () => {
@@ -299,8 +301,15 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
         onMouseDown={startResizing}
       />
 
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between group">
         <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-500">Explorateur</h2>
+        <button 
+          onClick={() => setShowCreateClassModal(true)}
+          className="text-slate-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+          title="Créer une nouvelle classe"
+        >
+          <Plus size={14} />
+        </button>
       </div>
 
       <div className="p-2">
@@ -325,6 +334,15 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
           nodes.map(node => renderNode(node))
         )}
       </div>
+
+      {showCreateClassModal && (
+        <EditClassModal 
+          onClose={() => setShowCreateClassModal(false)}
+          onSuccess={() => {
+            loadClasses();
+          }}
+        />
+      )}
     </div>
   );
 }

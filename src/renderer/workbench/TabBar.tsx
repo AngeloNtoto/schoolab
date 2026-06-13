@@ -28,20 +28,23 @@ export default function TabBar() {
               {tab.title}
             </span>
             
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                closeTab(tab.id);
-              }}
-              className={`
-                p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity
-                ${isActive ? 'hover:bg-blue-100 text-blue-400 hover:text-blue-700' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-700'}
-              `}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {/* Bouton de fermeture - Masqué si c'est l'onglet Bienvenue et qu'il est seul */}
+            {!(tab.id === 'welcome' && tabs.length === 1) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeTab(tab.id);
+                }}
+                className={`
+                  p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity
+                  ${isActive ? 'hover:bg-blue-100 text-blue-400 hover:text-blue-700' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-700'}
+                `}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         );
       })}

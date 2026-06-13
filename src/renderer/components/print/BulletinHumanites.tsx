@@ -20,6 +20,7 @@ interface BulletinHumanitesProps {
   grades: Grade[]; // Toutes les notes de la classe
   schoolName: string;
   schoolCity: string;
+  academicYear: string;
   onClose: () => void;
 }
 
@@ -31,6 +32,7 @@ export default function BulletinHumanites({
   grades: allGrades,
   schoolName,
   schoolCity,
+  academicYear,
   onClose
 }: BulletinHumanitesProps) {
 
@@ -120,6 +122,7 @@ export default function BulletinHumanites({
           schoolCity={schoolCity}
           studentRanks={studentRanks}
           totalStudents={totalStudents}
+          academicYear={academicYear}
         />
       </div>
     </div>

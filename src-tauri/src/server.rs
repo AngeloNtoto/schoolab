@@ -323,9 +323,11 @@ fn handle_get_class_full(id: i64, state: &AppState) -> Response<io::Cursor<Vec<u
     };
 
     // Custom Sorts
-    let mut stmt = match conn.prepare(
-        "SELECT id, name, student_order FROM custom_sorts WHERE class_id = ?"
-    ) { Ok(s) => s, Err(_) => return error_response(500, "Failed prep custom_sorts") };
+    let mut stmt =
+        match conn.prepare("SELECT id, name, student_order FROM custom_sorts WHERE class_id = ?") {
+            Ok(s) => s,
+            Err(_) => return error_response(500, "Failed prep custom_sorts"),
+        };
 
     let custom_sorts: Vec<CustomSortResponse> = match stmt.query_map([id], |row| {
         Ok(CustomSortResponse {

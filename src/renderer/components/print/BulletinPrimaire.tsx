@@ -21,6 +21,7 @@ interface BulletinPrimaireProps {
   grades: Grade[]; // Toutes les notes
   schoolName: string;
   schoolCity: string;
+  academicYear: string;
   onClose: () => void;
 }
 
@@ -33,6 +34,7 @@ export default function BulletinPrimaire({
   grades: allGrades,
   schoolName,
   schoolCity,
+  academicYear,
   onClose
 }: BulletinPrimaireProps) {
 
@@ -114,6 +116,7 @@ export default function BulletinPrimaire({
           schoolCity={schoolCity}
           studentRanks={studentRanks}
           totalStudents={totalStudents}
+          academicYear={academicYear}
         />
       </div>
     </div>

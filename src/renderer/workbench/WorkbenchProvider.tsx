@@ -4,6 +4,7 @@ import { Command, WorkbenchContext } from './workbenchTypes';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { dbService } from '../services/databaseService';
 import { documentRegistry } from './documentRegistry';
+import { macroService } from '../services/macroService';
 
 export interface Tab {
   id: string;
@@ -46,7 +47,7 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
     } catch(e) {
       console.error('Failed to parse saved tabs', e);
     }
-    return [];
+    return [{ id: 'welcome', type: 'dashboard', title: 'Bienvenue', path: '/dashboard' }];
   });
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
@@ -59,9 +60,21 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
 
   // Exécution d'une commande
   const executeCommand = async (id: string, payload?: any) => {
-    const ctx: WorkbenchContext = {}; 
-    await commandRegistry.executeCommand(id, payload, ctx);
+    const cmd = commandRegistry.getCommand(id);
+    if (cmd) {
+      // Record action if macro service is recording
+      macroService.recordAction(id, payload);
+      const ctx: WorkbenchContext = {}; 
+      await cmd.run(payload, ctx);
+    } else {
+      console.warn(`Command ${id} not found`);
+    }
   };
+
+  // Set the execute function for the macro service so it can play back macros
+  useEffect(() => {
+    macroService.setExecuteCommandFn(executeCommand);
+  }, [executeCommand]);
 
   // Gestion des onglets
   const openTab = (tab: Tab) => {
@@ -85,9 +98,16 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
         if (nextTab) {
           navigate(nextTab.path);
         } else {
-          navigate('/dashboard'); // Fallback route
+          // S'il n'y a plus d'onglets, ajouter l'onglet de bienvenue
+          navigate('/dashboard');
         }
       }
+      
+      // Ne jamais laisser l'interface sans onglet
+      if (newTabs.length === 0) {
+        return [{ id: 'welcome', type: 'dashboard', title: 'Bienvenue', path: '/dashboard' }];
+      }
+      
       return newTabs;
     });
   };
@@ -244,6 +264,34 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
         title: 'Mettre la note au maximum (Cellule active)',
         category: 'Grille de points',
         run: () => window.dispatchEvent(new CustomEvent('gradebook:maxCell'))
+      },
+      {
+        id: 'macro.action.startRecording',
+        title: 'Démarrer l\'enregistrement d\'une macro',
+        category: 'Macros',
+        run: () => {
+          macroService.startRecording();
+          window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Enregistrement macro démarré', type: 'info' } }));
+        }
+      },
+      {
+        id: 'macro.action.stopRecording',
+        title: 'Arrêter l\'enregistrement',
+        category: 'Macros',
+        run: () => {
+          macroService.stopRecording(`Macro ${new Date().toLocaleTimeString()}`);
+          window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Macro enregistrée', type: 'success' } }));
+        }
+      },
+      {
+        id: 'macro.action.manage',
+        title: 'Gérer les macros',
+        category: 'Macros',
+        run: () => openPanel({
+          id: 'macros',
+          type: 'macros.manage',
+          title: 'Vos Macros'
+        })
       }
     ];
 

@@ -60,16 +60,8 @@ export default function SettingsPage() {
   return (
     <div className="h-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col font-sans transition-colors duration-300">
       
-      {/* Barre supérieure d'actions */}
-      <div className="h-14 bg-slate-50 dark:bg-slate-950 flex items-center px-6 flex-shrink-0 select-none border-b border-slate-200/30 dark:border-white/5">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-200 hover:-translate-x-0.5"
-        >
-          <ChevronLeft size={18} className="stroke-[2.5]" />
-          <span className="text-[12px] font-bold tracking-wider uppercase">Retour</span>
-        </button>
-      </div>
+      {/* Spacer pour l'esthétique au lieu du bouton Retour */}
+      <div className="h-6 flex-shrink-0"></div>
 
       {/* Corps principal en colonnes */}
       <div className="flex-1 flex overflow-hidden">

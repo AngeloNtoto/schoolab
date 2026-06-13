@@ -22,6 +22,7 @@ interface ClassBulletinsProps {
   domains: Domain[];
   schoolName: string;
   schoolCity: string;
+  academicYear: string;
   onClose: () => void;
 }
 
@@ -33,6 +34,7 @@ export default function ClassBulletins({
   domains,
   schoolName,
   schoolCity,
+  academicYear,
   onClose
 }: ClassBulletinsProps) {
   
@@ -220,6 +222,7 @@ export default function ClassBulletins({
                     schoolCity={schoolCity}
                     studentRanks={ranks}
                     totalStudents={totalStudents}
+                    academicYear={academicYear}
                   />
                 ) : (
                   <BulletinHumanitesContent
@@ -232,6 +235,7 @@ export default function ClassBulletins({
                     schoolCity={schoolCity}
                     studentRanks={ranks}
                     totalStudents={totalStudents}
+                    academicYear={academicYear}
                   />
                 )}
               </div>

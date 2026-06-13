@@ -8,6 +8,7 @@ import { useWorkbench } from './WorkbenchProvider';
 import { documentRegistry } from './documentRegistry';
 import { undoRedoService } from '../services/undoRedoService';
 import { useDragState } from './dragManager';
+import { macroService } from '../services/macroService';
 
 function DragGhost() {
   const { isDragging, currentX, currentY, item } = useDragState();
@@ -37,6 +38,7 @@ export default function WorkbenchShell() {
   const [activeView, setActiveView] = useState<string | null>('explorer');
   const [explorerWidth, setExplorerWidth] = useState(240);
   const [statusMessage, setStatusMessage] = useState('Prêt');
+  const [isRecordingMacro, setIsRecordingMacro] = useState(macroService.isCurrentlyRecording());
   const location = useLocation();
   const isSettings = location.pathname === '/settings';
   
@@ -74,6 +76,17 @@ export default function WorkbenchShell() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const handleStart = () => setIsRecordingMacro(true);
+    const handleStop = () => setIsRecordingMacro(false);
+    window.addEventListener('macro:recordingStart', handleStart);
+    window.addEventListener('macro:recordingStop', handleStop);
+    return () => {
+      window.removeEventListener('macro:recordingStart', handleStart);
+      window.removeEventListener('macro:recordingStop', handleStop);
+    };
   }, []);
 
   const activePanel = panels.find(p => p.id === activePanelId) || panels[panels.length - 1];
@@ -125,6 +138,18 @@ export default function WorkbenchShell() {
         <div className="h-6 bg-blue-600 text-white flex items-center px-3 text-xs shrink-0 select-none">
           <div className="flex-1 flex items-center gap-4">
             <span>{statusMessage}</span>
+            {isRecordingMacro && (
+              <div className="flex items-center gap-2 bg-red-500/20 px-2 py-0.5 rounded border border-red-400/30">
+                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                <span className="text-red-100 font-medium">Enregistrement Macro...</span>
+                <button 
+                  onClick={() => macroService.stopRecording(`Macro ${new Date().toLocaleTimeString()}`)}
+                  className="ml-2 hover:bg-red-500/40 px-1.5 rounded transition-colors"
+                >
+                  Arrêter
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4 text-blue-100">
             <span>Schoolab Workbench</span>

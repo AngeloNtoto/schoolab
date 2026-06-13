@@ -19,6 +19,7 @@ export interface BulletinPrimaireContentProps {
   schoolCity: string;
   studentRanks: StudentRanks;
   totalStudents: number;
+  academicYear: string;
 }
 
 const getApplication = (percentage: number | null, config: DeliberationConfig): string => {
@@ -54,7 +55,8 @@ export default function BulletinPrimaireContent({
   schoolName,
   schoolCity,
   studentRanks,
-  totalStudents
+  totalStudents,
+  academicYear
 }: BulletinPrimaireContentProps) {
 
   // États locaux de mise en page dynamique (polices et interlignes)
@@ -233,7 +235,7 @@ export default function BulletinPrimaireContent({
 
       {/* Bulletin Title */}
       <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6" style={{ fontSize: `${titleSize}px` }}>
-        BULLETIN DE LA {classInfo.level} ANNEE CYCLE TERMINAL DE L'EDUCATION DE BASE ({classInfo.level === '7ème' ? 'CTB7' : 'CTB8'}) ANNEE SCOLAIRE 2024 - 2025
+        BULLETIN DE LA {classInfo.level} DE L'EDUCATION DE BASE ({classInfo.level === '7ème' ? 'CTB7' : 'CTB8'}) ANNEE SCOLAIRE {academicYear}
       </div>
 
       {/* Grades Table */}

@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 
 export default function Layout() {
   const location = useLocation();
-  const isSettings = location.pathname === '/settings';
+  const isSettings = location.pathname === '/setting';
 
   return (
     <div className="flex bg-white h-screen overflow-hidden">
