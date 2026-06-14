@@ -56,6 +56,8 @@ export interface RankedStudent {
   category: StudentCategory;
   failedSubjects: string[];
   repechageSubjects: string[];
+  // Liste des matières pour lesquelles l'élève est marqué "Voir Bureau" (dette non réglée)
+  voirBureauSubjects: string[];
   missingSubjects: string[];
   subjectDetails: {
     subjectName: string;

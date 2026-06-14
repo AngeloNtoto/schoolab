@@ -1,4 +1,5 @@
 import { dbService } from './databaseService';
+import { PredictionResult } from './predictionService';
 
 export interface Grade {
   id?: number;
@@ -19,8 +20,8 @@ class GradeService {
    */
   async getGradesByClass(classId: number): Promise<Grade[]> {
     return await dbService.query<Grade>(
-      `SELECT g.* FROM grades g 
-       INNER JOIN students s ON g.student_id = s.id 
+      `SELECT g.* FROM grades g
+       INNER JOIN students s ON g.student_id = s.id
        WHERE s.class_id = ?`,
       [classId]
     );
@@ -70,6 +71,21 @@ class GradeService {
       await dbService.execute(
         'INSERT INTO grades (student_id, subject_id, period, value, is_dirty, last_modified_at) VALUES (?, ?, ?, ?, 1, (datetime(\'now\')))',
         [studentId, subjectId, period, value]
+      );
+    }
+  }
+
+  /**
+   * Importe les grades prédits en masse dans la base de données.
+   * @param predictions Liste des prédictions à importer
+   */
+  async importPredictedGrades(predictions: PredictionResult[]): Promise<void> {
+    for (const pred of predictions) {
+      await this.updateGrade(
+        pred.studentId,
+        pred.subjectId,
+        pred.period,
+        pred.predictedGrade
       );
     }
   }

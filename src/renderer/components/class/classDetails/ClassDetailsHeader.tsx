@@ -24,6 +24,7 @@ import { ClassData, Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
 import { ALL_PERIODS } from './gradeUtils';
+import { GradePredictorWidget } from '../GradePredictorWidget';
 
 interface ClassDetailsHeaderProps {
   classInfo: ClassData;
@@ -67,6 +68,7 @@ interface ClassDetailsHeaderProps {
   onCreateCustomSort: () => void;
   onEditCustomSort: (sort: CustomSort) => void;
   onDeleteCustomSort: (sortId: number) => Promise<void>;
+  onPredictionsApplied?: () => void;
 }
 
 export default function ClassDetailsHeader({
@@ -110,7 +112,8 @@ export default function ClassDetailsHeader({
   onDeleteSelected,
   onCreateCustomSort,
   onEditCustomSort,
-  onDeleteCustomSort
+  onDeleteCustomSort,
+  onPredictionsApplied
 }: ClassDetailsHeaderProps) {
   return (
     <header className="bg-blue-600 dark:bg-slate-900 border-b border-white/5 sticky top-0 z-30 shadow-lg">
@@ -148,6 +151,13 @@ export default function ClassDetailsHeader({
             >
               <RefreshCw size={18} className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : 'group-hover:rotate-180'}`} />
             </button>
+            <GradePredictorWidget
+              classId={classInfo.id}
+              subjects={subjects}
+              students={students}
+              onSuccess={() => onPredictionsApplied?.()}
+              onError={(error) => console.error(error)}
+            />
             <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
               <button
                 onClick={onOpenPalmares}

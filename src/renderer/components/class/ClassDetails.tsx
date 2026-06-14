@@ -379,6 +379,7 @@ export default function ClassDetails({
           onCreateCustomSort={handleCreateCustomSort}
           onEditCustomSort={handleEditCustomSort}
           onDeleteCustomSort={handleDeleteCustomSort}
+          onPredictionsApplied={() => onRefreshAll()}
         />
       )}
 

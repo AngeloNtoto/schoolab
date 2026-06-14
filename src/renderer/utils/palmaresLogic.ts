@@ -79,6 +79,8 @@ export const calculateRankings = (
     let hasAllGrades = true;
     const failedSubjects: string[] = [];
     const repechageSubjects: string[] = [];
+    // Matières marquées "Voir Bureau" : l'élève a une dette, il ne peut pas encore passer
+    const voirBureauSubjects: string[] = [];
     const missingSubjects: string[] = [];
     const subjectDetails: RankedStudent['subjectDetails'] = [];
 
@@ -133,6 +135,11 @@ export const calculateRankings = (
       const rep = repechages.find((r) => r.student_id === student.id && r.subject_id === subject.id);
       if (rep && rep.percentage > 0) {
         repechageSubjects.push(subject.code || subject.name);
+      }
+
+      // Marquer la matière comme "Voir Bureau" si l'élève a une dette non réglée
+      if (rep && rep.voir_bureau === 1) {
+        voirBureauSubjects.push(subject.code || subject.name);
       }
 
       subjectDetails.push({
@@ -219,6 +226,7 @@ export const calculateRankings = (
       category,
       failedSubjects,
       repechageSubjects,
+      voirBureauSubjects,
       missingSubjects,
       subjectDetails,
     });
