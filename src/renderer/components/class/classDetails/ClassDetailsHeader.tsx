@@ -164,6 +164,15 @@ export default function ClassDetailsHeader({
               onSuccess={() => onPredictionsApplied?.()}
               onError={(error) => console.error(error)}
             />
+            {/* Bouton d'accès rapide au modal Voir Bureau (VB) */}
+            <button
+              onClick={() => setShowVoirBureau(true)}
+              title="Gérer les Voir Bureau de la classe"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-200 hover:text-white rounded-xl border border-amber-500/30 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
+            >
+              <AlertTriangle size={13} />
+              <span>Voir Bureau</span>
+            </button>
             <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
               <button
                 onClick={onOpenPalmares}
@@ -375,21 +384,6 @@ export default function ClassDetailsHeader({
                         className={`w-10 h-5 rounded-full relative transition-colors ${showStats ? 'bg-blue-500' : 'bg-slate-600'}`}
                       >
                         <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all ${showStats ? 'left-6' : 'left-1'}`} />
-                      </button>
-                    </div>
-
-                    {/* Bouton Voir Bureau dans le popover de filtres */}
-                    <div className="flex items-center justify-between border-t border-white/10 pt-3">
-                      <div>
-                        <span className="text-amber-400 text-[10px] font-black uppercase tracking-widest">Voir Bureau (VB)</span>
-                        <p className="text-white/40 text-[9px] mt-0.5">Marquer les élèves avec une dette</p>
-                      </div>
-                      <button
-                        onClick={() => { setShowVoirBureau(true); setShowFiltersPopover(false); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white rounded-lg border border-amber-500/30 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
-                      >
-                        <AlertTriangle size={11} />
-                        Gérer
                       </button>
                     </div>
                   </div>

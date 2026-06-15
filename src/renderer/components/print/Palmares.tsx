@@ -40,6 +40,9 @@ export default function Palmares({
   const [palmaresMode, setPalmaresMode] = useState<PalmaresMode>('BEFORE_DELIBERATION');
   const [repechages, setRepechages] = useState<Repechage[]>([]);
   const [delibConfig, setDelibConfig] = useState<DeliberationConfig>(DEFAULT_DELIBERATION_CONFIG);
+  // Contrôle si le statut "Voir Bureau" est affiché dans la liste de repêchage.
+  // Mettre à false pour imprimer la liste sans tenir compte du VB.
+  const [showVoirBureau, setShowVoirBureau] = useState(true);
 
   // Chargement des points de repêchage et de la config
   React.useEffect(() => {
@@ -146,75 +149,114 @@ export default function Palmares({
 
   return (
     <div className="bg-slate-100 p-8 print:p-0 print:bg-white">
-      {/* Barre d'outils supérieure propre et professionnelle (masquée à l'impression) */}
-      <div className="max-w-[210mm] mx-auto mb-6 bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-3 flex items-center gap-3 print:hidden">
+      {/* Barre d'outils supérieure — deux rangées pour une disposition propre (masquée à l'impression) */}
+      <div className="max-w-[210mm] mx-auto mb-6 bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-3 print:hidden">
 
-        {/* Bouton Retour */}
-        <button
-          onClick={onClose}
-          className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 active:scale-[0.97] transition-all duration-150 font-medium text-sm cursor-pointer"
-        >
-          <ArrowLeft size={16} />
-          Retour
-        </button>
+        {/* Rangée 1 : Navigation + Sélecteurs principaux */}
+        <div className="flex items-center gap-3 flex-wrap">
 
-        {/* Séparateur vertical */}
-        <div className="h-7 w-px bg-slate-200"></div>
-
-        {/* Sélection de la Période */}
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value as Period)}
-          className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
-        >
-          <option value="P1">1ère Période</option>
-          <option value="P2">2ème Période</option>
-          <option value="EXAM1">Examen 1er Sem.</option>
-          <option value="SEM1">Semestre 1</option>
-          <option value="P3">3ème Période</option>
-          <option value="P4">4ème Période</option>
-          <option value="EXAM2">Examen 2ème Sem.</option>
-          <option value="SEM2">Semestre 2</option>
-          <option value="ANNUAL">Annuel</option>
-        </select>
-
-        {/* Sélection du mode de Délibération (uniquement si période Annuel) */}
-        {selectedPeriod === 'ANNUAL' && (
-          <select
-            value={palmaresMode}
-            onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
-            className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer animate-fade-in"
+          {/* Bouton Retour */}
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 active:scale-[0.97] transition-all duration-150 font-medium text-sm cursor-pointer"
           >
-            <option value="BEFORE_DELIBERATION">Avant Délibération</option>
-            <option value="AFTER_DELIBERATION">Palmarès Final (De Délib.)</option>
-            <option value="REPECHAGE_LIST">Liste de Repêchage</option>
+            <ArrowLeft size={16} />
+            Retour
+          </button>
+
+          {/* Séparateur vertical */}
+          <div className="h-7 w-px bg-slate-200"></div>
+
+          {/* Sélection de la Période */}
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value as Period)}
+            className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+          >
+            <option value="P1">1ère Période</option>
+            <option value="P2">2ème Période</option>
+            <option value="EXAM1">Examen 1er Sem.</option>
+            <option value="SEM1">Semestre 1</option>
+            <option value="P3">3ème Période</option>
+            <option value="P4">4ème Période</option>
+            <option value="EXAM2">Examen 2ème Sem.</option>
+            <option value="SEM2">Semestre 2</option>
+            <option value="ANNUAL">Annuel</option>
           </select>
-        )}
 
-        {/* Filtre d'exclusion des Abandons */}
-        <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none hover:text-slate-800 transition-colors">
-          <input
-            type="checkbox"
-            checked={onlyAbandons}
-            onChange={(e) => setOnlyAbandons(e.target.checked)}
-            className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-          />
-          Sans abandons
-        </label>
+          {/* Sélection du mode de Délibération (uniquement si période Annuel) */}
+          {selectedPeriod === 'ANNUAL' && (
+            <select
+              value={palmaresMode}
+              onChange={(e) => setPalmaresMode(e.target.value as PalmaresMode)}
+              className="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 outline-none bg-white font-medium text-slate-700 text-sm cursor-pointer"
+            >
+              <option value="BEFORE_DELIBERATION">Avant Délibération</option>
+              <option value="AFTER_DELIBERATION">Palmarès Final (De Délib.)</option>
+              <option value="REPECHAGE_LIST">Liste de Repêchage</option>
+            </select>
+          )}
 
-        {/* Espacement flexible pour pousser le bouton Imprimer à droite */}
-        <div className="flex-1"></div>
+          {/* Pousser le bouton imprimer à droite */}
+          <div className="flex-1"></div>
 
-        {/* Bouton d'impression */}
-        <PrintButton
-          targetRef={palmaresRef}
-          title={`${documentTitle} de la ${classInfo.name} - ${periode(selectedPeriod)}`}
-          extraCss={printCss}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
-        >
-          <Printer size={16} />
-          Imprimer
-        </PrintButton>
+          {/* Bouton d'impression */}
+          <PrintButton
+            targetRef={palmaresRef}
+            title={`${documentTitle} de la ${classInfo.name} - ${periode(selectedPeriod)}`}
+            extraCss={printCss}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-[0.97] transition-all duration-150 shadow-sm font-medium text-sm cursor-pointer"
+          >
+            <Printer size={16} />
+            Imprimer
+          </PrintButton>
+        </div>
+
+        {/* Rangée 2 : Options et filtres secondaires (séparée par un trait fin) */}
+        <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-slate-100">
+
+          {/* Filtre d'exclusion des Abandons */}
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer select-none hover:text-slate-800 transition-colors">
+            <input
+              type="checkbox"
+              checked={onlyAbandons}
+              onChange={(e) => setOnlyAbandons(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            Sans abandons
+          </label>
+
+          {/* Toggle VB : visible uniquement en mode Liste de Repêchage */}
+          {palmaresMode === 'REPECHAGE_LIST' && (
+            <>
+              <div className="h-5 w-px bg-slate-200"></div>
+              <label
+                className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none transition-colors"
+                title={showVoirBureau ? 'Masquer VB : affiche les vraies matières échouées' : 'Afficher VB : remplace les matières par « Voir Bureau »'}
+              >
+                <input
+                  type="checkbox"
+                  checked={showVoirBureau}
+                  onChange={(e) => setShowVoirBureau(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-amber-300 text-amber-500 focus:ring-amber-400 cursor-pointer"
+                />
+                <span className={showVoirBureau ? 'text-amber-600 font-semibold' : 'text-slate-400'}>
+                  Afficher VB
+                </span>
+              </label>
+            </>
+          )}
+
+          {/* Résumé des stats dans la deuxième rangée */}
+          <div className="flex-1"></div>
+          <div className="flex items-center gap-3 text-xs text-slate-400 font-medium">
+            <span>{stats.total} élèves</span>
+            <span>·</span>
+            <span className="text-green-600">{stats.passed} réussis</span>
+            <span>·</span>
+            <span className="text-red-500">{stats.failed} échoués</span>
+          </div>
+        </div>
       </div>
 
       {/* Rendu imprimable du palmarès */}
@@ -246,7 +288,10 @@ export default function Palmares({
 
         {/* Rendu conditionnel du tableau selon le mode */}
         {palmaresMode === 'REPECHAGE_LIST' ? (
-          <RepechageListTable displayedStudents={displayedStudents} />
+          <RepechageListTable
+            displayedStudents={displayedStudents}
+            showVoirBureau={showVoirBureau}
+          />
         ) : selectedPeriod === 'ANNUAL' ? (
           <AnnualTable
             displayedStudents={displayedStudents}

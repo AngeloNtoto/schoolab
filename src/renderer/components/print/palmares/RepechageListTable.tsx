@@ -3,16 +3,25 @@ import { RankedStudent } from '../../../types/palmares';
 
 interface Props {
   displayedStudents: RankedStudent[];
+  /**
+   * Si true (défaut), affiche "Voir Bureau" à la place des matières pour les élèves VB.
+   * Si false, on ignore le statut VB et on affiche les matières échouées/manquantes normalement.
+   * Utile pour imprimer la liste sans tenir compte du VB.
+   */
+  showVoirBureau?: boolean;
 }
 
 /**
  * Tableau imprimable de la liste de repêchage.
- * 
+ *
  * Règle d'affichage :
- *  - Si l'élève est marqué "Voir Bureau" sur une matière → afficher "VB" en rouge à la place des points
- *  - Sinon → afficher les matières échouées (Repêchage) et manquantes (Session unique)
+ *  - Si showVoirBureau=true ET l'élève est marqué "Voir Bureau" → afficher "VOIR BUREAU" à la place
+ *  - Sinon → afficher les matières échouées (Repêchage) et manquantes (Session unique) normalement
  */
-export const RepechageListTable: React.FC<Props> = ({ displayedStudents }) => {
+export const RepechageListTable: React.FC<Props> = ({
+  displayedStudents,
+  showVoirBureau = true  // Par défaut on respecte le statut VB
+}) => {
   return (
     <table className="w-full border-collapse border border-black text-[14px] text-black">
       <thead>
@@ -29,8 +38,11 @@ export const RepechageListTable: React.FC<Props> = ({ displayedStudents }) => {
           const missing = rankedStudent.missingSubjects.join(', ');
           const failed = rankedStudent.failedSubjects.join(', ');
 
-          // Vérifier si cet élève a des matières "Voir Bureau"
-          const hasVoirBureau = rankedStudent.voirBureauSubjects && rankedStudent.voirBureauSubjects.length > 0;
+          // Vérifier si cet élève a des matières "Voir Bureau" ET si on doit les afficher
+          const hasVoirBureau =
+            showVoirBureau &&
+            rankedStudent.voirBureauSubjects &&
+            rankedStudent.voirBureauSubjects.length > 0;
 
           return (
             <tr key={rankedStudent.student.id} className="border border-black font-semibold leading-none">
@@ -39,23 +51,19 @@ export const RepechageListTable: React.FC<Props> = ({ displayedStudents }) => {
                 {rankedStudent.student.last_name} {rankedStudent.student.post_name} {rankedStudent.student.first_name}
               </td>
 
-              {/* Colonne Repêchage : remplacer par VOIR BUREAU si l'élève a une dette */}
+              {/* Colonne Repêchage : si VB activé ET pris en compte → afficher "VOIR BUREAU" */}
               <td className="border border-black px-2.5 py-0 text-center text-black">
                 {hasVoirBureau ? (
-                  // Afficher "VOIR BUREAU" en gras et souligné pour cet élève
-                  <span className="font-black">
-                    Voir Bureau
-                  </span>
+                  <span className="font-black">Voir Bureau</span>
                 ) : (
                   failed
                 )}
               </td>
 
-              {/* Colonne Session unique : idem, masquer si VB */}
+              {/* Colonne Session unique : idem, masquer si VB pris en compte */}
               <td className="border border-black px-2.5 py-0 text-center text-black">
                 {hasVoirBureau ? (
-                  // Cellule vide : le message VB est déjà dans la colonne précédente
-                  <span className="">Voir Bureau</span>
+                  <span className="font-black">Voir Bureau</span>
                 ) : (
                   missing
                 )}

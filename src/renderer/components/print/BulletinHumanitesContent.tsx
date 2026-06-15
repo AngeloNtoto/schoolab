@@ -338,7 +338,14 @@ export default function BulletinHumanitesContent({
                     const toneTot2 = getSubjectToneClass(pctTot2, seuil);
                     const toneTG = getSubjectToneClass(pctTG, seuil);
 
-                    const repechage = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
+                    /**
+                     * NOTE IMPORTANTE : Le champ voir_bureau est volontairement ignoré ici.
+                     * Le bulletin affiche uniquement le pourcentage de repêchage (valeur chiffrée).
+                     * Le VB est réservé à la liste de repêchage du palmarès.
+                     */
+                    const repechage = repechages.find(
+                      r => r.student_id === student.id && r.subject_id === subject.id && (r.percentage ?? 0) > 0
+                    );
 
                     return (
                       <tr key={subject.id}>
