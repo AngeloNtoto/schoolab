@@ -624,13 +624,13 @@ export default function BulletinHumanitesContent({
 
       <style>{`
         .subject-passed {
-          color: #b91c1c;
+          color: #0000AF;
           font-weight: 650;
           font-style: italic;
         }
 
         .subject-failed {
-          color: #0423AF;
+          color: #b91c1c;
           font-weight: 200;
         }
 

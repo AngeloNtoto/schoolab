@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ArrowLeft,
   Plus,
@@ -18,13 +18,15 @@ import {
   Minimize,
   Download,
   RefreshCw,
-  RotateCcw
+  RotateCcw,
+  AlertTriangle
 } from '../../iconsSvg';
 import { ClassData, Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
 import { ALL_PERIODS } from './gradeUtils';
 import { GradePredictorWidget } from '../GradePredictorWidget';
+import VoirBureauModal from '../VoirBureauModal';
 
 interface ClassDetailsHeaderProps {
   classInfo: ClassData;
@@ -115,6 +117,9 @@ export default function ClassDetailsHeader({
   onDeleteCustomSort,
   onPredictionsApplied
 }: ClassDetailsHeaderProps) {
+  // État local pour l'ouverture du modal Voir Bureau
+  const [showVoirBureau, setShowVoirBureau] = useState(false);
+
   return (
     <header className="bg-blue-600 dark:bg-slate-900 border-b border-white/5 sticky top-0 z-30 shadow-lg">
       <div className="px-6 py-3">
@@ -158,6 +163,15 @@ export default function ClassDetailsHeader({
               onSuccess={() => onPredictionsApplied?.()}
               onError={(error) => console.error(error)}
             />
+            {/* Bouton d'accès rapide au modal Voir Bureau (VB) */}
+            <button
+              onClick={() => setShowVoirBureau(true)}
+              title="Gérer les Voir Bureau de la classe"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-200 hover:text-white rounded-xl border border-amber-500/30 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
+            >
+              <AlertTriangle size={13} />
+              <span>Voir Bureau</span>
+            </button>
             <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
               <button
                 onClick={onOpenPalmares}
@@ -430,5 +444,14 @@ export default function ClassDetailsHeader({
         )}
       </div>
     </header>
+
+    {/* Modal Voir Bureau — liste de toute la classe avec toggle par élève */}
+    <VoirBureauModal
+      isOpen={showVoirBureau}
+      onClose={() => setShowVoirBureau(false)}
+      students={students}
+      subjects={subjects}
+      classId={classInfo.id}
+    />
   );
 }
