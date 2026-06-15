@@ -43,7 +43,7 @@ export const RepechageListTable: React.FC<Props> = ({ displayedStudents }) => {
               <td className="border border-black px-2.5 py-0 text-center text-black">
                 {hasVoirBureau ? (
                   // Afficher "VOIR BUREAU" en gras et souligné pour cet élève
-                  <span className="font-black uppercase underline">
+                  <span className="font-black">
                     Voir Bureau
                   </span>
                 ) : (
@@ -55,7 +55,7 @@ export const RepechageListTable: React.FC<Props> = ({ displayedStudents }) => {
               <td className="border border-black px-2.5 py-0 text-center text-black">
                 {hasVoirBureau ? (
                   // Cellule vide : le message VB est déjà dans la colonne précédente
-                  <span className="text-black/30 text-xs italic">—</span>
+                  <span className="">Voir Bureau</span>
                 ) : (
                   missing
                 )}

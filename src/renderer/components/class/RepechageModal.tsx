@@ -173,7 +173,7 @@ export default function RepechageModal({ isOpen, onClose, student, subjects }: R
         {/* Légende "Voir Bureau" */}
         <div className="px-6 py-3 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-200 dark:border-amber-500/20 flex items-center gap-2 shrink-0">
           <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-            🏢 VOIR BUREAU (VB)
+            VOIR BUREAU (VB)
           </span>
           <span className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
             — Activer si l'élève a une dette. Dans la liste de repêchage, "VB" s'affichera à la place de ses points.
@@ -240,7 +240,7 @@ export default function RepechageModal({ isOpen, onClose, student, subjects }: R
                         {isVoirBureau ? (
                           // Afficher le badge VB à la place des points si activé
                           <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                            🏢 Voir Bureau
+                            Voir Bureau
                           </span>
                         ) : (
                           <span className="font-bold text-slate-600 dark:text-slate-400">
