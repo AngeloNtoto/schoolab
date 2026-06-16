@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { classService, ClassData } from '../services/classService';
+import { dbService } from '../services/databaseService';
 import { academicYearService } from '../services/academicYearService';
 import { useWorkbench } from './WorkbenchProvider';
-import { ChevronRight, ChevronDown, Archive as Folder, FileText, Search, Plus } from '../components/iconsSvg';
+import { ChevronRight, ChevronDown, Archive as Folder, FileText, Search, Plus, Edit, Trash2 } from '../components/iconsSvg';
 import EditClassModal from '../components/class/EditClassModal';
+import { useContextMenu } from './ContextMenuLayer';
 
 interface ExplorerPaneProps {
   width: number;
@@ -25,7 +27,10 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isResizing, setIsResizing] = useState(false);
   const [showCreateClassModal, setShowCreateClassModal] = useState(false);
+  const [editClassData, setEditClassData] = useState<ClassData | null>(null);
+  const [selectedClassIds, setSelectedClassIds] = useState<number[]>([]);
   const { executeCommand, activeTabId } = useWorkbench();
+  const { showContextMenu } = useContextMenu();
 
   const loadClasses = useCallback(async () => {
     try {
@@ -209,8 +214,81 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
     });
   };
 
-  const handleClassClick = (classId: number) => {
-    executeCommand(`schoolab.openClass.${classId}`);
+  const handleClassClick = (e: React.MouseEvent, classId: number) => {
+    if (e.ctrlKey || e.metaKey) {
+      setSelectedClassIds(prev => prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId]);
+    } else {
+      setSelectedClassIds([classId]);
+      executeCommand(`schoolab.openClass.${classId}`);
+    }
+  };
+
+  const handleEditClass = (cls: ClassData) => {
+    setEditClassData(cls);
+  };
+
+  const handleDeleteClass = async (cls: ClassData) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer la classe ${cls.level} ${cls.option || ''} ${cls.section || ''} ?`)) {
+      try {
+        await dbService.execute('DELETE FROM classes WHERE id = ?', [cls.id]);
+        loadClasses();
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la suppression de la classe. Elle contient peut-être des élèves.");
+      }
+    }
+  };
+
+  const handleBulkDelete = async (ids: number[]) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ces ${ids.length} classes ?`)) {
+      try {
+        for (const id of ids) {
+          await dbService.execute('DELETE FROM classes WHERE id = ?', [id]);
+        }
+        setSelectedClassIds([]);
+        loadClasses();
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la suppression de certaines classes.");
+      }
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, node: TreeNode) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (node.type === 'folder') {
+      showContextMenu(e, [
+        { label: `Dossier: ${node.name}`, action: () => {} },
+        { separator: true, label: '' },
+        { label: 'Nouvelle classe', action: () => setShowCreateClassModal(true) }
+      ]);
+      return;
+    }
+
+    const cls = node.classData!;
+    const isSelected = selectedClassIds.includes(cls.id);
+    const affectedClasses = isSelected ? selectedClassIds : [cls.id];
+
+    if (!isSelected) {
+      setSelectedClassIds([cls.id]);
+    }
+
+    if (affectedClasses.length > 1) {
+      showContextMenu(e, [
+        { label: `${affectedClasses.length} classes sélectionnées`, action: () => {} },
+        { separator: true, label: '' },
+        { label: 'Supprimer la sélection', action: () => handleBulkDelete(affectedClasses), danger: true }
+      ]);
+    } else {
+      showContextMenu(e, [
+        { label: `Classe: ${cls.level} ${cls.option || ''}`, action: () => {} },
+        { separator: true, label: '' },
+        { label: 'Modifier la classe', action: () => handleEditClass(cls) },
+        { label: 'Supprimer', action: () => handleDeleteClass(cls), danger: true }
+      ]);
+    }
   };
 
   // Resizing logic
@@ -259,6 +337,7 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
               e.stopPropagation();
               toggleFolder(node.id);
             }}
+            onContextMenu={(e) => handleContextMenu(e, node)}
           >
             <div className="w-4 flex justify-center text-slate-400">
               {node.isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -279,11 +358,16 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
       return (
         <div 
           key={node.id}
-          className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-slate-600 dark:text-slate-400 transition-colors group"
+          className={`flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors group ${
+            selectedClassIds.includes(node.classData!.id) 
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' 
+              : 'text-slate-600 dark:text-slate-400'
+          }`}
           style={{ paddingLeft: `${depth * 12 + 24}px` }}
-          onClick={() => handleClassClick(node.classData!.id)}
+          onClick={(e) => handleClassClick(e, node.classData!.id)}
+          onContextMenu={(e) => handleContextMenu(e, node)}
         >
-          <FileText size={14} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+          <FileText size={14} className={selectedClassIds.includes(node.classData!.id) ? 'text-blue-500' : 'text-slate-400 group-hover:text-blue-500 transition-colors'} />
           <span className="text-[13px] truncate">{node.name}</span>
         </div>
       );
@@ -335,9 +419,13 @@ export default function ExplorerPane({ width, setWidth }: ExplorerPaneProps) {
         )}
       </div>
 
-      {showCreateClassModal && (
+      {(showCreateClassModal || editClassData) && (
         <EditClassModal 
-          onClose={() => setShowCreateClassModal(false)}
+          classData={editClassData}
+          onClose={() => {
+            setShowCreateClassModal(false);
+            setEditClassData(null);
+          }}
           onSuccess={() => {
             loadClasses();
           }}
