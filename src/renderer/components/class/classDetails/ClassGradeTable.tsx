@@ -304,26 +304,208 @@ export default function ClassGradeTable({
     ]);
   };
 
+  // Menu contextuel riche pour le nom du cours (matière) dans l'en-tête de la grille
   const handleSubjectContextMenu = (e: React.MouseEvent, subject: Subject) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Calcul rapide des statistiques du cours pour l'affichage dans le menu
+    const allPeriods = Array.from(selectedPeriods);
+    const totalMax = allPeriods.reduce((sum, p) => {
+      switch (p) {
+        case 'P1': return sum + subject.max_p1;
+        case 'P2': return sum + subject.max_p2;
+        case 'EXAM1': return sum + subject.max_exam1;
+        case 'P3': return sum + subject.max_p3;
+        case 'P4': return sum + subject.max_p4;
+        case 'EXAM2': return sum + subject.max_exam2;
+        default: return sum;
+      }
+    }, 0);
+
+    // Compter les notes remplies et vides pour ce cours
+    let filledCount = 0;
+    let emptyCount = 0;
+    for (const p of allPeriods) {
+      for (const s of activeStudents) {
+        const key = getCellKey({ studentId: s.id, subjectId: subject.id, period: p });
+        if (gradesMap.has(key)) filledCount++;
+        else emptyCount++;
+      }
+    }
+
     showContextMenu(e, [
-      { label: `Cours: ${subject.name}`, action: () => {} },
+      // En-tête informatif avec statistiques rapides
+      { label: `📘 ${subject.name} (max total: ${totalMax})`, action: () => {} },
+      { label: `   ${filledCount} notes saisies · ${emptyCount} vides`, action: () => {} },
       { separator: true, label: '' },
+
+      // --- Sélection ---
       {
-        label: 'Vider complètement ce cours',
+        label: '✅ Sélectionner toutes les colonnes du cours',
+        action: () => {
+          // Sélectionne toutes les périodes visibles de ce cours
+          for (const p of allPeriods) {
+            let max = 0;
+            switch (p) {
+              case 'P1': max = subject.max_p1; break;
+              case 'P2': max = subject.max_p2; break;
+              case 'EXAM1': max = subject.max_exam1; break;
+              case 'P3': max = subject.max_p3; break;
+              case 'P4': max = subject.max_p4; break;
+              case 'EXAM2': max = subject.max_exam2; break;
+            }
+            if (max > 0) {
+              gradebookStore.selectColumn(subject.id, p, activeStudents.map(s => s.id), true);
+            }
+          }
+        }
+      },
+      { separator: true, label: '' },
+
+      // --- Remplissage ---
+      {
+        label: 'Mettre le maximum à tout le cours',
         action: async () => {
-          if (window.confirm(`Effacer TOUTES les notes de toutes les périodes pour le cours ${subject.name} ? Cette action est irréversible.`)) {
-            const periods = Array.from(selectedPeriods);
-            for (const p of periods) {
-               for (const s of activeStudents) {
-                 await onGradeUpdate(s.id, subject.id, p, null);
-               }
+          if (window.confirm(`Attribuer le maximum à TOUTES les périodes pour ${subject.name} ?`)) {
+            for (const p of allPeriods) {
+              let max = 0;
+              switch (p) {
+                case 'P1': max = subject.max_p1; break;
+                case 'P2': max = subject.max_p2; break;
+                case 'EXAM1': max = subject.max_exam1; break;
+                case 'P3': max = subject.max_p3; break;
+                case 'P4': max = subject.max_p4; break;
+                case 'EXAM2': max = subject.max_exam2; break;
+              }
+              if (max > 0) {
+                for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, p, max);
+              }
+            }
+          }
+        }
+      },
+      {
+        label: 'Remplir uniquement les cases vides...',
+        action: async () => {
+          const val = window.prompt(`Saisissez la note à attribuer aux cases vides de ${subject.name} :`);
+          if (val !== null) {
+            const numVal = parseFloat(val.replace(',', '.'));
+            if (!isNaN(numVal) && numVal >= 0) {
+              for (const p of allPeriods) {
+                let max = 0;
+                switch (p) {
+                  case 'P1': max = subject.max_p1; break;
+                  case 'P2': max = subject.max_p2; break;
+                  case 'EXAM1': max = subject.max_exam1; break;
+                  case 'P3': max = subject.max_p3; break;
+                  case 'P4': max = subject.max_p4; break;
+                  case 'EXAM2': max = subject.max_exam2; break;
+                }
+                if (max > 0 && numVal <= max) {
+                  for (const s of activeStudents) {
+                    const key = getCellKey({ studentId: s.id, subjectId: subject.id, period: p });
+                    // Ne remplir que si la cellule est vide
+                    if (!gradesMap.has(key)) {
+                      await onGradeUpdate(s.id, subject.id, p, numVal);
+                    }
+                  }
+                }
+              }
+            } else {
+              alert('Valeur invalide');
+            }
+          }
+        }
+      },
+      { separator: true, label: '' },
+
+      // --- Vidage sélectif ---
+      {
+        label: 'Vider le Semestre 1 (P1 + P2 + Ex1)',
+        action: async () => {
+          if (window.confirm(`Effacer les notes du Sem.1 pour ${subject.name} ?`)) {
+            for (const p of ['P1', 'P2', 'EXAM1']) {
+              if (selectedPeriods.has(p)) {
+                for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, p, null);
+              }
             }
           }
         },
         danger: true
+      },
+      {
+        label: 'Vider le Semestre 2 (P3 + P4 + Ex2)',
+        action: async () => {
+          if (window.confirm(`Effacer les notes du Sem.2 pour ${subject.name} ?`)) {
+            for (const p of ['P3', 'P4', 'EXAM2']) {
+              if (selectedPeriods.has(p)) {
+                for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, p, null);
+              }
+            }
+          }
+        },
+        danger: true
+      },
+      {
+        label: 'Vider complètement ce cours',
+        action: async () => {
+          if (window.confirm(`Effacer TOUTES les notes de TOUTES les périodes pour ${subject.name} ? Cette action est irréversible.`)) {
+            for (const p of allPeriods) {
+              for (const s of activeStudents) {
+                await onGradeUpdate(s.id, subject.id, p, null);
+              }
+            }
+          }
+        },
+        danger: true
+      },
+      { separator: true, label: '' },
+
+      // --- Copie entre périodes ---
+      {
+        label: 'Copier P1 → P2',
+        action: async () => {
+          if (subject.max_p1 > 0 && subject.max_p2 > 0) {
+            if (window.confirm(`Copier les notes de P1 vers P2 pour ${subject.name} ? Les notes existantes en P2 seront écrasées.`)) {
+              for (const s of activeStudents) {
+                const val = gradesMap.get(getCellKey({ studentId: s.id, subjectId: subject.id, period: 'P1' })) ?? null;
+                await onGradeUpdate(s.id, subject.id, 'P2', val);
+              }
+            }
+          } else {
+            alert('P1 ou P2 n\'est pas configuré pour ce cours.');
+          }
+        }
+      },
+      {
+        label: 'Copier P3 → P4',
+        action: async () => {
+          if (subject.max_p3 > 0 && subject.max_p4 > 0) {
+            if (window.confirm(`Copier les notes de P3 vers P4 pour ${subject.name} ? Les notes existantes en P4 seront écrasées.`)) {
+              for (const s of activeStudents) {
+                const val = gradesMap.get(getCellKey({ studentId: s.id, subjectId: subject.id, period: 'P3' })) ?? null;
+                await onGradeUpdate(s.id, subject.id, 'P4', val);
+              }
+            }
+          } else {
+            alert('P3 ou P4 n\'est pas configuré pour ce cours.');
+          }
+        }
+      },
+      {
+        label: 'Copier Sem.1 → Sem.2',
+        action: async () => {
+          if (window.confirm(`Dupliquer P1→P3, P2→P4 et Ex1→Ex2 pour ${subject.name} ?`)) {
+            const mapping: [string, string][] = [['P1', 'P3'], ['P2', 'P4'], ['EXAM1', 'EXAM2']];
+            for (const [from, to] of mapping) {
+              for (const s of activeStudents) {
+                const val = gradesMap.get(getCellKey({ studentId: s.id, subjectId: subject.id, period: from })) ?? null;
+                await onGradeUpdate(s.id, subject.id, to, val);
+              }
+            }
+          }
+        }
       }
     ]);
   };
