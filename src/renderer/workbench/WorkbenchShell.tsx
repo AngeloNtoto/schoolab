@@ -40,7 +40,6 @@ export default function WorkbenchShell() {
   const [statusMessage, setStatusMessage] = useState('Prêt');
   const [isRecordingMacro, setIsRecordingMacro] = useState(macroService.isCurrentlyRecording());
   const location = useLocation();
-  const isSettings = location.pathname === '/settings';
   
   const { panels, activePanelId, closePanel } = useWorkbench();
 
@@ -116,16 +115,12 @@ export default function WorkbenchShell() {
 
   return (
     <div className="flex bg-white h-screen overflow-hidden">
-      {!isSettings && (
-        <>
-          <Sidebar 
-            activeView={activeView} 
-            onToggleView={(view) => setActiveView(v => v === view ? null : view)} 
-          />
-          {activeView === 'explorer' && (
-            <ExplorerPane width={explorerWidth} setWidth={setExplorerWidth} />
-          )}
-        </>
+      <Sidebar 
+        activeView={activeView} 
+        onToggleView={(view) => setActiveView(v => v === view ? null : view)} 
+      />
+      {activeView === 'explorer' && (
+        <ExplorerPane width={explorerWidth} setWidth={setExplorerWidth} />
       )}
       <main className="flex-1 flex flex-col min-w-0 relative">
         <SplitView 
