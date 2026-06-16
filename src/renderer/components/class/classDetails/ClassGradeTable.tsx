@@ -181,25 +181,78 @@ export default function ClassGradeTable({
 
     if (max <= 0) return;
 
+    const state = gradebookStore.getState();
+    const selectedCells = state.selectedCells.size > 0 ? Array.from(state.selectedCells) : [];
+    
+    const selectedColsSet = new Set<string>();
+    selectedCells.forEach(key => {
+      const [, sb, p] = key.split('-');
+      selectedColsSet.add(`${sb}-${p}`);
+    });
+
+    const clickedColKey = `${subject.id}-${period}`;
+    const targetCols = selectedColsSet.has(clickedColKey) 
+      ? Array.from(selectedColsSet) 
+      : [clickedColKey];
+
+    const isMulti = targetCols.length > 1;
+    const titleLabel = isMulti 
+      ? `${targetCols.length} colonnes sélectionnées` 
+      : `Colonne: ${subject.name} - ${period} (/ ${max})`;
+
     showContextMenu(e, [
-      { label: `Colonne: ${subject.name} - ${period} (/ ${max})`, action: () => {} },
+      { label: titleLabel, action: () => {} },
       { separator: true, label: '' },
       { 
-        label: 'Mettre la note maximum à tous', 
+        label: isMulti ? 'Mettre la note maximum partout' : 'Mettre la note maximum à tous', 
         action: async () => {
-          if (window.confirm(`Voulez-vous vraiment attribuer ${max}/${max} à tous les élèves ?`)) {
-            for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, max);
+          if (window.confirm(`Voulez-vous vraiment attribuer le maximum à tous les élèves pour ${isMulti ? 'ces colonnes' : 'cette colonne'} ?`)) {
+            for (const colKey of targetCols) {
+              const [sbStr, p] = colKey.split('-');
+              const sbId = parseInt(sbStr, 10);
+              const subj = displayedSubjects.find(s => s.id === sbId);
+              if (!subj) continue;
+              let colMax = 0;
+              switch (p) {
+                case 'P1': colMax = subj.max_p1; break;
+                case 'P2': colMax = subj.max_p2; break;
+                case 'EXAM1': colMax = subj.max_exam1; break;
+                case 'P3': colMax = subj.max_p3; break;
+                case 'P4': colMax = subj.max_p4; break;
+                case 'EXAM2': colMax = subj.max_exam2; break;
+              }
+              if (colMax > 0) {
+                for (const s of activeStudents) await onGradeUpdate(s.id, sbId, p, colMax);
+              }
+            }
           }
         } 
       },
       { 
         label: 'Attribuer une note spécifique...', 
         action: async () => {
-          const val = window.prompt(`Saisissez la note à attribuer à tous les élèves (max ${max}):`);
+          const val = window.prompt(`Saisissez la note à attribuer :`);
           if (val !== null) {
             const numVal = parseFloat(val.replace(',', '.'));
-            if (!isNaN(numVal) && numVal >= 0 && numVal <= max) {
-              for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, numVal);
+            if (!isNaN(numVal) && numVal >= 0) {
+              for (const colKey of targetCols) {
+                const [sbStr, p] = colKey.split('-');
+                const sbId = parseInt(sbStr, 10);
+                const subj = displayedSubjects.find(s => s.id === sbId);
+                if (!subj) continue;
+                let colMax = 0;
+                switch (p) {
+                  case 'P1': colMax = subj.max_p1; break;
+                  case 'P2': colMax = subj.max_p2; break;
+                  case 'EXAM1': colMax = subj.max_exam1; break;
+                  case 'P3': colMax = subj.max_p3; break;
+                  case 'P4': colMax = subj.max_p4; break;
+                  case 'EXAM2': colMax = subj.max_exam2; break;
+                }
+                if (numVal <= colMax) {
+                  for (const s of activeStudents) await onGradeUpdate(s.id, sbId, p, numVal);
+                }
+              }
             } else {
               alert('Valeur invalide');
             }
@@ -207,10 +260,14 @@ export default function ClassGradeTable({
         } 
       },
       { 
-        label: 'Vider la colonne', 
+        label: isMulti ? 'Vider les colonnes' : 'Vider la colonne', 
         action: async () => {
-          if (window.confirm(`Effacer toutes les notes de cette colonne ? Cette action est irréversible.`)) {
-            for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, null);
+          if (window.confirm(`Effacer toutes les notes de ${isMulti ? 'ces colonnes' : 'cette colonne'} ? Cette action est irréversible.`)) {
+            for (const colKey of targetCols) {
+              const [sbStr, p] = colKey.split('-');
+              const sbId = parseInt(sbStr, 10);
+              for (const s of activeStudents) await onGradeUpdate(s.id, sbId, p, null);
+            }
           }
         }, 
         danger: true 
@@ -219,22 +276,54 @@ export default function ClassGradeTable({
       { 
         label: 'Décaler les notes vers le bas ↓', 
         action: async () => {
-          for (let i = activeStudents.length - 1; i > 0; i--) {
-            const prevVal = gradesMap.get(getCellKey({studentId: activeStudents[i-1].id, subjectId: subject.id, period}));
-            await onGradeUpdate(activeStudents[i].id, subject.id, period, prevVal ?? null);
+          for (const colKey of targetCols) {
+            const [sbStr, p] = colKey.split('-');
+            const sbId = parseInt(sbStr, 10);
+            for (let i = activeStudents.length - 1; i > 0; i--) {
+              const prevVal = gradesMap.get(getCellKey({studentId: activeStudents[i-1].id, subjectId: sbId, period: p}));
+              await onGradeUpdate(activeStudents[i].id, sbId, p, prevVal ?? null);
+            }
+            await onGradeUpdate(activeStudents[0].id, sbId, p, null);
           }
-          await onGradeUpdate(activeStudents[0].id, subject.id, period, null);
         } 
       },
       { 
         label: 'Décaler les notes vers le haut ↑', 
         action: async () => {
-          for (let i = 0; i < activeStudents.length - 1; i++) {
-            const nextVal = gradesMap.get(getCellKey({studentId: activeStudents[i+1].id, subjectId: subject.id, period}));
-            await onGradeUpdate(activeStudents[i].id, subject.id, period, nextVal ?? null);
+          for (const colKey of targetCols) {
+            const [sbStr, p] = colKey.split('-');
+            const sbId = parseInt(sbStr, 10);
+            for (let i = 0; i < activeStudents.length - 1; i++) {
+              const nextVal = gradesMap.get(getCellKey({studentId: activeStudents[i+1].id, subjectId: sbId, period: p}));
+              await onGradeUpdate(activeStudents[i].id, sbId, p, nextVal ?? null);
+            }
+            await onGradeUpdate(activeStudents[activeStudents.length - 1].id, sbId, p, null);
           }
-          await onGradeUpdate(activeStudents[activeStudents.length - 1].id, subject.id, period, null);
         } 
+      }
+    ]);
+  };
+
+  const handleSubjectContextMenu = (e: React.MouseEvent, subject: Subject) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    showContextMenu(e, [
+      { label: `Cours: ${subject.name}`, action: () => {} },
+      { separator: true, label: '' },
+      {
+        label: 'Vider complètement ce cours',
+        action: async () => {
+          if (window.confirm(`Effacer TOUTES les notes de toutes les périodes pour le cours ${subject.name} ? Cette action est irréversible.`)) {
+            const periods = Array.from(selectedPeriods);
+            for (const p of periods) {
+               for (const s of activeStudents) {
+                 await onGradeUpdate(s.id, subject.id, p, null);
+               }
+            }
+          }
+        },
+        danger: true
       }
     ]);
   };
@@ -390,7 +479,8 @@ export default function ClassGradeTable({
             <th
               key={subject.id}
               colSpan={visibleGradeColumnCount}
-              className="bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap"
+              onContextMenu={(e) => handleSubjectContextMenu(e, subject)}
+              className="bg-slate-100 dark:bg-slate-800 px-2 py-2 text-center font-semibold text-slate-700 dark:text-slate-200 border-x border-slate-300 dark:border-slate-700 whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors"
             >
               {subject.name}
             </th>
