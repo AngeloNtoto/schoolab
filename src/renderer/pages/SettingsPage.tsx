@@ -46,77 +46,71 @@ export default function SettingsPage() {
     { id: 'about' as const, label: 'À propos', icon: Info, description: 'Version et support technique' },
   ];
 
-  // Palette de styles CSS pour l'élément actif de la barre latérale
+  // Palette de styles CSS pour l'élément actif en horizontal
   const tabColors: Record<string, string> = {
-    general: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-l-[3px] border-blue-500 pl-3',
-    appearance: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-l-[3px] border-amber-500 pl-3',
-    impression: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-l-[3px] border-teal-500 pl-3',
-    deliberation: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-l-[3px] border-purple-500 pl-3',
-    licence: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-l-[3px] border-emerald-500 pl-3',
-    cloud: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-l-[3px] border-indigo-500 pl-3',
-    about: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-l-[3px] border-sky-500 pl-3',
+    general: 'bg-blue-600 text-white shadow-md shadow-blue-500/20',
+    appearance: 'bg-amber-500 text-white shadow-md shadow-amber-500/20',
+    impression: 'bg-teal-500 text-white shadow-md shadow-teal-500/20',
+    deliberation: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
+    licence: 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20',
+    cloud: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20',
+    about: 'bg-sky-500 text-white shadow-md shadow-sky-500/20',
   };
 
   return (
     <div className="h-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col font-sans transition-colors duration-300">
       
-      {/* Spacer pour l'esthétique au lieu du bouton Retour */}
-      <div className="h-6 flex-shrink-0"></div>
-
-      {/* Corps principal en colonnes */}
-      <div className="flex-1 flex overflow-hidden">
-        
-        {/* Sidebar latérale : Panneau de choix des réglages */}
-        <div className="w-[280px] flex-shrink-0 px-6 pb-6 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-slate-950">
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">Paramètres</h1>
-          
-          <nav className="flex-1 space-y-1">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 hover:scale-[1.01] ${
-                    isActive
-                      ? tabColors[tab.id]
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <tab.icon size={16} className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
-                  <span className={`text-[13px] ${isActive ? 'font-bold' : 'font-medium'}`}>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Badge du forfait actif en bas de la sidebar */}
+      {/* En-tête horizontal : Titre et Onglets */}
+      <div className="px-8 pt-8 pb-4 flex-shrink-0 bg-slate-50 dark:bg-slate-950">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Paramètres</h1>
           {licenseStatus?.active && (
-            <div className="mt-auto pt-6 px-1">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{licenseStatus.plan === 'PLUS' ? 'Schoolab Plus' : 'Schoolab Pro'} — Activé</span>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-bold shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{licenseStatus.plan === 'PLUS' ? 'Schoolab Plus' : 'Schoolab Pro'} — Activé</span>
             </div>
           )}
         </div>
+        
+        <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-200 whitespace-nowrap text-sm ${
+                  isActive
+                    ? tabColors[tab.id] + ' font-bold'
+                    : 'text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200/50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <tab.icon size={16} className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Panneau de configuration actif à droite */}
-        <div className="flex-1 h-full overflow-y-auto bg-white dark:bg-[#0c101d] rounded-tl-[2rem] border-t border-l border-slate-200/60 dark:border-white/5 shadow-2xl transition-colors duration-300">
-          <div className="max-w-3xl py-10 px-8 md:px-12 pb-24">
+      {/* Corps principal : Conteneur blanc arrondi */}
+      <div className="flex-1 overflow-hidden px-6 pb-6">
+        <div className="h-full overflow-y-auto bg-white dark:bg-[#0c101d] rounded-[2rem] border border-slate-200/60 dark:border-white/5 shadow-xl transition-colors duration-300">
+          <div className="max-w-3xl mx-auto py-10 px-8 md:px-12 pb-24">
             
             {/* Rendu conditionnel de l'onglet actif */}
-            {activeTab === 'general' && <GeneralSettingsTab />}
-            {activeTab === 'appearance' && <AppearanceSettingsTab />}
-            {activeTab === 'impression' && <ImpressionSettingsTab />}
-            {activeTab === 'deliberation' && <DeliberationSettingsTab />}
-            {activeTab === 'licence' && <LicenceSettingsTab />}
-            {activeTab === 'cloud' && <CloudSettingsTab />}
-            {activeTab === 'about' && <AboutSettingsTab />}
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {activeTab === 'general' && <GeneralSettingsTab />}
+              {activeTab === 'appearance' && <AppearanceSettingsTab />}
+              {activeTab === 'impression' && <ImpressionSettingsTab />}
+              {activeTab === 'deliberation' && <DeliberationSettingsTab />}
+              {activeTab === 'licence' && <LicenceSettingsTab />}
+              {activeTab === 'cloud' && <CloudSettingsTab />}
+              {activeTab === 'about' && <AboutSettingsTab />}
+            </div>
 
           </div>
         </div>
-
       </div>
     </div>
   );
