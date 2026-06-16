@@ -33,96 +33,86 @@ export default function NetworkDashboard() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 relative transition-colors duration-500">
-      <div 
-        className="fixed inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: 'url(/assets/watermark.png)',
-          backgroundSize: '400px',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
-
-      {/* Header */}
-      <header className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 relative shadow-lg transition-colors duration-500 backdrop-blur-xl">
-        <div className="max-w-[95%] mx-auto px-8 py-6">
-          <div className="flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-4">
-              <button 
+    <div className="h-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col font-sans transition-colors duration-300">
+      <div className="h-6 flex-shrink-0"></div>
+      
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar latérale */}
+        <div className="w-[280px] flex-shrink-0 px-6 pb-6 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-slate-950">
+          <div className="flex items-center gap-3 mb-6">
+             <button 
                 onClick={() => navigate(-1)} 
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl backdrop-blur-md transition-all shadow-xl"
+                className="bg-slate-200/50 hover:bg-slate-300/50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 p-2 rounded-xl transition-all"
                 title="Retour"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} />
               </button>
-              <div className="bg-white/20 dark:bg-blue-600/30 p-2.5 rounded-[1.5rem] backdrop-blur-md shadow-2xl rotate-3">
-                <Monitor className="text-white dark:text-blue-400" size={24} />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-white dark:text-slate-100 tracking-tight">Gestion Réseau</h1>
-                <div className="flex items-center gap-3 text-blue-100 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1.5">
-                  <Globe size={12} className="text-blue-200 dark:text-blue-400" />
-                  <span>Nom de cet appareil:</span>
-                  {isEditing ? (
-                    <div className="flex items-center gap-2 bg-white/10 rounded px-2 py-0.5">
-                      <input
-                        type="text"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        className="bg-transparent border-none focus:ring-0 text-white p-0 h-auto w-32 outline-none"
-                        autoFocus
-                      />
-                      <button onClick={handleSaveIdentity} className="text-green-300 hover:text-green-100 font-bold text-xs uppercase">Valider</button>
-                      <button onClick={() => setIsEditing(false)} className="text-red-300 hover:text-red-100 font-bold text-xs uppercase">Annuler</button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditing(true)}>
-                      <span className="font-mono font-medium underline decoration-blue-400/50 underline-offset-4">
-                        {identity}
-                      </span>
-                      <Settings size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  )}
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Réseau</h1>
+          </div>
+          
+          <div className="mb-6 px-3 py-3 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Cet appareil</p>
+             {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="bg-white dark:bg-black/50 border border-slate-300 dark:border-white/10 rounded px-2 py-1 text-sm text-slate-900 dark:text-white outline-none w-full"
+                    autoFocus
+                  />
+                  <button onClick={handleSaveIdentity} className="text-green-600 dark:text-green-400 font-bold text-xs">OK</button>
+                  <button onClick={() => setIsEditing(false)} className="text-red-600 dark:text-red-400 font-bold text-xs">X</button>
                 </div>
-              </div>
-            </div>
+              ) : (
+                <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setIsEditing(true)}>
+                  <Monitor size={14} className="text-blue-500" />
+                  <span className="font-mono font-medium text-slate-800 dark:text-slate-200 truncate">
+                    {identity}
+                  </span>
+                  <Settings size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 ml-auto" />
+                </div>
+              )}
+          </div>
 
-            {/* Tab Switcher */}
-            <div className="flex bg-white/10 dark:bg-black/40 p-1.5 rounded-2xl backdrop-blur-md border border-white/10 dark:border-white/5 shadow-2xl overflow-x-auto no-scrollbar">
-              {[
-                { id: 'receive', label: 'Recevoir', icon: Download },
-                { id: 'send', label: 'Envoyer', icon: Send },
-                { id: 'sync', label: 'Synchronisation', icon: RefreshCw },
-                { id: 'server', label: 'Serveur Web', icon: Globe },
-              ].map((tab) => (
+          <nav className="flex-1 space-y-1">
+            {[
+              { id: 'receive', label: 'Recevoir', icon: Download },
+              { id: 'send', label: 'Envoyer', icon: Send },
+              { id: 'sync', label: 'Synchronisation', icon: RefreshCw },
+              { id: 'server', label: 'Serveur Web', icon: Globe },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest whitespace-nowrap ${
-                    activeTab === tab.id 
-                      ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-2xl shadow-blue-500/20 ring-1 ring-white/20' 
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 hover:scale-[1.01] ${
+                    isActive
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-l-[3px] border-blue-500 pl-3'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <tab.icon size={16} />
-                  {tab.label}
+                  <tab.icon size={16} className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
+                  <span className={`text-[13px] ${isActive ? 'font-bold' : 'font-medium'}`}>{tab.label}</span>
                 </button>
-              ))}
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Contenu principal */}
+        <div className="flex-1 h-full overflow-y-auto bg-white dark:bg-[#0c101d] rounded-tl-[2rem] border-t border-l border-slate-200/60 dark:border-white/5 shadow-2xl transition-colors duration-300">
+          <div className="max-w-4xl py-10 px-8 md:px-12 pb-24">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+               {activeTab === 'send' && <SendPanel />}
+               {activeTab === 'receive' && <TransferInbox />}
+               {activeTab === 'sync' && <SyncPanel />}
+               {activeTab === 'server' && <ServerPanel />}
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-[95%] mx-auto px-8 py-8 relative">
-        <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-           {activeTab === 'send' && <SendPanel />}
-           {activeTab === 'receive' && <TransferInbox />}
-           {activeTab === 'sync' && <SyncPanel />}
-           {activeTab === 'server' && <ServerPanel />}
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

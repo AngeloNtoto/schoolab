@@ -15,7 +15,7 @@ export default function ActivityBar({ activeView, onToggleView }: ActivityBarPro
 
   const navItems = [
     { path: '/network', commandId: 'schoolab.openNetwork', icon: Network, label: 'Réseau' },
-    { path: '/academic-years', commandId: 'schoolab.openAcademicYears', icon: CalendarRange, label: 'Années Académiques' },
+    { path: '/academic-years', commandId: 'schoolab.openAcademicYears', icon: CalendarRange, label: 'Années Scolaires' },
   ];
 
   return (

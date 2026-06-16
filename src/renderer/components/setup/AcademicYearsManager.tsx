@@ -26,7 +26,7 @@ export default function AcademicYearsManager() {
       const data = await academicYearService.getAll();
       setYears(data);
     } catch (err) {
-      toast.error("Erreur lors du chargement des années académiques");
+      toast.error("Erreur lors du chargement des années scolaires");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export default function AcademicYearsManager() {
         return;
       }
       await academicYearService.create(name, startDate, endDate);
-      toast.success("Année académique créée");
+      toast.success("Année scolaire créée");
       setShowForm(false);
       resetForm();
       loadYears();
@@ -85,29 +85,34 @@ export default function AcademicYearsManager() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50/50 dark:bg-slate-950 transition-colors duration-500">
-      <div className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 px-8 py-10 shadow-lg mb-8 transition-colors backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-               <div className="bg-white/20 dark:bg-blue-600/30 p-3 rounded-2xl shadow-xl backdrop-blur-md transition-colors">
-                  <CalendarRange size={28} className="text-white dark:text-blue-400" />
-               </div>
-               <div>
-                  <h1 className="text-3xl font-black text-white dark:text-slate-100 tracking-tight">Années Académiques</h1>
-                  <p className="text-blue-100 dark:text-slate-500 font-bold uppercase tracking-widest text-[10px]">Gérez les périodes scolaires</p>
-               </div>
+    <div className="h-full bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col font-sans transition-colors duration-300">
+      <div className="h-6 flex-shrink-0"></div>
+      
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar minimaliste pour le titre ou la navigation si besoin */}
+        <div className="w-[280px] flex-shrink-0 px-6 pb-6 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-slate-950">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-500/10 rounded-xl">
+              <CalendarRange size={24} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Années Scolaires</h1>
           </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">
+            Gérez les périodes scolaires et définissez l'année active pour l'ensemble du système.
+          </p>
+          
           <button
             onClick={() => setShowForm(true)}
-            className="bg-white dark:bg-blue-600 text-blue-600 dark:text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 dark:hover:bg-blue-700 transition-all shadow-2xl shadow-blue-500/20 active:scale-[0.98]"
+            className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-3 font-bold text-sm hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]"
           >
             <Plus size={18} />
             Nouvelle Année
           </button>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-6 pb-12">
+        {/* Zone de contenu principale (style Workbench) */}
+        <div className="flex-1 h-full overflow-y-auto bg-white dark:bg-[#0c101d] rounded-tl-[2rem] border-t border-l border-slate-200/60 dark:border-white/5 shadow-2xl transition-colors duration-300">
+          <div className="max-w-4xl py-10 px-8 md:px-12 pb-24">
         {loading ? (
            <ProfessionalLoader message="Chargement des périodes..." fullScreen={false} />
         ) : (
@@ -219,13 +224,15 @@ export default function AcademicYearsManager() {
               ))}
 
               {years.length === 0 && (
-                  <div className="text-center py-10 text-slate-500">
-                      Aucune année académique enregistrée.
+                  <div className="text-center py-10 text-slate-500 font-medium">
+                      Aucune année scolaire enregistrée.
                   </div>
               )}
             </div>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

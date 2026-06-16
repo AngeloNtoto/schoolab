@@ -183,65 +183,64 @@ export default function NotesPage() {
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="flex h-full bg-slate-50/50 dark:bg-slate-950 transition-colors">
-      {/* Main List Panel */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Premium Adaptive Header */}
-        <div className="bg-blue-600 dark:bg-slate-900/50 border-b border-transparent dark:border-white/5 px-6 py-6 shadow-lg transition-colors backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto w-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-white/20 dark:bg-blue-600/30 rounded-2xl shadow-xl backdrop-blur-md transition-colors">
-                  <StickyNote className="text-white dark:text-blue-400" size={24} />
-                </div>
-                <div>
-                  <h1 className="text-xl font-black text-white dark:text-white tracking-tight">Notes & Mémos</h1>
-                  <p className="text-blue-100 dark:text-slate-500 font-bold uppercase tracking-widest text-[10px]">
-                    {notes.length} note{notes.length !== 1 ? 's' : ''} enregistrée{notes.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowAddModal(true)}
-                className="bg-white dark:bg-blue-600 hover:bg-blue-50 dark:hover:bg-blue-700 text-blue-600 dark:text-white px-6 py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-500/20 transition-all active:scale-[0.98]"
-              >
-                <Plus size={20} /> Nouvelle Note
-              </button>
-            </div>
+    <div className="flex h-full bg-slate-50 dark:bg-slate-950 transition-colors flex-col">
+      <div className="h-6 flex-shrink-0"></div>
 
-            {/* Search & Filters */}
-            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
-              <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" size={20} />
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main List Panel */}
+        <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#0c101d] rounded-tl-[2rem] border-t border-l border-slate-200/60 dark:border-white/5 shadow-2xl transition-colors duration-300">
+          
+          {/* Header minimaliste */}
+          <div className="px-8 py-8 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-500/10 rounded-2xl">
+                <StickyNote className="text-blue-600 dark:text-blue-400" size={24} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Notes & Mémos</h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  {notes.length} note{notes.length !== 1 ? 's' : ''} enregistrée{notes.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Rechercher par titre ou contenu..." 
+                  placeholder="Rechercher..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-6 py-4 bg-white/10 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-white/10 focus:bg-white/20 dark:focus:bg-black/40 outline-none text-white placeholder-white/40 font-bold shadow-inner transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-slate-900 dark:text-white text-sm transition-all"
                 />
               </div>
-              <div className="flex bg-white/10 dark:bg-black/20 p-1.5 rounded-[1.25rem] border border-white/10 dark:border-white/5 self-start backdrop-blur-md">
+              <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-white/10">
                 {(['all', 'general', 'class', 'student'] as const).map(type => (
                   <button
                     key={type}
                     onClick={() => setFilterType(type)}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all ${
                       filterType === type 
-                        ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-xl shadow-blue-500/20' 
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                     }`}
                   >
                     {type === 'all' ? 'Tout' : type === 'general' ? 'Général' : type === 'class' ? 'Classe' : 'Élève'}
                   </button>
                 ))}
               </div>
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 font-bold text-sm shadow-md active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                <Plus size={18} /> Nouvelle Note
+              </button>
             </div>
           </div>
-        </div>
 
         {/* Notes List Area */}
-        <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50 dark:bg-transparent transition-colors">
+        <div className="flex-1 overflow-y-auto p-8 bg-transparent">
             {loading ? (
                 <ProfessionalLoader message="Chargement des mémos..." subMessage="Veuillez patienter" fullScreen={false} />
             ) : sortedNotes.length === 0 ? (
@@ -435,6 +434,7 @@ export default function NotesPage() {
           </div>
         </div>
       )}
+      </div>
 
       {(showAddModal || noteToEdit) && (
         <AddNoteModal 
