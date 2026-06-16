@@ -262,6 +262,118 @@ export default function ClassGradeTable({
     setPasteIntent(null);
   };
 
+  const handleBodyContextMenu = (e: React.MouseEvent) => {
+    // Si on a une sélection de cellules
+    const state = gradebookStore.getState();
+    const selectedCells = state.selectedCells.size > 0 ? Array.from(state.selectedCells) : [];
+    
+    if (selectedCells.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      showContextMenu(e, [
+        { label: `${selectedCells.length} cellules sélectionnées`, action: () => {} },
+        { separator: true, label: '' },
+        {
+          label: 'Vider la sélection',
+          action: async () => {
+            if (window.confirm(`Effacer les notes des ${selectedCells.length} cellules ?`)) {
+              for (const cellKey of selectedCells) {
+                const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
+                await onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, null);
+              }
+            }
+          },
+          danger: true
+        },
+        {
+          label: 'Attribuer une note...',
+          action: async () => {
+            const val = window.prompt(`Saisissez la note pour ces ${selectedCells.length} cellules :`);
+            if (val !== null) {
+              const numVal = parseFloat(val.replace(',', '.'));
+              if (!isNaN(numVal) && numVal >= 0) {
+                for (const cellKey of selectedCells) {
+                  const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
+                  // Note: Il faudrait vérifier max, on laisse passer pour plus de flexibilité dans la sélection
+                  await onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, numVal);
+                }
+              }
+            }
+          }
+        },
+        { separator: true, label: '' },
+        {
+          label: 'Décaler la sélection vers le bas ↓',
+          action: async () => {
+            // Pour chaque cellule, on déplace la valeur au student_id suivant
+            // On traite les étudiants de bas en haut pour ne pas écraser les valeurs
+            const cellsByCol = new Map<string, {studentId: number, subjectId: number, period: string, val: number | null}>();
+            selectedCells.forEach(key => {
+              const [st, sb, p] = key.split('-');
+              cellsByCol.set(key, { studentId: parseInt(st, 10), subjectId: parseInt(sb, 10), period: p, val: gradesMap.get(key) ?? null });
+            });
+
+            // Grouper par colonne (subject-period)
+            const cols = new Map<string, number[]>();
+            selectedCells.forEach(key => {
+              const [st, sb, p] = key.split('-');
+              const colKey = `${sb}-${p}`;
+              if (!cols.has(colKey)) cols.set(colKey, []);
+              cols.get(colKey)!.push(parseInt(st, 10));
+            });
+
+            for (const [colKey, studentIds] of cols.entries()) {
+              const [sb, p] = colKey.split('-');
+              const subjectId = parseInt(sb, 10);
+              // Trier les studentIds selon leur ordre d'affichage (pour décaler de haut en bas)
+              const sortedIdx = studentIds.map(id => activeStudents.findIndex(s => s.id === id)).filter(idx => idx !== -1).sort((a, b) => b - a); // Inverse pour descendre
+              
+              for (const idx of sortedIdx) {
+                if (idx < activeStudents.length - 1) {
+                  const currentStId = activeStudents[idx].id;
+                  const nextStId = activeStudents[idx + 1].id;
+                  const currentVal = gradesMap.get(getCellKey({ studentId: currentStId, subjectId, period: p })) ?? null;
+                  await onGradeUpdate(nextStId, subjectId, p, currentVal);
+                  await onGradeUpdate(currentStId, subjectId, p, null); // Vide l'ancienne case
+                }
+              }
+            }
+          }
+        },
+        {
+          label: 'Décaler la sélection vers le haut ↑',
+          action: async () => {
+            const cols = new Map<string, number[]>();
+            selectedCells.forEach(key => {
+              const [st, sb, p] = key.split('-');
+              const colKey = `${sb}-${p}`;
+              if (!cols.has(colKey)) cols.set(colKey, []);
+              cols.get(colKey)!.push(parseInt(st, 10));
+            });
+
+            for (const [colKey, studentIds] of cols.entries()) {
+              const [sb, p] = colKey.split('-');
+              const subjectId = parseInt(sb, 10);
+              // Trier normal (de haut en bas) pour remonter sans écraser
+              const sortedIdx = studentIds.map(id => activeStudents.findIndex(s => s.id === id)).filter(idx => idx !== -1).sort((a, b) => a - b);
+              
+              for (const idx of sortedIdx) {
+                if (idx > 0) {
+                  const currentStId = activeStudents[idx].id;
+                  const prevStId = activeStudents[idx - 1].id;
+                  const currentVal = gradesMap.get(getCellKey({ studentId: currentStId, subjectId, period: p })) ?? null;
+                  await onGradeUpdate(prevStId, subjectId, p, currentVal);
+                  await onGradeUpdate(currentStId, subjectId, p, null); // Vide l'ancienne case
+                }
+              }
+            }
+          }
+        }
+      ]);
+    }
+  };
+
   return (
     <>
       <table className="w-full border-collapse min-w-max">
@@ -300,7 +412,7 @@ export default function ClassGradeTable({
               <React.Fragment key={subject.id}>
                 {selectedPeriods.has('P1') && (
                   <th 
-                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P1', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P1', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P1', subject.max_p1)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
@@ -310,7 +422,7 @@ export default function ClassGradeTable({
 
                 {selectedPeriods.has('P2') && (
                   <th 
-                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P2', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P2', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P2', subject.max_p2)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
@@ -320,7 +432,7 @@ export default function ClassGradeTable({
 
                 {selectedPeriods.has('EXAM1') && (
                   <th 
-                    onClick={(e) => hasExam1 && gradebookStore.selectColumn(subject.id, 'EXAM1', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => hasExam1 && gradebookStore.selectColumn(subject.id, 'EXAM1', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => hasExam1 && handleHeaderContextMenu(e, subject, 'EXAM1', subject.max_exam1)}
                     className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam1
@@ -341,7 +453,7 @@ export default function ClassGradeTable({
 
                 {selectedPeriods.has('P3') && (
                   <th 
-                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P3', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P3', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P3', subject.max_p3)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
@@ -351,7 +463,7 @@ export default function ClassGradeTable({
 
                 {selectedPeriods.has('P4') && (
                   <th 
-                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P4', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => gradebookStore.selectColumn(subject.id, 'P4', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P4', subject.max_p4)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
@@ -361,7 +473,7 @@ export default function ClassGradeTable({
 
                 {selectedPeriods.has('EXAM2') && (
                   <th 
-                    onClick={(e) => hasExam2 && gradebookStore.selectColumn(subject.id, 'EXAM2', activeStudents.map(s => s.id), e.shiftKey)}
+                    onClick={(e) => hasExam2 && gradebookStore.selectColumn(subject.id, 'EXAM2', activeStudents.map(s => s.id), e.shiftKey || e.ctrlKey || e.metaKey)}
                     onContextMenu={(e) => hasExam2 && handleHeaderContextMenu(e, subject, 'EXAM2', subject.max_exam2)}
                     className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam2
@@ -385,7 +497,7 @@ export default function ClassGradeTable({
         </tr>
       </thead>
 
-      <tbody>
+      <tbody onContextMenu={handleBodyContextMenu}>
         {activeStudents.map((student, idx) => (
           <StudentRow
             key={student.id}
