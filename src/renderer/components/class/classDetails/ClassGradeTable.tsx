@@ -3,6 +3,7 @@ import { gradebookStore, getCellKey } from '../../../context/gradebookSelection'
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
+import { useContextMenu } from '../../../workbench/ContextMenuLayer';
 import StudentRow from './StudentRow';
 import { ColumnStats, getVisibleGradeColumnCount } from './gradeUtils';
 
@@ -55,6 +56,7 @@ export default function ClassGradeTable({
   selectedStudentIds,
   onToggleSelectStudent
 }: ClassGradeTableProps) {
+  const { showContextMenu } = useContextMenu();
   const visibleGradeColumnCount = getVisibleGradeColumnCount(selectedPeriods);
   const orderMap = sortOrder.startsWith('custom_')
     ? (() => {
@@ -173,6 +175,70 @@ export default function ClassGradeTable({
     };
   }, [onGradeUpdate, displayedSubjects]);
 
+  const handleHeaderContextMenu = (e: React.MouseEvent, subject: Subject, period: string, max: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (max <= 0) return;
+
+    showContextMenu(e, [
+      { label: `Colonne: ${subject.name} - ${period} (/ ${max})`, action: () => {} },
+      { separator: true, label: '' },
+      { 
+        label: 'Mettre la note maximum à tous', 
+        action: async () => {
+          if (window.confirm(`Voulez-vous vraiment attribuer ${max}/${max} à tous les élèves ?`)) {
+            for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, max);
+          }
+        } 
+      },
+      { 
+        label: 'Attribuer une note spécifique...', 
+        action: async () => {
+          const val = window.prompt(`Saisissez la note à attribuer à tous les élèves (max ${max}):`);
+          if (val !== null) {
+            const numVal = parseFloat(val.replace(',', '.'));
+            if (!isNaN(numVal) && numVal >= 0 && numVal <= max) {
+              for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, numVal);
+            } else {
+              alert('Valeur invalide');
+            }
+          }
+        } 
+      },
+      { 
+        label: 'Vider la colonne', 
+        action: async () => {
+          if (window.confirm(`Effacer toutes les notes de cette colonne ? Cette action est irréversible.`)) {
+            for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, period, null);
+          }
+        }, 
+        danger: true 
+      },
+      { separator: true, label: '' },
+      { 
+        label: 'Décaler les notes vers le bas ↓', 
+        action: async () => {
+          for (let i = activeStudents.length - 1; i > 0; i--) {
+            const prevVal = gradesMap.get(getCellKey({studentId: activeStudents[i-1].id, subjectId: subject.id, period}));
+            await onGradeUpdate(activeStudents[i].id, subject.id, period, prevVal ?? null);
+          }
+          await onGradeUpdate(activeStudents[0].id, subject.id, period, null);
+        } 
+      },
+      { 
+        label: 'Décaler les notes vers le haut ↑', 
+        action: async () => {
+          for (let i = 0; i < activeStudents.length - 1; i++) {
+            const nextVal = gradesMap.get(getCellKey({studentId: activeStudents[i+1].id, subjectId: subject.id, period}));
+            await onGradeUpdate(activeStudents[i].id, subject.id, period, nextVal ?? null);
+          }
+          await onGradeUpdate(activeStudents[activeStudents.length - 1].id, subject.id, period, null);
+        } 
+      }
+    ]);
+  };
+
   const executePaste = (overwrite: boolean) => {
     if (!pasteIntent) return;
     const { values, cells } = pasteIntent;
@@ -235,6 +301,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('P1') && (
                   <th 
                     onClick={(e) => gradebookStore.selectColumn(subject.id, 'P1', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P1', subject.max_p1)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     P1<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p1}</span>
@@ -244,6 +311,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('P2') && (
                   <th 
                     onClick={(e) => gradebookStore.selectColumn(subject.id, 'P2', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P2', subject.max_p2)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     P2<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p2}</span>
@@ -253,6 +321,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('EXAM1') && (
                   <th 
                     onClick={(e) => hasExam1 && gradebookStore.selectColumn(subject.id, 'EXAM1', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => hasExam1 && handleHeaderContextMenu(e, subject, 'EXAM1', subject.max_exam1)}
                     className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam1
                       ? 'text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/30 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors'
@@ -273,6 +342,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('P3') && (
                   <th 
                     onClick={(e) => gradebookStore.selectColumn(subject.id, 'P3', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P3', subject.max_p3)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     P3<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p3}</span>
@@ -282,6 +352,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('P4') && (
                   <th 
                     onClick={(e) => gradebookStore.selectColumn(subject.id, 'P4', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => handleHeaderContextMenu(e, subject, 'P4', subject.max_p4)}
                     className="px-2 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 min-w-[50px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     P4<br/><span className="text-[10px] text-slate-400 dark:text-slate-500">/{subject.max_p4}</span>
@@ -291,6 +362,7 @@ export default function ClassGradeTable({
                 {selectedPeriods.has('EXAM2') && (
                   <th 
                     onClick={(e) => hasExam2 && gradebookStore.selectColumn(subject.id, 'EXAM2', activeStudents.map(s => s.id), e.shiftKey)}
+                    onContextMenu={(e) => hasExam2 && handleHeaderContextMenu(e, subject, 'EXAM2', subject.max_exam2)}
                     className={`px-2 py-2 text-xs font-medium border-r border-slate-300 dark:border-slate-600 min-w-[50px] ${
                     hasExam2
                       ? 'text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/30 cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors'
