@@ -13,6 +13,54 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "1.7.0",
+    date: "16 Juin 2026",
+    title: "Workbench Avancé & Actions de Masse sur la Grille",
+    description: "Refonte majeure de l'interface en mode Workbench avec des fonctionnalités de tableur avancées pour la gestion des notes.",
+    features: [
+      {
+        tag: "Nouveau",
+        text: "Interface Workbench complète avec onglets, panneaux redimensionnables, explorateur latéral et palette de commandes (Ctrl+Shift+P)."
+      },
+      {
+        tag: "Nouveau",
+        text: "Menu contextuel sur les en-têtes de colonnes (P1, P2, Ex1...) : remplissage automatique, attribution de note, vidage et décalage haut/bas."
+      },
+      {
+        tag: "Nouveau",
+        text: "Sélection multiple de colonnes avec CTRL+clic et actions de masse sur les cellules sélectionnées (vidage, attribution, décalage)."
+      },
+      {
+        tag: "Nouveau",
+        text: "Menu contextuel sur les noms de cours dans la grille pour vider toutes les notes d'une matière en un clic."
+      },
+      {
+        tag: "Nouveau",
+        text: "Explorateur de classes avec clic droit (modifier/supprimer), sélection multiple CTRL+clic et suppression en masse."
+      },
+      {
+        tag: "Nouveau",
+        text: "Système de macros pour automatiser les actions répétitives avec variables contextuelles et sécurité renforcée."
+      },
+      {
+        tag: "Amélioration",
+        text: "Design unifié mode sombre avec glassmorphism sur la palette de commandes, le prédicteur IA et la modal Voir Bureau."
+      },
+      {
+        tag: "Amélioration",
+        text: "Copier-coller global (Ctrl+C/V) dans la grille de notes avec gestion intelligente du collage multiple."
+      },
+      {
+        tag: "Correctif",
+        text: "Protection contre les crashes lors du redémarrage d'onglets sans données (Bulletin, Palmarès, Coupons)."
+      },
+      {
+        tag: "Correctif",
+        text: "Correction des erreurs TypeError liées aux propriétés classInfo et aux services de base de données."
+      }
+    ]
+  },
+  {
     version: "1.4.30",
     date: "11 Juin 2026",
     title: "Grille de classe mieux organisée",
