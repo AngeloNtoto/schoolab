@@ -322,7 +322,7 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
           });
         });
 
-        const students = await dbService.query<{id: number, first_name: string, last_name: string, class_id: number}>('SELECT id, first_name, last_name, class_id FROM students WHERE status = "active" OR status IS NULL');
+        const students = await dbService.query<{id: number, first_name: string, last_name: string, class_id: number}>('SELECT id, first_name, last_name, class_id FROM students WHERE is_abandoned = 0 OR is_abandoned IS NULL');
         students.forEach(s => {
           commandRegistry.registerCommand({
             id: `schoolab.openStudent.${s.id}`,

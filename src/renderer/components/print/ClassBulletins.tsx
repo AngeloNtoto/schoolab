@@ -54,6 +54,7 @@ export default function ClassBulletins({
   // Attendre 300ms avant de lancer les calculs lourds
   React.useEffect(() => {
     const loadData = async () => {
+        if (!classInfo) return;
         try {
             const reps = await repechageService.getRepechagesByClass(classInfo.id);
             setRepechages(reps);
@@ -65,7 +66,7 @@ export default function ClassBulletins({
 
     const timer = setTimeout(loadData, 350);
     return () => clearTimeout(timer);
-  }, [classInfo.id]);
+  }, [classInfo?.id]);
 
   // Calcul des notes finales selon le mode de délibération sélectionné
   const finalGrades = useMemo(() => {
