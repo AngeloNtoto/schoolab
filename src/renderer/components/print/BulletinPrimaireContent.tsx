@@ -100,6 +100,7 @@ export default function BulletinPrimaireContent({
 
   const formatValue = (val: number | null | undefined): string => {
     if (val === null || val === undefined) return '';
+    if (val === -1) return 'zéro';
     return Number.isInteger(val) ? val.toString() : val.toFixed(1);
   };
 

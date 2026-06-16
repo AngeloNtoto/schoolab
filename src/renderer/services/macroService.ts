@@ -36,6 +36,7 @@ class MacroService {
     };
     this.macros.push(macro);
     this.saveMacros();
+    this.currentRecording = [];
     window.dispatchEvent(new Event('macro:recordingStop'));
     return macro;
   }
@@ -48,6 +49,8 @@ class MacroService {
 
   recordAction(commandId: string, payload?: any) {
     if (!this.isRecording) return;
+    // Ne pas enregistrer les commandes liées aux macros elles-mêmes pour éviter les boucles infinies ou duplications
+    if (commandId.startsWith('macro.')) return; 
     this.currentRecording.push({ commandId, payload });
   }
 

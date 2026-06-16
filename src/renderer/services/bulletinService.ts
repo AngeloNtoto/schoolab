@@ -1,6 +1,7 @@
 import { gradeService, Grade } from './gradeService';
 import { studentService } from './studentService';
 import { Subject } from './classService';
+import { getMathValue } from '../components/class/classDetails/gradeUtils';
 
 export interface StudentRanks {
   p1: number;
@@ -41,12 +42,13 @@ class BulletinService {
       let p3 = 0, p4 = 0, ex2 = 0;
 
       g.forEach(grade => {
-        if (grade.period === 'P1') p1 += grade.value;
-        if (grade.period === 'P2') p2 += grade.value;
-        if (grade.period === 'EXAM1') ex1 += grade.value;
-        if (grade.period === 'P3') p3 += grade.value;
-        if (grade.period === 'P4') p4 += grade.value;
-        if (grade.period === 'EXAM2') ex2 += grade.value;
+        const val = getMathValue(grade.value);
+        if (grade.period === 'P1') p1 += val;
+        if (grade.period === 'P2') p2 += val;
+        if (grade.period === 'EXAM1') ex1 += val;
+        if (grade.period === 'P3') p3 += val;
+        if (grade.period === 'P4') p4 += val;
+        if (grade.period === 'EXAM2') ex2 += val;
       });
 
       const tot1 = p1 + p2 + ex1;
@@ -117,12 +119,13 @@ class BulletinService {
       let p3 = 0, p4 = 0, ex2 = 0;
 
       g.forEach(grade => {
-        if (grade.period === 'P1') p1 += grade.value;
-        if (grade.period === 'P2') p2 += grade.value;
-        if (grade.period === 'EXAM1') ex1 += grade.value;
-        if (grade.period === 'P3') p3 += grade.value;
-        if (grade.period === 'P4') p4 += grade.value;
-        if (grade.period === 'EXAM2') ex2 += grade.value;
+        const val = getMathValue(grade.value);
+        if (grade.period === 'P1') p1 += val;
+        if (grade.period === 'P2') p2 += val;
+        if (grade.period === 'EXAM1') ex1 += val;
+        if (grade.period === 'P3') p3 += val;
+        if (grade.period === 'P4') p4 += val;
+        if (grade.period === 'EXAM2') ex2 += val;
       });
 
       const tot1 = p1 + p2 + ex1;
@@ -214,7 +217,7 @@ class BulletinService {
         ['P1', 'P2', 'EXAM1', 'P3', 'P4', 'EXAM2'].forEach(period => {
           const gradeEntry = gradesForSubj.find(g => g.period === period);
           if (gradeEntry) {
-            subjectPts += gradeEntry.value;
+            subjectPts += getMathValue(gradeEntry.value);
           }
         });
 
@@ -296,8 +299,8 @@ class BulletinService {
               if (period === 'P4') maxForPeriod = fail.subject.max_p4;
               if (period === 'EXAM2') maxForPeriod = fail.subject.max_exam2;
 
-              const failSpace = maxForPeriod - failGrade.value;
-              const surpAvailable = surpGrade.value; 
+              const failSpace = maxForPeriod - getMathValue(failGrade.value);
+              const surpAvailable = getMathValue(surpGrade.value);
 
               const transfer = Math.min(amountToTake - amountTransferred, failSpace, surpAvailable);
               if (transfer > 0) {

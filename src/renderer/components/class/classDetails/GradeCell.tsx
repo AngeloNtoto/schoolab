@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { convertGradeToCourseMax, formatGradeInputValue } from './gradeUtils';
+import { convertGradeToCourseMax, formatGradeInputValue, formatDisplayValue, GRADE_TRICHEUR_CODE } from './gradeUtils';
 import { gradebookStore, useCellState } from '../../../context/gradebookSelection';
 
 interface GradeCellProps {
@@ -74,8 +74,26 @@ const GradeCell = React.memo(({
       }
       setEditValue('');
     } else {
-      const num = finalValue === '00' ? 0 : parseFloat(finalValue);
-      if (!isNaN(num) && num >= 0) {
+      const isTricheur = finalValue.toLowerCase() === 't';
+      const isMoitie = finalValue.toLowerCase() === 'm2';
+      
+      let num = parseFloat(finalValue);
+      if (finalValue === '00') num = 0;
+      
+      if (isTricheur) {
+        if (value !== GRADE_TRICHEUR_CODE) {
+          onChange(GRADE_TRICHEUR_CODE);
+          flashSaved();
+        }
+      } else if (isMoitie && maxValue > 0) {
+        const inputMax = correctionMax || maxValue;
+        const half = inputMax / 2;
+        const convertedValue = convertGradeToCourseMax(half, maxValue, correctionMax);
+        if (convertedValue !== value) {
+          onChange(convertedValue);
+          flashSaved();
+        }
+      } else if (!isNaN(num) && num >= 0) {
         const inputMax = correctionMax || maxValue;
         if (inputMax > 0 && num > inputMax) {
           setEditValue(formatGradeInputValue(value, maxValue, correctionMax));
@@ -101,7 +119,7 @@ const GradeCell = React.memo(({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
+    if (/^[0-9]*\.?[0-9]*$/.test(raw) || /^[tTmMnHh]?[2]?$/.test(raw)) {
       setEditValue(raw);
     }
   };
@@ -193,6 +211,14 @@ const GradeCell = React.memo(({
        e.preventDefault();
        onChange(maxValue);
        flashSaved();
+    } else if (e.key.toLowerCase() === 'h' && maxValue > 0) { // 'h' pour moitié (half)
+       e.preventDefault();
+       onChange(maxValue / 2);
+       flashSaved();
+    } else if (e.key.toLowerCase() === 't') { // 't' pour tricheur
+       e.preventDefault();
+       onChange(GRADE_TRICHEUR_CODE);
+       flashSaved();
     }
   };
 
@@ -272,8 +298,8 @@ const GradeCell = React.memo(({
               : ''
       }
     >
-      <span className={`${isEditing && !disabled ? 'invisible' : ''} ${conditionalColorClass}`}>
-        {disabled ? 'N/A' : (value !== null ? value : '-')}
+      <span className={`${isEditing && !disabled ? 'invisible' : ''} ${conditionalColorClass} ${value === GRADE_TRICHEUR_CODE ? 'font-bold uppercase text-[9px] tracking-wider' : ''}`}>
+        {disabled ? 'N/A' : formatDisplayValue(value)}
       </span>
 
       {showSaved && (

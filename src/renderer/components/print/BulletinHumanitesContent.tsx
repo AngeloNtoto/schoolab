@@ -88,6 +88,12 @@ export default function BulletinHumanitesContent({
     return g ? g.value : null;
   };
 
+  const formatValue = (val: number | null | undefined): string => {
+    if (val === null || val === undefined) return '';
+    if (val === -1) return 'zéro';
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
+  };
+
   const calculateTotal = (subjectId: number, periods: string[]) => {
     let total = 0;
     let count = 0;
@@ -315,15 +321,15 @@ export default function BulletinHumanitesContent({
                     return (
                       <tr key={subject.id}>
                         <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p1 ?? ''}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p2 ?? ''}</td>
-                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{ex1 ?? ''}</td>)}
-                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{tot1 ?? ''}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p3 ?? ''}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{p4 ?? ''}</td>
-                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{ex2 ?? ''}</td>)}
-                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{tot2 ?? ''}</td>
-                        <td className={`border border-black font-bold bg-slate-50 py-0.5 ${subjectToneClass}`}>{tg ?? ''}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p1)}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p2)}</td>
+                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(ex1)}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{formatValue(tot1)}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p3)}</td>
+                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p4)}</td>
+                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(ex2)}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{formatValue(tot2)}</td>
+                        <td className={`border border-black font-bold bg-slate-50 py-0.5 ${subjectToneClass}`}>{formatValue(tg)}</td>
                         <td className={`border border-black py-0.5 ${subjectToneClass}`}>{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
                         <td className="border border-black py-0.5"></td>
                       </tr>

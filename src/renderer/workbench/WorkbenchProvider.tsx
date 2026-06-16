@@ -307,6 +307,7 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
     ];
 
     baseCommands.forEach(cmd => commandRegistry.registerCommand(cmd));
+    setCommands(commandRegistry.getAllCommands());
     
     // Fonction pour charger dynamiquement classes et élèves
     const loadDynamicCommands = async () => {

@@ -4,6 +4,20 @@ export type PeriodKey = typeof ALL_PERIODS[number];
 
 export type ColumnStats = Record<string, { avg: number; min: number; max: number; count: number }>;
 
+export const GRADE_TRICHEUR_CODE = -1;
+
+export const getMathValue = (value: number | null | undefined): number => {
+  if (value === null || value === undefined) return 0;
+  if (value === GRADE_TRICHEUR_CODE) return 0;
+  return value;
+};
+
+export const formatDisplayValue = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '-';
+  if (value === GRADE_TRICHEUR_CODE) return 'zéro';
+  return value.toString();
+};
+
 export const roundGradeValue = (value: number) => Math.round(value);
 
 export const convertGradeToCourseMax = (
@@ -36,6 +50,7 @@ export const formatGradeInputValue = (
   correctionMax: number | null
 ) => {
   if (value === null) return '';
+  if (value === GRADE_TRICHEUR_CODE) return 'T';
   return convertGradeToCorrectionMax(value, courseMax, correctionMax).toString();
 };
 

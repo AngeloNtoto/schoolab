@@ -1,6 +1,7 @@
 import { Subject, Grade, Student, RankedStudent, Period, PalmaresMode, StudentCategory } from '../types/palmares';
 import { Repechage } from '../services/repechageService';
 import { DeliberationConfig, deliberationConfigService } from '../services/deliberationConfigService';
+import { getMathValue } from '../components/class/classDetails/gradeUtils';
 
 export const periode = (period: string): string => {
   switch (period) {
@@ -94,7 +95,7 @@ export const calculateRankings = (
         const gradeEntry = grades.find(
           (g) => g.student_id === student.id && g.subject_id === subject.id && g.period === periodData.period
         );
-        const grade = gradeEntry ? gradeEntry.value : null;
+        const grade = gradeEntry ? getMathValue(gradeEntry.value) : null;
 
         if (grade === null) {
           hasAllGrades = false;

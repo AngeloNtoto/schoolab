@@ -99,6 +99,12 @@ export default function CouponContent({
     return grade ? grade.value : null;
   };
 
+  const formatValue = (val: number | null | undefined): string => {
+    if (val === null || val === undefined) return '';
+    if (val === -1) return 'zéro';
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
+  };
+
   /**
    * Calcule le total des notes pour plusieurs périodes
    */
@@ -107,10 +113,13 @@ export default function CouponContent({
     let hasAnyGrade = false;
     
     periods.forEach(period => {
-      const value = getGrade(subjectId, period);
-      if (value !== null) {
+      const grade = grades.find(g => g.subject_id === subjectId && g.period === period);
+      const value = grade ? grade.value : null;
+      if (value !== null && value !== -1) {
         total += value;
         hasAnyGrade = true;
+      } else if (value === -1) {
+        hasAnyGrade = true; // -1 means 0 math but it's a grade
       }
     });
     
@@ -283,15 +292,15 @@ export default function CouponContent({
                     return (
                       <tr key={subject.id} className="text-[13px]">
                         <td className="border border-black text-left px-2 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
-                        <td className="border border-black">{p1 ?? ''}</td>
-                        <td className="border border-black py-0">{p2 ?? ''}</td>
-                        <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? (ex1 ?? '') : ''}</td>
-                        <td className="border border-black font-bold py-0">{tot1 ?? ''}</td>
-                        <td className="border border-black py-0">{p3 ?? ''}</td>
-                        <td className="border border-black py-0">{p4 ?? ''}</td>
-                        <td className={`border border-black py-0 ${subject.max_exam2 === 0 ? 'bg-black' : ''}`}>{subject.max_exam2 > 0 ? (ex2 ?? '') : ''}</td>
-                        <td className="border border-black font-bold py-0">{tot2 ?? ''}</td>
-                        <td className="border border-black font-bold bg-slate-50 py-0">{tg || ''}</td>
+                        <td className="border border-black">{formatValue(p1)}</td>
+                        <td className="border border-black py-0">{formatValue(p2)}</td>
+                        <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? formatValue(ex1) : ''}</td>
+                        <td className="border border-black font-bold py-0">{formatValue(tot1)}</td>
+                        <td className="border border-black py-0">{formatValue(p3)}</td>
+                        <td className="border border-black py-0">{formatValue(p4)}</td>
+                        <td className={`border border-black py-0 ${subject.max_exam2 === 0 ? 'bg-black' : ''}`}>{subject.max_exam2 > 0 ? formatValue(ex2) : ''}</td>
+                        <td className="border border-black font-bold py-0">{formatValue(tot2)}</td>
+                        <td className="border border-black font-bold bg-slate-50 py-0">{formatValue(tg)}</td>
                       </tr>
                     );
                   })}

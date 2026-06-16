@@ -8,11 +8,16 @@ export default function CommandPalette() {
   const { commands, executeCommand } = useWorkbench();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Filtrer les commandes selon la recherche
-  const filteredCommands = commands.filter(cmd => 
-    cmd.title.toLowerCase().includes(query.toLowerCase()) || 
-    cmd.category.toLowerCase().includes(query.toLowerCase())
-  );
+  // Fonction pour enlever les accents
+  const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  // Filtrer les commandes selon la recherche (tolérant)
+  const queryTerms = normalize(query).split(' ').filter(Boolean);
+  const filteredCommands = commands.filter(cmd => {
+    if (queryTerms.length === 0) return true;
+    const searchString = normalize(cmd.title + ' ' + cmd.category);
+    return queryTerms.every(term => searchString.includes(term));
+  });
 
   useEffect(() => {
     // Écouter le raccourci global Ctrl+K (ou Cmd+K sur Mac)
