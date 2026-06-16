@@ -3,6 +3,7 @@ import { gradebookStore } from '../../../context/gradebookSelection';
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import GradeCell from './GradeCell';
+import { GRADE_TRICHEUR_CODE } from './gradeUtils';
 
 interface StudentRowProps {
   student: Student;
@@ -14,6 +15,9 @@ interface StudentRowProps {
   lockedPeriods: Set<string>;
   correctionMax: number | null;
   selectedPeriods: Set<string>;
+  // Sélection multiple desktop-style (CTRL+clic)
+  selectedStudentIds: Set<number>;
+  onToggleSelectStudent: (studentId: number, withCtrl: boolean) => void;
 }
 
 const StudentRow = React.memo(({
@@ -26,9 +30,21 @@ const StudentRow = React.memo(({
   lockedPeriods,
   correctionMax,
   selectedPeriods,
+  selectedStudentIds,
+  onToggleSelectStudent,
 }: StudentRowProps) => {
+  // Vérifie si cet élève est sélectionné (via CTRL+clic)
+  const isRowSelected = selectedStudentIds.has(student.id);
   const getGrade = (subjectId: number, period: string) => {
     return gradesMap.get(`${student.id}-${subjectId}-${period}`) ?? null;
+  };
+
+  // Calcule la valeur numérique d'une note pour les totaux :
+  // null → 0, Tricheur (-1) → 0 (affiché "zéro", compté 0), sinon la valeur réelle
+  const getGradeValue = (val: number | null): number => {
+    if (val === null) return 0;
+    if (val === GRADE_TRICHEUR_CODE) return 0; // "zéro" = compté comme 0
+    return val;
   };
 
   const calculateSemesterTotal = (subjectId: number, semester: 1 | 2) => {
@@ -37,14 +53,15 @@ const StudentRow = React.memo(({
       const p2 = getGrade(subjectId, 'P2');
       const ex1 = getGrade(subjectId, 'EXAM1');
       if (p1 === null && p2 === null && ex1 === null) return null;
-      return (p1 || 0) + (p2 || 0) + (ex1 || 0);
+      // T(richeur) = -1 contribue comme -1 dans la somme
+      return getGradeValue(p1) + getGradeValue(p2) + getGradeValue(ex1);
     }
 
     const p3 = getGrade(subjectId, 'P3');
     const p4 = getGrade(subjectId, 'P4');
     const ex2 = getGrade(subjectId, 'EXAM2');
     if (p3 === null && p4 === null && ex2 === null) return null;
-    return (p3 || 0) + (p4 || 0) + (ex2 || 0);
+    return getGradeValue(p3) + getGradeValue(p4) + getGradeValue(ex2);
   };
 
   const availableColumns = useMemo(() => {
@@ -60,18 +77,42 @@ const StudentRow = React.memo(({
     return cols;
   }, [subjects, selectedPeriods]);
 
+  // Couleur de fond de la ligne : sélectionnée > pair/impair
+  const rowBg = isRowSelected
+    ? 'bg-blue-50 dark:bg-blue-900/30'
+    : idx % 2 === 0
+      ? 'bg-white dark:bg-slate-900'
+      : 'bg-slate-50 dark:bg-slate-800';
+
+  // Gestion du clic sur le numéro ou le nom de l'élève
+  const handleRowHeaderClick = (e: React.MouseEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      // CTRL+clic = sélection/désélection multiple
+      e.preventDefault();
+      onToggleSelectStudent(student.id, true);
+    } else {
+      // Clic simple = sélection des cellules de la ligne dans la grille
+      onToggleSelectStudent(student.id, false);
+      gradebookStore.selectRow(student.id, availableColumns, e.shiftKey);
+    }
+  };
+
   return (
-    <tr className={`group border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'}`}>
-      <td 
-        onClick={(e) => gradebookStore.selectRow(student.id, availableColumns, e.shiftKey)}
-        className={`sticky left-0 z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-400 min-w-[40px] w-[40px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
+    <tr className={`group border-b border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 ${rowBg} transition-colors`}>
+      <td
+        onClick={handleRowHeaderClick}
+        className={`sticky left-0 z-10 px-1 py-3 text-center border-r border-slate-200 dark:border-slate-700 text-[10px] font-black min-w-[40px] w-[40px] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${rowBg} group-hover:bg-slate-100 dark:group-hover:bg-slate-700 select-none ${
+          isRowSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
+        }`}
       >
-        {idx + 1}
+        {isRowSelected ? '✓' : idx + 1}
       </td>
       <td
-        className={`sticky left-[40px] z-10 px-4 py-3 font-medium text-slate-800 dark:text-slate-200 border-r-2 border-slate-300 dark:border-slate-600 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800'} group-hover:bg-slate-100 dark:group-hover:bg-slate-700`}
+        className={`sticky left-[40px] z-10 px-4 py-3 font-medium border-r-2 border-slate-300 dark:border-slate-600 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors select-none ${rowBg} group-hover:bg-slate-100 dark:group-hover:bg-slate-700 ${
+          isRowSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-800 dark:text-slate-200'
+        }`}
         onContextMenu={(e) => onContextMenu(e, student)}
-        onClick={(e) => gradebookStore.selectRow(student.id, availableColumns, e.shiftKey)}
+        onClick={handleRowHeaderClick}
       >
         {student.last_name} {student.post_name}
       </td>

@@ -19,6 +19,9 @@ interface ClassGradeTableProps {
   columnStats: ColumnStats;
   onContextMenu: (e: React.MouseEvent, student: Student) => void;
   onGradeUpdate: (studentId: number, subjectId: number, period: string, value: number | null) => Promise<void>;
+  // Sélection multiple desktop-style (CTRL+clic)
+  selectedStudentIds: Set<number>;
+  onToggleSelectStudent: (studentId: number, withCtrl: boolean) => void;
 }
 
 const GradeStatCell = ({ statKey, columnStats, borderClass = 'border-r border-slate-200 dark:border-slate-700' }: {
@@ -48,7 +51,9 @@ export default function ClassGradeTable({
   showStats,
   columnStats,
   onContextMenu,
-  onGradeUpdate
+  onGradeUpdate,
+  selectedStudentIds,
+  onToggleSelectStudent
 }: ClassGradeTableProps) {
   const visibleGradeColumnCount = getVisibleGradeColumnCount(selectedPeriods);
   const orderMap = sortOrder.startsWith('custom_')
@@ -321,6 +326,8 @@ export default function ClassGradeTable({
             selectedPeriods={selectedPeriods}
             lockedPeriods={lockedPeriods}
             correctionMax={correctionMax}
+            selectedStudentIds={selectedStudentIds}
+            onToggleSelectStudent={onToggleSelectStudent}
           />
         ))}
         {withdrawnStudents.length > 0 && (
@@ -347,6 +354,8 @@ export default function ClassGradeTable({
                 selectedPeriods={selectedPeriods}
                 lockedPeriods={lockedPeriods}
                 correctionMax={correctionMax}
+                selectedStudentIds={selectedStudentIds}
+                onToggleSelectStudent={onToggleSelectStudent}
               />
             ))}
           </>

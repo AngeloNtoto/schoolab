@@ -79,6 +79,9 @@ export default function ClassDetails({
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false);
   const { showContextMenu } = useContextMenu();
 
+  // État de la sélection multiple desktop-style (CTRL+clic sur les lignes)
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+
   const loadCustomSorts = useCallback(async () => {
     if (!classInfo) return;
     try {
@@ -271,43 +274,71 @@ export default function ClassDetails({
     }
   }, [onUpdateGrade, toast]);
 
+  // Gestion CTRL+clic sur les lignes d'élèves (sélection multiple)
+  const handleToggleSelectStudent = useCallback((studentId: number, withCtrl: boolean) => {
+    if (withCtrl) {
+      // CTRL+clic : ajoute/retire de la sélection
+      setSelectedStudentIds(prev => {
+        const next = new Set(prev);
+        if (next.has(studentId)) {
+          next.delete(studentId);
+        } else {
+          next.add(studentId);
+        }
+        return next;
+      });
+    } else {
+      // Clic simple sans CTRL : vide la sélection (on laisse le gradebook gérer la sélection cellules)
+      setSelectedStudentIds(new Set());
+    }
+  }, []);
+
   const handleContextMenu = useCallback((e: React.MouseEvent, student: Student) => {
     e.preventDefault();
+
+    // Si cet élève fait partie de la sélection multiple, le menu s'applique à tous
+    const targetIds = selectedStudentIds.has(student.id) && selectedStudentIds.size > 1
+      ? Array.from(selectedStudentIds)
+      : [student.id];
+    const isMulti = targetIds.length > 1;
+
     showContextMenu(e, [
+      // En-tête du menu (titre non-cliquable)
       {
-        label: `Modifier ${student.first_name} ${student.last_name}`,
-        action: () => onEditStudent(student.id)
+        label: isMulti ? `${targetIds.length} élèves sélectionnés` : `${student.first_name} ${student.last_name}`,
+        action: () => {},
+        disabled: true
       },
+      { separator: true, label: '' },
+      // Actions individu uniquement
+      ...(!isMulti ? [
+        { label: 'Modifier l\'information', action: () => onEditStudent(student.id) },
+        { label: 'Voir le bulletin', action: () => onOpenBulletin(student.id) },
+        { label: 'Examen de repêchage', action: () => onOpenRepechage(student.id) },
+        { separator: true, label: '' }
+      ] : []),
+      // Action de suppression (s'applique à tous)
       {
-        label: 'Voir le bulletin',
-        action: () => onOpenBulletin(student.id)
-      },
-      {
-        label: 'Examen de repêchage',
-        action: () => onOpenRepechage(student.id)
-      },
-      {
-        separator: true,
-        label: ''
-      },
-      {
-        label: 'Supprimer l\'élève',
+        label: isMulti ? `Supprimer les ${targetIds.length} élèves` : 'Supprimer l\'entrée',
         danger: true,
         action: async () => {
           const confirmed = await toast.confirm({
-            title: 'Supprimer l\'élève',
-            message: `Êtes-vous sûr de vouloir supprimer l'élève ${student.last_name} ? Cette action est irréversible.`,
+            title: 'Supprimer',
+            message: isMulti
+              ? `Supprimer définitivement ces ${targetIds.length} élèves et toutes leurs notes ?`
+              : `Supprimer ${student.last_name} définitivement ? Cette action est irréversible.`,
             confirmLabel: 'Supprimer',
             cancelLabel: 'Annuler',
             variant: 'danger'
           });
           if (confirmed) {
-            await onDeleteStudent(student.id);
+            for (const id of targetIds) await onDeleteStudent(id);
+            setSelectedStudentIds(new Set());
           }
         }
       }
     ]);
-  }, [showContextMenu, onEditStudent, onOpenBulletin, onOpenRepechage, onDeleteStudent, toast]);
+  }, [showContextMenu, onEditStudent, onOpenBulletin, onOpenRepechage, onDeleteStudent, toast, selectedStudentIds]);
 
   const handleCreateCustomSort = () => {
     setEditingCustomSort(null);
@@ -412,6 +443,8 @@ export default function ClassDetails({
               columnStats={columnStats}
               onContextMenu={handleContextMenu}
               onGradeUpdate={onGradeUpdate}
+              selectedStudentIds={selectedStudentIds}
+              onToggleSelectStudent={handleToggleSelectStudent}
             />
           </>
         )}
