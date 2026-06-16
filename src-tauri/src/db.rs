@@ -155,6 +155,8 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
             subject_id INTEGER NOT NULL,
             value REAL NOT NULL DEFAULT 0,
             percentage REAL NOT NULL DEFAULT 0,
+            -- Indique si l'élève doit se présenter au bureau (dette) avant la session de repêchage
+            voir_bureau INTEGER NOT NULL DEFAULT 0,
             server_id TEXT,
             is_dirty INTEGER DEFAULT 1,
             created_at TEXT DEFAULT '1970-01-01 00:00:00',
@@ -269,6 +271,12 @@ pub fn initialize_db(db_path: &Path) -> Result<(), String> {
     // Migration: ordre d'affichage des matières (bulletin, grille)
     let _ = conn.execute(
         "ALTER TABLE subjects ADD COLUMN display_order INTEGER DEFAULT 0",
+        [],
+    );
+
+    // Migration: Ajout du marqueur "Voir Bureau" pour les repêchages (dette élève)
+    let _ = conn.execute(
+        "ALTER TABLE repechages ADD COLUMN voir_bureau INTEGER NOT NULL DEFAULT 0",
         [],
     );
 

@@ -7,7 +7,7 @@ export const periode = (period: string): string => {
   switch (period) {
     case 'SEM1': return '1ère Semestre';
     case 'SEM2': return '2ème Semestre';
-    case 'ANNUAL': return 'Année';
+    case 'ANNUAL': return null;
     case 'P1': return '1ère Période';
     case 'P2': return '2ème Période';
     case 'P3': return '3ème Période';

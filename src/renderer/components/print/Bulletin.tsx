@@ -16,6 +16,7 @@ interface BulletinProps {
   grades: Grade[];
   schoolName: string;
   schoolCity: string;
+  academicYear: string;
   onClose: () => void;
 }
 

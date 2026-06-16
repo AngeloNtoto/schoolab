@@ -311,26 +311,62 @@ export default function BulletinHumanitesContent({
                     const ex2 = getGrade(subject.id, 'EXAM2');
                     const tot2 = calculateTotal(subject.id, ['P3', 'P4', 'EXAM2']);
 
-                    const tg = (tot1 !== null || tot2 !== null) ? (tot1 || 0) + (tot2 || 0) : null;
-                    const totalMax = firstSubject.max_p1 + firstSubject.max_p2 + firstSubject.max_exam1 + firstSubject.max_p3 + firstSubject.max_p4 + firstSubject.max_exam2;
-                    const subjectPct = tg !== null && totalMax > 0 ? (tg / totalMax) * 100 : null;
-                    const subjectToneClass = getSubjectToneClass(subjectPct, delibConfig.seuilEchecMatiere);
+                    // --- Calcul du pourcentage PAR PÉRIODE pour la couleur réussite/échec ---
+                    // Chaque cellule est colorée selon son propre pourcentage, pas le total annuel
+                    const seuil = delibConfig.seuilEchecMatiere;
 
-                    const repechage = repechages.find(r => r.student_id === student.id && r.subject_id === subject.id);
+                    // Pourcentage par période individuelle (P1, P2, P3, P4)
+                    const pctP1 = (p1 !== null && firstSubject.max_p1 > 0) ? (p1 / firstSubject.max_p1) * 100 : null;
+                    const pctP2 = (p2 !== null && firstSubject.max_p2 > 0) ? (p2 / firstSubject.max_p2) * 100 : null;
+                    const pctEx1 = (ex1 !== null && firstSubject.max_exam1 > 0) ? (ex1 / firstSubject.max_exam1) * 100 : null;
+                    const pctP3 = (p3 !== null && firstSubject.max_p3 > 0) ? (p3 / firstSubject.max_p3) * 100 : null;
+                    const pctP4 = (p4 !== null && firstSubject.max_p4 > 0) ? (p4 / firstSubject.max_p4) * 100 : null;
+                    const pctEx2 = (ex2 !== null && firstSubject.max_exam2 > 0) ? (ex2 / firstSubject.max_exam2) * 100 : null;
+
+                    // Pourcentage par semestre (Tot1 = P1+P2+Exam1, Tot2 = P3+P4+Exam2)
+                    const maxSem1 = firstSubject.max_p1 + firstSubject.max_p2 + firstSubject.max_exam1;
+                    const maxSem2 = firstSubject.max_p3 + firstSubject.max_p4 + firstSubject.max_exam2;
+                    const pctTot1 = (tot1 !== null && maxSem1 > 0) ? (tot1 / maxSem1) * 100 : null;
+                    const pctTot2 = (tot2 !== null && maxSem2 > 0) ? (tot2 / maxSem2) * 100 : null;
+
+                    // Pourcentage du Total Général (annuel)
+                    const tg = (tot1 !== null || tot2 !== null) ? (tot1 || 0) + (tot2 || 0) : null;
+                    const totalMax = maxSem1 + maxSem2;
+                    const pctTG = (tg !== null && totalMax > 0) ? (tg / totalMax) * 100 : null;
+
+                    // Classe CSS de couleur par cellule
+                    const toneP1 = getSubjectToneClass(pctP1, seuil);
+                    const toneP2 = getSubjectToneClass(pctP2, seuil);
+                    const toneEx1 = getSubjectToneClass(pctEx1, seuil);
+                    const toneTot1 = getSubjectToneClass(pctTot1, seuil);
+                    const toneP3 = getSubjectToneClass(pctP3, seuil);
+                    const toneP4 = getSubjectToneClass(pctP4, seuil);
+                    const toneEx2 = getSubjectToneClass(pctEx2, seuil);
+                    const toneTot2 = getSubjectToneClass(pctTot2, seuil);
+                    const toneTG = getSubjectToneClass(pctTG, seuil);
+
+                    /**
+                     * NOTE IMPORTANTE : Le champ voir_bureau est volontairement ignoré ici.
+                     * Le bulletin affiche uniquement le pourcentage de repêchage (valeur chiffrée).
+                     * Le VB est réservé à la liste de repêchage du palmarès.
+                     */
+                    const repechage = repechages.find(
+                      r => r.student_id === student.id && r.subject_id === subject.id && (r.percentage ?? 0) > 0
+                    );
 
                     return (
                       <tr key={subject.id}>
                         <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p1)}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p2)}</td>
-                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(ex1)}</td>)}
-                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{formatValue(tot1)}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p3)}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(p4)}</td>
-                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${subjectToneClass}`}>{formatValue(ex2)}</td>)}
-                        <td className={`border border-black font-bold py-0.5 ${subjectToneClass}`}>{formatValue(tot2)}</td>
-                        <td className={`border border-black font-bold bg-slate-50 py-0.5 ${subjectToneClass}`}>{formatValue(tg)}</td>
-                        <td className={`border border-black py-0.5 ${subjectToneClass}`}>{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
+                        <td className={`border border-black py-0.5 ${toneP1}`}>{formatValue(p1)}</td>
+                        <td className={`border border-black py-0.5 ${toneP2}`}>{formatValue(p2)}</td>
+                        {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${toneEx1}`}>{formatValue(ex1)}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${toneTot1}`}>{formatValue(tot1)}</td>
+                        <td className={`border border-black py-0.5 ${toneP3}`}>{formatValue(p3)}</td>
+                        <td className={`border border-black py-0.5 ${toneP4}`}>{formatValue(p4)}</td>
+                        {ex2 === null && firstSubject.max_exam2==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${toneEx2}`}>{formatValue(ex2)}</td>)}
+                        <td className={`border border-black font-bold py-0.5 ${toneTot2}`}>{formatValue(tot2)}</td>
+                        <td className={`border border-black font-bold bg-slate-50 py-0.5 ${toneTG}`}>{formatValue(tg)}</td>
+                        <td className={`border border-black py-0.5 ${toneTG}`}>{repechage?.percentage ? `${repechage.percentage}%` : ''}</td>
                         <td className="border border-black py-0.5"></td>
                       </tr>
                     );
@@ -608,7 +644,7 @@ export default function BulletinHumanitesContent({
         }
 
         .subject-failed {
-          color: #047857;
+          color: #0423AF;
           font-weight: 200;
         }
 

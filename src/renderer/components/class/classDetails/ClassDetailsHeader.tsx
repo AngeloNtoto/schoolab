@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import {
   ArrowLeft,
   Plus,
@@ -18,8 +18,11 @@ import {
   Minimize,
   Download,
   RefreshCw,
-  RotateCcw
+  RotateCcw,
+  AlertTriangle
 } from '../../iconsSvg';
+import { GradePredictorWidget } from '../GradePredictorWidget';
+import VoirBureauModal from '../VoirBureauModal';
 import { ClassData, Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
@@ -65,6 +68,7 @@ interface ClassDetailsHeaderProps {
   onCreateCustomSort: () => void;
   onEditCustomSort: (sort: CustomSort) => void;
   onDeleteCustomSort: (sortId: number) => Promise<void>;
+  onPredictionsApplied?: () => void;
 }
 
 export default function ClassDetailsHeader({
@@ -106,8 +110,10 @@ export default function ClassDetailsHeader({
   onShowAddStudent,
   onCreateCustomSort,
   onEditCustomSort,
-  onDeleteCustomSort
+  onDeleteCustomSort,
+  onPredictionsApplied
 }: ClassDetailsHeaderProps) {
+  const [showVoirBureau, setShowVoirBureau] = useState(false);
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30">
       <div className="px-4 py-2">
@@ -141,6 +147,22 @@ export default function ClassDetailsHeader({
               title="Actualiser les données"
             >
               <RefreshCw size={14} className={`transition-transform duration-500 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+            <GradePredictorWidget
+              classId={classInfo.id}
+              subjects={subjects}
+              students={students}
+              onSuccess={() => onPredictionsApplied?.()}
+              onError={(error) => console.error(error)}
+            />
+            {/* Bouton d'accès rapide au modal Voir Bureau (VB) */}
+            <button
+              onClick={() => setShowVoirBureau(true)}
+              title="Gérer les Voir Bureau de la classe"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-200 hover:text-white rounded-xl border border-amber-500/30 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
+            >
+              <AlertTriangle size={13} />
+              <span>Voir Bureau</span>
             </button>
             <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
             <button
@@ -403,6 +425,13 @@ export default function ClassDetailsHeader({
           </div>
         )}
       </div>
+      <VoirBureauModal
+        isOpen={showVoirBureau}
+        onClose={() => setShowVoirBureau(false)}
+        students={students}
+        subjects={subjects}
+        classId={classInfo.id}
+      />
     </header>
   );
 }

@@ -518,6 +518,360 @@ fn get_web_server_info() -> Option<server::ServerInfo> {
     server::get_server_info()
 }
 
+// Grade prediction structures and functions
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictionResult {
+    pub student_id: i32,
+    pub student_name: String,
+    pub subject_id: i32,
+    pub subject_name: String,
+    pub period: String,
+    pub predicted_grade: f64,
+    pub max_grade: f64,
+    pub confidence: u8,
+    pub reasoning: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PredictionParams {
+    pub class_id: i32,
+    pub student_ids: Option<Vec<i32>>,
+    pub subject_ids: Option<Vec<i32>>,
+    pub periods: Option<Vec<String>>,
+    pub confidence_threshold: u8,
+}
+
+fn calculate_student_performance(
+    conn: &Connection,
+    student_id: i32,
+    excluded_subject_id: i32,
+    period: &str,
+) -> Result<f64, String> {
+    info!("  [student_perf] student_id={}, excluded_subject={}, period={}", student_id, excluded_subject_id, period);
+
+    let max_col = match period {
+        "P1" => "max_p1",
+        "P2" => "max_p2",
+        "EXAM1" => "max_exam1",
+        "P3" => "max_p3",
+        "P4" => "max_p4",
+        "EXAM2" => "max_exam2",
+        _ => "max_p1",
+    };
+
+    let query = format!(
+        "SELECT g.value, s.{} as max_val
+         FROM grades g
+         JOIN subjects s ON g.subject_id = s.id
+         WHERE g.student_id = ? AND g.subject_id != ? AND g.period = ?
+         AND g.value IS NOT NULL AND g.value >= 0",
+        max_col
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| {
+        error!("  [student_perf] Failed to prepare: {}", e);
+        e.to_string()
+    })?;
+
+    let grades_iter = stmt
+        .query_map(rusqlite::params![student_id, excluded_subject_id, period], |row| {
+            let value: f64 = row.get(0)?;
+            let max: f64 = row.get(1)?;
+            Ok((value, max))
+        })
+        .map_err(|e| {
+            error!("  [student_perf] Failed to query: {}", e);
+            e.to_string()
+        })?;
+
+    let mut percentages = Vec::new();
+    for grade_result in grades_iter {
+        let (value, max) = grade_result.map_err(|e| {
+            error!("  [student_perf] Failed to get row: {}", e);
+            e.to_string()
+        })?;
+        if max > 0.0 {
+            percentages.push(value / max);
+        }
+    }
+
+    if percentages.is_empty() {
+        info!("  [student_perf] No grades found, returning 0.5");
+        return Ok(0.5);
+    }
+
+    let avg = percentages.iter().sum::<f64>() / percentages.len() as f64;
+    info!("  [student_perf] Found {} grades, avg: {:.4}", percentages.len(), avg);
+    Ok(avg.min(1.0).max(0.0))
+}
+
+fn calculate_class_performance(
+    conn: &Connection,
+    class_id: i32,
+    subject_id: i32,
+    period: &str,
+) -> Result<f64, String> {
+    info!("  [class_perf] class_id={}, subject_id={}, period={}", class_id, subject_id, period);
+
+    let max_col = match period {
+        "P1" => "max_p1",
+        "P2" => "max_p2",
+        "EXAM1" => "max_exam1",
+        "P3" => "max_p3",
+        "P4" => "max_p4",
+        "EXAM2" => "max_exam2",
+        _ => "max_p1",
+    };
+
+    let query = format!(
+        "SELECT AVG(CAST(g.value AS FLOAT) / s.{}) as avg_percentage
+         FROM grades g
+         JOIN subjects s ON g.subject_id = s.id
+         JOIN students st ON g.student_id = st.id
+         WHERE st.class_id = ? AND g.subject_id = ? AND g.period = ?
+         AND g.value IS NOT NULL AND g.value >= 0",
+        max_col
+    );
+
+    let mut stmt = conn.prepare(&query).map_err(|e| {
+        error!("  [class_perf] Failed to prepare: {}", e);
+        e.to_string()
+    })?;
+
+    let avg_percentage: f64 = stmt
+        .query_row(rusqlite::params![class_id, subject_id, period], |row| {
+            row.get(0)
+        })
+        .unwrap_or_else(|e| {
+            info!("  [class_perf] Query returned no rows or error: {}, using 0.5", e);
+            0.5
+        });
+
+    info!("  [class_perf] Result: {:.4}", avg_percentage);
+    Ok(avg_percentage.min(1.0).max(0.0))
+}
+
+fn get_max_for_period(conn: &Connection, subject_id: i32, period: &str) -> Result<f64, String> {
+    info!("  [max_for_period] subject_id={}, period={}", subject_id, period);
+
+    let column = match period {
+        "P1" => "max_p1",
+        "P2" => "max_p2",
+        "EXAM1" => "max_exam1",
+        "P3" => "max_p3",
+        "P4" => "max_p4",
+        "EXAM2" => "max_exam2",
+        _ => "max_p1",
+    };
+
+    let query = format!("SELECT {} FROM subjects WHERE id = ?", column);
+    let mut stmt = conn.prepare(&query).map_err(|e| {
+        error!("  [max_for_period] Failed to prepare: {}", e);
+        e.to_string()
+    })?;
+
+    let max: f64 = stmt
+        .query_row(rusqlite::params![subject_id], |row| row.get(0))
+        .map_err(|e| {
+            error!("  [max_for_period] Failed to query: {}", e);
+            e.to_string()
+        })?;
+
+    info!("  [max_for_period] Result: {:.0}", max);
+    Ok(max)
+}
+
+#[tauri::command]
+async fn predict_missing_grades(
+    app_handle: tauri::AppHandle,
+    params: PredictionParams,
+) -> Result<Vec<PredictionResult>, String> {
+    info!("=== PREDICT_MISSING_GRADES START ===");
+    info!("Params: class_id={}, confidence_threshold={}", params.class_id, params.confidence_threshold);
+
+    let db_path = get_db_path(&app_handle);
+    let conn = Connection::open(db_path).map_err(|e| {
+        error!("Failed to open DB: {}", e);
+        e.to_string()
+    })?;
+
+    let mut results = Vec::new();
+    let periods = params.periods.unwrap_or_else(|| {
+        vec![
+            "P1".to_string(),
+            "P2".to_string(),
+            "EXAM1".to_string(),
+            "P3".to_string(),
+            "P4".to_string(),
+            "EXAM2".to_string(),
+        ]
+    });
+
+    info!("Periods: {:?}", periods);
+
+    // Get all students in class
+    let mut student_stmt = conn
+        .prepare("SELECT id, first_name, last_name FROM students WHERE class_id = ?")
+        .map_err(|e| {
+            error!("Failed to prepare student query: {}", e);
+            e.to_string()
+        })?;
+
+    let students_iter = student_stmt
+        .query_map(rusqlite::params![params.class_id], |row| {
+            Ok((row.get::<_, i32>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?))
+        })
+        .map_err(|e| {
+            error!("Failed to query students: {}", e);
+            e.to_string()
+        })?;
+
+    for student_result in students_iter {
+        let (student_id, first_name, last_name) = student_result.map_err(|e| {
+            error!("Failed to get student row: {}", e);
+            e.to_string()
+        })?;
+
+        info!("Processing student: {} {} (id={})", first_name, last_name, student_id);
+
+        if let Some(ref student_ids) = params.student_ids {
+            if !student_ids.contains(&student_id) {
+                continue;
+            }
+        }
+
+        // Get all subjects for this class
+        let mut subject_stmt = conn
+            .prepare("SELECT id, name FROM subjects WHERE class_id = ?")
+            .map_err(|e| {
+                error!("Failed to prepare subject query: {}", e);
+                e.to_string()
+            })?;
+
+        let subjects_iter = subject_stmt
+            .query_map(rusqlite::params![params.class_id], |row| {
+                Ok((row.get::<_, i32>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(|e| {
+                error!("Failed to query subjects: {}", e);
+                e.to_string()
+            })?;
+
+        for subject_result in subjects_iter {
+            let (subject_id, subject_name) = subject_result.map_err(|e| {
+                error!("Failed to get subject row: {}", e);
+                e.to_string()
+            })?;
+
+            if let Some(ref subject_ids) = params.subject_ids {
+                if !subject_ids.contains(&subject_id) {
+                    continue;
+                }
+            }
+
+            for period in &periods {
+                // Check if grade exists
+                let existing: Option<f64> = conn
+                    .query_row(
+                        "SELECT value FROM grades WHERE student_id = ? AND subject_id = ? AND period = ?",
+                        rusqlite::params![student_id, subject_id, period],
+                        |row| row.get(0),
+                    )
+                    .ok();
+
+                if existing.is_some() {
+                    continue;
+                }
+
+                // Log pour déboguer : on utilise first_name et last_name (pas de variable student_name)
+                info!("Calculating prediction for {} {} / {} / {}", first_name, last_name, subject_name, period);
+
+                // Calculate prediction
+                let student_perf = match calculate_student_performance(&conn, student_id, subject_id, period) {
+                    Ok(perf) => {
+                        info!("  Student perf: {:.2}", perf);
+                        perf
+                    },
+                    Err(e) => {
+                        error!("  Failed to calculate student perf: {}", e);
+                        continue;
+                    }
+                };
+
+                let class_perf = match calculate_class_performance(&conn, params.class_id, subject_id, period) {
+                    Ok(perf) => {
+                        info!("  Class perf: {:.2}", perf);
+                        perf
+                    },
+                    Err(e) => {
+                        error!("  Failed to calculate class perf: {}", e);
+                        continue;
+                    }
+                };
+
+                let max_grade = match get_max_for_period(&conn, subject_id, period) {
+                    Ok(max) => {
+                        info!("  Max grade: {:.2}", max);
+                        max
+                    },
+                    Err(e) => {
+                        error!("  Failed to get max grade: {}", e);
+                        continue;
+                    }
+                };
+
+                let ecart = student_perf - class_perf;
+                let predicted_percentage = if ecart > 0.15 {
+                    class_perf.min(0.95)
+                } else if ecart < -0.15 {
+                    (class_perf - 0.1).max(0.0)
+                } else {
+                    (class_perf * 0.7 + student_perf * 0.3).min(1.0)
+                };
+
+                let predicted_grade = predicted_percentage * max_grade;
+
+                let mut confidence = 80u8;
+                if (ecart.abs()) > 0.25 {
+                    confidence = confidence.saturating_sub(20);
+                }
+                if student_perf < 0.3 {
+                    confidence = confidence.saturating_sub(15);
+                }
+                if predicted_percentage < 0.3 {
+                    confidence = confidence.saturating_sub(10);
+                }
+
+                info!("  Predicted: {:.2}/{:.0} (conf: {}%)", predicted_grade, max_grade, confidence);
+
+                if confidence >= params.confidence_threshold {
+                    results.push(PredictionResult {
+                        student_id,
+                        student_name: format!("{} {}", first_name, last_name),
+                        subject_id,
+                        subject_name: subject_name.clone(),
+                        period: period.clone(),
+                        predicted_grade: (predicted_grade * 100.0).round() / 100.0,
+                        max_grade,
+                        confidence,
+                        reasoning: format!(
+                            "Perf élève: {:.0}% vs classe: {:.0}% (écart: {:.0}%)",
+                            student_perf * 100.0,
+                            class_perf * 100.0,
+                            ecart * 100.0
+                        ),
+                    });
+                }
+            }
+        }
+    }
+
+    info!("=== PREDICT_MISSING_GRADES END: {} results ===", results.len());
+    Ok(results)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -563,7 +917,8 @@ pub fn run() {
             check_sync_status,
             start_web_server,
             get_web_server_info,
-            server::broadcast_db_change
+            server::broadcast_db_change,
+            predict_missing_grades
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

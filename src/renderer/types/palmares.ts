@@ -57,6 +57,7 @@ export interface RankedStudent {
   failedSubjects: string[];
   repechageSubjects: string[];
   missingSubjects: string[];
+  voirBureauSubjects?: string[];
   subjectDetails: {
     subjectName: string;
     subjectCode: string;

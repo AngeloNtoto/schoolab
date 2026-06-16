@@ -306,8 +306,7 @@ export default function ClassDetails({
       // En-tête du menu (titre non-cliquable)
       {
         label: isMulti ? `${targetIds.length} élèves sélectionnés` : `${student.first_name} ${student.last_name}`,
-        action: () => {},
-        disabled: true
+        action: () => {}
       },
       { separator: true, label: '' },
       // Actions individu uniquement
@@ -408,6 +407,7 @@ export default function ClassDetails({
           onCreateCustomSort={handleCreateCustomSort}
           onEditCustomSort={handleEditCustomSort}
           onDeleteCustomSort={handleDeleteCustomSort}
+          onPredictionsApplied={handleRefresh}
         />
       )}
 
