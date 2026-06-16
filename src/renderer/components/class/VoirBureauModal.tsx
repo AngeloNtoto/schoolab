@@ -124,19 +124,19 @@ export default function VoirBureauModal({
       <div className="bg-white dark:bg-[#020617] rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/5 w-full max-w-xl flex flex-col max-h-[88vh] animate-in zoom-in-95 duration-300">
 
         {/* Header du modal */}
-        <div className="bg-amber-500 dark:bg-amber-600 px-8 py-6 flex items-center justify-between shrink-0">
+        <div className="bg-white dark:bg-slate-900 px-8 py-6 flex items-center justify-between shrink-0 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-              <Users size={22} className="text-white" />
+            <div className="bg-amber-50 dark:bg-amber-500/10 p-3 rounded-2xl border border-amber-100 dark:border-amber-500/20">
+              <Users size={22} className="text-amber-600 dark:text-amber-300" />
             </div>
             <div>
-              <p className="text-amber-100/70 font-black uppercase tracking-widest text-[9px] mb-1">
+              <p className="text-amber-600 dark:text-amber-300 font-black uppercase tracking-widest text-[9px] mb-1">
                 Administration
               </p>
-              <h2 className="text-xl font-black text-white tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
                 Voir Bureau
                 {vbCount > 0 && (
-                  <span className="ml-2 text-sm bg-white/20 px-2 py-0.5 rounded-full">
+                  <span className="ml-2 text-sm bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 px-2 py-0.5 rounded-full">
                     {vbCount} élève{vbCount > 1 ? 's' : ''}
                   </span>
                 )}
@@ -145,7 +145,7 @@ export default function VoirBureauModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all"
           >
             <X size={20} />
           </button>

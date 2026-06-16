@@ -80,6 +80,7 @@ export const calculateRankings = (
     let hasAllGrades = true;
     const failedSubjects: string[] = [];
     const repechageSubjects: string[] = [];
+    const voirBureauSubjects: string[] = [];
     const missingSubjects: string[] = [];
     const subjectDetails: RankedStudent['subjectDetails'] = [];
 
@@ -134,6 +135,9 @@ export const calculateRankings = (
       const rep = repechages.find((r) => r.student_id === student.id && r.subject_id === subject.id);
       if (rep && rep.percentage > 0) {
         repechageSubjects.push(subject.code || subject.name);
+      }
+      if (rep && rep.voir_bureau === 1) {
+        voirBureauSubjects.push(subject.code || subject.name);
       }
 
       subjectDetails.push({
@@ -221,6 +225,7 @@ export const calculateRankings = (
       failedSubjects,
       repechageSubjects,
       missingSubjects,
+      voirBureauSubjects,
       subjectDetails,
     });
   }

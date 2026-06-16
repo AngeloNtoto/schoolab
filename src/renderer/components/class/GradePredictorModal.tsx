@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Loader2, X, ChevronDown } from '../iconsSvg';
+import { AlertCircle, CheckCircle, Loader2, X, ChevronDown, Sparkles } from '../iconsSvg';
 import { PredictionResult } from '../../services/predictionService';
 
 interface GradePredictorModalProps {
@@ -157,14 +157,19 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
       <div className="bg-white dark:bg-[#020617] rounded-[2rem] shadow-2xl border border-slate-200 dark:border-white/10 max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
 
         {/* Header */}
-        <div className="bg-purple-600 px-6 py-5 flex justify-between items-center shrink-0">
-          <div>
-            <p className="text-purple-200/60 font-black uppercase tracking-widest text-[9px] mb-1">Intelligence Artificielle</p>
-            <h2 className="text-xl font-black text-white">Prédire Notes Manquantes</h2>
+        <div className="bg-white dark:bg-slate-900 px-6 py-5 flex justify-between items-center shrink-0 border-b border-slate-100 dark:border-white/5">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+              <Sparkles size={22} className="text-blue-600 dark:text-blue-300" />
+            </div>
+            <div>
+              <p className="text-blue-600 dark:text-blue-300 font-black uppercase tracking-widest text-[9px] mb-1">Prédiction</p>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">Notes manquantes</h2>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all"
           >
             <X size={20} />
           </button>
@@ -185,7 +190,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                   </h3>
                   {/* Résumé des filtres actifs */}
                   {filterSummary.length > 0 && (
-                    <p className="text-[10px] text-purple-600 dark:text-purple-400 font-medium mt-1">
+                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium mt-1">
                       Filtres actifs : {filterSummary.join(' · ')}
                     </p>
                   )}
@@ -200,7 +205,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Élèves</span>
                       {selectedStudents.length > 0 && (
-                        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full text-[10px] font-black">
+                        <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-[10px] font-black">
                           {selectedStudents.length} sélectionné{selectedStudents.length > 1 ? 's' : ''}
                         </span>
                       )}
@@ -215,7 +220,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                       {/* Bouton tout sélectionner/désélectionner */}
                       <button
                         onClick={toggleAllStudents}
-                        className="text-[10px] font-black text-purple-600 dark:text-purple-400 mb-2 hover:underline"
+                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-2 hover:underline"
                       >
                         {selectedStudents.length === students.length ? 'Désélectionner tout' : 'Sélectionner tout'}
                       </button>
@@ -225,7 +230,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                             key={s.id}
                             className={`flex items-center gap-2 text-xs cursor-pointer px-2 py-1.5 rounded-lg transition-colors ${
                               selectedStudents.includes(s.id)
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                 : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                             }`}
                           >
@@ -233,7 +238,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                               type="checkbox"
                               checked={selectedStudents.includes(s.id)}
                               onChange={() => toggleStudent(s.id)}
-                              className="w-3.5 h-3.5 accent-purple-600 shrink-0"
+                              className="w-3.5 h-3.5 accent-blue-600 shrink-0"
                             />
                             <span className="truncate font-medium">{s.name}</span>
                           </label>
@@ -252,7 +257,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Matières</span>
                       {selectedSubjects.length > 0 && (
-                        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full text-[10px] font-black">
+                        <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full text-[10px] font-black">
                           {selectedSubjects.length} sélectionnée{selectedSubjects.length > 1 ? 's' : ''}
                         </span>
                       )}
@@ -266,7 +271,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                     <div className="px-4 pb-3">
                       <button
                         onClick={toggleAllSubjects}
-                        className="text-[10px] font-black text-purple-600 dark:text-purple-400 mb-2 hover:underline"
+                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 mb-2 hover:underline"
                       >
                         {selectedSubjects.length === subjects.length ? 'Désélectionner tout' : 'Sélectionner tout'}
                       </button>
@@ -276,7 +281,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                             key={s.id}
                             className={`flex items-center gap-2 text-xs cursor-pointer px-2 py-1.5 rounded-lg transition-colors ${
                               selectedSubjects.includes(s.id)
-                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                 : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-400'
                             }`}
                           >
@@ -284,7 +289,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                               type="checkbox"
                               checked={selectedSubjects.includes(s.id)}
                               onChange={() => toggleSubject(s.id)}
-                              className="w-3.5 h-3.5 accent-purple-600 shrink-0"
+                              className="w-3.5 h-3.5 accent-blue-600 shrink-0"
                             />
                             <span className="truncate font-medium">{s.name}</span>
                           </label>
@@ -305,7 +310,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                     </span>
                     <button
                       onClick={toggleAllPeriods}
-                      className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline"
+                      className="text-[10px] font-black text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {selectedPeriods.length === ALL_PERIODS.length ? 'Aucune' : 'Toutes'}
                     </button>
@@ -317,7 +322,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                         onClick={() => togglePeriod(p)}
                         className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
                           selectedPeriods.includes(p)
-                            ? 'bg-purple-600 text-white shadow'
+                            ? 'bg-blue-600 text-white shadow'
                             : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
                         }`}
                       >
@@ -334,7 +339,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-200">
                     Confiance minimale
                   </label>
-                  <span className="text-sm font-black text-purple-600 dark:text-purple-400">
+                  <span className="text-sm font-black text-blue-600 dark:text-blue-400">
                     {confidenceThreshold}%
                   </span>
                 </div>
@@ -344,7 +349,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                   max="100"
                   value={confidenceThreshold}
                   onChange={e => setConfidenceThreshold(parseInt(e.target.value))}
-                  className="w-full accent-purple-600"
+                  className="w-full accent-blue-600"
                 />
                 <div className="flex justify-between text-[10px] text-slate-400">
                   <span>0% (inclure tout)</span>
@@ -364,7 +369,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
               <button
                 onClick={handlePredict}
                 disabled={isLoading}
-                className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg"
               >
                 {isLoading ? 'Analyse en cours...' : 'Lancer la Prédiction'}
               </button>
@@ -376,7 +381,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
             <>
               {isLoading && (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="animate-spin mr-3 text-purple-600" size={22} />
+                  <Loader2 className="animate-spin mr-3 text-blue-600" size={22} />
                   <span className="text-slate-500 font-medium">Prédiction en cours...</span>
                 </div>
               )}
@@ -400,7 +405,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                         type="checkbox"
                         checked={selectedResults.length === filteredResults.length && filteredResults.length > 0}
                         onChange={toggleAllResults}
-                        className="w-4 h-4 accent-purple-600"
+                        className="w-4 h-4 accent-blue-600"
                       />
                       <span className="text-slate-600 dark:text-slate-400 font-medium">Tout sélectionner</span>
                     </label>
@@ -427,7 +432,7 @@ export const GradePredictorModal: React.FC<GradePredictorModalProps> = ({
                                 type="checkbox"
                                 checked={selectedResults.includes(idx)}
                                 onChange={() => toggleResultSelection(idx)}
-                                className="w-4 h-4 accent-purple-600"
+                                className="w-4 h-4 accent-blue-600"
                               />
                             </td>
                             <td className="px-4 py-3 font-bold text-slate-700 dark:text-slate-200">{result.studentName}</td>

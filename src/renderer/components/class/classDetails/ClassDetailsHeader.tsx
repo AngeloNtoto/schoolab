@@ -159,7 +159,7 @@ export default function ClassDetailsHeader({
             <button
               onClick={() => setShowVoirBureau(true)}
               title="Gérer les Voir Bureau de la classe"
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-amber-500/20 hover:bg-amber-500 text-amber-200 hover:text-white rounded-xl border border-amber-500/30 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded text-[11px] font-medium text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:text-amber-200 dark:hover:bg-amber-500/10 transition-colors"
             >
               <AlertTriangle size={13} />
               <span>Voir Bureau</span>
