@@ -74,30 +74,30 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Migrer le tri personnalisé des élèves
 - [x] Désactiver les sélections de texte parasites lors des glisser-déposer
 
-## Phase 8 : Local History et Checkpoints (Restauration)
-- [ ] Créer un Checkpoint automatique avant chaque import massif
-- [ ] Créer un Checkpoint automatique avant chaque "Sync Push" vers le cloud
-- [ ] Créer un Checkpoint automatique avant les délibérations
-- [ ] Permettre la création d'un "Snapshot" complet de l'état d'une classe (élèves, cours, notes)
-- [ ] Créer une interface utilisateur pour visualiser les différences (diff) avant restauration
-- [ ] Implémenter la restauration d'un checkpoint (en mode "Brouillon" dans un premier temps)
+## Phase 8 : Local History et Checkpoints (Restauration) (Skipped)
+- [ ] ~Créer un Checkpoint automatique avant chaque import massif~
+- [ ] ~Créer un Checkpoint automatique avant chaque "Sync Push" vers le cloud~
+- [ ] ~Créer un Checkpoint automatique avant les délibérations~
+- [ ] ~Permettre la création d'un "Snapshot" complet de l'état d'une classe (élèves, cours, notes)~
+- [ ] ~Créer une interface utilisateur pour visualiser les différences (diff) avant restauration~
+- [ ] ~Implémenter la restauration d'un checkpoint (en mode "Brouillon" dans un premier temps)~
 
-## Phase 9 : Draft Mode (Mode Brouillon)
-- [ ] Ajouter la table SQLite `drafts`
-- [ ] Créer le service des brouillons
-- [ ] Convertir la fonction d'importation des élèves en brouillon
-- [ ] Convertir la fonction d'importation des notes en brouillon
-- [ ] Convertir le processus de délibération en brouillon validable
-- [ ] Ajouter un panneau "Brouillons" pour lister et valider les actions en attente
+## Phase 9 : Draft Mode (Mode Brouillon) (Skipped)
+- [ ] ~Ajouter la table SQLite `drafts`~
+- [ ] ~Créer le service des brouillons~
+- [ ] ~Convertir la fonction d'importation des élèves en brouillon~
+- [ ] ~Convertir la fonction d'importation des notes en brouillon~
+- [ ] ~Convertir le processus de délibération en brouillon validable~
+- [ ] ~Ajouter un panneau "Brouillons" pour lister et valider les actions en attente~
 
-## Phase 10 : Sync 2.0
-- [ ] Ajouter la table SQLite `sync_queue` (File d'attente de synchronisation)
-- [ ] Lier la table `operation_log` (historique) à `sync_queue`
-- [ ] Afficher la liste des opérations en attente dans l'interface
-- [ ] Ajouter une logique de réessai automatique (Retry) en cas d'erreur de réseau
-- [ ] Ajouter l'exportation d'un diagnostic système (Export diagnostic)
-- [ ] Implémenter la détection de conflits simples entre le client local et le serveur
-- [ ] Créer une interface pour la résolution manuelle des conflits
+## Phase 10 : Sync 2.0 (Skipped)
+- [ ] ~Ajouter la table SQLite `sync_queue` (File d'attente de synchronisation)~
+- [ ] ~Lier la table `operation_log` (historique) à `sync_queue`~
+- [ ] ~Afficher la liste des opérations en attente dans l'interface~
+- [ ] ~Ajouter une logique de réessai automatique (Retry) en cas d'erreur de réseau~
+- [ ] ~Ajouter l'exportation d'un diagnostic système (Export diagnostic)~
+- [ ] ~Implémenter la détection de conflits simples entre le client local et le serveur~
+- [ ] ~Créer une interface pour la résolution manuelle des conflits~
 
 ## Phase 11 : Native Desktop Layer (Optimisation Tauri)
 - [x] Implémenter la sauvegarde et restauration de l'état de la fenêtre (Window state)
@@ -108,8 +108,8 @@ Ce document suit les étapes du `plan-transformation-workbench.md` pour transfor
 - [x] Utiliser les fenêtres de dialogue (Dialogs) natives pour les imports/exports de fichiers
 
 ## Phase 12 : Automatisations et Macros
-- [ ] Permettre l'enregistrement d'une suite de commandes exécutées
-- [ ] Créer une fonctionnalité de sauvegarde sous forme de "Macro" nommée
-- [ ] Pouvoir rejouer des Macros pour automatiser des tâches redondantes (ex: Macro "Préparer fin d'année")
-- [ ] Intégrer des variables contextuelles dans les macros (classe active, période active, etc.)
-- [ ] Ajouter des fenêtres de confirmation de sécurité pour les macros impliquant des actions destructives
+- [x] Permettre l'enregistrement d'une suite de commandes exécutées
+- [x] Créer une fonctionnalité de sauvegarde sous forme de "Macro" nommée
+- [x] Pouvoir rejouer des Macros pour automatiser des tâches redondantes (ex: Macro "Préparer fin d'année")
+- [x] Intégrer des variables contextuelles dans les macros (classe active, période active, etc.)
+- [x] Ajouter des fenêtres de confirmation de sécurité pour les macros impliquant des actions destructives

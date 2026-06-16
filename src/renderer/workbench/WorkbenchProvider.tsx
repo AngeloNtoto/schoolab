@@ -64,7 +64,18 @@ export function WorkbenchProvider({ children }: { children: React.ReactNode }) {
     if (cmd) {
       // Record action if macro service is recording
       macroService.recordAction(id, payload);
-      const ctx: WorkbenchContext = {}; 
+      
+      // Construction du contexte
+      const path = window.location.pathname; // Utiliser window.location pour avoir la valeur la plus fraîche
+      let activeClassId;
+      if (path.startsWith('/class/')) {
+        activeClassId = parseInt(path.split('/')[2]);
+      }
+
+      const ctx: WorkbenchContext = {
+        activeClassId: !isNaN(activeClassId) ? activeClassId : undefined
+      }; 
+      
       await cmd.run(payload, ctx);
     } else {
       console.warn(`Command ${id} not found`);

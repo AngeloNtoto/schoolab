@@ -1,7 +1,10 @@
 import React from 'react';
 
 export interface WorkbenchContext {
-  // Pour l'instant vide, pourra contenir l'état actif, la sélection, etc.
+  activeClassId?: number;
+  activePeriod?: string;
+  activeStudentId?: number;
+  // D'autres variables de contexte peuvent être ajoutées au besoin
 }
 
 export interface Command<TPayload = unknown> {
@@ -10,6 +13,7 @@ export interface Command<TPayload = unknown> {
   category: string;
   icon?: React.ComponentType<{ className?: string }>;
   shortcut?: string;
+  isDestructive?: boolean;
   when?: (ctx: WorkbenchContext) => boolean;
   run: (payload?: TPayload, ctx?: WorkbenchContext) => Promise<void> | void;
 }
