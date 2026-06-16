@@ -43,6 +43,14 @@ export default function ClassCoupons({
   academicYear,
   onClose
 }: ClassCouponsProps) {
+  if (!classInfo) {
+    return (
+      <div className="flex items-center justify-center h-full text-slate-500 bg-slate-50 dark:bg-slate-900">
+        <p>Les données de la classe sont introuvables. Veuillez fermer cet onglet et le rouvrir depuis la classe.</p>
+      </div>
+    );
+  }
+
   // Réf pour capturer la zone d'impression
   const printAreaRef = useRef<HTMLDivElement>(null);
 

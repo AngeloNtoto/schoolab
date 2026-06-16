@@ -23,6 +23,14 @@ interface BulletinProps {
 export default function Bulletin(props: BulletinProps) {
   const { classInfo } = props;
   
+  if (!classInfo) {
+    return (
+      <div className="flex items-center justify-center h-full text-slate-500 bg-slate-50 dark:bg-slate-900">
+        <p>Les données de la classe sont introuvables. Veuillez fermer cet onglet et le rouvrir depuis la classe.</p>
+      </div>
+    );
+  }
+
   // Détermine si c'est une classe primaire (7ème ou 8ème)
   const isPrimaire = classInfo.level === '7ème' || classInfo.level === '8ème';
 
