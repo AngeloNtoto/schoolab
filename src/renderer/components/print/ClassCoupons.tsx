@@ -146,10 +146,6 @@ export default function ClassCoupons({
         <div className="bg-white rounded-xl shadow-sm p-4 sticky top-0 z-10">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <button onClick={onClose} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-3 py-1.5 rounded-lg border shadow-sm">
-                <ArrowLeft size={20} />
-                Retour à la classe
-              </button>
               <div>
                 <h1 className="font-bold text-slate-900">{className}</h1>
                 <p className="text-sm text-slate-500">Impression des coupons</p>

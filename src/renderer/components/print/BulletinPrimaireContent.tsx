@@ -132,7 +132,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-6 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
       
       {/* Header */}
       <div className="border-2 border-black mb-0">
@@ -145,10 +145,10 @@ export default function BulletinPrimaireContent({
           </div>
 
           {/* Center: Ministry Info */}
-          <div className="flex-1 text-center py-1 px-4">
-            <h1 className="font-bold uppercase tracking-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
-            <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>MINISTERE DE L'EDUCATION NATIONALE</h2>
-            <h2 className="font-bold uppercase mt-0.5" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>ET NOUVELLE CITOYENNETE</h2>
+          <div className="flex-1 text-center py-2 px-4 flex flex-col justify-center">
+            <h1 className="font-bold uppercase tracking-tight leading-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
+            <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>MINISTERE DE L'EDUCATION NATIONALE</h2>
+            <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>ET NOUVELLE CITOYENNETE</h2>
           </div>
 
           {/* Right: Coat of arms */}
@@ -177,7 +177,7 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Info Grid */}
-      <div className="border-1 border-black mb-0 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
+      <div className="border-1 border-black mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5">
         <div className="space-y-1">
           <div className="flex items-baseline gap-2">
             <span className="font-bold min-w-[60px]">VILLE :</span>
@@ -235,12 +235,13 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6" style={{ fontSize: `${titleSize}px` }}>
-        BULLETIN DE LA {classInfo.level} DE L'EDUCATION DE BASE ({classInfo.level === '7ème' ? 'CTB7' : 'CTB8'}) ANNEE SCOLAIRE {academicYear}
+      <div className="mt-2 border-2 border-black border-b-0 p-1 bg-slate-100 uppercase flex items-center justify-between" style={{ fontSize: `${titleSize * 0.85}px`, lineHeight: '1.2' }}>
+        <span className="font-bold pl-4">BULLETIN DE LA {classInfo.level} EDUCATION DE BASE</span>
+        <span className="font-bold pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(6, bodySize - 1)}px` }}>
+      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[18%] p-1">BRANCHE</th>

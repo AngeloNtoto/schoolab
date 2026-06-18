@@ -90,15 +90,7 @@ export default function BulletinHumanites({
     <div className="bg-slate-100 p-8 print:p-0 print:bg-white">
 
       {/* Barre d'outils - Masquée à l'impression */}
-      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft size={20} />
-          Retour
-        </button>
-
+      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-end print:hidden">
         <PrintButton
           targetRef={bulletinRef}
           title={`Bulletin - ${student.last_name} ${student.first_name}`}

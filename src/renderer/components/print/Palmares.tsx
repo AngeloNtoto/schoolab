@@ -163,18 +163,6 @@ export default function Palmares({
         {/* Rangée 1 : Navigation + Sélecteurs principaux */}
         <div className="flex items-center gap-3 flex-wrap">
 
-          {/* Bouton Retour */}
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 active:scale-[0.97] transition-all duration-150 font-medium text-sm cursor-pointer"
-          >
-            <ArrowLeft size={16} />
-            Retour
-          </button>
-
-          {/* Séparateur vertical */}
-          <div className="h-7 w-px bg-slate-200"></div>
-
           {/* Sélection de la Période */}
           <select
             value={selectedPeriod}

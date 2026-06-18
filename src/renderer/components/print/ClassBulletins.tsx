@@ -126,7 +126,6 @@ export default function ClassBulletins({
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <p className="text-slate-600">Aucun élève trouvé.</p>
-        <button onClick={onClose} className="mt-4 text-blue-600 hover:underline">Retour</button>
       </div>
     );
   }
@@ -142,13 +141,6 @@ export default function ClassBulletins({
       {/* --- Zone de Contrôle (Non imprimée) --- */}
       <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden sticky top-0 bg-slate-100/90 backdrop-blur pb-4 pt-4 z-10 border-b border-slate-200">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onClose}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-4 py-2 rounded-lg border shadow-sm hover:shadow transition-all"
-          >
-            <ArrowLeft size={20} />
-            Retour à la classe
-          </button>
           {isReady && (
             <span className="text-slate-500 text-sm font-medium bg-white px-3 py-2 rounded-lg border">
               {studentsToPrint.length} Bulletins

@@ -118,7 +118,7 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 min-h-[297mm] relative text-black font-serif print:shadow-none print:p-0 print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize}px`, lineHeight: lineHeight } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
       
       {/* Header */}
       <div className="border-2 border-black mb-0 ">
@@ -131,10 +131,10 @@ export default function BulletinHumanitesContent({
           </div>
           
           {/* Title */}
-          <div className="flex-1 text-center py-1">
-            <h1 className="font-medium uppercase" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
-            <h2 className="font-medium uppercase" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Education Nationale</h2>
-            <h3 className="font-medium uppercase" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Et Nouvelle Citoyennete</h3>
+          <div className="flex-1 text-center py-2 flex flex-col justify-center">
+            <h1 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
+            <h2 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Education Nationale</h2>
+            <h3 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Et Nouvelle Citoyennete</h3>
           </div>
 
           {/* Coat of arms */}
@@ -157,12 +157,12 @@ export default function BulletinHumanitesContent({
 
         {/* Province */}
         <div className="p-1 font-bold border-b border-black bg-slate-100">
-          PROVINCE EDUCATIONNELLE :
+          PROVINCE EDUCATIONNELLE :............................................................................................................................................................................................
         </div>
       </div>
 
       {/* Info Grid */}
-      <div className="border-2 border-black mb-0 p-1 grid grid-cols-2 gap-x-8 gap-y-0.5">
+      <div className="border-2 border-black mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold min-w-[60px]">VILLE :</span>
           <span className="border-b border-dotted border-black flex-1 text-center font-semibold">{schoolCity}</span>
@@ -220,12 +220,13 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="border-2 border-black border-b-0 p-1 text-center font-small bg-slate-100 uppercase text-sm h-6" style={{ fontSize: `${titleSize}px` }}>
-        BULLETIN DE LA {classInfo.level} ANNEE HUMANITES / {classInfo.option} &nbsp;&nbsp;&nbsp; ANNEE SCOLAIRE {academicYear}
+      <div className="mt-2 border-2 border-black border-b-0 p-1 bg-slate-100 uppercase flex items-center justify-between font-bold" style={{ fontSize: `${titleSize * 0.65}px`, lineHeight: '1.2' }}>
+        <span className="pl-4">BULLETIN DE LA {classInfo.level} ANNÉE DES HUMANITES {classInfo.option}</span>
+        <span className="pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(6, bodySize - 1)}px` }}>
+      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[25%] p-0">BRANCHES</th>

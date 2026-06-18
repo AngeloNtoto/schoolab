@@ -90,15 +90,7 @@ export default function CouponEleve({
       onContextMenu={handleContextMenu}
     >
       {/* Barre de navigation (Masquée à l'impression) */}
-      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-between print:hidden">
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-3 py-1.5 rounded-lg border shadow-sm transition-colors"
-        >
-          <ArrowLeft size={20} />
-          Retour à la classe
-        </button>
-
+      <div className="max-w-[210mm] mx-auto mb-6 flex items-center justify-end print:hidden">
         <PrintButton
           targetRef={couponRef}
           title={`Coupon_${student.last_name}_${student.first_name}`}
