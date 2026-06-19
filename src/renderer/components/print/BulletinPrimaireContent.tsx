@@ -251,7 +251,8 @@ export default function BulletinPrimaireContent({
       <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
-            <th rowSpan={3} className="border border-black w-[18%] p-1">BRANCHE</th>
+            {/* Colonne BRANCHES — largeur réduite pour minimiser l'espace mort */}
+            <th rowSpan={3} className="border border-black w-[15%] p-0.5 text-left">BRANCHE</th>
             <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Premier Semestre</th>
             <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Second Semestre</th>
             <th colSpan={2} rowSpan={3} className="border border-black bg-slate-100 w-[8%]">T.G.</th>
@@ -333,7 +334,8 @@ export default function BulletinPrimaireContent({
                   
                   return (
                     <tr key={subject.id}>
-                      <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
+                      {/* Nom du cours — taille augmentée et padding réduit pour coller aux cellules de cotation */}
+                      <td className="border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: `${Math.max(7, bodySize - 0.5)}px` }}>{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className={`border border-black ${subjectToneClass}`}>{formatValue(p1)}</td>
                       <td className={`border border-black ${subjectToneClass}`}>{formatValue(p2)}</td>
@@ -686,8 +688,9 @@ export default function BulletinPrimaireContent({
           font-style: italic;
         }
 
+        /* Couleur alignée sur le bulletin Humanités (#0423AF bleu) pour une cohérence visuelle */
         .subject-failed {
-          color: #047857;
+          color: #0423AF;
           font-weight: 200;
         }
 
