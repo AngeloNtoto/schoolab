@@ -120,9 +120,14 @@ export default function BulletinHumanitesContent({
   return (
     <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
       
+      {/* ===== CADRE GLOBAL DU BULLETIN ===== */}
+      {/* Un cadre unique englobe l'intégralité du bulletin pour un rendu officiel soigné */}
+      <div className="bulletin-cadre-global" style={{ border: '3px solid #000', padding: '0' }}>
+
       {/* Header */}
-      <div className="border-2 border-black mb-0 ">
-        <div className="flex border-b border-black">
+      {/* En-tête du bulletin — bordures internes seulement (le cadre global fait le tour) */}
+      <div className="mb-0">
+        <div className="flex border-b-2 border-black">
           {/* Flag */}
           <div className="w-24 border-r border-black p-2 flex items-center justify-center">
             <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
@@ -146,7 +151,7 @@ export default function BulletinHumanitesContent({
         </div>
 
         {/* ID Row */}
-        <div className="flex border-b border-black">
+        <div className="flex border-b-2 border-black">
           <div className="w-20 font-bold p-1 border-r border-black bg-slate-100">N° ID.</div>
           <div className="flex-1 flex">
             {Array(20).fill(0).map((_, i) => (
@@ -156,13 +161,14 @@ export default function BulletinHumanitesContent({
         </div>
 
         {/* Province */}
-        <div className="p-1 font-bold border-b border-black bg-slate-100">
+        <div className="p-1 font-bold border-b-2 border-black bg-slate-100">
           PROVINCE EDUCATIONNELLE :............................................................................................................................................................................................
         </div>
       </div>
 
       {/* Info Grid */}
-      <div className="border-2 border-black mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5">
+      {/* Grille d'informations de l'élève — sans bordure propre, contenue dans le cadre global */}
+      <div className="mb-0 p-1 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold min-w-[60px]">VILLE :</span>
           <span className="border-b border-dotted border-black flex-1 text-center font-semibold">{schoolCity}</span>
@@ -220,13 +226,15 @@ export default function BulletinHumanitesContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="mt-2 border-2 border-black border-b-0 p-1 bg-slate-100 uppercase flex items-center justify-between font-bold" style={{ fontSize: `${titleSize * 0.65}px`, lineHeight: '1.2' }}>
+      {/* Titre du bulletin — harmonisé avec le cadre global */}
+      <div className="p-1 bg-slate-100 uppercase flex items-center justify-between font-bold border-b-2 border-black" style={{ fontSize: `${titleSize * 0.65}px`, lineHeight: '1.2' }}>
         <span className="pl-4">BULLETIN DE LA {classInfo.level} ANNÉE DES HUMANITES {classInfo.option}</span>
         <span className="pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
+      {/* Tableau des notes — bordures internes, le cadre global fait le tour extérieur */}
+      <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[25%] p-0">BRANCHES</th>
@@ -601,8 +609,8 @@ export default function BulletinHumanitesContent({
         </tbody>
       </table>
 
-      {/* Footer */}
-      <div className="border-2 border-black border-t-0 p-2 text-[10px]">
+      {/* Pied de page — inclus dans le cadre global, donc pas de bordure propre */}
+      <div className="p-2 text-[10px] border-t-2 border-black">
         <div className="mb-0">
           - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en ............................................................................................(1)
         </div>
@@ -637,6 +645,9 @@ export default function BulletinHumanitesContent({
         </div>
       </div>
 
+      {/* ===== FIN DU CADRE GLOBAL ===== */}
+      </div>
+
       <style>{`
         .subject-passed {
           color: #b91c1c;
@@ -650,15 +661,25 @@ export default function BulletinHumanitesContent({
         }
 
         @media print {
+          /* Saut de page après chaque bulletin */
           .page-break-after-always {
             page-break-after: always;
           }
 
+          /* Cadre global du bulletin — bien visible à l'impression */
+          .bulletin-cadre-global {
+            border: 3px solid #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Couleurs réussite/échec en noir à l'impression (pas de couleur) */
           .subject-passed,
           .subject-failed {
             color: #000 !important;
           }
 
+          /* Épaisseur différente pour distinguer réussite et échec */
           .subject-passed {
             font-weight: 650 !important;
             font-style: italic;
