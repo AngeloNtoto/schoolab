@@ -30,8 +30,8 @@ const getApplication = (percentage: number | null, config: DeliberationConfig): 
 const getSubjectToneClass = (percentage: number | null, threshold: number) => {
   if (percentage === null) return '';
   return percentage < threshold
-    ? 'subject-failed'
-    : 'subject-passed';
+    ? 'subject-passed'
+    : 'subject-failed';
 };
 
 const abregeConduite = (conduite?: string | null) => {
@@ -134,33 +134,37 @@ export default function BulletinPrimaireContent({
   return (
     <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
       
+      {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
+      {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
+      <div className="bulletin-cadre-global" style={{ border: '3px solid #000', padding: '0' }}>
+
       {/* Header */}
-      <div className="border-2 border-black mb-0">
-        <div className="flex border-b border-black">
+      <div className="mb-0">
+        <div className="flex border-b-2 border-black">
           {/* Left: Flag */}
-          <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+          <div className="w-20 border-r border-black p-1 flex items-center justify-center">
             <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
               <img src={drapeauUrl} alt="Drapeau de la RDC" className="w-full h-full object-cover" />
             </div>
           </div>
 
           {/* Center: Ministry Info */}
-          <div className="flex-1 text-center py-2 px-4 flex flex-col justify-center">
+          <div className="flex-1 text-center py-1 px-2 flex flex-col justify-center">
             <h1 className="font-bold uppercase tracking-tight leading-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
             <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>MINISTERE DE L'EDUCATION NATIONALE</h2>
             <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>ET NOUVELLE CITOYENNETE</h2>
           </div>
 
           {/* Right: Coat of arms */}
-          <div className="w-24 border-l border-black p-2 flex items-center justify-center">
-            <div className="w-16 h-16 overflow-hidden">
+          <div className="w-20 border-l border-black p-1 flex items-center justify-center">
+            <div className="w-14 h-14 overflow-hidden">
               <img src={armoirieUrl} alt="Armoiries de la RDC" className="w-full h-full object-contain" />
             </div>
           </div>
         </div>
 
         {/* ID Row */}
-        <div className="flex border border-black mb-1">
+        <div className="flex border-b-2 border-black mb-0">
           <div className="w-16 font-bold p-0.5 border-r border-black flex items-center">N° ID</div>
           <div className="flex-1 flex h-5">
             {Array(25).fill(0).map((_, i) => (
@@ -170,15 +174,16 @@ export default function BulletinPrimaireContent({
         </div>
 
         {/* Province */}
-        <div className="flex items-baseline mb-1">
+        <div className="flex items-baseline px-1 py-0 border-b-2 border-black">
           <span className="font-bold">PROVINCE :</span>
           <span className="border-b border-dotted border-black flex-1 ml-1"></span>
         </div>
       </div>
 
       {/* Info Grid */}
-      <div className="border-1 border-black mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5">
-        <div className="space-y-1">
+      {/* Grille d'informations de l'élève — contenue dans le cadre global */}
+      <div className="mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
+        <div className="space-y-0.5">
           <div className="flex items-baseline gap-2">
             <span className="font-bold min-w-[60px]">VILLE :</span>
             <span className="border-b border-dotted border-black flex-1 text-center uppercase">{schoolCity}</span>
@@ -200,7 +205,7 @@ export default function BulletinPrimaireContent({
             </div>
           </div>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex items-baseline gap-2">
             <span className="font-bold min-w-[60px]">ELEVE :</span>
             <span className="border-b border-dotted border-black flex-1 font-bold text-center uppercase">
@@ -235,16 +240,18 @@ export default function BulletinPrimaireContent({
       </div>
 
       {/* Bulletin Title */}
-      <div className="mt-2 border-2 border-black border-b-0 p-1 bg-slate-100 uppercase flex items-center justify-between" style={{ fontSize: `${titleSize * 0.85}px`, lineHeight: '1.2' }}>
+      {/* Titre du bulletin — harmonisé avec le cadre global */}
+      <div className="p-0.5 bg-slate-100 uppercase flex items-center justify-between border-b-2 border-black" style={{ fontSize: `${titleSize * 0.85}px`, lineHeight: '1.2' }}>
         <span className="font-bold pl-4">BULLETIN DE LA {classInfo.level} EDUCATION DE BASE</span>
         <span className="font-bold pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>
 
       {/* Grades Table */}
-      <table className="w-full border-2 border-black border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
+      {/* Tableau des notes — bordures internes seulement */}
+      <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
-            <th rowSpan={3} className="border border-black w-[18%] p-1">BRANCHE</th>
+            <th rowSpan={3} className="border border-black w-[14%] p-1">BRANCHE</th>
             <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Premier Semestre</th>
             <th colSpan={7} className="border border-black bg-slate-50 uppercase py-0.5">Second Semestre</th>
             <th colSpan={2} rowSpan={3} className="border border-black bg-slate-100 w-[8%]">T.G.</th>
@@ -285,6 +292,7 @@ export default function BulletinPrimaireContent({
             let domainTG = 0;
 
             // Fonction pour rendre une ligne de matière (réutilisée partout)
+            // Coloration INDIVIDUELLE par cellule : chaque période est colorée selon son propre pourcentage
             const renderSubjectRow = (subject: Subject) => {
                   const p1 = getGrade(subject.id, 'P1');
                   const p2 = getGrade(subject.id, 'P2');
@@ -298,14 +306,43 @@ export default function BulletinPrimaireContent({
                   
                   const tg = (tot1 !== null || tot2 !== null) ? (tot1 || 0) + (tot2 || 0) : null;
                   
+                  // Maxima par matière (en primaire, max_p1 = max_p2 = max_p3 = max_p4)
                   const maxP = subject.max_p1;
                   const maxEx1Val = subject.max_exam1;
                   const maxEx2Val = subject.max_exam2;
                   const maxTot1Val = (maxP * 2) + maxEx1Val;
                   const maxTot2Val = (maxP * 2) + maxEx2Val;
                   const maxTGVal = maxTot1Val + maxTot2Val;
-                  const subjectPct = tg !== null && maxTGVal > 0 ? (tg / maxTGVal) * 100 : null;
-                  const subjectToneClass = getSubjectToneClass(subjectPct, delibConfig.seuilEchecMatiere);
+
+                  // --- Coloration INDIVIDUELLE par période (alignée sur le modèle humanités) ---
+                  // Chaque cellule est colorée selon son propre pourcentage, pas le total annuel
+                  const seuil = delibConfig.seuilEchecMatiere;
+
+                  // Pourcentage individuel par période
+                  const pctP1 = (p1 !== null && maxP > 0) ? (p1 / maxP) * 100 : null;
+                  const pctP2 = (p2 !== null && maxP > 0) ? (p2 / maxP) * 100 : null;
+                  const pctEx1 = (ex1 !== null && maxEx1Val > 0) ? (ex1 / maxEx1Val) * 100 : null;
+                  const pctP3 = (p3 !== null && maxP > 0) ? (p3 / maxP) * 100 : null;
+                  const pctP4 = (p4 !== null && maxP > 0) ? (p4 / maxP) * 100 : null;
+                  const pctEx2 = (ex2 !== null && maxEx2Val > 0) ? (ex2 / maxEx2Val) * 100 : null;
+
+                  // Pourcentage par semestre (Tot1 et Tot2)
+                  const pctTot1 = (tot1 !== null && maxTot1Val > 0) ? (tot1 / maxTot1Val) * 100 : null;
+                  const pctTot2 = (tot2 !== null && maxTot2Val > 0) ? (tot2 / maxTot2Val) * 100 : null;
+
+                  // Pourcentage du Total Général (annuel)
+                  const pctTG = (tg !== null && maxTGVal > 0) ? (tg / maxTGVal) * 100 : null;
+
+                  // Classe CSS de couleur par cellule (même logique que humanités)
+                  const toneP1 = getSubjectToneClass(pctP1, seuil);
+                  const toneP2 = getSubjectToneClass(pctP2, seuil);
+                  const toneEx1 = getSubjectToneClass(pctEx1, seuil);
+                  const toneTot1 = getSubjectToneClass(pctTot1, seuil);
+                  const toneP3 = getSubjectToneClass(pctP3, seuil);
+                  const toneP4 = getSubjectToneClass(pctP4, seuil);
+                  const toneEx2 = getSubjectToneClass(pctEx2, seuil);
+                  const toneTot2 = getSubjectToneClass(pctTot2, seuil);
+                  const toneTG = getSubjectToneClass(pctTG, seuil);
 
                   // Accumuler les totaux du domaine
                   domainMaxP += maxP;
@@ -326,23 +363,24 @@ export default function BulletinPrimaireContent({
                   
                   return (
                     <tr key={subject.id}>
-                      <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
+                      {/* Nom de la branche — taille augmentée pour meilleure lisibilité */}
+                      <td className="border border-black text-left px-1 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: `${Math.max(7, bodySize - 1)}px` }}>{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p1)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p2)}</td>
+                      <td className={`border border-black ${toneP1}`}>{formatValue(p1)}</td>
+                      <td className={`border border-black ${toneP2}`}>{formatValue(p2)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx1Val)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(ex1)}</td>
+                      <td className={`border border-black ${toneEx1}`}>{formatValue(ex1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot1Val)}</td>
-                      <td className={`border border-black font-bold ${subjectToneClass}`}>{formatValue(tot1)}</td>
+                      <td className={`border border-black font-bold ${toneTot1}`}>{formatValue(tot1)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p3)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(p4)}</td>
+                      <td className={`border border-black ${toneP3}`}>{formatValue(p3)}</td>
+                      <td className={`border border-black ${toneP4}`}>{formatValue(p4)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxEx2Val)}</td>
-                      <td className={`border border-black ${subjectToneClass}`}>{formatValue(ex2)}</td>
+                      <td className={`border border-black ${toneEx2}`}>{formatValue(ex2)}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxTot2Val)}</td>
-                      <td className={`border border-black font-bold ${subjectToneClass}`}>{formatValue(tot2)}</td>
+                      <td className={`border border-black font-bold ${toneTot2}`}>{formatValue(tot2)}</td>
                       <td className="border border-black font-bold bg-slate-100">{formatValue(maxTGVal)}</td>
-                      <td className={`border border-black font-bold bg-slate-100 ${subjectToneClass}`}>{formatValue(tg)}</td>
+                      <td className={`border border-black font-bold bg-slate-100 ${toneTG}`}>{formatValue(tg)}</td>
                       <td className="border border-black"></td>
                       <td className="border border-black"></td>
                     </tr>
@@ -634,7 +672,8 @@ export default function BulletinPrimaireContent({
       </table>
 
       {/* Footer text from CTBE model */}
-      <div className="mt-2 text-[9px] border-t border-black pt-2">
+      {/* Pied de page — inclus dans le cadre global */}
+      <div className="p-2 text-[9px] border-t-2 border-black">
         <p className="mb-2 italic">
            - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en : ................................................................................................................................................................................................................. (1)
         </p>
@@ -668,6 +707,9 @@ export default function BulletinPrimaireContent({
         </div>
       </div>
 
+      {/* ===== FIN DU CADRE GLOBAL ===== */}
+      </div>
+
        <style>{`
         .subject-passed {
           color: #b91c1c;
@@ -681,15 +723,25 @@ export default function BulletinPrimaireContent({
         }
 
         @media print {
+          /* Saut de page après chaque bulletin */
           .page-break-after-always {
             page-break-after: always;
           }
 
+          /* Cadre global du bulletin — bien visible à l'impression */
+          .bulletin-cadre-global {
+            border: 3px solid #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Couleurs réussite/échec en noir à l'impression (pas de couleur) */
           .subject-passed,
           .subject-failed {
             color: #000 !important;
           }
 
+          /* Épaisseur différente pour distinguer réussite et échec */
           .subject-passed {
             font-weight: 650 !important;
             font-style: italic;

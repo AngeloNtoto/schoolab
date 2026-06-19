@@ -32,7 +32,7 @@ interface ClassDetailsProps {
   onRefreshSubjects: () => Promise<void>;
   onRefreshAll: () => Promise<void>;
   onSetEditingSubject: (subject: Subject | null) => void;
-  onOpenRepechage: (studentId: number) => void;
+
 }
 
 export default function ClassDetails({
@@ -53,8 +53,7 @@ export default function ClassDetails({
   onImportStudents,
   onRefreshSubjects,
   onRefreshAll,
-  onSetEditingSubject,
-  onOpenRepechage
+  onSetEditingSubject
 }: ClassDetailsProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -313,7 +312,6 @@ export default function ClassDetails({
       ...(!isMulti ? [
         { label: 'Modifier l\'information', action: () => onEditStudent(student.id) },
         { label: 'Voir le bulletin', action: () => onOpenBulletin(student.id) },
-        { label: 'Examen de repêchage', action: () => onOpenRepechage(student.id) },
         { separator: true, label: '' }
       ] : []),
       // Action de suppression (s'applique à tous)
@@ -337,7 +335,7 @@ export default function ClassDetails({
         }
       }
     ]);
-  }, [showContextMenu, onEditStudent, onOpenBulletin, onOpenRepechage, onDeleteStudent, toast, selectedStudentIds]);
+  }, [showContextMenu, onEditStudent, onOpenBulletin, onDeleteStudent, toast, selectedStudentIds]);
 
   const handleCreateCustomSort = () => {
     setEditingCustomSort(null);

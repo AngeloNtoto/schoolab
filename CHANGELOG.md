@@ -4,6 +4,26 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.0] - 2026-06-19
+
+### 📝 Bulletins Professionnels
+- **Encadrement unique** : Ajout d'un cadre global de 3px autour du bulletin (Primaire et Humanités) pour un rendu officiel soigné.
+- **Optimisation de l'espace** : Réduction des marges internes et des padding pour rendre le bulletin plus compact lors de l'impression et limiter la consommation de papier.
+- **Règles de coloration inversées** : Les notes en échec sont désormais mises en évidence (gras/italique) pour faciliter la lecture des résultats.
+
+### 🔄 Nouveau système de Repêchage
+- **Saisie en masse** : Introduction du `BulkRepechageModal` pour une saisie fluide de la classe entière.
+- **Synchronisation temps réel** : Calcule automatique bidirectionnel entre la saisie des Points et des Pourcentages (%).
+- **Ergonomie** : Intégration de l'action directement dans le menu contextuel de la grille (par matière).
+
+### 🎨 Modernisation de l'UI
+- Remplacement complet des popups natifs bloquants (`window.prompt`, `window.confirm`, `window.alert`) de la grille de notes par des **modals Toast élégants** et fluides.
+
+### 🛠️ Corrections & Cloud Sync
+- **Correction d'erreur Sync** : Résolution du plantage lors du *push sync* provoqué par des données vides (`Invalid column type Null`) via une normalisation (COALESCE) en amont.
+
+---
+
 ## [1.7.0] - 2026-06-16
 
 ### 🎨 Nouveau Design (Workbench)

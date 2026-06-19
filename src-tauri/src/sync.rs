@@ -221,7 +221,7 @@ fn collect_push_data(conn: &Connection) -> Result<SyncData, String> {
         })
         .map_err(|e| e.to_string())?;
 
-    let subjects_dirty: Vec<SubjectPush> = conn.prepare("SELECT id, name, code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, category, sub_domain, domain_id, class_id, server_id, last_modified_at FROM subjects WHERE is_dirty = 1")
+    let subjects_dirty: Vec<SubjectPush> = conn.prepare("SELECT id, name, COALESCE(code, '') AS code, max_p1, max_p2, max_exam1, max_p3, max_p4, max_exam2, COALESCE(category, '') AS category, COALESCE(sub_domain, '') AS sub_domain, domain_id, class_id, server_id, last_modified_at FROM subjects WHERE is_dirty = 1")
         .and_then(|mut stmt| stmt.query_map([], |row| Ok(SubjectPush { localId: row.get(0)?, serverId: row.get(13)?, name: row.get(1)?, code: row.get(2)?, maxP1: row.get(3)?, maxP2: row.get(4)?, maxExam1: row.get(5)?, maxP3: row.get(6)?, maxP4: row.get(7)?, maxExam2: row.get(8)?, category: row.get(9)?, subDomain: row.get(10)?, domainLocalId: row.get(11)?, classLocalId: row.get(12)?, last_modified_at: row.get(14)? }))?.collect::<Result<Vec<_>, _>>())
         .map_err(|e| e.to_string())?;
 

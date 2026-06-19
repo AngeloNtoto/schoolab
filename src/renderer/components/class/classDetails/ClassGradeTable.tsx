@@ -3,9 +3,12 @@ import { gradebookStore, getCellKey } from '../../../context/gradebookSelection'
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
+import { repechageService } from '../../../services/repechageService';
 import { useContextMenu } from '../../../workbench/ContextMenuLayer';
+import { useToast } from '../../../context/ToastContext';
 import StudentRow from './StudentRow';
 import { ColumnStats, getVisibleGradeColumnCount } from './gradeUtils';
+import BulkRepechageModal from './BulkRepechageModal';
 
 interface ClassGradeTableProps {
   displayedSubjects: Subject[];
@@ -57,6 +60,7 @@ export default function ClassGradeTable({
   onToggleSelectStudent
 }: ClassGradeTableProps) {
   const { showContextMenu } = useContextMenu();
+  const toast = useToast();
   const visibleGradeColumnCount = getVisibleGradeColumnCount(selectedPeriods);
   const orderMap = sortOrder.startsWith('custom_')
     ? (() => {
@@ -66,6 +70,7 @@ export default function ClassGradeTable({
     : {};
 
   const [pasteIntent, setPasteIntent] = useState<{ values: string[], cells: string[] } | null>(null);
+  const [repechageModalSubject, setRepechageModalSubject] = useState<Subject | null>(null);
 
   const activeStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] !== -1);
   const withdrawnStudents = filteredAndSortedStudents.filter(s => orderMap[s.id] === -1);
@@ -206,7 +211,7 @@ export default function ClassGradeTable({
       { 
         label: isMulti ? 'Mettre la note maximum partout' : 'Mettre la note maximum à tous', 
         action: async () => {
-          if (window.confirm(`Voulez-vous vraiment attribuer le maximum à tous les élèves pour ${isMulti ? 'ces colonnes' : 'cette colonne'} ?`)) {
+          if (await toast.confirm({ title: 'Confirmation', message: `Voulez-vous vraiment attribuer le maximum à tous les élèves pour ${isMulti ? 'ces colonnes' : 'cette colonne'} ?` })) {
             for (const colKey of targetCols) {
               const [sbStr, p] = colKey.split('-');
               const sbId = parseInt(sbStr, 10);
@@ -231,7 +236,7 @@ export default function ClassGradeTable({
       { 
         label: 'Attribuer une note spécifique...', 
         action: async () => {
-          const val = window.prompt(`Saisissez la note à attribuer :`);
+          const val = await toast.prompt({ title: 'Note spécifique', message: `Saisissez la note à attribuer :` });
           if (val !== null) {
             const numVal = parseFloat(val.replace(',', '.'));
             if (!isNaN(numVal) && numVal >= 0) {
@@ -254,7 +259,7 @@ export default function ClassGradeTable({
                 }
               }
             } else {
-              alert('Valeur invalide');
+              await toast.alert('Erreur', 'Valeur invalide');
             }
           }
         } 
@@ -262,7 +267,7 @@ export default function ClassGradeTable({
       { 
         label: isMulti ? 'Vider les colonnes' : 'Vider la colonne', 
         action: async () => {
-          if (window.confirm(`Effacer toutes les notes de ${isMulti ? 'ces colonnes' : 'cette colonne'} ? Cette action est irréversible.`)) {
+          if (await toast.confirm({ title: 'Attention', message: `Effacer toutes les notes de ${isMulti ? 'ces colonnes' : 'cette colonne'} ? Cette action est irréversible.`, variant: 'danger' })) {
             for (const colKey of targetCols) {
               const [sbStr, p] = colKey.split('-');
               const sbId = parseInt(sbStr, 10);
@@ -363,11 +368,18 @@ export default function ClassGradeTable({
       },
       { separator: true, label: '' },
 
+      // --- Repêchage ---
+      {
+        label: 'Examen de repêchage...',
+        action: () => handleRepechageForSubject(subject)
+      },
+      { separator: true, label: '' },
+
       // --- Remplissage ---
       {
         label: 'Mettre le maximum à tout le cours',
         action: async () => {
-          if (window.confirm(`Attribuer le maximum à TOUTES les périodes pour ${subject.name} ?`)) {
+          if (await toast.confirm({ title: 'Confirmation', message: `Attribuer le maximum à TOUTES les périodes pour ${subject.name} ?` })) {
             for (const p of allPeriods) {
               let max = 0;
               switch (p) {
@@ -388,7 +400,7 @@ export default function ClassGradeTable({
       {
         label: 'Remplir uniquement les cases vides...',
         action: async () => {
-          const val = window.prompt(`Saisissez la note à attribuer aux cases vides de ${subject.name} :`);
+          const val = await toast.prompt({ title: 'Remplir', message: `Saisissez la note à attribuer aux cases vides de ${subject.name} :` });
           if (val !== null) {
             const numVal = parseFloat(val.replace(',', '.'));
             if (!isNaN(numVal) && numVal >= 0) {
@@ -413,7 +425,7 @@ export default function ClassGradeTable({
                 }
               }
             } else {
-              alert('Valeur invalide');
+              await toast.alert('Erreur', 'Valeur invalide');
             }
           }
         }
@@ -424,7 +436,7 @@ export default function ClassGradeTable({
       {
         label: 'Vider le Semestre 1 (P1 + P2 + Ex1)',
         action: async () => {
-          if (window.confirm(`Effacer les notes du Sem.1 pour ${subject.name} ?`)) {
+          if (await toast.confirm({ title: 'Attention', message: `Effacer les notes du Sem.1 pour ${subject.name} ?`, variant: 'danger' })) {
             for (const p of ['P1', 'P2', 'EXAM1']) {
               if (selectedPeriods.has(p)) {
                 for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, p, null);
@@ -437,7 +449,7 @@ export default function ClassGradeTable({
       {
         label: 'Vider le Semestre 2 (P3 + P4 + Ex2)',
         action: async () => {
-          if (window.confirm(`Effacer les notes du Sem.2 pour ${subject.name} ?`)) {
+          if (await toast.confirm({ title: 'Attention', message: `Effacer les notes du Sem.2 pour ${subject.name} ?`, variant: 'danger' })) {
             for (const p of ['P3', 'P4', 'EXAM2']) {
               if (selectedPeriods.has(p)) {
                 for (const s of activeStudents) await onGradeUpdate(s.id, subject.id, p, null);
@@ -450,7 +462,7 @@ export default function ClassGradeTable({
       {
         label: 'Vider complètement ce cours',
         action: async () => {
-          if (window.confirm(`Effacer TOUTES les notes de TOUTES les périodes pour ${subject.name} ? Cette action est irréversible.`)) {
+          if (await toast.confirm({ title: 'Attention', message: `Effacer TOUTES les notes de TOUTES les périodes pour ${subject.name} ? Cette action est irréversible.`, variant: 'danger' })) {
             for (const p of allPeriods) {
               for (const s of activeStudents) {
                 await onGradeUpdate(s.id, subject.id, p, null);
@@ -467,14 +479,14 @@ export default function ClassGradeTable({
         label: 'Copier P1 → P2',
         action: async () => {
           if (subject.max_p1 > 0 && subject.max_p2 > 0) {
-            if (window.confirm(`Copier les notes de P1 vers P2 pour ${subject.name} ? Les notes existantes en P2 seront écrasées.`)) {
+            if (await toast.confirm({ title: 'Copie', message: `Copier les notes de P1 vers P2 pour ${subject.name} ? Les notes existantes en P2 seront écrasées.` })) {
               for (const s of activeStudents) {
                 const val = gradesMap.get(getCellKey({ studentId: s.id, subjectId: subject.id, period: 'P1' })) ?? null;
                 await onGradeUpdate(s.id, subject.id, 'P2', val);
               }
             }
           } else {
-            alert('P1 ou P2 n\'est pas configuré pour ce cours.');
+            await toast.alert('Erreur', 'P1 ou P2 n\'est pas configuré pour ce cours.');
           }
         }
       },
@@ -482,21 +494,21 @@ export default function ClassGradeTable({
         label: 'Copier P3 → P4',
         action: async () => {
           if (subject.max_p3 > 0 && subject.max_p4 > 0) {
-            if (window.confirm(`Copier les notes de P3 vers P4 pour ${subject.name} ? Les notes existantes en P4 seront écrasées.`)) {
+            if (await toast.confirm({ title: 'Copie', message: `Copier les notes de P3 vers P4 pour ${subject.name} ? Les notes existantes en P4 seront écrasées.` })) {
               for (const s of activeStudents) {
                 const val = gradesMap.get(getCellKey({ studentId: s.id, subjectId: subject.id, period: 'P3' })) ?? null;
                 await onGradeUpdate(s.id, subject.id, 'P4', val);
               }
             }
           } else {
-            alert('P3 ou P4 n\'est pas configuré pour ce cours.');
+            await toast.alert('Erreur', 'P3 ou P4 n\'est pas configuré pour ce cours.');
           }
         }
       },
       {
         label: 'Copier Sem.1 → Sem.2',
         action: async () => {
-          if (window.confirm(`Dupliquer P1→P3, P2→P4 et Ex1→Ex2 pour ${subject.name} ?`)) {
+          if (await toast.confirm({ title: 'Copie', message: `Dupliquer P1→P3, P2→P4 et Ex1→Ex2 pour ${subject.name} ?` })) {
             const mapping: [string, string][] = [['P1', 'P3'], ['P2', 'P4'], ['EXAM1', 'EXAM2']];
             for (const [from, to] of mapping) {
               for (const s of activeStudents) {
@@ -508,6 +520,13 @@ export default function ClassGradeTable({
         }
       }
     ]);
+  };
+
+  // ============================================================================
+  // REPECHAGE — Ouvre le nouveau modal
+  // ============================================================================
+  const handleRepechageForSubject = (subject: Subject) => {
+    setRepechageModalSubject(subject);
   };
 
   const executePaste = (overwrite: boolean) => {
@@ -548,7 +567,7 @@ export default function ClassGradeTable({
         {
           label: 'Vider la sélection',
           action: async () => {
-            if (window.confirm(`Effacer les notes des ${selectedCells.length} cellules ?`)) {
+            if (await toast.confirm({ title: 'Attention', message: `Effacer les notes des ${selectedCells.length} cellules ?`, variant: 'danger' })) {
               for (const cellKey of selectedCells) {
                 const [studentIdStr, subjectIdStr, period] = cellKey.split('-');
                 await onGradeUpdate(parseInt(studentIdStr, 10), parseInt(subjectIdStr, 10), period, null);
@@ -560,7 +579,7 @@ export default function ClassGradeTable({
         {
           label: 'Attribuer une note...',
           action: async () => {
-            const val = window.prompt(`Saisissez la note pour ces ${selectedCells.length} cellules :`);
+            const val = await toast.prompt({ title: 'Note', message: `Saisissez la note pour ces ${selectedCells.length} cellules :` });
             if (val !== null) {
               const numVal = parseFloat(val.replace(',', '.'));
               if (!isNaN(numVal) && numVal >= 0) {
@@ -896,6 +915,14 @@ export default function ClassGradeTable({
           </div>
         </div>
       )}
+
+      {/* Modal de Repêchage */}
+      <BulkRepechageModal
+        isOpen={!!repechageModalSubject}
+        onClose={() => setRepechageModalSubject(null)}
+        subject={repechageModalSubject}
+        students={activeStudents}
+      />
     </>
   );
 }
