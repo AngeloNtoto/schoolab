@@ -15,23 +15,28 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [repechageValues, setRepechageValues] = useState<Record<number, string>>({});
+  const [repechagePercentages, setRepechagePercentages] = useState<Record<number, string>>({});
+  const [repechagePoints, setRepechagePoints] = useState<Record<number, string>>({});
   const [originalValues, setOriginalValues] = useState<Record<number, number>>({});
 
   useEffect(() => {
     if (isOpen && subject) {
       loadData();
     } else {
-      setRepechageValues({});
+      setRepechagePercentages({});
+      setRepechagePoints({});
       setOriginalValues({});
     }
   }, [isOpen, subject]);
+
+  const totalMax = subject ? ((subject.max_p1 || 0) + (subject.max_p2 || 0) + (subject.max_exam1 || 0) + (subject.max_p3 || 0) + (subject.max_p4 || 0) + (subject.max_exam2 || 0)) : 0;
 
   const loadData = async () => {
     if (!subject) return;
     setLoading(true);
     try {
-      const initialValues: Record<number, string> = {};
+      const initialPercentages: Record<number, string> = {};
+      const initialPoints: Record<number, string> = {};
       const origValues: Record<number, number> = {};
       
       // Load existing repechages for each student for this subject
@@ -39,14 +44,17 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
         const reps = await repechageService.getRepechagesByStudent(student.id);
         const rep = reps.find(r => r.subject_id === subject.id);
         if (rep && rep.percentage > 0) {
-          initialValues[student.id] = rep.percentage.toString();
+          initialPercentages[student.id] = rep.percentage.toString();
+          initialPoints[student.id] = ((rep.percentage * totalMax) / 100).toFixed(1).replace(/\.0$/, '');
           origValues[student.id] = rep.percentage;
         } else {
-          initialValues[student.id] = '';
+          initialPercentages[student.id] = '';
+          initialPoints[student.id] = '';
           origValues[student.id] = 0;
         }
       }
-      setRepechageValues(initialValues);
+      setRepechagePercentages(initialPercentages);
+      setRepechagePoints(initialPoints);
       setOriginalValues(origValues);
     } catch (error) {
       console.error('Erreur lors du chargement des repêchages', error);
@@ -56,15 +64,44 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
     }
   };
 
-  const handleInputChange = (studentId: number, value: string) => {
-    // Only allow numbers and one decimal point
+  const handlePercentageChange = (studentId: number, value: string) => {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      // Allow max 100
-      const num = parseFloat(value);
+      let num = parseFloat(value);
+      let newPercentageStr = value;
+
       if (value !== '' && !isNaN(num) && num > 100) {
-        setRepechageValues(prev => ({ ...prev, [studentId]: '100' }));
+        newPercentageStr = '100';
+        num = 100;
+      }
+      
+      setRepechagePercentages(prev => ({ ...prev, [studentId]: newPercentageStr }));
+      
+      if (!isNaN(num) && value !== '') {
+        const points = (num * totalMax) / 100;
+        setRepechagePoints(prev => ({ ...prev, [studentId]: points.toFixed(1).replace(/\.0$/, '') }));
       } else {
-        setRepechageValues(prev => ({ ...prev, [studentId]: value }));
+        setRepechagePoints(prev => ({ ...prev, [studentId]: '' }));
+      }
+    }
+  };
+
+  const handlePointsChange = (studentId: number, value: string) => {
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      let num = parseFloat(value);
+      let newPointsStr = value;
+
+      if (value !== '' && !isNaN(num) && num > totalMax) {
+        newPointsStr = totalMax.toString();
+        num = totalMax;
+      }
+      
+      setRepechagePoints(prev => ({ ...prev, [studentId]: newPointsStr }));
+      
+      if (!isNaN(num) && value !== '' && totalMax > 0) {
+        const percentage = (num / totalMax) * 100;
+        setRepechagePercentages(prev => ({ ...prev, [studentId]: percentage.toFixed(1).replace(/\.0$/, '') }));
+      } else {
+        setRepechagePercentages(prev => ({ ...prev, [studentId]: '' }));
       }
     }
   };
@@ -76,7 +113,7 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
 
     try {
       for (const student of students) {
-        const valStr = repechageValues[student.id];
+        const valStr = repechagePercentages[student.id];
         const currentVal = originalValues[student.id] || 0;
         
         let percentage = 0;
@@ -99,7 +136,7 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
       onClose();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      toast.error('Erreur lors de l\\'enregistrement');
+      toast.error("Erreur lors de l\\'enregistrement");
     } finally {
       setSaving(false);
     }
@@ -151,6 +188,7 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
                 <tr>
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 w-16 text-center">N°</th>
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">Élève</th>
+                  <th className="py-3 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 w-48 text-right">Points (/{totalMax})</th>
                   <th className="py-3 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 w-48 text-right">Pourcentage (%)</th>
                 </tr>
               </thead>
@@ -166,8 +204,20 @@ export default function BulkRepechageModal({ isOpen, onClose, subject, students 
                       <div className="relative inline-block w-32">
                         <input
                           type="text"
-                          value={repechageValues[student.id] || ''}
-                          onChange={(e) => handleInputChange(student.id, e.target.value)}
+                          value={repechagePoints[student.id] || ''}
+                          onChange={(e) => handlePointsChange(student.id, e.target.value)}
+                          placeholder="0"
+                          className="w-full text-right py-2 pl-3 pr-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 group-hover:border-blue-300 dark:group-hover:border-slate-600"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium pointer-events-none text-xs">/{totalMax}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-6 text-right">
+                      <div className="relative inline-block w-32">
+                        <input
+                          type="text"
+                          value={repechagePercentages[student.id] || ''}
+                          onChange={(e) => handlePercentageChange(student.id, e.target.value)}
                           placeholder="0"
                           className="w-full text-right py-2 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-bold focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 group-hover:border-blue-300 dark:group-hover:border-slate-600"
                         />
