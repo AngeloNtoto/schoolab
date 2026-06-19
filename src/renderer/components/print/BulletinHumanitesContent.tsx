@@ -118,7 +118,7 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN ===== */}
       {/* Un cadre unique englobe l'intégralité du bulletin pour un rendu officiel soigné */}
@@ -129,22 +129,22 @@ export default function BulletinHumanitesContent({
       <div className="mb-0">
         <div className="flex border-b-2 border-black">
           {/* Flag */}
-          <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+          <div className="w-20 border-r border-black p-1 flex items-center justify-center">
             <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
               <img src={drapeauUrl} alt="Drapeau de la RDC" className="w-full h-full object-cover" />
             </div>
           </div>
           
           {/* Title */}
-          <div className="flex-1 text-center py-2 flex flex-col justify-center">
+          <div className="flex-1 text-center py-1 flex flex-col justify-center">
             <h1 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
             <h2 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Ministere de l'Education Nationale</h2>
             <h3 className="font-medium uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>Et Nouvelle Citoyennete</h3>
           </div>
 
           {/* Coat of arms */}
-          <div className="w-24 border-l border-black p-2 flex items-center justify-center">
-            <div className="w-16 h-16 overflow-hidden">
+          <div className="w-20 border-l border-black p-1 flex items-center justify-center">
+            <div className="w-14 h-14 overflow-hidden">
               <img src={armoirieUrl} alt="Armoiries de la RDC" className="w-full h-full object-contain" />
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function BulletinHumanitesContent({
 
         {/* ID Row */}
         <div className="flex border-b-2 border-black">
-          <div className="w-20 font-bold p-1 border-r border-black bg-slate-100">N° ID.</div>
+          <div className="w-20 font-bold p-0.5 border-r border-black bg-slate-100">N° ID.</div>
           <div className="flex-1 flex">
             {Array(20).fill(0).map((_, i) => (
               <div key={i} className="flex-1 border-r border-black last:border-r-0"></div>
@@ -161,14 +161,14 @@ export default function BulletinHumanitesContent({
         </div>
 
         {/* Province */}
-        <div className="p-1 font-bold border-b-2 border-black bg-slate-100">
-          PROVINCE EDUCATIONNELLE :............................................................................................................................................................................................
+        <div className="px-1 py-0.5 font-bold border-b-2 border-black bg-slate-100">
+          PROVINCE EDUCATIONNELLE :..........................................................................................................................................................................................
         </div>
       </div>
 
       {/* Info Grid */}
       {/* Grille d'informations de l'élève — sans bordure propre, contenue dans le cadre global */}
-      <div className="mb-0 p-1 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
+      <div className="mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
         <div className="flex items-baseline gap-2">
           <span className="font-semibold min-w-[60px]">VILLE :</span>
           <span className="border-b border-dotted border-black flex-1 text-center font-semibold">{schoolCity}</span>
@@ -227,7 +227,7 @@ export default function BulletinHumanitesContent({
 
       {/* Bulletin Title */}
       {/* Titre du bulletin — harmonisé avec le cadre global */}
-      <div className="p-1 bg-slate-100 uppercase flex items-center justify-between font-bold border-b-2 border-black" style={{ fontSize: `${titleSize * 0.65}px`, lineHeight: '1.2' }}>
+      <div className="p-0.5 bg-slate-100 uppercase flex items-center justify-between font-bold border-b-2 border-black" style={{ fontSize: `${titleSize * 0.65}px`, lineHeight: '1.2' }}>
         <span className="pl-4">BULLETIN DE LA {classInfo.level} ANNÉE DES HUMANITES {classInfo.option}</span>
         <span className="pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>

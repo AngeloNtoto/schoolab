@@ -142,22 +142,22 @@ export default function BulletinPrimaireContent({
       <div className="mb-0">
         <div className="flex border-b-2 border-black">
           {/* Left: Flag */}
-          <div className="w-24 border-r border-black p-2 flex items-center justify-center">
+          <div className="w-20 border-r border-black p-1 flex items-center justify-center">
             <div className="w-full aspect-[4/3] border border-black shadow-sm overflow-hidden bg-white">
               <img src={drapeauUrl} alt="Drapeau de la RDC" className="w-full h-full object-cover" />
             </div>
           </div>
 
           {/* Center: Ministry Info */}
-          <div className="flex-1 text-center py-2 px-4 flex flex-col justify-center">
+          <div className="flex-1 text-center py-1 px-2 flex flex-col justify-center">
             <h1 className="font-bold uppercase tracking-tight leading-tight" style={{ fontSize: `${Math.max(10, titleSize - 3)}px` }}>Republique Democratique du Congo</h1>
             <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>MINISTERE DE L'EDUCATION NATIONALE</h2>
             <h2 className="font-bold uppercase leading-tight" style={{ fontSize: `${Math.max(8, titleSize - 5)}px` }}>ET NOUVELLE CITOYENNETE</h2>
           </div>
 
           {/* Right: Coat of arms */}
-          <div className="w-24 border-l border-black p-2 flex items-center justify-center">
-            <div className="w-16 h-16 overflow-hidden">
+          <div className="w-20 border-l border-black p-1 flex items-center justify-center">
+            <div className="w-14 h-14 overflow-hidden">
               <img src={armoirieUrl} alt="Armoiries de la RDC" className="w-full h-full object-contain" />
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function BulletinPrimaireContent({
         </div>
 
         {/* Province */}
-        <div className="flex items-baseline p-1 border-b-2 border-black">
+        <div className="flex items-baseline px-1 py-0 border-b-2 border-black">
           <span className="font-bold">PROVINCE :</span>
           <span className="border-b border-dotted border-black flex-1 ml-1"></span>
         </div>
@@ -182,8 +182,8 @@ export default function BulletinPrimaireContent({
 
       {/* Info Grid */}
       {/* Grille d'informations de l'élève — contenue dans le cadre global */}
-      <div className="mb-0 p-1 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
-        <div className="space-y-1">
+      <div className="mb-0 p-0.5 grid grid-cols-2 gap-x-4 gap-y-0.5 border-b-2 border-black">
+        <div className="space-y-0.5">
           <div className="flex items-baseline gap-2">
             <span className="font-bold min-w-[60px]">VILLE :</span>
             <span className="border-b border-dotted border-black flex-1 text-center uppercase">{schoolCity}</span>
@@ -205,7 +205,7 @@ export default function BulletinPrimaireContent({
             </div>
           </div>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex items-baseline gap-2">
             <span className="font-bold min-w-[60px]">ELEVE :</span>
             <span className="border-b border-dotted border-black flex-1 font-bold text-center uppercase">
@@ -241,7 +241,7 @@ export default function BulletinPrimaireContent({
 
       {/* Bulletin Title */}
       {/* Titre du bulletin — harmonisé avec le cadre global */}
-      <div className="p-1 bg-slate-100 uppercase flex items-center justify-between border-b-2 border-black" style={{ fontSize: `${titleSize * 0.85}px`, lineHeight: '1.2' }}>
+      <div className="p-0.5 bg-slate-100 uppercase flex items-center justify-between border-b-2 border-black" style={{ fontSize: `${titleSize * 0.85}px`, lineHeight: '1.2' }}>
         <span className="font-bold pl-4">BULLETIN DE LA {classInfo.level} EDUCATION DE BASE</span>
         <span className="font-bold pr-4">ANNEE SCOLAIRE {academicYear}</span>
       </div>
