@@ -237,7 +237,7 @@ export default function BulletinHumanitesContent({
       <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
         <thead>
           <tr>
-            <th rowSpan={3} className="border border-black w-[25%] p-0">BRANCHES</th>
+            <th rowSpan={3} className="border border-black w-[18%] p-0">BRANCHES</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">PREMIER SEMESTRE</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">SECOND SEMESTRE</th>
             <th rowSpan={3} className="border border-black w-[5%] p-0">T.G.</th>
@@ -365,7 +365,8 @@ export default function BulletinHumanitesContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="border border-black text-left px-2 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
+                        {/* Nom de la branche — taille augmentée pour meilleure lisibilité */}
+                        <td className="border border-black text-left px-1 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: `${Math.max(7, bodySize - 1)}px` }}>{subject.name}</td>
                         <td className={`border border-black py-0.5 ${toneP1}`}>{formatValue(p1)}</td>
                         <td className={`border border-black py-0.5 ${toneP2}`}>{formatValue(p2)}</td>
                         {ex1 === null && firstSubject.max_exam1==0 ? (<td className="border bg-black border-black py-0.5"></td>) : (<td className={`border border-black py-0.5 ${toneEx1}`}>{formatValue(ex1)}</td>)}
