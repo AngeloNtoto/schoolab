@@ -128,8 +128,7 @@ export default function Class() {
                 });
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [grades, students, subjects]);
+    }, [id, classInfo, domains, schoolSettings, academicYear, grades, students, subjects, panels, updatePanelProps]);
 
     // Callback pour ouvrir le modal d'édition avec un élève spécifique
     const handleEditStudent = useCallback((studentId: number) => {

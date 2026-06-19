@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { commandRegistry } from './commandRegistry';
+import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useWorkbench } from './WorkbenchProvider';
 
 export interface MenuItem {
@@ -26,29 +25,53 @@ const ContextMenuContext = createContext<ContextMenuContextType | undefined>(und
 
 export function ContextMenuProvider({ children }: { children: React.ReactNode }) {
   const [menuState, setMenuState] = useState<ContextMenuState | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const menuRef = useRef<HTMLDivElement>(null);
   const { executeCommand } = useWorkbench();
 
   const showContextMenu = (e: React.MouseEvent, items: MenuItem[], contextData?: any) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Adjust position to stay within viewport
     let x = e.clientX;
     let y = e.clientY;
     
-    // Quick estimation of menu size, can be refined
-    const menuWidth = 220;
-    const menuHeight = items.length * 36;
+    const menuWidth = 240;
+    const menuHeight = items.reduce((h, item) => h + (item.separator ? 9 : 36), 8);
     
-    if (x + menuWidth > window.innerWidth) x -= menuWidth;
-    if (y + menuHeight > window.innerHeight) y -= menuHeight;
+    if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 8;
+    if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 8;
+    if (x < 8) x = 8;
+    if (y < 8) y = 8;
     
+    setMenuPosition({ x, y });
     setMenuState({ x, y, items, contextData });
   };
 
   const hideContextMenu = () => {
     setMenuState(null);
   };
+
+  useLayoutEffect(() => {
+    if (!menuState || !menuRef.current) return;
+
+    const rect = menuRef.current.getBoundingClientRect();
+    const margin = 8;
+    let x = menuPosition.x;
+    let y = menuPosition.y;
+
+    const maxX = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxY = Math.max(margin, window.innerHeight - rect.height - margin);
+
+    if (x > maxX) x = maxX;
+    if (y > maxY) y = maxY;
+    if (x < margin) x = margin;
+    if (y < margin) y = margin;
+
+    if (x !== menuPosition.x || y !== menuPosition.y) {
+      setMenuPosition({ x, y });
+    }
+  }, [menuState, menuPosition.x, menuPosition.y]);
 
   useEffect(() => {
     const handleClick = () => hideContextMenu();
@@ -74,8 +97,9 @@ export function ContextMenuProvider({ children }: { children: React.ReactNode })
       
       {menuState && (
         <div 
+          ref={menuRef}
           className="fixed z-[9999] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-md py-1 min-w-[200px] text-sm animate-in fade-in zoom-in-95 duration-100"
-          style={{ top: menuState.y, left: menuState.x }}
+          style={{ top: menuPosition.y, left: menuPosition.x }}
           onContextMenu={(e) => e.preventDefault()} // Prevent native menu on our menu
         >
           {menuState.items.map((item, index) => {

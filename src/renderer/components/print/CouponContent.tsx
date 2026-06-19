@@ -6,12 +6,11 @@
  * à la fois pour un seul élève et pour l'impression en masse.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { StudentRanks } from '../../services/bulletinService';
-import { settingsService } from '../../services/settingsService';
 
 // ============================================================================
 // TYPES
@@ -62,30 +61,13 @@ export default function CouponContent({
   forcePageBreak = true
 }: CouponContentProps) {
 
-  // États de configuration d'impression dynamiques
-  const [titleSize, setTitleSize] = useState(14);
-  const [bodySize, setBodySize] = useState(8);
-  const [lineHeight, setLineHeight] = useState(1.2);
+  const titleSize = 13;
+  const bodySize = 8;
+  const lineHeight = 1.15;
   const compactScale = 1.08;
   const annualTableFontSize = compact ? Math.round((bodySize + 4) * compactScale) : bodySize + 1;
   const annualSummaryFontSize = compact ? Math.round((bodySize + 5) * compactScale) : bodySize + 5;
   const annualCellPaddingY = compact ? '1.5px' : '2px';
-
-  useEffect(() => {
-    const fetchPrintSettings = async () => {
-      try {
-        const t = await settingsService.get('coupon_font_size_title');
-        const b = await settingsService.get('coupon_font_size_body');
-        const l = await settingsService.get('coupon_line_height');
-        if (t) setTitleSize(parseFloat(t));
-        if (b) setBodySize(parseFloat(b));
-        if (l) setLineHeight(parseFloat(l));
-      } catch (e) {
-        console.error("Impossible de charger les préférences de police du coupon :", e);
-      }
-    };
-    fetchPrintSettings();
-  }, []);
 
   // ============================================================================
   // FONCTIONS UTILITAIRES POUR LES NOTES
@@ -131,7 +113,7 @@ export default function CouponContent({
       className={`max-w-[210mm] mx-auto bg-white relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none ${
         compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-8 min-h-[297mm]'
       } ${forcePageBreak ? 'page-break-after-always' : ''}`}
-      style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${compact ? Math.round((bodySize + 4) * compactScale) : bodySize}px`, lineHeight: compact ? Math.max(1.1, lineHeight * compactScale) : lineHeight } as any}
+      style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '8px', lineHeight: 1.15 } as any}
     >
       
       {/* ================================================================ */}

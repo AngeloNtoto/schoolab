@@ -4,6 +4,13 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.1] - 2026-06-19
+
+### ✅ Améliorations utilisateur
+- Correction du rendu des bulletins pour un affichage propre et stable en impression.
+- Suppression de l'onglet de paramètres d'impression obsolète pour une interface plus claire.
+- Nettoyage des réglages et stabilisation de la synchronisation.
+
 ## [2.1.0] - 2026-06-19
 
 ### 📝 Bulletins Professionnels

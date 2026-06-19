@@ -1,10 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
 import { Domain } from '../../services/domainService';
 import { StudentRanks } from '../../services/bulletinService';
-import { settingsService } from '../../services/settingsService';
 import { deliberationConfigService, DeliberationConfig, DEFAULT_DELIBERATION_CONFIG } from '../../services/deliberationConfigService';
 import drapeauUrl from '../../../../assets/drapeau.svg';
 import armoirieUrl from '../../../../assets/armoirie.svg';
@@ -60,28 +59,9 @@ export default function BulletinPrimaireContent({
 }: BulletinPrimaireContentProps) {
 
   // États locaux de mise en page dynamique (polices et interlignes)
-  const [titleSize, setTitleSize] = useState(16);
-  const [bodySize, setBodySize] = useState(9);
-  const [lineHeight, setLineHeight] = useState(1.3);
-  const [delibConfig, setDelibConfig] = useState<DeliberationConfig>(DEFAULT_DELIBERATION_CONFIG);
-
-  useEffect(() => {
-    const fetchPrintSettings = async () => {
-      try {
-        const t = await settingsService.get('bulletin_font_size_title');
-        const b = await settingsService.get('bulletin_font_size_body');
-        const l = await settingsService.get('bulletin_line_height');
-        const config = await deliberationConfigService.load();
-        if (t) setTitleSize(parseFloat(t));
-        if (b) setBodySize(parseFloat(b));
-        if (l) setLineHeight(parseFloat(l));
-        setDelibConfig(config);
-      } catch (e) {
-        console.error("Impossible de charger les préférences de police du bulletin :", e);
-      }
-    };
-    fetchPrintSettings();
-  }, []);
+  const delibConfig = DEFAULT_DELIBERATION_CONFIG;
+  const titleSize = 14;
+  const bodySize = 8.5;
 
   // ============================================================================
   // HELPERS
@@ -132,7 +112,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '8px', lineHeight: 1.15 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}

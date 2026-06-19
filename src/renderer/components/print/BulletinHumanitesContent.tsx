@@ -4,7 +4,7 @@
  * Composant de présentation pure pour le bulletin des humanités.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Student } from '../../services/studentService';
 import { ClassData, Subject } from '../../services/classService';
 import { Grade } from '../../services/gradeService';
@@ -54,30 +54,10 @@ export default function BulletinHumanitesContent({
   academicYear
 }: BulletinHumanitesContentProps) {
 
-  // États locaux de mise en page d'impression dynamique
-  const [titleSize, setTitleSize] = useState(16);
-  const [bodySize, setBodySize] = useState(10);
-  const [lineHeight, setLineHeight] = useState(1.2);
-  const [delibConfig, setDelibConfig] = useState<DeliberationConfig>(DEFAULT_DELIBERATION_CONFIG);
-
-  useEffect(() => {
-    const fetchPrintSettings = async () => {
-      try {
-        const t = await settingsService.get('bulletin_font_size_title');
-        const b = await settingsService.get('bulletin_font_size_body');
-        const l = await settingsService.get('bulletin_line_height');
-        const config = await deliberationConfigService.load();
-        
-        if (t) setTitleSize(parseFloat(t));
-        if (b) setBodySize(parseFloat(b));
-        if (l) setLineHeight(parseFloat(l));
-        setDelibConfig(config);
-      } catch (e) {
-        console.error("Erreur technique lors du chargement des tailles de polices d'impression :", e);
-      }
-    };
-    fetchPrintSettings();
-  }, []);
+  const titleSize = 13;
+  const bodySize = 8;
+  const lineHeight = 1.15;
+  const delibConfig = DEFAULT_DELIBERATION_CONFIG;
 
   // ============================================================================
   // FONCTIONS UTILITAIRES
@@ -118,7 +98,7 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: `${bodySize * 0.95}px`, lineHeight: lineHeight } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '8px', lineHeight: 1.15 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN ===== */}
       {/* Un cadre unique englobe l'intégralité du bulletin pour un rendu officiel soigné */}
@@ -234,7 +214,7 @@ export default function BulletinHumanitesContent({
 
       {/* Grades Table */}
       {/* Tableau des notes — bordures internes, le cadre global fait le tour extérieur */}
-      <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
+      <table className="w-full border-collapse text-center" style={{ fontSize: '8px' }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[18%] p-0">BRANCHES</th>

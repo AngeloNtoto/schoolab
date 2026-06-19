@@ -5,7 +5,6 @@ import { useLicense } from '../context/LicenseContext';
 // Importation des icônes SVG pour la barre latérale
 import { 
   Sun, 
-  Printer, 
   Building2, 
   ShieldCheck, 
   RefreshCw, 
@@ -17,7 +16,6 @@ import {
 // Importation des sous-panneaux modulaires de configuration
 import GeneralSettingsTab from '../components/settings/GeneralSettingsTab';
 import AppearanceSettingsTab from '../components/settings/AppearanceSettingsTab';
-import ImpressionSettingsTab from '../components/settings/ImpressionSettingsTab';
 import DeliberationSettingsTab from '../components/settings/DeliberationSettingsTab';
 import LicenceSettingsTab from '../components/settings/LicenceSettingsTab';
 import CloudSettingsTab from '../components/settings/CloudSettingsTab';
@@ -25,7 +23,7 @@ import AboutSettingsTab from '../components/settings/AboutSettingsTab';
 
 /**
  * Page principale de configuration de Schoolab.
- * Organise les différents onglets de paramétrage (identité, apparence, impression, délibération, licence, cloud, à propos).
+ * Organise les différents onglets de paramétrage (identité, apparence, délibération, licence, cloud, à propos).
  */
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -33,13 +31,12 @@ export default function SettingsPage() {
   const { license: licenseStatus } = useLicense();
   
   // Onglet sélectionné par défaut
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'impression' | 'deliberation' | 'licence' | 'cloud' | 'about'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'deliberation' | 'licence' | 'cloud' | 'about'>('general');
 
   // Définition de la liste des onglets (icônes, libellés et descriptions)
   const tabs = [
     { id: 'general' as const, label: 'Établissement', icon: Building2, description: 'Identité locale de l\'école' },
     { id: 'appearance' as const, label: 'Thème', icon: Sun, description: 'Affichage clair ou sombre' },
-    { id: 'impression' as const, label: 'Impression', icon: Printer, description: 'Polices et interlignes' },
     { id: 'deliberation' as const, label: 'Délibération', icon: GraduationCap, description: 'Seuils, rachats et mentions' },
     { id: 'licence' as const, label: 'Licence & Droits', icon: ShieldCheck, description: 'Statut du poste de travail' },
     { id: 'cloud' as const, label: 'Cloud & Synchro', icon: RefreshCw, description: 'Sauvegardes collaboratives' },
@@ -50,7 +47,6 @@ export default function SettingsPage() {
   const tabColors: Record<string, string> = {
     general: 'bg-blue-600 text-white shadow-md shadow-blue-500/20',
     appearance: 'bg-amber-500 text-white shadow-md shadow-amber-500/20',
-    impression: 'bg-teal-500 text-white shadow-md shadow-teal-500/20',
     deliberation: 'bg-purple-600 text-white shadow-md shadow-purple-500/20',
     licence: 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20',
     cloud: 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20',
@@ -102,7 +98,6 @@ export default function SettingsPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               {activeTab === 'general' && <GeneralSettingsTab />}
               {activeTab === 'appearance' && <AppearanceSettingsTab />}
-              {activeTab === 'impression' && <ImpressionSettingsTab />}
               {activeTab === 'deliberation' && <DeliberationSettingsTab />}
               {activeTab === 'licence' && <LicenceSettingsTab />}
               {activeTab === 'cloud' && <CloudSettingsTab />}
