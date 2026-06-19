@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import Toast, { ToastType } from '../components/ui/Toast';
 import ConfirmModal from '../components/common/ConfirmModal';
+import PromptModal from '../components/common/PromptModal';
 
 interface ToastData {
   id: string;
@@ -17,6 +18,14 @@ interface ConfirmOptions {
   variant?: 'danger' | 'warning' | 'info';
 }
 
+interface PromptOptions {
+  title: string;
+  message: string;
+  defaultValue?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+}
+
 interface ToastContextType {
   addToast: (type: ToastType, message: string, duration?: number) => void;
   removeToast: (id: string) => void;
@@ -26,6 +35,7 @@ interface ToastContextType {
   info: (message: string, duration?: number) => void;
   confirm: (options: ConfirmOptions) => Promise<boolean>;
   alert: (title: string, message: string) => Promise<void>;
+  prompt: (options: PromptOptions) => Promise<string | null>;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -36,8 +46,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     isOpen: boolean;
     options: ConfirmOptions;
   }>({ isOpen: false, options: { title: '', message: '' } });
+  const [promptState, setPromptState] = useState<{
+    isOpen: boolean;
+    options: PromptOptions;
+  }>({ isOpen: false, options: { title: '', message: '' } });
   
   const confirmResolveRef = useRef<((value: boolean) => void) | null>(null);
+  const promptResolveRef = useRef<((value: string | null) => void) | null>(null);
 
   const addToast = useCallback((type: ToastType, message: string, duration = 5000) => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -76,6 +91,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const prompt = useCallback((options: PromptOptions): Promise<string | null> => {
+    return new Promise((resolve) => {
+      promptResolveRef.current = resolve;
+      setPromptState({ isOpen: true, options });
+    });
+  }, []);
+
   const handleConfirm = () => {
     confirmResolveRef.current?.(true);
     setConfirmState({ isOpen: false, options: { title: '', message: '' } });
@@ -86,8 +108,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setConfirmState({ isOpen: false, options: { title: '', message: '' } });
   };
 
+  const handlePromptConfirm = (value: string) => {
+    promptResolveRef.current?.(value);
+    setPromptState({ isOpen: false, options: { title: '', message: '' } });
+  };
+
+  const handlePromptCancel = () => {
+    promptResolveRef.current?.(null);
+    setPromptState({ isOpen: false, options: { title: '', message: '' } });
+  };
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info, confirm, alert }}>
+    <ToastContext.Provider value={{ addToast, removeToast, success, error, warning, info, confirm, alert, prompt }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
         {toasts.map((toast) => (
@@ -107,6 +139,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         variant={confirmState.options.variant}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
+      />
+      <PromptModal
+        isOpen={promptState.isOpen}
+        title={promptState.options.title}
+        message={promptState.options.message}
+        defaultValue={promptState.options.defaultValue}
+        confirmLabel={promptState.options.confirmLabel}
+        cancelLabel={promptState.options.cancelLabel}
+        onConfirm={handlePromptConfirm}
+        onCancel={handlePromptCancel}
       />
     </ToastContext.Provider>
   );

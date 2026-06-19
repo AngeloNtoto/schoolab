@@ -13,6 +13,30 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.0",
+    date: "19 Juin 2026",
+    title: "Bulletins Professionnels & Repêchage Intelligent",
+    description: "Amélioration majeure de la mise en page des bulletins pour l'impression, refonte de l'interface de repêchage et modernisation globale des boîtes de dialogue.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Professionalisation des bulletins avec un cadre global, optimisation des marges et rendu plus compact pour économiser du papier."
+      },
+      {
+        tag: "Nouveau",
+        text: "Nouvelle interface de saisie des repêchages en masse avec calcul et synchronisation en temps réel entre Points et Pourcentages."
+      },
+      {
+        tag: "Amélioration",
+        text: "Remplacement de toutes les boîtes de dialogue natives (alertes, prompts, confirmations) de la grille de notes par des modals Toast modernes et non-bloquants."
+      },
+      {
+        tag: "Correctif",
+        text: "Correction d'une erreur bloquant la synchronisation Cloud (Invalid column type Null)."
+      }
+    ]
+  },
+  {
     version: "1.7.0",
     date: "16 Juin 2026",
     title: "Workbench Avancé & Actions de Masse sur la Grille",
