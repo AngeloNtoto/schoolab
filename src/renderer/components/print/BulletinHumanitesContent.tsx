@@ -37,8 +37,8 @@ const getApplication = (percentage: number | null, config: DeliberationConfig): 
 const getSubjectToneClass = (percentage: number | null, threshold: number) => {
   if (percentage === null) return '';
   return percentage < threshold
-    ? 'subject-failed'
-    : 'subject-passed';
+    ? 'subject-passed'
+    : 'subject-failed';
 };
 
 export default function BulletinHumanitesContent({

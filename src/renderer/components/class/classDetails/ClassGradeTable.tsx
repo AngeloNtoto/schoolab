@@ -3,7 +3,9 @@ import { gradebookStore, getCellKey } from '../../../context/gradebookSelection'
 import { Subject } from '../../../services/classService';
 import { Student } from '../../../services/studentService';
 import { CustomSort } from '../../../services/customSortService';
+import { repechageService } from '../../../services/repechageService';
 import { useContextMenu } from '../../../workbench/ContextMenuLayer';
+import { useToast } from '../../../context/ToastContext';
 import StudentRow from './StudentRow';
 import { ColumnStats, getVisibleGradeColumnCount } from './gradeUtils';
 
@@ -57,6 +59,7 @@ export default function ClassGradeTable({
   onToggleSelectStudent
 }: ClassGradeTableProps) {
   const { showContextMenu } = useContextMenu();
+  const toast = useToast();
   const visibleGradeColumnCount = getVisibleGradeColumnCount(selectedPeriods);
   const orderMap = sortOrder.startsWith('custom_')
     ? (() => {
@@ -506,8 +509,85 @@ export default function ClassGradeTable({
             }
           }
         }
+      },
+      { separator: true, label: '' },
+
+      // --- Repêchage ---
+      {
+        label: '📝 Examen de repêchage...',
+        action: () => handleRepechageForSubject(subject)
       }
     ]);
+  };
+
+  // ============================================================================
+  // REPECHAGE — Saisie des pourcentages de repêchage pour un cours donné
+  // ============================================================================
+  // On ouvre un prompt unique qui permet de saisir tous les pourcentages d'un coup
+  // Format attendu : chaque ligne = "NOM Postnom: pourcentage"
+  const handleRepechageForSubject = async (subject: Subject) => {
+    try {
+      // Charger les repêchages existants pour cette matière via le service
+      const existingRepechages = new Map<number, number>();
+      for (const student of activeStudents) {
+        const reps = await repechageService.getRepechagesByStudent(student.id);
+        const rep = reps.find(r => r.subject_id === subject.id);
+        if (rep && rep.percentage > 0) {
+          existingRepechages.set(student.id, rep.percentage);
+        }
+      }
+
+      // Construire la liste des élèves avec leurs valeurs actuelles
+      // Format affiché : "NOM Postnom: pourcentage"
+      const lines = activeStudents.map(s => {
+        const current = existingRepechages.get(s.id) || 0;
+        return `${s.last_name} ${s.post_name || ''}: ${current}`;
+      });
+
+      const input = window.prompt(
+        `Repêchage — ${subject.name}\n\n` +
+        `Saisissez les pourcentages de repêchage (0 = pas de repêchage).\n` +
+        `Format : chaque ligne = "NOM Postnom: pourcentage"\n\n` +
+        lines.join('\n'),
+        lines.join('\n')
+      );
+
+      if (input === null) return; // Annulation par l'utilisateur
+
+      // Parser les résultats ligne par ligne
+      const resultLines = input.split('\n').filter(l => l.trim() !== '');
+      let updatedCount = 0;
+
+      for (let i = 0; i < Math.min(resultLines.length, activeStudents.length); i++) {
+        const line = resultLines[i];
+        // Extraire le pourcentage après le dernier ":" de la ligne
+        const colonIndex = line.lastIndexOf(':');
+        if (colonIndex === -1) continue;
+
+        const valueStr = line.substring(colonIndex + 1).trim().replace('%', '').replace(',', '.');
+        const percentage = parseFloat(valueStr);
+
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) continue;
+
+        const student = activeStudents[i];
+        const currentVal = existingRepechages.get(student.id) || 0;
+
+        // Ne mettre à jour que si la valeur a changé
+        if (percentage !== currentVal) {
+          await repechageService.updateRepechage(student.id, subject.id, percentage);
+          updatedCount++;
+        }
+      }
+
+      if (updatedCount > 0) {
+        toast.success(`Repêchage ${subject.name} : ${updatedCount} élève(s) mis à jour`);
+      } else {
+        toast.info('Aucune modification effectuée');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la saisie des repêchages:', error);
+      toast.error('Erreur lors de la mise à jour des repêchages');
+    }
   };
 
   const executePaste = (overwrite: boolean) => {

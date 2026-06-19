@@ -12,7 +12,7 @@ import Bulletin from "../print/Bulletin";
 import ClassBulletins from "../print/ClassBulletins";
 import ClassCoupons from "../print/ClassCoupons";
 import Palmares from "../print/Palmares";
-import RepechageModal from "./RepechageModal";
+
 import { useWorkbench } from "../../workbench/WorkbenchProvider";
 
 // Animations CSS gérées par classes animate-in
@@ -31,7 +31,7 @@ export default function Class() {
     const { openPanel, updatePanelProps, panels } = useWorkbench();
     
     const [editModal, setEditModal] = useState(false);
-    const [repechageModal, setRepechageModal] = useState(false);
+
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
     
     // États pour les données de la classe
@@ -171,16 +171,7 @@ export default function Class() {
         });
     }, [students, classInfo, subjects, domains, grades, schoolSettings, academicYear, openPanel]);
 
-    // Callback pour ouvrir le repêchage
-    const handleOpenRepechage = useCallback((studentId: number) => {
-        setSelectedStudentId(studentId);
-        setRepechageModal(true);
-    }, []);
 
-    const handleCloseRepechage = useCallback(() => {
-        setRepechageModal(false);
-        setSelectedStudentId(null);
-    }, []);
 
     // Callbacks pour l'impression en masse
     const handleOpenBulkPrint = useCallback(() => {
@@ -251,18 +242,9 @@ export default function Class() {
                 </div>
             )}
 
-            {repechageModal && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <RepechageModal
-                        isOpen={repechageModal}
-                        student={students.find(s => s.id === selectedStudentId) || null}
-                        subjects={subjects}
-                        onClose={handleCloseRepechage}
-                    />
-                </div>
-            )}
 
-            <div className={`h-full ${(editModal || repechageModal) ? 'opacity-30 scale-98 pointer-events-none' : ''} transition-all duration-500`}>
+
+            <div className={`h-full ${editModal ? 'opacity-30 scale-98 pointer-events-none' : ''} transition-all duration-500`}>
                 <ClassDetails 
                     classInfo={classInfo}
                     subjects={subjects}
@@ -272,7 +254,7 @@ export default function Class() {
                     loading={loading}
                     onEditStudent={handleEditStudent}
                     onOpenBulletin={handleOpenBulletin}
-                    onOpenRepechage={handleOpenRepechage}
+
                     onOpenBulkPrint={handleOpenBulkPrint}
                     onOpenCouponsPrint={handleOpenCoupons}
                     onOpenPalmares={handleOpenPalmares}
