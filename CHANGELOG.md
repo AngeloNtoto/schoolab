@@ -4,6 +4,13 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.2] - 2026-06-20
+
+### ✅ Impression et bulletins
+- Amélioration de la mise en page des coupons et des bulletins pour un rendu plus compact et plus lisible.
+- Réduction du volume des en-têtes du coupon sans sacrifier la lisibilité.
+- Uniformisation du texte de `POURCENTAGE` et `PLACE` pour une meilleure lecture sur papier.
+
 ## [2.1.1] - 2026-06-19
 
 ### ✅ Améliorations utilisateur

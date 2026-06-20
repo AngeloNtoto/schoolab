@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.2",
+    date: "20 Juin 2026",
+    title: "Améliorations de l'impression et du rendu des bulletins",
+    description: "Optimisation de l'impression des coupons et des bulletins avec une mise en page plus compacte et une meilleure lisibilité.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Réduction des en-têtes et des cases du coupon annuel pour gagner de l'espace sans perdre en lisibilité."
+      },
+      {
+        tag: "Amélioration",
+        text: "Augmentation de la taille du texte des sections POURCENTAGE et PLACE dans les bulletins pour un rendu papier plus facile à lire."
+      },
+      {
+        tag: "Correctif",
+        text: "Mises à jour de la mise en page des bulletins et des coupons pour un affichage imprimé plus stable."
+      }
+    ]
+  },
+  {
     version: "2.1.0",
     date: "19 Juin 2026",
     title: "Bulletins Professionnels & Repêchage Intelligent",
