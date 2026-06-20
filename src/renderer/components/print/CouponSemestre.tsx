@@ -211,18 +211,18 @@ export default function CouponSemestre({
           {/* Ligne du Pourcentage — affiche le % pour chaque sous-période, l'examen, et le total */}
           <tr className="font-bold">
             <td className="border border-black text-left px-1">POURCENTAGE</td>
-            <td className="border border-black text-center">{percentageP1}%</td>
-            <td className="border border-black text-center">{percentageP2}%</td>
-            <td className="border border-black text-center">{totalMaxExam > 0 ? `${percentageExam}%` : ''}</td>
-            <td className="border border-black text-center">{percentageSemestre}%</td>
+            <td className="border border-black text-[7px] text-center py-0.5">{percentageP1}</td>
+            <td className="border border-black text-[7px] text-center py-0.5">{percentageP2}</td>
+            <td className="border border-black text-[7px] text-center py-0.5">{totalMaxExam > 0 ? `${percentageExam}` : ''}</td>
+            <td className="border border-black text-[7px] text-center py-0.5">{percentageSemestre}</td>
           </tr>
           {/* Ligne PLACE — utilise les bonnes clés de StudentRanks (tot1 / tot2) */}
           <tr className="font-bold">
             <td className="border border-black text-left px-1">PLACE</td>
-            <td className='border border-black text-center'>{ranks?.[semester === 'S1' ? 'p1' : 'p3'] ?? '?'}/{totalStudents || '?'}</td>
-            <td className='border border-black text-center'>{ranks?.[semester === 'S1' ? 'p2' : 'p4'] ?? '?'}/{totalStudents || '?'}</td>
-            <td className='border border-black text-center'>{totalMaxExam > 0 ? `${ranks?.[semester === 'S1' ? 'ex1' : 'ex2'] ?? '?'}/${totalStudents || '?'}` : ''}</td>
-            <td className="border border-black text-center">{ranks?.[semester === 'S1' ? 'tot1' : 'tot2'] ?? '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-[9px] px-1 py-0.5 text-center'>{ranks?.[semester === 'S1' ? 'p1' : 'p3'] ?? '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-[9px] px-1 py-0.5 text-center'>{ranks?.[semester === 'S1' ? 'p2' : 'p4'] ?? '?'}/{totalStudents || '?'}</td>
+            <td className='border border-black text-[9px] px-1 py-0.5 text-center'>{totalMaxExam > 0 ? `${ranks?.[semester === 'S1' ? 'ex1' : 'ex2'] ?? '?'}/${totalStudents || '?'}` : ''}</td>
+            <td className="border border-black text-[9px] px-1 py-0.5 text-center">{ranks?.[semester === 'S1' ? 'tot1' : 'tot2'] ?? '?'}/{totalStudents || '?'}</td>
           </tr>
           <tr className="font-bold">
             <td className="border border-black text-left px-1">CONDUITE</td>

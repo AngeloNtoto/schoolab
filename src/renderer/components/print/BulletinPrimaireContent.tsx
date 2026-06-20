@@ -112,7 +112,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '8px', lineHeight: 1.15 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
@@ -247,7 +247,7 @@ export default function BulletinPrimaireContent({
             <th colSpan={2} rowSpan={2} className="border border-black w-[8%]">MAX EXAMEN</th>
             <th colSpan={2} rowSpan={2} className="border border-black w-[10%]">TOT</th>
             <th rowSpan={2} className="border border-black w-[4%]">%</th>
-            <th rowSpan={2} className="border border-black text-[7px] w-[8%]">Sign. Prof</th>
+            <th rowSpan={2} className="border border-black text-[9px] w-[8%]">Sign. Prof</th>
           </tr>
           <tr>
             <th className="border border-black w-[3%]">1ere P</th>
@@ -344,7 +344,7 @@ export default function BulletinPrimaireContent({
                   return (
                     <tr key={subject.id}>
                       {/* Nom de la branche — taille augmentée pour meilleure lisibilité */}
-                      <td className="border border-black text-left px-1 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: `${Math.max(7, bodySize - 1)}px` }}>{subject.name}</td>
+                      <td className="border border-black text-left px-1 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis text-[11px]">{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className={`border border-black ${toneP1}`}>{formatValue(p1)}</td>
                       <td className={`border border-black ${toneP2}`}>{formatValue(p2)}</td>
@@ -538,7 +538,7 @@ export default function BulletinPrimaireContent({
             return (
               <>
                 <tr className="font-bold border-t border-black">
-                  <td className="border border-black text-left px-2 uppercase">TOTAUX</td>
+                  <td className="border border-black text-left px-2 uppercase py-2 align-middle">TOTAUX</td>
                   <td className="border border-black bg-black"></td>
                   <td className="border border-black">{formatValue(totalP1)}</td>
                   <td className="border border-black">{formatValue(totalP2)}</td>
@@ -568,40 +568,40 @@ export default function BulletinPrimaireContent({
                 <tr className="font-bold">
                   <td className="border border-black text-left px-2 uppercase">POURCENTAGE</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctP1 ? `${pctP1}%` : ''}</td>
-                  <td className="border border-black text-center">{pctP2 ? `${pctP2}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctP1 ? `${pctP1}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctP2 ? `${pctP2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctEx1 ? `${pctEx1}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctEx1 ? `${pctEx1}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pct1 ? `${pct1}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pct1 ? `${pct1}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctP3 ? `${pctP3}%` : ''}</td>
-                  <td className="border border-black text-center">{pctP4 ? `${pctP4}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctP3 ? `${pctP3}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctP4 ? `${pctP4}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pctEx2 ? `${pctEx2}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pctEx2 ? `${pctEx2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center">{pct2 ? `${pct2}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center py-0 leading-none">{pct2 ? `${pct2}%` : ''}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-center bg-slate-100">{pctG ? `${pctG}%` : ''}</td>
+                  <td className="border border-black text-[10px] text-center bg-slate-100 py-0 leading-none">{pctG ? `${pctG}%` : ''}</td>
                 </tr>
-                <tr>
-                  <td className="border border-black text-left px-2 font-bold uppercase underline text-[8px]">PLACE/NBRE D'ELEVES</td>
+                <tr className="font-bold">
+                  <td className="border border-black text-left px-2 font-bold uppercase underline text-[10px]">PLACE/NBRE D'ELEVES</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.p1}/{totalStudents}</td>
-                  <td className="border border-black text-sm">{studentRanks?.p2}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.p1}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.p2}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.ex1}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.ex1}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.tot1}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.tot1}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.p3}/{totalStudents}</td>
-                  <td className="border border-black text-sm">{studentRanks?.p4}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.p3}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.p4}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.ex2}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.ex2}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black text-sm">{studentRanks?.tot2}/{totalStudents}</td>
+                  <td className="border border-black text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.tot2}/{totalStudents}</td>
                   <td className="border border-black bg-black"></td>
-                  <td className="border border-black font-bold bg-slate-100">{studentRanks?.tg}/{totalStudents}</td>
+                  <td className="border border-black font-bold bg-slate-100 text-[10px] px-1 py-0 leading-none text-center">{studentRanks?.tg}/{totalStudents}</td>
                 </tr>
                 <tr>
                   <td className="border border-black text-left px-2 font-bold uppercase underline">APPLICATION</td>

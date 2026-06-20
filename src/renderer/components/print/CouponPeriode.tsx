@@ -98,9 +98,9 @@ export default function CouponPeriode({
       <table className="w-full border-collapse text-[8px]">
         <thead>
           <tr>
-            <th className="border border-black text-left px-1 w-3/5">Branche</th>
-            <th className="border border-black w-1/5">Max</th>
-            <th className="border border-black w-1/5">Note</th>
+            <th className="border border-black text-left px-1 w-[40%]">Branche</th>
+            <th className="border border-black w-[30%]">Max</th>
+            <th className="border border-black w-[30%]">Note</th>
           </tr>
         </thead>
         <tbody>
@@ -109,9 +109,9 @@ export default function CouponPeriode({
             const note = getGrade(subject.id);
             return (
               <tr key={subject.id}>
-                <td className="border border-black text-left px-1 truncate max-w-0">{subject.name}</td>
-                <td className="border border-black text-center">{max}</td>
-                <td className="border border-black text-center font-bold">{note ?? ''}</td>
+                <td className="border border-black text-left px-1 truncate max-w-[40%]">{subject.name}</td>
+                <td className="border border-black text-center px-1">{max}</td>
+                <td className="border border-black text-center font-bold px-1">{note ?? ''}</td>
               </tr>
             );
           })}
@@ -119,16 +119,16 @@ export default function CouponPeriode({
         <tfoot>
           <tr className="font-bold bg-slate-100">
             <td className="border border-black text-left px-1">TOTAL</td>
-            <td className="border border-black text-center">{totalMax}</td>
-            <td className="border border-black text-center">{totalObtained}</td>
+            <td className="border border-black text-center px-1">{totalMax}</td>
+            <td className="border border-black text-center px-1">{totalObtained}</td>
           </tr>
           <tr className="font-bold italic">
             <td className="border border-black text-left px-1">POURCENTAGE</td>
-            <td colSpan={2} className="border border-black text-center">{percentage}%</td>
+            <td colSpan={2} className="border border-black text-center text-[10px] py-0.5">{percentage}</td>
           </tr>
           <tr className='font-bold italic'>
-            <td className="border border-black text-left px-1">PLACE</td>
-            <td colSpan={2} className="border border-black text-center">{ranks?.[period.toLowerCase() as keyof StudentRanks] || ''} / {totalStudents || '?'}</td>
+            <td className="border border-black text-left px-1 py-1">PLACE</td>
+            <td colSpan={2} className="border border-black text-center text-[10px] py-0.5">{ranks?.[period.toLowerCase() as keyof StudentRanks] || ''} / {totalStudents || '?'}</td>
           </tr>
           <tr className="font-bold italic">
             <td className="border border-black text-left px-1">CONDUITE</td>

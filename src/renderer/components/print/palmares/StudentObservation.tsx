@@ -53,7 +53,7 @@ export const StudentObservation = ({
         );
         return (
           <div className="text-black text-[12px] font-semibold leading-tight">
-            {details.map((s) => `${s.subjectCode || s.subjectName} ${((s.points / s.maxPoints) * 100).toFixed(1).replace('.0', '')}%`).join('; ')}
+            {details.map((s) => `${s.subjectCode || s.subjectName} ${Math.round(((s.points / s.maxPoints) * 100))}`).join('; ')}
           </div>
         );
       }
