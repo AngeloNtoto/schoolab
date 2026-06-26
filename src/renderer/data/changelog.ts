@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.3",
+    date: "26 Juin 2026",
+    title: "Correction de l'impression des bulletins",
+    description: "Restauration des bordures et ajout de marges internes pour une impression parfaite des bulletins.",
+    features: [
+      {
+        tag: "Correctif",
+        text: "Maintien de la page pleine pour éviter l'impression des en-têtes web indésirables tout en restaurant l'affichage des bordures extérieures."
+      },
+      {
+        tag: "Amélioration",
+        text: "Ajout d'un espacement interne pour aérer les bulletins lors de l'impression."
+      }
+    ]
+  },
+  {
     version: "2.1.2",
     date: "20 Juin 2026",
     title: "Améliorations de l'impression et du rendu des bulletins",

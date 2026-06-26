@@ -4,6 +4,12 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.3] - 2026-06-26
+
+### ✅ Impression et bulletins
+- Maintien de la page pleine pour éviter l'impression des en-têtes web indésirables tout en restaurant l'affichage des bordures extérieures des bulletins.
+- Ajout d'un espacement interne (padding) pour aérer les bulletins lors de l'impression de classe, au primaire et aux humanités.
+
 ## [2.1.2] - 2026-06-20
 
 ### ✅ Impression et bulletins
