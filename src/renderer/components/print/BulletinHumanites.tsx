@@ -65,7 +65,7 @@ export default function BulletinHumanites({
   const printCss = `
     @page {
       size: A4;
-      margin: 10mm;
+      margin: 0;
     }
     * {
       -webkit-print-color-adjust: exact !important;
@@ -81,6 +81,8 @@ export default function BulletinHumanites({
       margin: 0 !important;
       width: 100% !important;
       max-width: none !important;
+      padding: 10mm;
+      box-sizing: border-box;
     }
   `;
 
