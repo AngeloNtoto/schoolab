@@ -70,22 +70,30 @@ export default function CouponContent({
   // ============================================================================
   const layout = React.useMemo(() => {
     let totalRows = subjects.length;
-
-    const isVeryCompact = totalRows > 25;    
-    const isCompact = totalRows > 18;        
-
-    return {
-      totalRows,
-      // Taille de police du nom de matière
-      subjectFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
-      // Padding vertical des cellules de matières
-      cellPy: isVeryCompact ? '0px' : isCompact ? '1px' : '2px',
-      // Taille de police du tableau
-      tableFont: isVeryCompact ? '7px' : isCompact ? '8px' : '9px',
-      // Taille de police de base du conteneur
-      baseFont: isVeryCompact ? '8px' : isCompact ? '8.5px' : '9px',
-    };
-  }, [subjects]);
+    
+    if (compact) {
+      // MODE 2 PAR PAGE (Hauteur = ~148mm)
+      const isVeryCompact = totalRows > 22;    
+      const isCompact = totalRows > 16;        
+      return {
+        subjectFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
+        cellPy: isVeryCompact ? '0px' : isCompact ? '2px' : '3px',
+        tableFont: isVeryCompact ? '8px' : isCompact ? '9px' : '10px',
+        baseFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
+        headerText: 'text-[9px]',
+      };
+    } else {
+      // MODE 1 PAR PAGE (Hauteur = 297mm)
+      // On a toute la page, on peut écrire gros pour bien remplir l'espace
+      return {
+        subjectFont: totalRows > 20 ? '11px' : '13px',
+        cellPy: totalRows > 20 ? '4px' : '6px',
+        tableFont: totalRows > 20 ? '10px' : '12px',
+        baseFont: totalRows > 20 ? '11px' : '13px',
+        headerText: 'text-[11px]',
+      };
+    }
+  }, [subjects, compact]);
 
   // ============================================================================
   // FONCTIONS UTILITAIRES POUR LES NOTES
@@ -129,7 +137,7 @@ export default function CouponContent({
   return (
     <div
       className={`max-w-[210mm] mx-auto bg-white relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none ${
-        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-4 print:p-2 min-h-[297mm] print:min-h-0 flex flex-col'
+        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-4 print:p-2'
       } ${forcePageBreak ? 'page-break-after-always' : ''}`}
       style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}
     >
@@ -154,7 +162,7 @@ export default function CouponContent({
 
           {/* Colonne centrale : Titre du bulletin */}
           <div className="flex-1 px-1 py-0.5 text-center border-r border-black flex items-center justify-center bg-white">
-            <div className="font-semibold uppercase tracking-tight text-[10px] leading-snug">
+            <div className={`font-semibold uppercase tracking-tight leading-snug ${layout.headerText}`}>
               <div>COUPON DE L'ÉLÈVE</div>
               <div className="border-b border-dotted border-black inline-block px-1 py-0.5">{student.last_name} {student.post_name} {student.first_name}</div>
               <div className="mt-1">DE LA</div>
@@ -255,7 +263,7 @@ export default function CouponContent({
               return (
                 <React.Fragment key={key}>
                   {/* Ligne MAXIMA pour ce groupe */}
-                  <tr className="font-bold bg-slate-100 text-[13px]">
+                  <tr className="font-bold bg-slate-100">
                     <td className="border border-black text-left px-1 py-0">MAXIMA</td>
                     <td className="border border-black py-0">{firstSubject.max_p1}</td>
                     <td className="border border-black py-0">{firstSubject.max_p2}</td>
@@ -286,7 +294,7 @@ export default function CouponContent({
                     const tg = (tot1 || 0) + (tot2 || 0);
 
                     return (
-                      <tr key={subject.id} className="text-[13px]">
+                      <tr key={subject.id}>
                         <td className="subject-cell border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                         <td className="border border-black">{formatValue(p1)}</td>
                         <td className="border border-black py-0">{formatValue(p2)}</td>
@@ -310,7 +318,7 @@ export default function CouponContent({
           {/* ============================================================ */}
           {Array(Math.max(0, 18 - subjects.length)).fill(0).map((_, i) => (
             <tr key={`empty-${i}`}>
-              <td className="border border-black text-[13px] text-left px-1 py-0">&nbsp;</td>
+              <td className="border border-black text-left px-1 py-0">&nbsp;</td>
               <td className="border border-black"></td>
               <td className="border border-black"></td>
               <td className="border border-black"></td>
@@ -422,29 +430,29 @@ export default function CouponContent({
                 {/* POURCENTAGE — affiche aussi les % des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-1 py-0">POURCENTAGE</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctP1}</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctP2}</td>
-                  <td className={`border border-black text-[10px] text-center py-0 ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}` : ''}</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctTot1}</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctP3}</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctP4}</td>
-                  <td className={`border border-black text-[10px] text-center py-0 ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}` : ''}</td>
-                  <td className="border border-black text-[10px] text-center py-0">{pctTot2}</td>
-                  <td className="border border-black bg-slate-100 text-[10px] text-center py-0">{pctTG}</td>
+                  <td className="border border-black text-center py-0">{pctP1}</td>
+                  <td className="border border-black text-center py-0">{pctP2}</td>
+                  <td className={`border border-black text-center py-0 ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${pctEx1}` : ''}</td>
+                  <td className="border border-black text-center py-0">{pctTot1}</td>
+                  <td className="border border-black text-center py-0">{pctP3}</td>
+                  <td className="border border-black text-center py-0">{pctP4}</td>
+                  <td className={`border border-black text-center py-0 ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${pctEx2}` : ''}</td>
+                  <td className="border border-black text-center py-0">{pctTot2}</td>
+                  <td className="border border-black bg-slate-100 text-center py-0">{pctTG}</td>
                 </tr>
 
                 {/* PLACE — affiche aussi les places des examens */}
                 <tr className="font-bold">
                   <td className="border border-black text-left px-1 py-0">PLACE</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.p1 ?? ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.p2 ?? ''}/{totalStudents || '?'}</td>
-                  <td className={`border border-black text-[10px] px-1 py-0 text-center ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${ranks?.ex1 ?? '?'}/${totalStudents || '?'}` : ''}</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.tot1 ?? ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.p3 ?? ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.p4 ?? ''}/{totalStudents || '?'}</td>
-                  <td className={`border border-black text-[10px] px-1 py-0 text-center ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${ranks?.ex2 ?? '?'}/${totalStudents || '?'}` : ''}</td>
-                  <td className="border border-black text-[10px] px-1 py-0 text-center">{ranks?.tot2 ?? ''}/{totalStudents || '?'}</td>
-                  <td className="border border-black bg-blue-50 text-[10px] px-1 py-0 text-center">{ranks?.tg ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.p1 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.p2 ?? ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black px-1 py-0 text-center ${maxEx1 === 0 ? 'bg-black' : ''}`}>{maxEx1 > 0 ? `${ranks?.ex1 ?? '?'}/${totalStudents || '?'}` : ''}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.tot1 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.p3 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.p4 ?? ''}/{totalStudents || '?'}</td>
+                  <td className={`border border-black px-1 py-0 text-center ${maxEx2 === 0 ? 'bg-black' : ''}`}>{maxEx2 > 0 ? `${ranks?.ex2 ?? '?'}/${totalStudents || '?'}` : ''}</td>
+                  <td className="border border-black px-1 py-0 text-center">{ranks?.tot2 ?? ''}/{totalStudents || '?'}</td>
+                  <td className="border border-black bg-blue-50 px-1 py-0 text-center">{ranks?.tg ?? ''}/{totalStudents || '?'}</td>
                 </tr>
 
                 {/* APPLICATION */}
