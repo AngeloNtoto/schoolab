@@ -63,12 +63,29 @@ export default function CouponContent({
 
   const titleSize = 13;
   const bodySize = 8;
-  const lineHeight = 1.15;
   const compactScale = 1.08;
-  const annualTableFontSize = compact ? Math.round((bodySize + 4) * compactScale) : bodySize + 1;
-  const annualSummaryFontSize = compact ? Math.round((bodySize + 5) * compactScale) : bodySize + 5;
-  // Reduce cell vertical padding to free space; text size will be enforced to 9px via CSS below
-  const annualCellPaddingY = '1px';
+  
+  // ============================================================================
+  // MISE EN PAGE ADAPTATIVE
+  // ============================================================================
+  const layout = React.useMemo(() => {
+    let totalRows = subjects.length;
+
+    const isVeryCompact = totalRows > 25;    
+    const isCompact = totalRows > 18;        
+
+    return {
+      totalRows,
+      // Taille de police du nom de matière
+      subjectFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
+      // Padding vertical des cellules de matières
+      cellPy: isVeryCompact ? '0px' : isCompact ? '1px' : '2px',
+      // Taille de police du tableau
+      tableFont: isVeryCompact ? '7px' : isCompact ? '8px' : '9px',
+      // Taille de police de base du conteneur
+      baseFont: isVeryCompact ? '8px' : isCompact ? '8.5px' : '9px',
+    };
+  }, [subjects]);
 
   // ============================================================================
   // FONCTIONS UTILITAIRES POUR LES NOTES
@@ -112,9 +129,9 @@ export default function CouponContent({
   return (
     <div
       className={`max-w-[210mm] mx-auto bg-white relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none ${
-        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-8 min-h-[297mm]'
+        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-4 print:p-2'
       } ${forcePageBreak ? 'page-break-after-always' : ''}`}
-      style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '8px', lineHeight: 1.15 } as any}
+      style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}
     >
       
       {/* ================================================================ */}
@@ -156,7 +173,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className={`annual-coupon-table w-full border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${annualTableFontSize}px` }}>
+      <table className={`annual-coupon-table w-full border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -270,7 +287,7 @@ export default function CouponContent({
 
                     return (
                       <tr key={subject.id} className="text-[13px]">
-                        <td className="border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
+                        <td className="subject-cell border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                         <td className="border border-black">{formatValue(p1)}</td>
                         <td className="border border-black py-0">{formatValue(p2)}</td>
                         <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? formatValue(ex1) : ''}</td>
@@ -474,10 +491,13 @@ export default function CouponContent({
         }
         .annual-coupon-table th,
         .annual-coupon-table td {
-          padding-top: ${annualCellPaddingY} !important;
-          padding-bottom: ${annualCellPaddingY} !important;
-          font-size: 9px !important;
+          padding-top: ${layout.cellPy} !important;
+          padding-bottom: ${layout.cellPy} !important;
+          font-size: ${layout.tableFont} !important;
           line-height: 1 !important;
+        }
+        .subject-cell {
+          font-size: ${layout.subjectFont} !important;
         }
       `}</style>
     </div>
