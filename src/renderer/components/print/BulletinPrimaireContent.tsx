@@ -112,7 +112,7 @@ export default function BulletinPrimaireContent({
   }, [subjects]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
@@ -703,10 +703,6 @@ export default function BulletinPrimaireContent({
         }
 
         @media print {
-          /* Saut de page après chaque bulletin */
-          .page-break-after-always {
-            page-break-after: always;
-          }
 
           /* Cadre global du bulletin — bien visible à l'impression */
           .bulletin-cadre-global {

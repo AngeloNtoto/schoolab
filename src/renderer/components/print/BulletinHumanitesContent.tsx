@@ -98,7 +98,7 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 min-h-[297mm] relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none page-break-after-always" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN ===== */}
       {/* Un cadre unique englobe l'intégralité du bulletin pour un rendu officiel soigné */}
@@ -642,10 +642,6 @@ export default function BulletinHumanitesContent({
         }
 
         @media print {
-          /* Saut de page après chaque bulletin */
-          .page-break-after-always {
-            page-break-after: always;
-          }
 
           /* Cadre global du bulletin — bien visible à l'impression */
           .bulletin-cadre-global {
