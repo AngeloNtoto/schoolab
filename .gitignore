@@ -9,10 +9,5 @@ env
 cours.json
 criteres.md
 try.md
-<<<<<<< HEAD
 docs
-=======
-docs
-logs
->>>>>>> editor-upgrade
 src-tauri/Cargo.lock
