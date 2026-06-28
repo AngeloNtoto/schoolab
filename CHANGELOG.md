@@ -4,6 +4,13 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.4] - 2026-06-28
+
+### ✅ Impression et bulletins
+- **Mise en page adaptative** : Le système de rendu PDF pour le bulletin primaire et le coupon annuel s'ajuste dynamiquement au nombre de matières (tailles de polices et espacements).
+- **Correction de débordement** : Les marges fixes massives du bas de page ont été remplacées par un système intelligent pour garantir que le document tienne toujours sur une seule page A4.
+- **Aperçu fidèle** : Amélioration du rendu du coupon annuel pour bien remplir l'espace imparti sans être déformé.
+
 ## [2.1.3] - 2026-06-26
 
 ### ✅ Impression et bulletins

@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.4",
+    date: "28 Juin 2026",
+    title: "Mise en page adaptative des impressions",
+    description: "Amélioration dynamique de la mise en page pour éviter le débordement lors de l'impression avec de nombreux cours.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Le bulletin primaire et le coupon annuel s'ajustent désormais automatiquement selon le nombre de matières pour tenir parfaitement sur une page A4."
+      },
+      {
+        tag: "Correctif",
+        text: "Suppression des marges excessives en bas de page pour exploiter au mieux l'espace disponible sans déformer les écritures."
+      }
+    ]
+  },
+  {
     version: "2.1.3",
     date: "26 Juin 2026",
     title: "Correction de l'impression des bulletins",
