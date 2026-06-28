@@ -111,8 +111,52 @@ export default function BulletinPrimaireContent({
     return grouped;
   }, [subjects]);
 
+  // ============================================================================
+  // MISE EN PAGE ADAPTATIVE
+  // Calcule le nombre total de lignes visuelles dans le tableau et ajuste
+  // dynamiquement les tailles, paddings et espacements du footer pour que
+  // le bulletin tienne toujours sur une seule page A4.
+  // ============================================================================
+  const layout = useMemo(() => {
+    let totalRows = 0;
+
+    // Compter toutes les lignes visibles : domaines, sous-domaines, matières, sous-totaux
+    subjectsByDomain.forEach(({ subjects: domSubs, bySubDomain }, domainId) => {
+      if (domainId !== null) totalRows += 1; // en-tête du domaine
+      totalRows += bySubDomain.size;         // en-têtes des sous-domaines
+      totalRows += domSubs.length;           // lignes de matières
+      totalRows += 1;                        // sous-total du domaine
+    });
+
+    // Lignes fixes : MAXIMA GENERAUX + TOTAUX + POURCENTAGE + PLACE + APPLICATION + CONDUITE + SIGNATURE = 7
+    totalRows += 7;
+
+    // Déterminer le niveau de compacité selon le nombre de lignes
+    const isVeryCompact = totalRows > 30;    // Beaucoup de matières
+    const isCompact = totalRows > 22;        // Nombre moyen de matières
+
+    return {
+      totalRows,
+      // Taille de police du nom de matière (la plus grande cellule)
+      subjectFont: isVeryCompact ? '8px' : isCompact ? '9px' : '11px',
+      // Padding vertical des cellules de matières
+      cellPy: isVeryCompact ? 'py-0' : isCompact ? 'py-px' : 'py-0.5',
+      // Padding des en-têtes de domaine et sous-totaux
+      headerPad: isVeryCompact ? 'p-px' : isCompact ? 'p-0.5' : 'p-1',
+      // Taille de police du tableau
+      tableFont: isVeryCompact ? '6px' : isCompact ? '6.5px' : `${Math.max(5.5, bodySize - 2)}px`,
+      // Taille de police de base du conteneur
+      baseFont: isVeryCompact ? '7.5px' : isCompact ? '8px' : '9px',
+      // Espacement du pied de page (signatures, sceau)
+      footerMt: isVeryCompact ? 'mt-1' : isCompact ? 'mt-2' : 'mt-4',
+      signMb: isVeryCompact ? 'mb-2' : isCompact ? 'mb-4' : 'mb-8',
+      signPt: isVeryCompact ? 'pt-2' : isCompact ? 'pt-4' : 'pt-6',
+      noteMt: isVeryCompact ? 'mt-1' : isCompact ? 'mt-2' : 'mt-4',
+    };
+  }, [subjectsByDomain, bodySize]);
+
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
@@ -228,7 +272,7 @@ export default function BulletinPrimaireContent({
 
       {/* Grades Table */}
       {/* Tableau des notes — bordures internes seulement */}
-      <table className="w-full border-collapse text-center" style={{ fontSize: `${Math.max(5.5, bodySize - 2)}px` }}>
+      <table className="w-full border-collapse text-center" style={{ fontSize: layout.tableFont }}>
         <thead>
           <tr>
             <th rowSpan={3} className="border border-black w-[14%] p-1">BRANCHE</th>
@@ -343,8 +387,8 @@ export default function BulletinPrimaireContent({
                   
                   return (
                     <tr key={subject.id}>
-                      {/* Nom de la branche — taille augmentée pour meilleure lisibilité */}
-                      <td className="border border-black text-left px-1 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis text-[11px]">{subject.name}</td>
+                      {/* Nom de la branche — taille adaptée au nombre de matières */}
+                      <td className={`border border-black text-left px-1 ${layout.cellPy} whitespace-nowrap overflow-hidden text-ellipsis`} style={{ fontSize: layout.subjectFont }}>{subject.name}</td>
                       <td className="border border-black bg-slate-50 font-bold">{formatValue(maxP)}</td>
                       <td className={`border border-black ${toneP1}`}>{formatValue(p1)}</td>
                       <td className={`border border-black ${toneP2}`}>{formatValue(p2)}</td>
@@ -375,7 +419,7 @@ export default function BulletinPrimaireContent({
                 {/* En-tête du domaine — seulement si le domaine existe vraiment */}
                 {domainId !== null && (
                   <tr className="bg-slate-200">
-                    <td colSpan={20} className="border border-black p-1 font-bold uppercase text-center text-[9px]">
+                    <td colSpan={20} className={`border border-black ${layout.headerPad} font-bold uppercase text-center text-[9px]`}>
                       {domainName}
                     </td>
                   </tr>
@@ -388,7 +432,7 @@ export default function BulletinPrimaireContent({
                       <React.Fragment key={subDomainName}>
                         {/* Sous-header du sous-domaine — fond gris clair, texte italique */}
                         <tr className="bg-slate-100">
-                          <td colSpan={20} className="border border-black p-1 font-bold uppercase text-center text-[9px]">
+                          <td colSpan={20} className={`border border-black ${layout.headerPad} font-bold uppercase text-center text-[9px]`}>
                               {subDomainName}
                           </td>
                         </tr>
@@ -406,7 +450,7 @@ export default function BulletinPrimaireContent({
                 
                 {/* Sous-total du domaine */}
                 <tr className="bg-slate-100 font-bold">
-                  <td className="border border-black p-1 text-left uppercase">SOUS-TOTAL</td>
+                  <td className={`border border-black ${layout.headerPad} text-left uppercase`}>SOUS-TOTAL</td>
                   <td className="border border-black">{formatValue(domainMaxP)}</td>
                   <td className="border border-black">{formatValue(domainP1)}</td>
                   <td className="border border-black">{formatValue(domainP2)}</td>
@@ -652,31 +696,31 @@ export default function BulletinPrimaireContent({
       </table>
 
       {/* Footer text from CTBE model */}
-      {/* Pied de page — inclus dans le cadre global */}
-      <div className="p-2 text-[9px] border-t-2 border-black">
-        <p className="mb-2 italic">
-           - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en : ................................................................................................................................................................................................................. (1)
+      {/* Pied de page — inclus dans le cadre global, espacements dynamiques selon le nombre de matières */}
+      <div className="p-1 text-[9px] border-t-2 border-black">
+        <p className="mb-0.5 italic">
+           - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en : ........................... (1)
         </p>
-        <div className="flex flex-col space-y-1 mb-4">
+        <div className="flex flex-col space-y-0 mb-1">
            <p>- L'élève passe dans la classe supérieure (1)</p>
            <p>- L'élève double la classe (1)</p>
         </div>
         
-        <div className="flex justify-between items-start mt-8">
-          <div className="text-center w-48">
-             <p className="font-bold underline mb-16">Signature de l'élève</p>
+        <div className={`flex justify-between items-start ${layout.footerMt}`}>
+          <div className="text-center w-40">
+             <p className={`font-bold underline ${layout.signMb}`}>Signature de l'élève</p>
           </div>
-          <div className="text-center w-48">
-             <p className="font-bold underline mb-4">Sceau de l'école</p>
+          <div className="text-center w-40">
+             <p className={`font-bold underline ${layout.signMb}`}>Sceau de l'école</p>
           </div>
-          <div className="text-right w-64 space-y-1">
-             <p>Fait à .........................................., le ........ / ........ / 20 ......</p>
-             <p className="font-bold underline pt-2">Le Chef d'établissement</p>
-             <p className="pt-12 underline">Nom et Signature</p>
+          <div className="text-right w-56 space-y-0.5">
+             <p>Fait à ............................., le ...... / ...... / 20 ......</p>
+             <p className="font-bold underline pt-1">Le Chef d'établissement</p>
+             <p className={`${layout.signPt} underline`}>Nom et Signature</p>
           </div>
         </div>
 
-        <div className="mt-8 text-[8px] flex justify-between items-end border-t border-black pt-1">
+        <div className={`${layout.noteMt} text-[8px] flex justify-between items-end border-t border-black pt-0.5`}>
           <div>
             <p>(1) Biffer la mention inutile</p>
             <p className="italic">Note Importante : Le Bulletin est sans valeur s'il est raturé ou surchargé</p>
