@@ -132,35 +132,39 @@ export default function BulletinPrimaireContent({
     totalRows += 7;
 
     // Déterminer le niveau de compacité selon le nombre de lignes
-    const isVeryCompact = totalRows > 30;    // Beaucoup de matières
-    const isCompact = totalRows > 22;        // Nombre moyen de matières
+    // On augmente considérablement les seuils car la réduction des marges du footer
+    // suffit la plupart du temps à faire tenir le bulletin.
+    const isVeryCompact = totalRows > 45;    
+    const isCompact = totalRows > 38;        
 
     return {
       totalRows,
-      // Taille de police du nom de matière (la plus grande cellule)
-      subjectFont: isVeryCompact ? '8px' : isCompact ? '9px' : '11px',
-      // Padding vertical des cellules de matières
+      // Taille de police du nom de matière (11px par défaut)
+      subjectFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
+      // Padding vertical des cellules de matières (py-0.5 par défaut)
       cellPy: isVeryCompact ? 'py-0' : isCompact ? 'py-px' : 'py-0.5',
-      // Padding des en-têtes de domaine et sous-totaux
-      headerPad: isVeryCompact ? 'p-px' : isCompact ? 'p-0.5' : 'p-1',
-      // Taille de police du tableau
-      tableFont: isVeryCompact ? '6px' : isCompact ? '6.5px' : `${Math.max(5.5, bodySize - 2)}px`,
-      // Taille de police de base du conteneur
-      baseFont: isVeryCompact ? '7.5px' : isCompact ? '8px' : '9px',
+      // Padding des en-têtes de domaine et sous-totaux (p-1 par défaut)
+      headerPad: isVeryCompact ? 'p-0.5' : isCompact ? 'p-0.5' : 'p-1',
+      // Taille de police du tableau (6.5px par défaut, soit Math.max(5.5, 8.5-2))
+      tableFont: isVeryCompact ? '5.5px' : isCompact ? '6px' : `${Math.max(5.5, bodySize - 2)}px`,
+      // Taille de police de base du conteneur (9px par défaut)
+      baseFont: isVeryCompact ? '8px' : isCompact ? '8.5px' : '9px',
+      
       // Espacement du pied de page (signatures, sceau)
-      footerMt: isVeryCompact ? 'mt-1' : isCompact ? 'mt-2' : 'mt-4',
-      signMb: isVeryCompact ? 'mb-2' : isCompact ? 'mb-4' : 'mb-8',
-      signPt: isVeryCompact ? 'pt-2' : isCompact ? 'pt-4' : 'pt-6',
-      noteMt: isVeryCompact ? 'mt-1' : isCompact ? 'mt-2' : 'mt-4',
+      // On redonne un peu d'espace en mode normal (mais moins que l'original mb-16)
+      footerMt: isVeryCompact ? 'mt-2' : isCompact ? 'mt-4' : 'mt-6',
+      signMb: isVeryCompact ? 'mb-4' : isCompact ? 'mb-6' : 'mb-10',
+      signPt: isVeryCompact ? 'pt-4' : isCompact ? 'pt-6' : 'pt-8',
+      noteMt: isVeryCompact ? 'mt-2' : isCompact ? 'mt-4' : 'mt-6',
     };
   }, [subjectsByDomain, bodySize]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] print:min-h-0 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none flex flex-col" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
-      <div className="bulletin-cadre-global" style={{ border: '3px solid #000', padding: '0' }}>
+      <div className="bulletin-cadre-global flex flex-col flex-1" style={{ border: '3px solid #000', padding: '0' }}>
 
       {/* Header */}
       <div className="mb-0">
@@ -697,7 +701,7 @@ export default function BulletinPrimaireContent({
 
       {/* Footer text from CTBE model */}
       {/* Pied de page — inclus dans le cadre global, espacements dynamiques selon le nombre de matières */}
-      <div className="p-1 text-[9px] border-t-2 border-black">
+      <div className="p-1 text-[9px] border-t-2 border-black mt-auto">
         <p className="mb-0.5 italic">
            - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en : ........................... (1)
         </p>

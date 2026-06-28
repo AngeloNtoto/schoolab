@@ -129,7 +129,7 @@ export default function CouponContent({
   return (
     <div
       className={`max-w-[210mm] mx-auto bg-white relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none ${
-        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-4 print:p-2'
+        compact ? 'p-1 min-h-0 h-full flex flex-col' : 'p-4 print:p-2 min-h-[297mm] print:min-h-0 flex flex-col'
       } ${forcePageBreak ? 'page-break-after-always' : ''}`}
       style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}
     >

@@ -98,11 +98,11 @@ export default function BulletinHumanitesContent({
   }}
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-2 print:p-0 min-h-[297mm] print:min-h-0 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none flex flex-col" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: '9px', lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN ===== */}
       {/* Un cadre unique englobe l'intégralité du bulletin pour un rendu officiel soigné */}
-      <div className="bulletin-cadre-global" style={{ border: '3px solid #000', padding: '0' }}>
+      <div className="bulletin-cadre-global flex flex-col flex-1" style={{ border: '3px solid #000', padding: '0' }}>
 
       {/* Header */}
       {/* En-tête du bulletin — bordures internes seulement (le cadre global fait le tour) */}
@@ -591,7 +591,7 @@ export default function BulletinHumanitesContent({
       </table>
 
       {/* Pied de page — inclus dans le cadre global, donc pas de bordure propre */}
-      <div className="p-2 text-[10px] border-t-2 border-black">
+      <div className="p-2 text-[10px] border-t-2 border-black mt-auto">
         <div className="mb-0">
           - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en ............................................................................................(1)
         </div>
