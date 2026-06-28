@@ -160,11 +160,11 @@ export default function BulletinPrimaireContent({
   }, [subjectsByDomain, bodySize]);
 
   return (
-    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 min-h-[297mm] print:min-h-0 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none flex flex-col" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}>
+    <div className="max-w-[210mm] mx-auto bg-white p-4 print:p-2 relative text-black font-serif print:shadow-none print:mx-0 print:w-full print:max-w-none" style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}>
       
       {/* ===== CADRE GLOBAL DU BULLETIN PRIMAIRE ===== */}
       {/* Un cadre unique englobe tout le bulletin pour un rendu officiel et soigné */}
-      <div className="bulletin-cadre-global flex flex-col flex-1" style={{ border: '3px solid #000', padding: '0' }}>
+      <div className="bulletin-cadre-global" style={{ border: '3px solid #000', padding: '0' }}>
 
       {/* Header */}
       <div className="mb-0">
@@ -701,7 +701,7 @@ export default function BulletinPrimaireContent({
 
       {/* Footer text from CTBE model */}
       {/* Pied de page — inclus dans le cadre global, espacements dynamiques selon le nombre de matières */}
-      <div className="p-1 text-[9px] border-t-2 border-black mt-auto">
+      <div className="p-1 text-[9px] border-t-2 border-black">
         <p className="mb-0.5 italic">
            - L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en : ........................... (1)
         </p>
