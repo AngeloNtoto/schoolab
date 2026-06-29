@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.8",
+    date: "29 Juin 2026",
+    title: "Marges d'impression matérielle (WebView2)",
+    description: "Protection contre la troncature physique par les marges matérielles de l'imprimante sous Windows.",
+    features: [
+      {
+        tag: "Correctif",
+        text: "Ajout d'une marge externe de sécurité (@page margin 5mm) pour garantir que le document ne soit pas physiquement coupé par la limite matérielle de l'imprimante."
+      },
+      {
+        tag: "Amélioration",
+        text: "Recalibrage du conteneur d'impression pour s'adapter automatiquement à la nouvelle marge sans provoquer de page blanche."
+      }
+    ]
+  },
+  {
     version: "2.1.7",
     date: "29 Juin 2026",
     title: "Optimisation de l'en-tête et des colonnes",

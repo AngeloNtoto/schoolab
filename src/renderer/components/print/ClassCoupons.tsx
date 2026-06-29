@@ -101,7 +101,7 @@ export default function ClassCoupons({
   const printCss = `
     @page { 
       size: A4; 
-      margin: ${annualTwoUp ? '0' : '5mm'};
+      margin: 5mm;
     }
     * {
       -webkit-print-color-adjust: exact !important;

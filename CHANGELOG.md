@@ -4,6 +4,14 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.8] - 2026-06-29
+
+### ✅ Impression et WebView2 (Windows)
+- **Correctif (Marges matérielles)** : L'impression à marge `0` causait la troncature du côté gauche du coupon par l'imprimante (limite matérielle d'impression sans bordure). Une marge externe de sécurité de `5mm` a été ajoutée.
+- **Amélioration (Conteneur)** : Le conteneur d'impression a été redimensionné (`print:w-full print:h-[286mm]`) pour absorber parfaitement cette nouvelle marge externe sans déclencher la création d'une page blanche supplémentaire.
+
+---
+
 ## [2.1.7] - 2026-06-29
 
 ### ✅ Ajustements Layout Impression
