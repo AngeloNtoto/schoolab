@@ -13,6 +13,30 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.5",
+    date: "29 Juin 2026",
+    title: "Correction majeure des mises en page d'impression (Coupons)",
+    description: "Amélioration visuelle et correction des problèmes de pages blanches lors des impressions de coupons.",
+    features: [
+      {
+        tag: "Correctif",
+        text: "Résolution du problème d'impression groupée où une page sur deux était blanche. La hauteur est désormais maintenue strictement à 296mm pour éviter les débordements invisibles."
+      },
+      {
+        tag: "Amélioration",
+        text: "Refonte de la mise en page des coupons : ajout d'une bordure complète et alignement parfait des informations de l'établissement."
+      },
+      {
+        tag: "Amélioration",
+        text: "Ajustement dynamique de la taille des polices et des marges internes pour une meilleure lisibilité sans dépasser l'espace papier."
+      },
+      {
+        tag: "Correctif",
+        text: "Élargissement à 20% de la colonne des branches pour éviter les coupures sur les noms de matières très longs."
+      }
+    ]
+  },
+  {
     version: "2.1.4",
     date: "28 Juin 2026",
     title: "Mise en page adaptative des impressions",

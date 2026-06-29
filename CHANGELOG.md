@@ -4,6 +4,16 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.5] - 2026-06-29
+
+### ✅ Impression et bulletins
+- **Correctif (UI)** : Résolution du problème d'impression groupée où une page sur deux était blanche. Le moteur d'impression maintient désormais la hauteur strictement à 296mm pour éviter les débordements invisibles.
+- **Refonte** : Restructuration de la mise en page des coupons de l'élève (bordure complète, alignement central parfait de l'en-tête de l'école).
+- **Lisibilité** : Ajustement dynamique et optimisé de la taille des polices et de l'interligne pour maximiser la lisibilité des coupons annuels sur papier A4.
+- **Correction** : Élargissement à 20% de la colonne des branches avec ellipsis propre pour éviter la coupure moche des matières trop longues.
+
+---
+
 ## [2.1.4] - 2026-06-28
 
 ### ✅ Impression et bulletins
