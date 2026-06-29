@@ -126,8 +126,8 @@ export default function PrintLayout({
           key={pageIndex}
           className={`
             page-container
-            w-[210mm] min-h-[297mm]
-            mx-auto bg-white
+            w-[210mm] h-[296mm]
+            mx-auto bg-white overflow-hidden
             ${period === 'YEAR' && couponsPerPage === 2 ? 'p-0 print:p-0' : 'p-4 print:p-2'}
             ${pageIndex > 0 ? 'page-break-before' : ''}
           `}
