@@ -153,7 +153,7 @@ export default function CouponContent({
       <div className="border-b-2 border-black">
         <div className="flex">
           {/* Colonne gauche : Infos école — texte plus grand et visible */}
-          <div className="w-[24%] border-r-2 border-black px-2 py-1 bg-slate-50">
+          <div className="w-[24%] border-r-2 border-black px-2 py-1 bg-slate-50 text-center flex flex-col justify-center">
             <div className="mb-0.5 text-[11px] uppercase tracking-tight font-bold leading-snug">
               {schoolInfo.name}
             </div>
