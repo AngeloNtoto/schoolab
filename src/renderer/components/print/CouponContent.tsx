@@ -162,12 +162,14 @@ export default function CouponContent({
           </div>
 
           {/* Colonne centrale : Titre du bulletin */}
-          <div className="flex-1 px-1 py-0.5 text-center border-r border-black flex items-center justify-center bg-white">
+          <div className="flex-1 px-1 py-1 text-center border-r border-black flex items-center justify-center bg-white">
             <div className={`font-semibold uppercase tracking-tight leading-snug ${layout.headerText}`}>
-              <div>COUPON DE L'ÉLÈVE</div>
-              <div className="border-b border-dotted border-black inline-block px-1 py-0.5">{student.last_name} {student.post_name} {student.first_name}</div>
-              <div className="mt-1">DE LA</div>
-              <div className="border-b border-dotted border-black inline-block px-1 py-0.5">{classInfo.level} {classInfo.option} {classInfo.section}</div>
+              <div className="mb-0.5">
+                COUPON DE L'ÉLÈVE : <span className="border-b border-dotted border-black px-1 inline-block">{student.last_name} {student.post_name} {student.first_name}</span>
+              </div>
+              <div>
+                DE LA : <span className="border-b border-dotted border-black px-1 inline-block">{classInfo.level} {classInfo.option} {classInfo.section}</span>
+              </div>
             </div>
           </div>
 
@@ -184,16 +186,16 @@ export default function CouponContent({
       {/* ================================================================ */}
       <table className={`annual-coupon-table w-full table-fixed border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
         <colgroup>
-          <col style={{ width: '27%' }} /> {/* Branches */}
+          <col style={{ width: '22%' }} /> {/* Branches */}
           <col style={{ width: '9%' }} />  {/* 1ere P */}
           <col style={{ width: '9%' }} />  {/* 2e P */}
-          <col style={{ width: '8%' }} />  {/* Comp 1 */}
-          <col style={{ width: '8%' }} />  {/* TOT 1 */}
+          <col style={{ width: '9%' }} />  {/* Comp 1 */}
+          <col style={{ width: '9%' }} />  {/* TOT 1 */}
           <col style={{ width: '9%' }} />  {/* 3e P */}
           <col style={{ width: '9%' }} />  {/* 4e P */}
-          <col style={{ width: '8%' }} />  {/* Comp 2 */}
-          <col style={{ width: '8%' }} />  {/* TOT 2 */}
-          <col style={{ width: '5%' }} />  {/* TOTAL */}
+          <col style={{ width: '9%' }} />  {/* Comp 2 */}
+          <col style={{ width: '9%' }} />  {/* TOT 2 */}
+          <col style={{ width: '6%' }} />  {/* TOTAL */}
         </colgroup>
         
         {/* -------------------------------------------------------------- */}

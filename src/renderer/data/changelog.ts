@@ -13,6 +13,22 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.7",
+    date: "29 Juin 2026",
+    title: "Optimisation de l'en-tête et des colonnes",
+    description: "Ajustement de l'espace vertical et horizontal pour une impression parfaite.",
+    features: [
+      {
+        tag: "Amélioration",
+        text: "Mise en page de l'en-tête (Titre et nom de l'élève) sur une seule ligne pour économiser considérablement de l'espace vertical."
+      },
+      {
+        tag: "Correctif",
+        text: "Réduction de la colonne Branches à 22% pour prévenir définitivement le décalage horizontal lors de l'impression sous Windows."
+      }
+    ]
+  },
+  {
     version: "2.1.6",
     date: "29 Juin 2026",
     title: "Correctif WebView2 : Troncature et Bordures invisibles",

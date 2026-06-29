@@ -4,6 +4,14 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.7] - 2026-06-29
+
+### ✅ Ajustements Layout Impression
+- **Amélioration** : Refonte de l'en-tête central pour afficher le titre "COUPON DE L'ÉLÈVE" sur la même ligne que le nom, libérant ainsi un espace vertical précieux pour l'impression de classe.
+- **Correctif** : Réduction de la largeur de la colonne `Branches` (de 27% à 22%) pour éviter de déborder de l'écran lors du calcul des largeurs sous Windows WebView2.
+
+---
+
 ## [2.1.6] - 2026-06-29
 
 ### ✅ Impression et WebView2 (Windows)
