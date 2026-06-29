@@ -215,19 +215,6 @@ export default function CouponContent({
             <th className="border border-black w-[5%] p-0">3e P.</th>
             <th className="border border-black w-[5%] p-0">4e P.</th>
           </tr>
-          {/* Ligne MAXIMA (en-tête) */}
-          <tr className="font-bold bg-slate-100">
-            <td className="border border-black text-left px-1 py-0">MAXIMA</td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-            <td className="border border-black py-0"></td>
-          </tr>
         </thead>
 
         <tbody>
