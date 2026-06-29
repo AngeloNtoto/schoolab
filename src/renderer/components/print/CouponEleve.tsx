@@ -50,7 +50,7 @@ export default function CouponEleve({
   const printCss = `
     @page { 
       size: A4; 
-      margin: 10mm; 
+      margin: 5mm; 
     }
     * {
       -webkit-print-color-adjust: exact !important;
@@ -114,7 +114,7 @@ export default function CouponEleve({
             academicYear={academicYear}
             ranks={ranks}
             totalStudents={totalStudents}
-            forcePageBreak={true}
+            forcePageBreak={false}
           />
         </div>
       </div>
