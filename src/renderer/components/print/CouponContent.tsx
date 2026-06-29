@@ -141,10 +141,12 @@ export default function CouponContent({
       style={{ WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact', fontSize: layout.baseFont, lineHeight: 1 } as any}
     >
       
-      {/* ================================================================ */}
-      {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
-      {/* ================================================================ */}
-      <div className="border-2 border-black mb-0 rounded-sm">
+      {/* CADRE GLOBAL UNIQUE */}
+      <div className="border-[2px] border-black rounded-sm overflow-hidden flex flex-col h-full">
+        {/* ================================================================ */}
+        {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
+        {/* ================================================================ */}
+        <div className="border-b-[2px] border-black mb-0">
         <div className="flex">
           {/* Colonne gauche : Infos école */}
           <div className="w-[22%] border-r border-black px-1 py-0.5 bg-slate-50 flex flex-col justify-center text-center">
@@ -180,7 +182,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className={`annual-coupon-table w-full table-fixed border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
+      <table className={`annual-coupon-table w-full table-fixed border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
         <colgroup>
           <col style={{ width: '27%' }} /> {/* Branches */}
           <col style={{ width: '9%' }} />  {/* 1ere P */}
@@ -485,6 +487,7 @@ export default function CouponContent({
           })()}
         </tbody>
       </table>
+      </div>
 
       <style>{`
         @media print {
@@ -495,8 +498,12 @@ export default function CouponContent({
             page-break-after: auto;
           }
         }
+        .annual-coupon-table, .annual-coupon-table th, .annual-coupon-table td {
+          border-color: black !important;
+        }
         .annual-coupon-table th,
         .annual-coupon-table td {
+          border: 1px solid black !important;
           padding-top: ${layout.cellPy} !important;
           padding-bottom: ${layout.cellPy} !important;
           font-size: ${layout.tableFont} !important;

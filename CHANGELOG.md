@@ -4,6 +4,15 @@ Toutes les modifications notables de ce projet sont documentées ici.
 
 ---
 
+## [2.1.6] - 2026-06-29
+
+### ✅ Impression et WebView2 (Windows)
+- **Correctif (Bordures)** : Forçage explicite (`border: 1px solid black !important`) des bordures du tableau pour contrer le bug de disparition sous Windows WebView2 lors de l'impression.
+- **Correctif (Troncature gauche)** : Résolution du bug WebView2 qui "mangeait" la première lettre des matières (`ranches` au lieu de `Branches`) dû à `table-layout: auto`. Le tableau est désormais verrouillé avec `table-fixed` et un `<colgroup>` strict.
+- **UI (Cadre global)** : L'en-tête et le tableau sont maintenant fusionnés visuellement à l'intérieur d'un seul et même grand cadre global pour un rendu plus esthétique et officiel.
+
+---
+
 ## [2.1.5] - 2026-06-29
 
 ### ✅ Impression et bulletins

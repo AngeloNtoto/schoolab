@@ -13,6 +13,26 @@ export interface ReleaseNote {
 // Liste historique des versions triée par ordre décroissant (la plus récente d'abord)
 export const changelog: ReleaseNote[] = [
   {
+    version: "2.1.6",
+    date: "29 Juin 2026",
+    title: "Correctif WebView2 : Troncature et Bordures invisibles",
+    description: "Correction majeure du rendu d'impression sous Windows (WebView2).",
+    features: [
+      {
+        tag: "Correctif",
+        text: "Résolution de la disparition mystérieuse des bordures des tableaux lors de l'impression sous Windows en appliquant un border explicite !important."
+      },
+      {
+        tag: "Correctif",
+        text: "Correction de la première lettre tronquée sur les noms de matières (ex: 'ranches' au lieu de 'Branches'). Le tableau utilise désormais table-fixed et un colgroup strict."
+      },
+      {
+        tag: "Amélioration",
+        text: "Ajout d'un cadre global unique et propre englobant l'en-tête de l'école et le tableau pour un rendu officiel."
+      }
+    ]
+  },
+  {
     version: "2.1.5",
     date: "29 Juin 2026",
     title: "Correction majeure des mises en page d'impression (Coupons)",
