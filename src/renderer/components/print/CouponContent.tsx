@@ -180,7 +180,19 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className={`annual-coupon-table w-full border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
+      <table className={`annual-coupon-table w-full table-fixed border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
+        <colgroup>
+          <col style={{ width: '27%' }} /> {/* Branches */}
+          <col style={{ width: '9%' }} />  {/* 1ere P */}
+          <col style={{ width: '9%' }} />  {/* 2e P */}
+          <col style={{ width: '8%' }} />  {/* Comp 1 */}
+          <col style={{ width: '8%' }} />  {/* TOT 1 */}
+          <col style={{ width: '9%' }} />  {/* 3e P */}
+          <col style={{ width: '9%' }} />  {/* 4e P */}
+          <col style={{ width: '8%' }} />  {/* Comp 2 */}
+          <col style={{ width: '8%' }} />  {/* TOT 2 */}
+          <col style={{ width: '5%' }} />  {/* TOTAL */}
+        </colgroup>
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -281,7 +293,7 @@ export default function CouponContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="subject-cell border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis max-w-0">{subject.name}</td>
+                        <td className="subject-cell border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
                         <td className="border border-black">{formatValue(p1)}</td>
                         <td className="border border-black py-0">{formatValue(p2)}</td>
                         <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? formatValue(ex1) : ''}</td>
