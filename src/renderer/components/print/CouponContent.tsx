@@ -86,11 +86,11 @@ export default function CouponContent({
       // MODE 1 PAR PAGE (Hauteur = 297mm)
       // On a toute la page, on peut écrire gros pour bien remplir l'espace
       return {
-        subjectFont: totalRows > 20 ? '12px' : '14px',
-        cellPy: totalRows > 20 ? '4px' : '6px',
-        tableFont: totalRows > 20 ? '11px' : '13px',
-        baseFont: totalRows > 20 ? '12px' : '14px',
-        headerText: 'text-[13px]',
+        subjectFont: totalRows > 20 ? '10px' : '11px',
+        cellPy: totalRows > 20 ? '1px' : '2px',
+        tableFont: totalRows > 20 ? '9px' : '10px',
+        baseFont: totalRows > 20 ? '10px' : '11px',
+        headerText: 'text-[12px]',
       };
     }
   }, [subjects, compact]);
@@ -497,7 +497,7 @@ export default function CouponContent({
           padding-top: ${layout.cellPy} !important;
           padding-bottom: ${layout.cellPy} !important;
           font-size: ${layout.tableFont} !important;
-          line-height: 1.15 !important;
+          line-height: 1 !important;
         }
         .subject-cell {
           font-size: ${layout.subjectFont} !important;
