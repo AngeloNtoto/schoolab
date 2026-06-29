@@ -76,21 +76,21 @@ export default function CouponContent({
       const isVeryCompact = totalRows > 22;    
       const isCompact = totalRows > 16;        
       return {
-        subjectFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
-        cellPy: isVeryCompact ? '0px' : isCompact ? '2px' : '3px',
-        tableFont: isVeryCompact ? '8px' : isCompact ? '9px' : '10px',
-        baseFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
-        headerText: 'text-[9px]',
+        subjectFont: isVeryCompact ? '10px' : isCompact ? '11px' : '12px',
+        cellPy: isVeryCompact ? '1px' : isCompact ? '2px' : '3px',
+        tableFont: isVeryCompact ? '9px' : isCompact ? '10px' : '11px',
+        baseFont: isVeryCompact ? '10px' : isCompact ? '11px' : '12px',
+        headerText: 'text-[11px]',
       };
     } else {
       // MODE 1 PAR PAGE (Hauteur = 297mm)
       // On a toute la page, on peut écrire gros pour bien remplir l'espace
       return {
-        subjectFont: totalRows > 20 ? '11px' : '13px',
+        subjectFont: totalRows > 20 ? '12px' : '14px',
         cellPy: totalRows > 20 ? '4px' : '6px',
-        tableFont: totalRows > 20 ? '10px' : '12px',
-        baseFont: totalRows > 20 ? '11px' : '13px',
-        headerText: 'text-[11px]',
+        tableFont: totalRows > 20 ? '11px' : '13px',
+        baseFont: totalRows > 20 ? '12px' : '14px',
+        headerText: 'text-[13px]',
       };
     }
   }, [subjects, compact]);
@@ -143,37 +143,42 @@ export default function CouponContent({
     >
       
       {/* ================================================================ */}
+      {/* CADRE GLOBAL — enveloppe tout le coupon (en-tête + tableau) */}
+      {/* ================================================================ */}
+      <div className="border-3 border-black" style={{ border: '3px solid #000' }}>
+
+      {/* ================================================================ */}
       {/* EN-TÊTE AVEC INFOS ÉCOLE ET ANNÉE SCOLAIRE */}
       {/* ================================================================ */}
-      <div className="border-2 border-black mb-0 rounded-sm">
+      <div className="border-b-2 border-black">
         <div className="flex">
-          {/* Colonne gauche : Infos école */}
-          <div className="w-[22%] border-r border-black px-1 py-0.5 bg-slate-50">
-            <div className="mb-0 text-[8px] uppercase tracking-tight font-semibold leading-snug">
+          {/* Colonne gauche : Infos école — texte plus grand et visible */}
+          <div className="w-[24%] border-r-2 border-black px-2 py-1 bg-slate-50">
+            <div className="mb-0.5 text-[11px] uppercase tracking-tight font-bold leading-snug">
               {schoolInfo.name}
             </div>
-            <div className="mb-0 text-[7px] uppercase tracking-tight">
+            <div className="mb-0.5 text-[10px] uppercase tracking-tight">
               B.P : {schoolInfo.pobox}
             </div>
-            <div className="mb-0 text-[8px] uppercase tracking-tight">
+            <div className="mb-0 text-[11px] uppercase tracking-tight font-semibold">
               {schoolInfo.city}
             </div>
           </div>
 
-          {/* Colonne centrale : Titre du bulletin */}
-          <div className="flex-1 px-1 py-0.5 text-center border-r border-black flex items-center justify-center bg-white">
-            <div className={`font-semibold uppercase tracking-tight leading-snug ${layout.headerText}`}>
-              <div>COUPON DE L'ÉLÈVE</div>
-              <div className="border-b border-dotted border-black inline-block px-1 py-0.5">{student.last_name} {student.post_name} {student.first_name}</div>
-              <div className="mt-1">DE LA</div>
-              <div className="border-b border-dotted border-black inline-block px-1 py-0.5">{classInfo.level} {classInfo.option} {classInfo.section}</div>
+          {/* Colonne centrale : Titre du coupon — bien visible et centré */}
+          <div className="flex-1 px-2 py-1 text-center border-r-2 border-black flex items-center justify-center bg-white">
+            <div className="font-bold uppercase tracking-tight leading-snug">
+              <div className="text-[13px] font-extrabold">COUPON DE L'ÉLÈVE</div>
+              <div className="border-b-2 border-dotted border-black inline-block px-2 py-0.5 text-[12px] mt-0.5">{student.last_name} {student.post_name} {student.first_name}</div>
+              <div className="mt-1 text-[11px]">DE LA</div>
+              <div className="border-b-2 border-dotted border-black inline-block px-2 py-0.5 text-[12px]">{classInfo.level} {classInfo.option} {classInfo.section}</div>
             </div>
           </div>
 
-          {/* Colonne droite : Année scolaire */}
-          <div className="w-[16%] text-center flex flex-col justify-center px-1 py-0.5 bg-slate-50">
-            <div className="font-semibold uppercase tracking-tight text-[7px]">ANNÉE SCOLAIRE</div>
-            <div className="font-bold text-[10px]">{academicYear}</div>
+          {/* Colonne droite : Année scolaire — texte agrandi */}
+          <div className="w-[18%] text-center flex flex-col justify-center px-2 py-1 bg-slate-50">
+            <div className="font-bold uppercase tracking-tight text-[10px]">ANNÉE SCOLAIRE</div>
+            <div className="font-extrabold text-[13px]">{academicYear}</div>
           </div>
         </div>
       </div>
@@ -181,7 +186,7 @@ export default function CouponContent({
       {/* ================================================================ */}
       {/* TABLEAU DES NOTES */}
       {/* ================================================================ */}
-      <table className={`annual-coupon-table w-full border-2 border-black border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
+      <table className={`annual-coupon-table w-full border-collapse text-center ${compact ? 'flex-1' : ''}`} style={{ fontSize: `${layout.tableFont}` }}>
         
         {/* -------------------------------------------------------------- */}
         {/* EN-TÊTE DU TABLEAU */}
@@ -189,7 +194,7 @@ export default function CouponContent({
         <thead>
           {/* Ligne 1 : Semestres */}
           <tr>
-            <th rowSpan={3} className="border border-black w-[16%] p-0">{compact ? 'Branches' : 'Branches'}</th>
+            <th rowSpan={3} className="border border-black w-[22%] p-1 text-left">Branches</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">PREMIER SEMESTRE</th>
             <th colSpan={4} className="border border-black bg-slate-50 p-0">SECOND SEMESTRE</th>
             <th rowSpan={3} className="border border-black w-[5%] p-0">TOTAL<br/>GÉNÉR.</th>
@@ -295,7 +300,7 @@ export default function CouponContent({
 
                     return (
                       <tr key={subject.id}>
-                        <td className="subject-cell border border-black text-left px-1 py-0 whitespace-nowrap overflow-hidden text-ellipsis">{subject.name}</td>
+                        <td className="subject-cell border border-black text-left px-1 py-0">{subject.name}</td>
                         <td className="border border-black">{formatValue(p1)}</td>
                         <td className="border border-black py-0">{formatValue(p2)}</td>
                         <td className={`border border-black py-0 ${subject.max_exam1 === 0 ? 'bg-black' : ''}`}>{subject.max_exam1 > 0 ? formatValue(ex1) : ''}</td>
@@ -488,6 +493,9 @@ export default function CouponContent({
         </tbody>
       </table>
 
+      {/* ===== FIN DU CADRE GLOBAL ===== */}
+      </div>
+
       <style>{`
         @media print {
           .page-break-after-always {
@@ -502,7 +510,7 @@ export default function CouponContent({
           padding-top: ${layout.cellPy} !important;
           padding-bottom: ${layout.cellPy} !important;
           font-size: ${layout.tableFont} !important;
-          line-height: 1 !important;
+          line-height: 1.15 !important;
         }
         .subject-cell {
           font-size: ${layout.subjectFont} !important;
